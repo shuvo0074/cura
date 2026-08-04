@@ -11,21 +11,21 @@ mobile/            Expo React Native
 
 ## Prerequisites
 
-- **Node.js 20+**
-- **PostgreSQL 16** and **Redis** running locally
+**Node.js 20+**, plus **PostgreSQL 16** and **Redis**. Pick one way to get them —
+the choice matters again in the Database step below.
 
-macOS:
+**Docker** (fewest steps):
+
+```bash
+docker compose up -d
+```
+
+**Homebrew** (macOS, no Docker licence to consider):
 
 ```bash
 brew install postgresql@16 redis
 brew services start postgresql@16
 brew services start redis
-```
-
-Or with Docker instead:
-
-```bash
-docker compose up -d
 ```
 
 ## Install
@@ -55,7 +55,15 @@ openssl rand -base64 24    # OTP_PEPPER
 
 ## Database
 
-If you installed PostgreSQL with Homebrew, create the role and database first:
+**If you used Docker** — nothing to create. The container already provisions the
+`cura` role, database and `C` collation, which is what the default
+`DATABASE_URL` expects. Just confirm both services are healthy:
+
+```bash
+docker compose ps           # postgres and redis should read "healthy"
+```
+
+**If you used Homebrew** — create the role and database yourself:
 
 ```bash
 export PATH="/opt/homebrew/opt/postgresql@16/bin:$PATH"
@@ -63,12 +71,15 @@ createuser -s cura
 createdb -O cura --encoding=UTF8 --locale=C --template=template0 cura
 ```
 
-Then, from `backend/`:
+Then either way, from `backend/`:
 
 ```bash
 npx prisma migrate dev      # apply schema
 npm run seed                # demo practice, doctor, patients, appointments
 ```
+
+> The `C` locale is not cosmetic — the patient prefix-search index uses
+> `text_pattern_ops`, which only works under a deterministic collation.
 
 ## Run
 
