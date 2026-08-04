@@ -16,6 +16,7 @@ import { SettingsModule } from './modules/settings/settings.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
 import { DocumentModule } from './modules/documents/document.module';
+import { PatientModule } from './modules/patients/patient.module';
 
 /**
  * Application root.
@@ -50,6 +51,7 @@ import { DocumentModule } from './modules/documents/document.module';
     BillingModule,
     RealtimeModule,
     DocumentModule,
+    PatientModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },

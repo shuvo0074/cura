@@ -1,0 +1,199 @@
+.shell {
+  display: grid;
+  grid-template-columns: var(--layout-sidebar-width) 1fr;
+  grid-template-rows: var(--layout-header-height) 1fr;
+  grid-template-areas:
+    'header header'
+    'sidebar content';
+  height: 100dvh;
+  background: var(--color-surface-canvas);
+}
+
+.shell[data-collapsed] {
+  grid-template-columns: var(--layout-sidebar-collapsed-width) 1fr;
+}
+
+/* -- Header ---------------------------------------------------------------- */
+
+.header {
+  grid-area: header;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: 0 var(--space-lg);
+  background: var(--color-surface-raised);
+  border-bottom: 1px solid var(--color-border-subtle);
+  z-index: 2;
+}
+
+.hamburger,
+.iconButton {
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--text-lg);
+  line-height: 1;
+  color: var(--color-text-secondary);
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.hamburger:hover,
+.iconButton:hover {
+  background: var(--color-surface-sunken);
+  color: var(--color-text-primary);
+}
+
+.brand {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  color: var(--color-brand-default);
+}
+
+.crumb {
+  padding-left: var(--space-md);
+  border-left: 1px solid var(--color-border-subtle);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.profile {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-brand-on-brand);
+  background: var(--color-brand-default);
+}
+
+.userName {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.signOut {
+  padding: var(--space-xs) var(--space-md);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  background: none;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.signOut:hover {
+  color: var(--color-text-primary);
+  border-color: var(--color-border-default);
+}
+
+/* -- Sidebar --------------------------------------------------------------- */
+
+.sidebar {
+  grid-area: sidebar;
+  overflow-y: auto;
+  padding: var(--space-sm) 0;
+  background: var(--color-surface-raised);
+  border-right: 1px solid var(--color-border-subtle);
+}
+
+.navList {
+  margin: 0;
+  padding: 0 var(--space-sm);
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--text-sm);
+  text-align: left;
+  color: var(--color-text-secondary);
+  background: none;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-standard);
+}
+
+.navItem:hover {
+  background: var(--color-surface-sunken);
+  color: var(--color-text-primary);
+}
+
+/* Active state highlighting — spec 2.2 "Functionality". */
+.navItem[data-active] {
+  color: var(--color-brand-on-brand);
+  background: var(--color-brand-default);
+}
+
+.navIcon {
+  width: 18px;
+  text-align: center;
+  font-size: var(--text-md);
+}
+
+.navLabel {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.navBadge {
+  padding: 1px 5px;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-radius: var(--radius-pill);
+  background: var(--color-feedback-warning-bg);
+  color: var(--color-feedback-warning-fg);
+}
+
+.navBadge[data-status='pending'] {
+  background: var(--color-surface-sunken);
+  color: var(--color-text-muted);
+}
+
+.navItem[data-active] .navBadge {
+  background: rgba(255, 255, 255, 0.22);
+  color: inherit;
+}
+
+/* -- Content --------------------------------------------------------------- */
+
+.content {
+  grid-area: content;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+@media (max-width: 760px) {
+  .shell,
+  .shell[data-collapsed] {
+    grid-template-columns: var(--layout-sidebar-collapsed-width) 1fr;
+  }
+  .crumb,
+  .userName {
+    display: none;
+  }
+}

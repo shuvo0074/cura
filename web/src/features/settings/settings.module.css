@@ -1,0 +1,62 @@
+.shell { display: grid; grid-template-columns: 220px 1fr; gap: 1px; height: 100%; background: var(--color-border-subtle); }
+@media (max-width: 820px) { .shell { grid-template-columns: 1fr; } }
+.tabs {
+  display: flex; flex-direction: column; gap: 2px; padding: var(--space-md);
+  background: var(--color-surface-raised); overflow-y: auto;
+}
+.tabs button {
+  padding: var(--space-sm) var(--space-md); text-align: left; font-size: var(--text-sm);
+  color: var(--color-text-secondary); background: none; border: none;
+  border-radius: var(--radius-sm); cursor: pointer;
+}
+.tabs button:hover { background: var(--color-surface-sunken); color: var(--color-text-primary); }
+.tabs button[data-active] { color: var(--color-brand-on-brand); background: var(--color-brand-default); }
+.notBuilt {
+  margin-top: var(--space-lg); padding: var(--space-sm); font-size: var(--text-xs);
+  line-height: var(--leading-normal); color: var(--color-text-muted);
+  border-top: 1px solid var(--color-border-subtle);
+}
+.panel { padding: var(--space-xl); overflow-y: auto; background: var(--color-surface-canvas); }
+.title { margin: 0 0 var(--space-md); font-size: var(--text-xl); color: var(--color-text-primary); }
+.subtitle { margin: var(--space-xl) 0 var(--space-sm); font-size: var(--text-md); color: var(--color-text-primary); }
+.hint { margin: 0 0 var(--space-md); font-size: var(--text-sm); color: var(--color-text-muted); }
+.definitions { display: grid; grid-template-columns: 160px 1fr; gap: var(--space-sm) var(--space-md); margin: 0; }
+.definitions dt { font-size: var(--text-sm); color: var(--color-text-muted); }
+.definitions dd { margin: 0; font-size: var(--text-sm); color: var(--color-text-primary); }
+.table { width: 100%; border-collapse: collapse; margin-top: var(--space-md); font-size: var(--text-sm); }
+.table th, .table td { padding: var(--space-sm); text-align: left; border-bottom: 1px solid var(--color-border-subtle); }
+.table th { color: var(--color-text-muted); font-weight: var(--weight-medium); font-size: var(--text-xs); text-transform: uppercase; }
+.numeric { text-align: right; font-variant-numeric: tabular-nums; }
+.inlineForm { display: flex; gap: var(--space-sm); margin-bottom: var(--space-md); flex-wrap: wrap; }
+.input, .inputSmall {
+  flex: 1; min-width: 140px; padding: var(--space-sm); font-size: var(--text-sm);
+  color: var(--color-text-primary); background: var(--color-surface-raised);
+  border: 1px solid var(--color-border-default); border-radius: var(--radius-sm);
+}
+.inputSmall { flex: 0 0 110px; min-width: 0; }
+.primary {
+  padding: var(--space-sm) var(--space-lg); font-size: var(--text-sm); font-weight: var(--weight-semibold);
+  color: var(--color-brand-on-brand); background: var(--color-brand-default);
+  border: none; border-radius: var(--radius-sm); cursor: pointer;
+}
+.toggle {
+  padding: 2px var(--space-sm); font-size: var(--text-xs); cursor: pointer;
+  color: var(--color-text-muted); background: var(--color-surface-sunken);
+  border: 1px solid var(--color-border-subtle); border-radius: var(--radius-pill);
+}
+.toggle[data-on] { color: var(--color-feedback-success-fg); background: var(--color-feedback-success-bg); border-color: currentColor; }
+.filters { display: flex; gap: var(--space-xs); flex-wrap: wrap; margin-bottom: var(--space-md); }
+.filters button {
+  padding: var(--space-xs) var(--space-sm); font-size: var(--text-xs);
+  color: var(--color-text-secondary); background: var(--color-surface-raised);
+  border: 1px solid var(--color-border-subtle); border-radius: var(--radius-sm); cursor: pointer;
+}
+.filters button[data-active] { color: var(--color-brand-on-brand); background: var(--color-brand-default); }
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin: var(--space-md) 0 0; padding: 0; list-style: none; }
+.chip {
+  padding: var(--space-xs) var(--space-sm); font-size: var(--text-xs);
+  color: var(--color-text-secondary); background: var(--color-surface-sunken);
+  border-radius: var(--radius-pill);
+}
+.muted { color: var(--color-text-muted); font-size: var(--text-sm); }
+.error { color: var(--color-feedback-danger-fg); font-size: var(--text-sm); }
