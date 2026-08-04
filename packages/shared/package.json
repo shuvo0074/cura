@@ -1,0 +1,31 @@
+{
+  "name": "@cura/shared",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Single source of truth for design tokens, runtime config, and cross-platform contracts",
+  "main": "./dist/cjs/index.js",
+  "types": "./dist/cjs/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/cjs/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.esm.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "@types/react": "^18.3.12",
+    "react": "^18.3.1"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "module": "./dist/esm/index.js"
+}

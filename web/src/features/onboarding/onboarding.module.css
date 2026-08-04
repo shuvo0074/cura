@@ -1,0 +1,227 @@
+.shell {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: var(--space-xl);
+  background: var(--color-surface-canvas);
+}
+
+.splash {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  color: var(--color-text-muted);
+}
+
+.card {
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding: var(--space-xxl);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-sm);
+}
+
+.title {
+  margin: 0;
+  flex: 1 0 100%;
+  font-size: var(--text-xxl);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.subtitle {
+  margin: 0;
+  flex: 1;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.saved {
+  font-size: var(--text-xs);
+  color: var(--color-feedback-success-fg);
+}
+
+/* Stepper — spec 3.2.6(a): visible progress with the current stage. */
+.stepper {
+  display: flex;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stepper li {
+  flex: 1;
+}
+
+.stepDot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  width: 100%;
+  padding: var(--space-sm);
+  text-align: left;
+  background: none;
+  border: none;
+  border-top: 3px solid var(--color-border-subtle);
+  cursor: pointer;
+}
+
+.stepDot[data-active] {
+  border-top-color: var(--color-brand-default);
+}
+
+.stepDot[data-done] {
+  border-top-color: var(--color-feedback-success-fg);
+}
+
+.stepDot[data-locked] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.stepNumber {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-secondary);
+}
+
+.stepLabel {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  line-height: var(--leading-tight);
+}
+
+.body {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-md);
+}
+
+@media (max-width: 640px) {
+  .body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
+}
+
+.input,
+.inputSmall {
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--text-md);
+  color: var(--color-text-primary);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+}
+
+.inputSmall {
+  width: 90px;
+}
+
+.input:focus-visible,
+.inputSmall:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 1px;
+}
+
+.repeaterRow {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.repeaterRow .input {
+  flex: 1;
+}
+
+.hint {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: var(--leading-relaxed);
+}
+
+.error {
+  font-size: var(--text-sm);
+  color: var(--color-feedback-danger-fg);
+}
+
+.formError {
+  margin: 0;
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--text-sm);
+  color: var(--color-feedback-danger-fg);
+  background: var(--color-feedback-danger-bg);
+  border-radius: var(--radius-sm);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.primary {
+  padding: var(--space-sm) var(--space-lg);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  color: var(--color-brand-on-brand);
+  background: var(--color-brand-default);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ghost {
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  background: none;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.ghost:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

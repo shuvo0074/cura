@@ -1,0 +1,321 @@
+.shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--color-surface-canvas);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--color-surface-raised);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.back {
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--text-sm);
+  color: var(--color-text-link);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.busy {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 1px;
+  flex: 1;
+  min-height: 0;
+  background: var(--color-border-subtle);
+}
+
+@media (max-width: 1000px) {
+  .columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+.timeline,
+.editor {
+  padding: var(--space-lg);
+  overflow-y: auto;
+  background: var(--color-surface-canvas);
+  /* Confines layout and paint to each pane so a long history does not force
+     the whole page to re-layout while typing a prescription. */
+  contain: content;
+}
+
+.sectionTitle {
+  margin: 0 0 var(--space-md);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.editorHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.signedBadge {
+  padding: 2px var(--space-sm);
+  font-size: var(--text-xs);
+  color: var(--color-feedback-success-fg);
+  background: var(--color-feedback-success-bg);
+  border-radius: var(--radius-pill);
+}
+
+.muted {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+/* -- Timeline entries ----------------------------------------------------- */
+
+.entry {
+  padding: var(--space-md);
+  margin-bottom: var(--space-sm);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.entryHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xs);
+}
+
+.entryDate {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.entryDoctor {
+  flex: 1;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.signedDot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-feedback-success-fg);
+}
+
+.entryLine {
+  margin: 0 0 var(--space-xs);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.entryLine strong {
+  color: var(--color-text-primary);
+  margin-right: var(--space-xs);
+}
+
+.entryDrugs {
+  margin: var(--space-xs) 0 0;
+  padding-left: var(--space-lg);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+/* -- Consent -------------------------------------------------------------- */
+
+.consent {
+  padding: var(--space-md);
+  margin-bottom: var(--space-md);
+  background: var(--color-feedback-warning-bg);
+  border: 1px solid var(--color-feedback-warning-fg);
+  border-radius: var(--radius-md);
+}
+
+.consentText {
+  margin: 0 0 var(--space-sm);
+  font-size: var(--text-sm);
+  color: var(--color-feedback-warning-fg);
+}
+
+.consentRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.codeInput {
+  width: 110px;
+  padding: var(--space-xs) var(--space-sm);
+  text-align: center;
+  letter-spacing: 0.25em;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+}
+
+/* -- Prescription grid ---------------------------------------------------- */
+
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-md);
+}
+
+.gridHead,
+.gridRow {
+  display: grid;
+  grid-template-columns: 2fr 1fr 0.8fr 1.2fr 1fr 32px;
+  gap: var(--space-xs);
+  align-items: center;
+}
+
+.gridHead {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.suggestWrap {
+  position: relative;
+}
+
+.suggestions {
+  position: absolute;
+  z-index: 5;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+}
+
+.suggestions button {
+  display: block;
+  width: 100%;
+  padding: var(--space-sm);
+  text-align: left;
+  font-size: var(--text-sm);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.suggestions button:hover {
+  background: var(--color-surface-sunken);
+}
+
+.doseGroup {
+  display: flex;
+  gap: 2px;
+}
+
+.dose {
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-xs);
+  text-align: center;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+}
+
+.input {
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+}
+
+.input:disabled,
+.dose:disabled {
+  background: var(--color-surface-sunken);
+  color: var(--color-text-muted);
+}
+
+.remove {
+  padding: var(--space-xs);
+  color: var(--color-text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-md);
+}
+
+.label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
+}
+
+.error {
+  margin: 0 0 var(--space-xs);
+  font-size: var(--text-sm);
+  color: var(--color-feedback-danger-fg);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.primary {
+  padding: var(--space-sm) var(--space-lg);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-brand-on-brand);
+  background: var(--color-brand-default);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.ghost {
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  background: none;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.primary:disabled,
+.ghost:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

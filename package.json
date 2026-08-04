@@ -1,0 +1,22 @@
+{
+  "name": "cura",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Cura — doctor practice management platform (backend, web, mobile)",
+  "workspaces": [
+    "packages/*",
+    "backend",
+    "web",
+    "mobile"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build:shared": "npm run build -w @cura/shared",
+    "typecheck": "npm run typecheck -w @cura/shared && npm run typecheck -w @cura/backend && npm run typecheck -w @cura/web",
+    "dev:backend": "npm run start:dev -w @cura/backend",
+    "dev:web": "npm run dev -w @cura/web",
+    "dev:mobile": "npm run start -w @cura/mobile"
+  }
+}

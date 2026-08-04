@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "Cura",
+    "slug": "cura",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "health.cura.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Cura uses the camera to capture NID and certificate images during verification.",
+        "NSFaceIDUsageDescription": "Cura uses Face ID to protect access to patient records.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "health.cura.app",
+      "permissions": ["CAMERA"]
+    },
+    "plugins": ["expo-secure-store"]
+  }
+}

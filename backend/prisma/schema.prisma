@@ -1,0 +1,718 @@
+// Cura — data model.
+//
+// Indexing strategy is driven by the read paths the specification demands:
+// universal search (mobile/name/curaId), the calendar grid (doctor + time
+// range), and the patient timeline (patient + occurredAt desc).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  DOCTOR
+  ASSISTANT_DOCTOR
+  ADMINISTRATOR
+  RECEPTIONIST
+  FRONT_DESK
+  NONE
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  WAITING
+  ENGAGED
+  DONE
+  CANCELLED
+  NO_SHOW
+}
+
+enum VisitType {
+  NEW
+  FOLLOW_UP
+  OLD
+}
+
+enum OtpPurpose {
+  REGISTRATION
+  LOGIN
+  PASSWORD_RESET
+  STAFF_DEVICE
+  PATIENT_CONSENT
+}
+
+enum DocumentCategory {
+  NID_FRONT
+  NID_BACK
+  MEDICAL_CERTIFICATE
+  DIGITAL_SIGNATURE
+  LAB_REPORT
+  EXTERNAL_PRESCRIPTION
+  OTHER
+}
+
+model User {
+  id             String    @id @default(uuid()) @db.Uuid
+  fullName       String    @db.VarChar(120)
+  email          String?   @unique @db.VarChar(160)
+  mobile         String?   @unique @db.VarChar(20)
+  passwordHash   String    @db.VarChar(255)
+  role           UserRole  @default(DOCTOR)
+  bmdcNumber     String?   @unique @db.VarChar(20)
+  gender         Gender?
+  dateOfBirth    DateTime? @db.Date
+  bloodGroup     String?   @db.VarChar(4)
+  secondaryPhone String?   @db.VarChar(20)
+  avatarUrl      String?   @db.VarChar(512)
+  locale         String    @default("en") @db.VarChar(5)
+
+  /// AES-256-GCM ciphertext. Never selected into list queries.
+  nidEncrypted   Bytes?
+  /// Deterministic HMAC of the NID, for duplicate detection without decrypting.
+  nidFingerprint String? @unique @db.VarChar(64)
+
+  emailVerifiedAt    DateTime?
+  mobileVerifiedAt   DateTime?
+  onboardingStep     Int       @default(0)
+  onboardingComplete Boolean   @default(false)
+
+  isActive         Boolean   @default(true)
+  twoFactorEnabled Boolean   @default(false)
+  failedLoginCount Int       @default(0)
+  lockedUntil      DateTime?
+  lastLoginAt      DateTime?
+  /// Bumped on password change / forced logout; invalidates every issued token.
+  tokenVersion     Int       @default(0)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  memberships     PracticeMembership[]
+  refreshTokens   RefreshToken[]
+  qualifications  Qualification[]
+  awards          Award[]
+  documents       DocumentAsset[]
+  appointments    Appointment[]        @relation("DoctorAppointments")
+  encounters      Encounter[]
+  auditLogs       AuditLog[]
+  onboardingDraft OnboardingDraft?
+
+  @@index([isActive, role])
+  @@index([deletedAt])
+  @@map("users")
+}
+
+model Qualification {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @db.Uuid
+  degreeName    String   @db.VarChar(120)
+  instituteName String   @db.VarChar(160)
+  passingYear   Int?
+  country       String?  @db.VarChar(80)
+  createdAt     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("qualifications")
+}
+
+model Award {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  title     String   @db.VarChar(160)
+  year      Int?
+  issuer    String?  @db.VarChar(160)
+  country   String?  @db.VarChar(80)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("awards")
+}
+
+/// Server-side autosave for the 4-step wizard (spec 3.2.6(d) state persistence).
+model OnboardingDraft {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @unique @db.Uuid
+  step      Int      @default(1)
+  payload   Json
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("onboarding_drafts")
+}
+
+model Practice {
+  id             String    @id @default(uuid()) @db.Uuid
+  name           String    @db.VarChar(160)
+  specialization String?   @db.VarChar(120)
+  contactNumber  String?   @db.VarChar(20)
+  email          String?   @db.VarChar(160)
+  address        String?   @db.VarChar(400)
+  mapsUrl        String?   @db.VarChar(512)
+  logoUrl        String?   @db.VarChar(512)
+  roomNumber     String?   @db.VarChar(40)
+  slotMinutes    Int       @default(10)
+  timezone       String    @default("Asia/Dhaka") @db.VarChar(60)
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  memberships  PracticeMembership[]
+  sessions     PracticeSession[]
+  closures     PracticeClosure[]
+  appointments Appointment[]
+  patients     Patient[]
+
+  @@index([isActive])
+  @@map("practices")
+}
+
+model PracticeMembership {
+  id         String   @id @default(uuid()) @db.Uuid
+  practiceId String   @db.Uuid
+  userId     String   @db.Uuid
+  role       UserRole
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  practice Practice @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([practiceId, userId])
+  @@index([userId, isActive])
+  @@map("practice_memberships")
+}
+
+model PracticeSession {
+  id         String @id @default(uuid()) @db.Uuid
+  practiceId String @db.Uuid
+  /// 0 = Sunday .. 6 = Saturday
+  dayOfWeek  Int    @db.SmallInt
+  startTime  String @db.VarChar(5)
+  endTime    String @db.VarChar(5)
+
+  practice Practice @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+
+  @@index([practiceId, dayOfWeek])
+  @@map("practice_sessions")
+}
+
+/// Off-days and ad-hoc blocks (spec 6.6.c.1.4.4 + Block Calendar).
+model PracticeClosure {
+  id         String   @id @default(uuid()) @db.Uuid
+  practiceId String   @db.Uuid
+  startsAt   DateTime
+  endsAt     DateTime
+  allDay     Boolean  @default(true)
+  reason     String?  @db.VarChar(240)
+  createdAt  DateTime @default(now())
+
+  practice Practice @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+
+  @@index([practiceId, startsAt, endsAt])
+  @@map("practice_closures")
+}
+
+model Patient {
+  id          String    @id @default(uuid()) @db.Uuid
+  practiceId  String    @db.Uuid
+  curaId      String    @unique @db.VarChar(20)
+  fullName    String    @db.VarChar(120)
+  mobile      String    @db.VarChar(20)
+  email       String?   @db.VarChar(160)
+  gender      Gender?
+  dateOfBirth DateTime? @db.Date
+  bloodGroup  String?   @db.VarChar(4)
+  address     String?   @db.VarChar(400)
+  avatarUrl   String?   @db.VarChar(512)
+  occupation  String?   @db.VarChar(120)
+  referredBy  String?   @db.VarChar(120)
+
+  /// Lower-cased, de-punctuated name used for prefix search.
+  searchName String @db.VarChar(160)
+
+  profileComplete Boolean   @default(false)
+  lastVisitAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+
+  practice     Practice         @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+  encounters   Encounter[]
+  consents     PatientConsent[]
+  documents    DocumentAsset[]
+
+  /// Family members sharing one mobile number resolve through this index.
+  @@index([practiceId, mobile])
+  @@index([practiceId, searchName])
+  @@index([practiceId, lastVisitAt(sort: Desc)])
+  @@index([deletedAt])
+  @@map("patients")
+}
+
+/// Consent unlocking history older than the 90-day privacy window.
+model PatientConsent {
+  id              String    @id @default(uuid()) @db.Uuid
+  patientId       String    @db.Uuid
+  grantedToUserId String    @db.Uuid
+  grantedAt       DateTime  @default(now())
+  expiresAt       DateTime
+  revokedAt       DateTime?
+  method          String    @db.VarChar(20)
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([patientId, grantedToUserId, expiresAt])
+  @@map("patient_consents")
+}
+
+model Appointment {
+  id         String @id @default(uuid()) @db.Uuid
+  practiceId String @db.Uuid
+  doctorId   String @db.Uuid
+  patientId  String @db.Uuid
+
+  scheduledAt       DateTime
+  endsAt            DateTime
+  durationMinutes   Int
+  status            AppointmentStatus @default(SCHEDULED)
+  visitType         VisitType         @default(NEW)
+  tokenNumber       Int?
+  plannedProcedures String[]
+  notes             String?           @db.VarChar(1000)
+
+  checkedInAt  DateTime?
+  engagedAt    DateTime?
+  completedAt  DateTime?
+  cancelledAt  DateTime?
+  cancelReason String?   @db.VarChar(240)
+
+  createdById String?  @db.Uuid
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  practice  Practice   @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+  doctor    User       @relation("DoctorAppointments", fields: [doctorId], references: [id])
+  patient   Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  encounter Encounter?
+
+  /// Primary calendar read path: one doctor's grid over a time window.
+  @@index([doctorId, scheduledAt])
+  @@index([practiceId, scheduledAt])
+  @@index([practiceId, status, scheduledAt])
+  @@index([patientId, scheduledAt(sort: Desc)])
+  @@map("appointments")
+}
+
+model Encounter {
+  id            String    @id @default(uuid()) @db.Uuid
+  patientId     String    @db.Uuid
+  doctorId      String    @db.Uuid
+  appointmentId String?   @unique @db.Uuid
+  occurredAt    DateTime
+  /// Once signed the clinical record is immutable; corrections are addenda.
+  signedAt      DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  patient      Patient         @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctor       User            @relation(fields: [doctorId], references: [id])
+  appointment  Appointment?    @relation(fields: [appointmentId], references: [id])
+  vitals       Vitals?
+  clinicalNote ClinicalNote?
+  prescription Prescription?
+  documents    DocumentAsset[]
+
+  /// Timeline read path.
+  @@index([patientId, occurredAt(sort: Desc)])
+  @@index([doctorId, occurredAt(sort: Desc)])
+  @@map("encounters")
+}
+
+model Vitals {
+  id              String   @id @default(uuid()) @db.Uuid
+  encounterId     String   @unique @db.Uuid
+  weightKg        Decimal? @db.Decimal(5, 2)
+  systolic        Int?
+  diastolic       Int?
+  pulseBpm        Int?
+  temperatureC    Decimal? @db.Decimal(4, 1)
+  respiratoryRate Int?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  encounter Encounter @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+
+  @@map("vitals")
+}
+
+model ClinicalNote {
+  id           String   @id @default(uuid()) @db.Uuid
+  encounterId  String   @unique @db.Uuid
+  complaints   String[]
+  observations String[]
+  diagnoses    String[]
+  advice       String[]
+  notes        String?  @db.VarChar(4000)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  encounter Encounter @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+
+  @@map("clinical_notes")
+}
+
+model Prescription {
+  id             String    @id @default(uuid()) @db.Uuid
+  encounterId    String    @unique @db.Uuid
+  investigations String[]
+  followUpDate   DateTime? @db.Date
+  signedAt       DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  encounter Encounter          @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+  items     PrescriptionItem[]
+
+  @@map("prescriptions")
+}
+
+model PrescriptionItem {
+  id             String  @id @default(uuid()) @db.Uuid
+  prescriptionId String  @db.Uuid
+  position       Int
+  drugName       String  @db.VarChar(160)
+  strength       String? @db.VarChar(40)
+  form           String? @db.VarChar(40)
+  durationDays   Int?
+  morning        Decimal @default(0) @db.Decimal(4, 2)
+  noon           Decimal @default(0) @db.Decimal(4, 2)
+  night          Decimal @default(0) @db.Decimal(4, 2)
+  mealRelation   String  @default("ANY") @db.VarChar(10)
+  instruction    String? @db.VarChar(300)
+
+  prescription Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+
+  @@index([prescriptionId, position])
+  @@map("prescription_items")
+}
+
+model DocumentAsset {
+  id          String           @id @default(uuid()) @db.Uuid
+  ownerUserId String?          @db.Uuid
+  patientId   String?          @db.Uuid
+  encounterId String?          @db.Uuid
+  category    DocumentCategory
+  fileName    String           @db.VarChar(255)
+  mimeType    String           @db.VarChar(100)
+  sizeBytes   Int
+  storageKey  String           @db.VarChar(512)
+  /// SHA-256 of the bytes; de-duplicates uploads and detects tampering.
+  checksum    String           @db.VarChar(64)
+  capturedOn  DateTime?        @db.Date
+  createdAt   DateTime         @default(now())
+  deletedAt   DateTime?
+
+  owner     User?      @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  patient   Patient?   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  encounter Encounter? @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+
+  @@index([patientId, category])
+  @@index([encounterId])
+  @@map("document_assets")
+}
+
+model RefreshToken {
+  id           String    @id @default(uuid()) @db.Uuid
+  userId       String    @db.Uuid
+  /// SHA-256 of the token. The raw value never touches the database.
+  tokenHash    String    @unique @db.VarChar(64)
+  /// Rotation lineage — reuse of a rotated token revokes the whole family.
+  familyId     String    @db.Uuid
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  replacedById String?   @db.Uuid
+  userAgent    String?   @db.VarChar(300)
+  ipHash       String?   @db.VarChar(64)
+  createdAt    DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+  @@index([familyId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+model OtpChallenge {
+  id          String     @id @default(uuid()) @db.Uuid
+  purpose     OtpPurpose
+  /// Hash of purpose+destination+code+pepper. Codes are never stored in clear.
+  codeHash    String     @db.VarChar(64)
+  destination String     @db.VarChar(160)
+  subjectId   String?    @db.Uuid
+  attempts    Int        @default(0)
+  maxAttempts Int        @default(5)
+  consumedAt  DateTime?
+  expiresAt   DateTime
+  createdAt   DateTime   @default(now())
+
+  @@index([destination, purpose, createdAt])
+  @@index([expiresAt])
+  @@map("otp_challenges")
+}
+
+/// Append-only PHI access trail.
+model AuditLog {
+  id           String   @id @default(uuid()) @db.Uuid
+  actorUserId  String?  @db.Uuid
+  action       String   @db.VarChar(80)
+  resourceType String   @db.VarChar(60)
+  resourceId   String?  @db.VarChar(64)
+  practiceId   String?  @db.Uuid
+  ipHash       String?  @db.VarChar(64)
+  userAgent    String?  @db.VarChar(300)
+  requestId    String?  @db.VarChar(64)
+  metadata     Json?
+  createdAt    DateTime @default(now())
+
+  actor User? @relation(fields: [actorUserId], references: [id])
+
+  @@index([actorUserId, createdAt(sort: Desc)])
+  @@index([resourceType, resourceId])
+  @@index([createdAt(sort: Desc)])
+  @@map("audit_logs")
+}
+
+model Drug {
+  id          String    @id @default(uuid()) @db.Uuid
+  practiceId  String?   @db.Uuid
+  name        String    @db.VarChar(160)
+  form        String?   @db.VarChar(40)
+  strength    String?   @db.VarChar(40)
+  unit        String?   @db.VarChar(20)
+  instruction String?   @db.VarChar(300)
+  searchName  String    @db.VarChar(160)
+  createdAt   DateTime  @default(now())
+  deletedAt   DateTime?
+
+  @@index([practiceId, searchName])
+  @@map("drugs")
+}
+
+model CatalogEntry {
+  id          String    @id @default(uuid()) @db.Uuid
+  practiceId  String    @db.Uuid
+  /// COMPLAINT | OBSERVATION | DIAGNOSIS | ADVICE | NOTE
+  kind        String    @db.VarChar(20)
+  value       String    @db.VarChar(300)
+  searchValue String    @db.VarChar(300)
+  createdAt   DateTime  @default(now())
+  deletedAt   DateTime?
+
+  @@unique([practiceId, kind, value])
+  @@index([practiceId, kind, searchValue])
+  @@map("catalog_entries")
+}
+
+model PricingItem {
+  id         String    @id @default(uuid()) @db.Uuid
+  practiceId String    @db.Uuid
+  name       String    @db.VarChar(160)
+  priceMinor Int
+  notes      String?   @db.VarChar(400)
+  isDefault  Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  deletedAt  DateTime?
+
+  @@unique([practiceId, name])
+  @@map("pricing_items")
+}
+
+// ---------------------------------------------------------------------------
+// Billing
+// ---------------------------------------------------------------------------
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PARTIALLY_PAID
+  PAID
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  BKASH
+  NAGAD
+  BANK_TRANSFER
+  OTHER
+}
+
+model Invoice {
+  id            String        @id @default(uuid()) @db.Uuid
+  practiceId    String        @db.Uuid
+  patientId     String        @db.Uuid
+  encounterId   String?       @db.Uuid
+  /// Human-facing sequential number, unique per practice.
+  number        String        @db.VarChar(30)
+  status        InvoiceStatus @default(DRAFT)
+  /// Money is stored in minor units (poisha) as integers. Floating point is
+  /// never used for currency.
+  subtotalMinor Int           @default(0)
+  discountMinor Int           @default(0)
+  taxMinor      Int           @default(0)
+  totalMinor    Int           @default(0)
+  paidMinor     Int           @default(0)
+  notes         String?       @db.VarChar(600)
+  issuedAt      DateTime?
+  createdById   String?       @db.Uuid
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  items    InvoiceItem[]
+  payments Payment[]
+
+  @@unique([practiceId, number])
+  @@index([practiceId, status, createdAt(sort: Desc)])
+  @@index([patientId, createdAt(sort: Desc)])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id            String  @id @default(uuid()) @db.Uuid
+  invoiceId     String  @db.Uuid
+  pricingItemId String? @db.Uuid
+  description   String  @db.VarChar(200)
+  quantity      Int     @default(1)
+  unitMinor     Int
+  discountMinor Int     @default(0)
+  totalMinor    Int
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@map("invoice_items")
+}
+
+model Payment {
+  id           String        @id @default(uuid()) @db.Uuid
+  invoiceId    String        @db.Uuid
+  amountMinor  Int
+  method       PaymentMethod @default(CASH)
+  reference    String?       @db.VarChar(120)
+  receivedById String?       @db.Uuid
+  receivedAt   DateTime      @default(now())
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@map("payments")
+}
+
+// ---------------------------------------------------------------------------
+// Settings
+// ---------------------------------------------------------------------------
+
+/// Per-practice notification matrix (spec: Communications category/type table).
+model CommunicationSetting {
+  id           String   @id @default(uuid()) @db.Uuid
+  practiceId   String   @db.Uuid
+  /// APPOINTMENT | FOLLOW_UP | PAYMENT | WISHES
+  category     String   @db.VarChar(30)
+  /// CONFIRMATION | CANCELLATION | REMINDER | INVOICE | BIRTHDAY | ANNIVERSARY
+  type         String   @db.VarChar(30)
+  smsEnabled   Boolean  @default(false)
+  emailEnabled Boolean  @default(false)
+  /// Offset in days for scheduled messages (e.g. 180 for the 6-month recall).
+  offsetDays   Int?
+  updatedAt    DateTime @updatedAt
+
+  @@unique([practiceId, category, type])
+  @@map("communication_settings")
+}
+
+/// Printout / page-setup configuration (spec: Printouts page setup + layout).
+model PrintoutSetting {
+  id             String   @id @default(uuid()) @db.Uuid
+  practiceId     String   @db.Uuid
+  /// EMR | BILLING
+  documentType   String   @db.VarChar(20)
+  printerType    String   @default("COLOUR") @db.VarChar(20)
+  paperSize      String   @default("A4") @db.VarChar(10)
+  orientation    String   @default("PORTRAIT") @db.VarChar(12)
+  marginTopMm    Int      @default(50)
+  marginBottomMm Int      @default(12)
+  marginLeftMm   Int      @default(6)
+  marginRightMm  Int      @default(6)
+  fontScale      Int      @default(100)
+  showHeader     Boolean  @default(true)
+  showFooter     Boolean  @default(true)
+  headerHtml     String?  @db.VarChar(2000)
+  footerHtml     String?  @db.VarChar(2000)
+  /// Scanned prescription pad used as a background image.
+  padImageKey    String?  @db.VarChar(512)
+  /// Ordered list of section keys (vitals, diagnosis, advice, ...).
+  sectionOrder   String[]
+  updatedAt      DateTime @updatedAt
+
+  @@unique([practiceId, documentType])
+  @@map("printout_settings")
+}
+
+model ConsentFormTemplate {
+  id         String   @id @default(uuid()) @db.Uuid
+  practiceId String   @db.Uuid
+  title      String   @db.VarChar(160)
+  bodyHtml   String   @db.Text
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([practiceId, isActive])
+  @@map("consent_form_templates")
+}
+
+model ChartingTemplate {
+  id           String   @id @default(uuid()) @db.Uuid
+  practiceId   String   @db.Uuid
+  name         String   @db.VarChar(160)
+  diagnoses    String[]
+  labOrders    String[]
+  followUpDays Int?
+  createdAt    DateTime @default(now())
+
+  @@unique([practiceId, name])
+  @@map("charting_templates")
+}
+
+model Subscription {
+  id         String    @id @default(uuid()) @db.Uuid
+  practiceId String    @unique @db.Uuid
+  /// FREE | PREMIUM
+  plan       String    @default("FREE") @db.VarChar(20)
+  status     String    @default("ACTIVE") @db.VarChar(20)
+  startedAt  DateTime  @default(now())
+  expiresAt  DateTime?
+  updatedAt  DateTime  @updatedAt
+
+  @@map("subscriptions")
+}

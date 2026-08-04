@@ -1,0 +1,126 @@
+# ---------------------------------------------------------------------------
+# Dependencies
+# ---------------------------------------------------------------------------
+node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/plugins
+!.yarn/versions
+
+# package-lock.json is deliberately NOT ignored — the lockfile pins the exact
+# dependency tree and must be committed for reproducible installs.
+
+# ---------------------------------------------------------------------------
+# Secrets
+#
+# backend/.env holds real generated values: the JWT access and refresh secrets,
+# the AES-256-GCM field-encryption key that protects stored NIDs, and the OTP
+# pepper. Committing it would compromise all of them at once. Only
+# .env.example — which contains placeholders — belongs in the repository.
+# ---------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+*.pem
+*.key
+*.p12
+*.keystore
+*.jks
+*.mobileprovision
+secrets/
+credentials.json
+google-services.json
+GoogleService-Info.plist
+
+# ---------------------------------------------------------------------------
+# Build output
+# ---------------------------------------------------------------------------
+dist/
+build/
+out/
+.turbo/
+*.tsbuildinfo
+.tscache/
+
+# Prisma generates its client into node_modules, which is already ignored.
+# prisma/migrations IS source and must stay tracked — nothing excludes it here.
+
+# ---------------------------------------------------------------------------
+# React Native / Expo
+# ---------------------------------------------------------------------------
+.expo/
+.expo-shared/
+web-build/
+*.jsbundle
+ios/Pods/
+ios/build/
+ios/*.xcworkspace/xcuserdata/
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+*.hprof
+
+# ---------------------------------------------------------------------------
+# Test & coverage
+# ---------------------------------------------------------------------------
+coverage/
+.nyc_output/
+*.lcov
+test-results/
+playwright-report/
+
+# ---------------------------------------------------------------------------
+# Logs & runtime
+# ---------------------------------------------------------------------------
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+pids/
+*.pid
+*.seed
+
+# ---------------------------------------------------------------------------
+# Editors & OS
+# ---------------------------------------------------------------------------
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+._*
+
+.idea/
+*.iml
+*.swp
+*.swo
+*~
+
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+
+# ---------------------------------------------------------------------------
+# Claude Code
+#
+# .claude/settings.json is shared team configuration and stays tracked.
+# settings.local.json holds one machine's personal permission grants.
+# ---------------------------------------------------------------------------
+.claude/settings.local.json
+
+# ---------------------------------------------------------------------------
+# Local scratch
+# ---------------------------------------------------------------------------
+tmp/
+temp/
+*.local
+.cache/
