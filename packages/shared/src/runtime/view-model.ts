@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
 /**
  * MVVM foundation.
@@ -31,8 +31,12 @@ export abstract class ViewModel<TState> {
    * Async ViewModel methods check this after every `await` before calling
    * `setState`, so a request that resolves after the View unmounted is dropped
    * instead of updating a dead instance.
+   *
+   * Public because `useViewModel` needs it: React StrictMode disposes an
+   * instance during its development remount cycle, and the hook must notice
+   * and replace it.
    */
-  protected get isDisposed(): boolean {
+  get isDisposed(): boolean {
     return this.disposed;
   }
 
@@ -92,6 +96,7 @@ export interface ObservableState<TState> {
   subscribe: (listener: () => void) => () => void;
   getSnapshot: () => TState;
   dispose(): void;
+  readonly isDisposed: boolean;
 }
 
 /** Extracts the state type a ViewModel exposes. */
@@ -112,11 +117,29 @@ export type StateOf<TViewModel> = TViewModel extends ObservableState<infer TStat
 export function useViewModel<TViewModel extends ObservableState<unknown>>(
   factory: () => TViewModel,
 ): [StateOf<TViewModel>, TViewModel] {
-  const ref = useRef<TViewModel | null>(null);
-  ref.current ??= factory();
-  const vm = ref.current;
+  // Held in a ref so the identity is stable across renders without making the
+  // factory a dependency — callers write `() => new XViewModel(deps)` inline,
+  // which is a new function every render.
+  const factoryRef = useRef(factory);
+  factoryRef.current = factory;
+
+  const [vm, setVm] = useState<TViewModel>(factory);
 
   useEffect(() => {
+    /**
+     * React StrictMode mounts, unmounts and remounts every component once in
+     * development. That unmount runs the cleanup below and disposes this
+     * instance — and a disposed ViewModel silently swallows every subsequent
+     * `setState`, which presents as a form whose fields will not accept input.
+     *
+     * So on re-entry we check first: if this instance is already dead, replace
+     * it rather than subscribing to a corpse.
+     */
+    if (vm.isDisposed) {
+      setVm(() => factoryRef.current());
+      return;
+    }
+
     return () => {
       vm.dispose();
     };
