@@ -7,6 +7,7 @@ import {
   APPOINTMENT_REPOSITORY,
   AUDIT_REPOSITORY,
   CONSENT_REPOSITORY,
+  DOCUMENT_REPOSITORY,
   OTP_REPOSITORY,
   PATIENT_REPOSITORY,
   REFRESH_TOKEN_REPOSITORY,
@@ -25,6 +26,7 @@ import {
   CLOCK,
   EMAIL_SENDER,
   EVENT_BUS,
+  FILE_STORAGE,
   ID_GENERATOR,
   SMS_SENDER,
 } from '../core/ports/services';
@@ -38,6 +40,8 @@ import { PrismaConsentRepository } from './repositories/consent.repository';
 import { PrismaCatalogRepository } from './repositories/catalog.repository';
 import { PrismaBillingRepository, PrismaReportRepository } from './repositories/billing.repository';
 import { PrismaPracticeRepository, PrismaSettingsRepository } from './repositories/practice.repository';
+import { PrismaDocumentRepository } from './repositories/document.repository';
+import { LocalFileStorage } from './adapters/file-storage.adapter';
 import {
   ConsoleEmailSender,
   ConsoleSmsSender,
@@ -85,6 +89,8 @@ import {
     { provide: REPORT_REPOSITORY, useClass: PrismaReportRepository },
     { provide: PRACTICE_REPOSITORY, useClass: PrismaPracticeRepository },
     { provide: SETTINGS_REPOSITORY, useClass: PrismaSettingsRepository },
+    { provide: DOCUMENT_REPOSITORY, useClass: PrismaDocumentRepository },
+    { provide: FILE_STORAGE, useClass: LocalFileStorage },
   ],
   exports: [
     AppConfigService,
@@ -109,6 +115,8 @@ import {
     REPORT_REPOSITORY,
     PRACTICE_REPOSITORY,
     SETTINGS_REPOSITORY,
+    DOCUMENT_REPOSITORY,
+    FILE_STORAGE,
   ],
 })
 export class InfrastructureModule {}

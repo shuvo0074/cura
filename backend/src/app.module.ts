@@ -15,6 +15,7 @@ import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
+import { DocumentModule } from './modules/documents/document.module';
 
 /**
  * Application root.
@@ -48,6 +49,7 @@ import { RealtimeModule } from './modules/realtime/realtime.module';
     SettingsModule,
     BillingModule,
     RealtimeModule,
+    DocumentModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },

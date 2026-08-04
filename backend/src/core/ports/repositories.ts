@@ -337,6 +337,19 @@ export interface AuditRepository {
 
 export const DOCUMENT_REPOSITORY = Symbol('DOCUMENT_REPOSITORY');
 
+export interface DocumentRecord {
+  id: string;
+  ownerUserId: string | null;
+  patientId: string | null;
+  encounterId: string | null;
+  category: DocumentCategory;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  storageKey: string;
+  createdAt: Date;
+}
+
 export interface DocumentRepository {
   create(input: {
     ownerUserId: string | null;
@@ -349,5 +362,9 @@ export interface DocumentRepository {
     storageKey: string;
     checksum: string;
   }): Promise<{ id: string; storageKey: string }>;
+  findById(id: string): Promise<DocumentRecord | null>;
+  /** Content-addressed lookup so an identical re-upload reuses the object. */
   findByChecksum(checksum: string): Promise<{ id: string; storageKey: string } | null>;
+  listForPatient(patientId: string): Promise<DocumentRecord[]>;
+  listForOwner(ownerUserId: string): Promise<DocumentRecord[]>;
 }
