@@ -1,0 +1,19 @@
+# React Native / native build output
+ios/build/
+ios/Pods/
+ios/Podfile.lock
+ios/.xcode.env.local
+ios/*.xcworkspace/xcuserdata/
+ios/*.xcodeproj/xcuserdata/
+
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.cxx/
+*.keystore
+!debug.keystore
+
+.bundle/
+vendor/bundle/
+*.hprof

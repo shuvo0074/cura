@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
+import {
+  ActivityIndicator,
+  Pressable,
+  SafeAreaView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { tokenStore, type AuthenticatedUser, type AuthSession, type Theme } from '@cura/shared';
 import { ServicesProvider, useServices } from './src/app/services';
 import { ThemeProvider, useTheme } from './src/design/theme-provider';
@@ -59,7 +66,10 @@ function Root() {
   if (session.status === 'anonymous') {
     return (
       <SafeAreaView style={styles.flex}>
-        <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
+        <StatusBar
+          barStyle={mode === 'dark' ? 'light-content' : 'dark-content'}
+          backgroundColor={theme.colors.surface.raised}
+        />
         <LoginScreen onAuthenticated={handleAuthenticated} />
       </SafeAreaView>
     );
@@ -69,7 +79,10 @@ function Root() {
 
   return (
     <SafeAreaView style={styles.flex}>
-      <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
+      <StatusBar
+        barStyle={mode === 'dark' ? 'light-content' : 'dark-content'}
+        backgroundColor={theme.colors.surface.raised}
+      />
       <View style={styles.header}>
         <Text style={styles.brand}>Cura</Text>
         <View style={styles.spacer} />

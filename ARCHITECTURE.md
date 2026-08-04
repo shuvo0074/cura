@@ -7,7 +7,7 @@ the doctor practice-management platform described in `Cura draft 5.pdf`.
 packages/shared/   Design tokens, config, contracts, validation, MVVM runtime
 backend/           NestJS API — hexagonal architecture, Prisma, PostgreSQL
 web/               React + Vite (Views only)
-mobile/            Expo React Native (Views only)
+mobile/            React Native CLI (Views only)
 ```
 
 ## Why the shared package is large
@@ -99,6 +99,8 @@ additionally rejects console SMS/email drivers and an empty CORS allowlist.
 (timeline + prescription writer with drug auto-suggest and consent unlock).
 
 **Mobile:** login/OTP and day agenda, sharing the same ViewModels.
+Bare React Native CLI — native `ios/` and `android/` projects are checked in,
+so native modules can be added without an eject step.
 
 Not built: document upload endpoints (schema and storage port exist, the
 multipart route does not), PDF rendering for printouts (settings are stored;

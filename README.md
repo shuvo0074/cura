@@ -6,7 +6,7 @@ Doctor practice-management platform — API, web app and mobile app in one monor
 packages/shared/   design tokens, config, contracts, validation, ViewModels
 backend/           NestJS + Prisma + PostgreSQL
 web/               React + Vite
-mobile/            Expo React Native
+mobile/            React Native (CLI)
 ```
 
 ## Prerequisites
@@ -90,11 +90,20 @@ npm run dev:backend         # http://localhost:3000/api
 npm run dev:web             # http://localhost:5173
 ```
 
-Mobile (optional):
+Mobile (optional) — needs Xcode and/or Android Studio:
 
 ```bash
-npm run dev:mobile          # Expo — press i for iOS, a for Android
+cd mobile
+npm run pods                # iOS only, first run: bundle install + pod install
+npm start                   # Metro bundler, leave running
+
+# in a second terminal
+npm run ios                 # or: npm run android
 ```
+
+The API host is resolved in `mobile/src/config/env.ts` — `localhost` on iOS,
+`10.0.2.2` on the Android emulator. For a physical device, put your machine's
+LAN IP in that file.
 
 ## Sign in
 
@@ -116,6 +125,7 @@ code is printed to the API console.
 | `npx prisma migrate dev` | `backend/` | apply schema changes |
 | `npm run seed` | `backend/` | reset demo data (idempotent) |
 | `npx prisma studio` | `backend/` | browse the database |
+| `npm run pods` | `mobile/` | reinstall CocoaPods after a native dep change |
 
 ## Troubleshooting
 
@@ -124,6 +134,9 @@ code is printed to the API console.
 
 **Web build fails on a `@cura/shared` import** — run `npm run build:shared`; the
 web app resolves the shared package from its build output, not its source.
+
+**Metro cannot resolve `@cura/shared`** — run `npm run build:shared`, then
+restart Metro with `npm start -- --reset-cache`; Metro caches resolution.
 
 **Redis fails to start on Homebrew 8.x** — the shipped `redis.conf` loads
 modules the formula does not install. Comment out the `loadmodule` lines in

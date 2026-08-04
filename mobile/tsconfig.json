@@ -1,19 +1,12 @@
 {
+  "extends": "@react-native/typescript-config/tsconfig.json",
   "compilerOptions": {
-    "target": "ESNext",
-    "lib": ["ESNext", "DOM"],
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "jsx": "react-jsx",
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
-    "allowJs": true,
-    "esModuleInterop": true,
     "skipLibCheck": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
     "noEmit": true
   },
-  "include": ["App.tsx", "src/**/*.ts", "src/**/*.tsx"]
+  "include": ["App.tsx", "index.js", "src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules", "android", "ios"]
 }
