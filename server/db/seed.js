@@ -41,9 +41,11 @@ async function main() {
 
   const doctorIdMap = {};
   for (const d of doctors) {
-    const matchedHospital = hospitals.find(
-      h => h.name === d.hospital || h.name.startsWith(d.hospital) || d.hospital.startsWith(h.name)
-    );
+    const matchedHospital = d.hospital
+      ? hospitals.find(
+          h => h.name === d.hospital || h.name.startsWith(d.hospital) || d.hospital.startsWith(h.name)
+        )
+      : null;
     const mappedHospitalId = matchedHospital ? hospitalIdMap[matchedHospital.id] : null;
     const email = `${d.name.toLowerCase().replace(/^dr\.?\s*/, '').replace(/[^a-z]+/g, '.')}@cura.health`;
     const { rows } = await pool.query(
