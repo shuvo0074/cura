@@ -1,0 +1,43 @@
+import { useNavigate } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
+import specialtyDetails from '../../data/specialtyDetails.json';
+
+export default function SpecialtyCard({ specialty, highlighted, onSelect }) {
+  const navigate = useNavigate();
+  const detail = specialtyDetails[specialty.name] || {};
+
+  return (
+    <div
+      onClick={onSelect}
+      className={`bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col cursor-pointer transition-shadow
+        ${highlighted ? 'ring-2 ring-primary' : ''}`}>
+      <img
+        src={`https://images.unsplash.com/photo-${detail.image}?w=400&h=220&fit=crop`}
+        alt={specialty.name}
+        className="w-full h-28 object-cover"
+      />
+      <div className="p-4 flex flex-col flex-1">
+        <h3 className="text-primary font-bold text-sm mb-1">{specialty.name}</h3>
+        <p className="text-xs text-gray-600 leading-relaxed line-clamp-3 flex-1">
+          {detail.description}
+        </p>
+
+        <div className="flex flex-wrap gap-1 mt-3">
+          {(detail.tags || []).map(tag => (
+            <span key={tag} className="text-[10px] font-medium text-gray-600 border border-gray-200 rounded-full px-2 py-0.5">
+              {tag}
+            </span>
+          ))}
+        </div>
+
+        <hr className="my-3 border-gray-100" />
+
+        <button
+          onClick={e => { e.stopPropagation(); navigate(`/specialties/${specialty.slug}`); }}
+          className="flex items-center justify-center gap-1.5 bg-primary text-white text-xs font-medium rounded-full py-2">
+          Find Doctor <ArrowRight size={13} />
+        </button>
+      </div>
+    </div>
+  );
+}
