@@ -3,14 +3,23 @@ import { useNavigate } from 'react-router-dom';
 import { Phone, Info, Share2, MapPin } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import SharePopover from './SharePopover';
+import CallPopover from './CallPopover';
+import { getDhakaNow } from '../../utils/dhakaTime';
 
 export default function DoctorCard({ doctor }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [shareAnchor, setShareAnchor] = useState(null);
+  const [callAnchor, setCallAnchor] = useState(null);
 
   function toggleShare(e) {
-    setShareAnchor(prev => (prev ? null : e.currentTarget));
+    const target = e.currentTarget;
+    setShareAnchor(prev => (prev ? null : target));
+  }
+
+  function toggleCall(e) {
+    const target = e.currentTarget;
+    setCallAnchor(prev => (prev ? null : target));
   }
 
   return (
@@ -37,10 +46,10 @@ export default function DoctorCard({ doctor }) {
         </div>
 
         <div className="flex gap-2 mt-3">
-          <a href={`tel:${doctor.phone}`}
+          <button onClick={toggleCall}
             className="flex-1 flex items-center justify-center gap-1 bg-primary text-white text-xs py-1.5 rounded-lg font-medium">
             <Phone size={12} /> {t('call_now')}
-          </a>
+          </button>
           <button onClick={() => navigate(`/doctors/${doctor.id}`)}
             className="flex-1 flex items-center justify-center gap-1 border border-primary text-primary text-xs py-1.5 rounded-lg font-medium">
             <Info size={12} /> {t('view_details')}
@@ -50,6 +59,10 @@ export default function DoctorCard({ doctor }) {
 
       {shareAnchor && (
         <SharePopover doctor={doctor} anchorEl={shareAnchor} onClose={() => setShareAnchor(null)} />
+      )}
+
+      {callAnchor && (
+        <CallPopover doctor={doctor} schedule={doctor.weekly_schedule} dow={getDhakaNow().dow} anchorEl={callAnchor} onClose={() => setCallAnchor(null)} />
       )}
     </div>
   );

@@ -41,6 +41,22 @@ export async function shareDoctor(req, res, next) {
   }
 }
 
+// Logs "tapped to call this chamber" intent from the Call popover — the
+// click, not confirmation a call was placed. There's no web API to observe
+// what happens after window.open('tel:...') hands off to the OS dialer.
+export async function logCall(req, res, next) {
+  try {
+    const { venue, phone } = req.body || {};
+    const { rows } = await query(
+      `INSERT INTO call_logs (doctor_id, venue, phone) VALUES ($1, $2, $3) RETURNING id, created_at`,
+      [req.params.id, venue || null, phone || null]
+    );
+    res.json({ id: rows[0].id, created_at: rows[0].created_at });
+  } catch (err) {
+    next(err);
+  }
+}
+
 function timeToMinutes(t) {
   const [h, m] = t.split(':').map(Number);
   return h * 60 + m;

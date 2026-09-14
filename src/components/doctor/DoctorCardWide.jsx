@@ -2,14 +2,24 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Phone, MapPin, Share2 } from 'lucide-react';
 import SharePopover from './SharePopover';
+import CallPopover from './CallPopover';
+import { getDhakaNow } from '../../utils/dhakaTime';
 
 export default function DoctorCardWide({ doctor }) {
   const navigate = useNavigate();
   const [shareAnchor, setShareAnchor] = useState(null);
+  const [callAnchor, setCallAnchor] = useState(null);
 
   function toggleShare(e) {
     e.stopPropagation();
-    setShareAnchor(prev => (prev ? null : e.currentTarget));
+    const target = e.currentTarget;
+    setShareAnchor(prev => (prev ? null : target));
+  }
+
+  function toggleCall(e) {
+    e.stopPropagation();
+    const target = e.currentTarget;
+    setCallAnchor(prev => (prev ? null : target));
   }
 
   return (
@@ -40,14 +50,18 @@ export default function DoctorCardWide({ doctor }) {
           className="flex-1 bg-primary text-white text-sm font-medium py-2.5">
           View Details
         </button>
-        <a href={`tel:${doctor.phone}`}
+        <button onClick={toggleCall}
           className="flex-1 flex items-center justify-center gap-1.5 border-l border-gray-100 text-primary text-sm font-medium py-2.5">
           <Phone size={14} /> Call Now
-        </a>
+        </button>
       </div>
 
       {shareAnchor && (
         <SharePopover doctor={doctor} anchorEl={shareAnchor} onClose={() => setShareAnchor(null)} />
+      )}
+
+      {callAnchor && (
+        <CallPopover doctor={doctor} schedule={doctor.weekly_schedule} dow={getDhakaNow().dow} anchorEl={callAnchor} onClose={() => setCallAnchor(null)} />
       )}
     </div>
   );

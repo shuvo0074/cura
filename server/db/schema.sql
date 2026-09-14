@@ -100,3 +100,15 @@ CREATE TABLE IF NOT EXISTS appointments (
   created_at        TIMESTAMPTZ DEFAULT now(),
   UNIQUE (doctor_id, appointment_date, appointment_time)
 );
+
+-- Fire-and-forget log of "tapped to call this chamber" intent from the Call
+-- popover — records the click, not confirmation that a call was placed or
+-- connected (the web platform has no API to observe what happens after
+-- window.open('tel:...') hands off to the OS dialer).
+CREATE TABLE IF NOT EXISTS call_logs (
+  id            SERIAL PRIMARY KEY,
+  doctor_id     INTEGER REFERENCES doctors(id) ON DELETE CASCADE,
+  venue         TEXT,
+  phone         TEXT,
+  created_at    TIMESTAMPTZ DEFAULT now()
+);

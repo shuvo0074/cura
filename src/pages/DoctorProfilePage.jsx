@@ -7,9 +7,23 @@ import {
   ClipboardList, CalendarClock,
 } from 'lucide-react';
 import { api } from '../api/client';
+import { buildShareUrl } from '../utils/share';
+import { getDhakaNow } from '../utils/dhakaTime';
 import SharePopover from '../components/doctor/SharePopover';
+import CallPopover from '../components/doctor/CallPopover';
 import BookingModal from '../components/booking/BookingModal';
 import ChamberList from '../components/booking/ChamberList';
+
+function LinkedInIcon({ size = 16 }) {
+  return (
+    <span
+      style={{ width: size, height: size, fontSize: size * 0.55 }}
+      className="inline-flex items-center justify-center rounded-[3px] bg-[#0A66C2] text-white font-bold leading-none"
+    >
+      in
+    </span>
+  );
+}
 
 const CARD = 'bg-white rounded-xl border border-gray-100 shadow-sm';
 const BOOKING_DAYS = [
@@ -33,11 +47,13 @@ export default function DoctorProfilePage() {
   const [doctor, setDoctor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [shareAnchor, setShareAnchor] = useState(null);
+  const [callAnchor, setCallAnchor] = useState(null);
   const [bookingDay, setBookingDay] = useState(undefined); // undefined = closed, null = open with no day preselected
-  const [selectedDay, setSelectedDay] = useState(null); // drives the Chamber List's per-day view
+  const [selectedDay, setSelectedDay] = useState(null); // drives the Chamber List's per-day view + Call popover
 
   useEffect(() => {
     setLoading(true);
+    setSelectedDay(getDhakaNow().dow); // default to Bangladesh's current weekday
     api.get(`/doctors/${id}`)
       .then(setDoctor)
       .catch(() => setDoctor(null))
@@ -53,7 +69,22 @@ export default function DoctorProfilePage() {
   );
 
   function toggleShare(e) {
-    setShareAnchor(prev => (prev ? null : e.currentTarget));
+    // Capture currentTarget now — it's nulled by the browser once the event
+    // finishes dispatching, and StrictMode's double-invoke of this updater
+    // in dev runs the second pass after that point, so reading e.currentTarget
+    // inside the updater itself is unsafe.
+    const target = e.currentTarget;
+    setShareAnchor(prev => (prev ? null : target));
+  }
+
+  function toggleCall(e) {
+    const target = e.currentTarget;
+    setCallAnchor(prev => (prev ? null : target));
+  }
+
+  function openLinkedIn() {
+    const url = buildShareUrl(doctor);
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank', 'noopener,noreferrer');
   }
 
   function openMaps() {
@@ -130,9 +161,9 @@ export default function DoctorProfilePage() {
 
             <div className="flex gap-2 px-6 py-5">
               {[
-                { icon: Phone, label: t('call'), action: () => window.open(`tel:${doctor.phone}`) },
+                { icon: Phone, label: t('call'), action: toggleCall },
                 { icon: Globe, label: t('website'), action: () => window.open(doctor.website, '_blank') },
-                { icon: Share2, label: t('share'), action: toggleShare },
+                { icon: LinkedInIcon, label: t('linkedin'), action: openLinkedIn },
                 { icon: Navigation, label: t('direction'), action: openMaps },
               ].map(({ icon: Icon, label, action }) => (
                 <button key={label} onClick={action}
@@ -215,6 +246,10 @@ export default function DoctorProfilePage() {
 
       {shareAnchor && (
         <SharePopover doctor={doctor} anchorEl={shareAnchor} onClose={() => setShareAnchor(null)} />
+      )}
+
+      {callAnchor && (
+        <CallPopover doctor={doctor} schedule={doctor.weekly_schedule} dow={selectedDay} anchorEl={callAnchor} onClose={() => setCallAnchor(null)} />
       )}
 
       {bookingDay !== undefined && (
