@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useEffect, useState } from 'react';
-import { Phone, Globe, Navigation, ArrowLeft, MapPin, Star, Users, Clock } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Phone, Globe, Navigation, ArrowLeft, MapPin, Star, Users, Clock, SlidersHorizontal, Search } from 'lucide-react';
 import { api } from '../api/client';
 import { getDhakaNow, parseTimeRangeToMinutes } from '../utils/dhakaTime';
 
@@ -27,6 +27,54 @@ function isOnDutyNow(venueSchedule) {
   });
 }
 
+// Page-local specialty filter, scoped to just this hospital's doctors — not
+// the shared FilterContext used by /doctors, /specialties/:slug, etc., since
+// a hospital page has no city dimension to filter (everyone's already here)
+// and shouldn't reset filter state other pages rely on.
+function SpecialtyFilter({ specialties, selected, onSelect, search, onSearch }) {
+  const { t } = useTranslation();
+  const filtered = specialties.filter(s => s.toLowerCase().includes(search.toLowerCase()));
+  return (
+    <aside className="w-full md:w-64 flex-shrink-0">
+      <div className={`${CARD} p-4 md:sticky md:top-20`}>
+        <div className="flex items-center justify-between mb-4">
+          <span className="flex items-center gap-2 font-semibold text-gray-800 text-sm">
+            <SlidersHorizontal size={15} /> {t('filter_by')}
+          </span>
+          <button onClick={() => onSelect('')} className="text-xs text-primary font-medium">
+            Clear All
+          </button>
+        </div>
+
+        <p className="text-sm font-semibold text-gray-800 mb-2">{t('specialities')}</p>
+        <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-2.5 py-1.5 mb-2">
+          <Search size={13} className="text-gray-400 flex-shrink-0" />
+          <input
+            value={search}
+            onChange={e => onSearch(e.target.value)}
+            placeholder={t('specialities')}
+            className="flex-1 text-xs outline-none bg-transparent"
+          />
+        </div>
+        <div className="flex flex-col gap-1.5 max-h-64 overflow-y-auto pr-1">
+          {filtered.map(item => (
+            <label key={item} className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={selected === item}
+                onChange={() => onSelect(selected === item ? '' : item)}
+                className="accent-primary"
+              />
+              {item}
+            </label>
+          ))}
+          {filtered.length === 0 && <p className="text-xs text-gray-400">No matches.</p>}
+        </div>
+      </div>
+    </aside>
+  );
+}
+
 export default function HospitalProfilePage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -34,9 +82,12 @@ export default function HospitalProfilePage() {
   const [hospital, setHospital] = useState(null);
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [specialtyFilter, setSpecialtyFilter] = useState('');
+  const [specSearch, setSpecSearch] = useState('');
 
   useEffect(() => {
     setLoading(true);
+    setSpecialtyFilter('');
     Promise.all([
       api.get(`/hospitals/${id}`),
       api.get(`/hospitals/${id}/doctors`),
@@ -45,6 +96,12 @@ export default function HospitalProfilePage() {
       .catch(() => { setHospital(null); setDoctors([]); })
       .finally(() => setLoading(false));
   }, [id]);
+
+  const specialtyNames = useMemo(
+    () => [...new Set(doctors.map(d => d.specialty))].sort(),
+    [doctors]
+  );
+  const filteredDoctors = specialtyFilter ? doctors.filter(d => d.specialty === specialtyFilter) : doctors;
 
   if (loading) {
     return <div className="flex items-center justify-center h-64 text-gray-400">Loading...</div>;
@@ -65,87 +122,97 @@ export default function HospitalProfilePage() {
         <ArrowLeft size={16} /> Back
       </button>
 
-      <div className="flex flex-col gap-5 max-w-4xl">
-        <div className={`${CARD} overflow-hidden`}>
-          <img src={hospital.photo} alt={hospital.name} className="w-full h-56 object-cover" />
-          <div className="p-6">
-            <h1 className="font-bold text-gray-900 text-2xl leading-tight">{hospital.name}</h1>
-            <p className="flex items-center gap-1.5 text-sm text-gray-500 mt-2">
-              <MapPin size={14} className="text-primary" /> {hospital.location}
-            </p>
-            {hospital.address && <p className="text-xs text-gray-400 mt-1">{hospital.address}</p>}
+      <div className="flex flex-col md:flex-row gap-6 items-start">
+        <SpecialtyFilter
+          specialties={specialtyNames}
+          selected={specialtyFilter}
+          onSelect={setSpecialtyFilter}
+          search={specSearch}
+          onSearch={setSpecSearch}
+        />
 
-            {hospital.description && (
-              <p className="text-sm text-gray-700 leading-relaxed mt-4 pt-4 border-t border-gray-100">
-                {hospital.description}
+        <div className="flex-1 w-full flex flex-col gap-5">
+          <div className={`${CARD} overflow-hidden`}>
+            <img src={hospital.photo} alt={hospital.name} className="w-full h-56 object-cover" />
+            <div className="p-6">
+              <h1 className="font-bold text-gray-900 text-2xl leading-tight">{hospital.name}</h1>
+              <p className="flex items-center gap-1.5 text-sm text-gray-500 mt-2">
+                <MapPin size={14} className="text-primary" /> {hospital.location}
               </p>
-            )}
+              {hospital.address && <p className="text-xs text-gray-400 mt-1">{hospital.address}</p>}
 
-            <div className="flex gap-2 mt-5">
-              <a href={`tel:${hospital.hotline}`}
-                className="flex-1 flex flex-col items-center gap-1.5 border border-gray-200 rounded-xl py-3 text-xs text-gray-600 hover:border-primary hover:text-primary hover:shadow-sm hover:-translate-y-0.5 transition-all">
-                <Phone size={16} /> {t('call')}
-              </a>
-              {hospital.website && (
-                <a href={hospital.website} target="_blank" rel="noreferrer"
-                  className="flex-1 flex flex-col items-center gap-1.5 border border-gray-200 rounded-xl py-3 text-xs text-gray-600 hover:border-primary hover:text-primary hover:shadow-sm hover:-translate-y-0.5 transition-all">
-                  <Globe size={16} /> {t('website')}
-                </a>
+              {hospital.description && (
+                <p className="text-sm text-gray-700 leading-relaxed mt-4 pt-4 border-t border-gray-100">
+                  {hospital.description}
+                </p>
               )}
-              <button onClick={openMaps}
-                className="flex-1 flex flex-col items-center gap-1.5 border border-gray-200 rounded-xl py-3 text-xs text-gray-600 hover:border-primary hover:text-primary hover:shadow-sm hover:-translate-y-0.5 transition-all">
-                <Navigation size={16} /> {t('direction')}
-              </button>
+
+              <div className="flex gap-2 mt-5">
+                <a href={`tel:${hospital.hotline}`}
+                  className="flex-1 flex flex-col items-center gap-1.5 border border-gray-200 rounded-xl py-3 text-xs text-gray-600 hover:border-primary hover:text-primary hover:shadow-sm hover:-translate-y-0.5 transition-all">
+                  <Phone size={16} /> {t('call')}
+                </a>
+                {hospital.website && (
+                  <a href={hospital.website} target="_blank" rel="noreferrer"
+                    className="flex-1 flex flex-col items-center gap-1.5 border border-gray-200 rounded-xl py-3 text-xs text-gray-600 hover:border-primary hover:text-primary hover:shadow-sm hover:-translate-y-0.5 transition-all">
+                    <Globe size={16} /> {t('website')}
+                  </a>
+                )}
+                <button onClick={openMaps}
+                  className="flex-1 flex flex-col items-center gap-1.5 border border-gray-200 rounded-xl py-3 text-xs text-gray-600 hover:border-primary hover:text-primary hover:shadow-sm hover:-translate-y-0.5 transition-all">
+                  <Navigation size={16} /> {t('direction')}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className={`${CARD} p-6`}>
-          <SectionHeading icon={Users}>{t('our_doctors')} ({doctors.length})</SectionHeading>
+          <div className={`${CARD} p-6`}>
+            <SectionHeading icon={Users}>{t('our_doctors')} ({filteredDoctors.length})</SectionHeading>
 
-          {doctors.length === 0 && (
-            <p className="text-sm text-gray-400 text-center py-6">{t('no_results')}</p>
-          )}
+            {filteredDoctors.length === 0 && (
+              <p className="text-sm text-gray-400 text-center py-6">{t('no_results')}</p>
+            )}
 
-          <div className="flex flex-col gap-3">
-            {doctors.map(doc => {
-              const onDuty = isOnDutyNow(doc.venue_schedule);
-              return (
-                <div key={doc.id}
-                  className="flex flex-col sm:flex-row sm:items-center gap-4 border border-gray-100 rounded-xl p-4 hover:border-primary/40 hover:shadow-sm transition-all">
-                  <img src={doc.photo} alt={doc.name} className="w-16 h-16 rounded-full object-cover flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-semibold text-gray-800 text-sm">{doc.name}</p>
-                      {onDuty && (
-                        <span className="text-[10px] font-semibold text-primary uppercase tracking-wide bg-primary/10 px-2 py-0.5 rounded-full">
-                          {t('on_duty_now')}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-primary text-xs font-medium mt-0.5">{doc.specialty} — {doc.department}</p>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
-                      <span>{doc.experience} {t('experience')}</span>
-                      {doc.rating && (
-                        <span className="flex items-center gap-1">
-                          <Star size={11} className="fill-amber-500 text-amber-500" /> {doc.rating}
-                        </span>
-                      )}
-                    </div>
-                    {doc.venue_schedule?.length > 0 && (
-                      <div className="flex items-start gap-1.5 mt-2 text-xs text-gray-500">
-                        <Clock size={12} className="text-gray-400 flex-shrink-0 mt-0.5" />
-                        <span>{doc.venue_schedule.map(s => s.time).join(', ')}</span>
+            <div className="flex flex-col gap-3">
+              {filteredDoctors.map(doc => {
+                const onDuty = isOnDutyNow(doc.venue_schedule);
+                return (
+                  <div key={doc.id}
+                    className="flex flex-col sm:flex-row sm:items-center gap-4 border border-gray-100 rounded-xl p-4 hover:border-primary/40 hover:shadow-sm transition-all">
+                    <img src={doc.photo} alt={doc.name} className="w-16 h-16 rounded-full object-cover flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-semibold text-gray-800 text-sm">{doc.name}</p>
+                        {onDuty && (
+                          <span className="text-[10px] font-semibold text-primary uppercase tracking-wide bg-primary/10 px-2 py-0.5 rounded-full">
+                            {t('on_duty_now')}
+                          </span>
+                        )}
                       </div>
-                    )}
+                      <p className="text-primary text-xs font-medium mt-0.5">{doc.specialty} — {doc.department}</p>
+                      <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                        <span>{doc.experience} {t('experience')}</span>
+                        {doc.rating && (
+                          <span className="flex items-center gap-1">
+                            <Star size={11} className="fill-amber-500 text-amber-500" /> {doc.rating}
+                          </span>
+                        )}
+                      </div>
+                      {doc.venue_schedule?.length > 0 && (
+                        <div className="flex items-start gap-1.5 mt-2 text-xs text-gray-500">
+                          <Clock size={12} className="text-gray-400 flex-shrink-0 mt-0.5" />
+                          <span>{doc.venue_schedule.map(s => s.time).join(', ')}</span>
+                        </div>
+                      )}
+                    </div>
+                    <button onClick={() => navigate(`/doctors/${doc.id}`)}
+                      className="flex-shrink-0 bg-primary text-white text-xs font-medium px-4 py-2 rounded-lg hover:shadow-sm hover:-translate-y-0.5 transition-all">
+                      {t('view_details')}
+                    </button>
                   </div>
-                  <button onClick={() => navigate(`/doctors/${doc.id}`)}
-                    className="flex-shrink-0 bg-primary text-white text-xs font-medium px-4 py-2 rounded-lg hover:shadow-sm hover:-translate-y-0.5 transition-all">
-                    {t('view_details')}
-                  </button>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
