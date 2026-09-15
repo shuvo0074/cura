@@ -21,7 +21,7 @@ export default function SymptomFilterPage() {
   }, []);
 
   useEffect(() => {
-    if (symptom) setFilterParams(p => ({ ...p, symptom: symptom.name }));
+    if (symptom) setFilterParams(p => ({ ...p, symptom: [symptom.name] }));
   }, [slug]);
 
   const symptomNames = useMemo(() => symptoms.map(s => s.name), []);
@@ -34,12 +34,13 @@ export default function SymptomFilterPage() {
     return doctors.filter(d => {
       const q = query.toLowerCase();
       const matchQ = !q || d.name.toLowerCase().includes(q);
-      const matchCity = !filterParams.city || d.city === filterParams.city;
-      const s = filterParams.symptom?.toLowerCase();
-      const matchSymptom = !s ||
-        d.specialty?.toLowerCase().includes(s) ||
-        d.name?.toLowerCase().includes(s) ||
-        d.about?.toLowerCase().includes(s);
+      const matchCity = !filterParams.city.length || filterParams.city.includes(d.city);
+      const matchSymptom = !filterParams.symptom.length || filterParams.symptom.some(sym => {
+        const s = sym.toLowerCase();
+        return d.specialty?.toLowerCase().includes(s) ||
+          d.name?.toLowerCase().includes(s) ||
+          d.about?.toLowerCase().includes(s);
+      });
       return matchQ && matchCity && matchSymptom;
     });
   }, [doctors, query, filterParams]);
@@ -51,7 +52,7 @@ export default function SymptomFilterPage() {
       <div className="flex-1 min-w-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <h1 className="text-2xl text-gray-800">
-            {filterParams.symptom || symptom?.name || slug}{' '}
+            {filterParams.symptom.length ? filterParams.symptom.join(', ') : symptom?.name || slug}{' '}
             <span className="text-gray-400 text-lg">({filtered.length})</span>
           </h1>
           <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-2 bg-white w-full sm:w-72">

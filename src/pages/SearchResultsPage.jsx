@@ -29,8 +29,8 @@ export default function SearchResultsPage() {
     return doctors.filter(d => {
       const q = query.toLowerCase();
       const matchQuery = !q || d.name.toLowerCase().includes(q) || d.specialty.toLowerCase().includes(q) || d.city.toLowerCase().includes(q);
-      const matchCity = !filterParams.city || d.city === filterParams.city;
-      const matchSpec = !filterParams.specialty || d.specialty === filterParams.specialty;
+      const matchCity = !filterParams.city.length || filterParams.city.includes(d.city);
+      const matchSpec = !filterParams.specialty.length || filterParams.specialty.includes(d.specialty);
       return matchQuery && matchCity && matchSpec;
     });
   }, [doctors, query, filterParams]);

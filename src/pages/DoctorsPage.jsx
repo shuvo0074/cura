@@ -28,8 +28,8 @@ export default function DoctorsPage() {
     return doctors.filter(d => {
       const q = query.toLowerCase();
       const matchQ = !q || d.name.toLowerCase().includes(q) || d.specialty.toLowerCase().includes(q);
-      const matchCity = !filterParams.city || d.city === filterParams.city;
-      const matchSpec = !filterParams.specialty || d.specialty === filterParams.specialty;
+      const matchCity = !filterParams.city.length || filterParams.city.includes(d.city);
+      const matchSpec = !filterParams.specialty.length || filterParams.specialty.includes(d.specialty);
       return matchQ && matchCity && matchSpec;
     });
   }, [doctors, query, filterParams]);

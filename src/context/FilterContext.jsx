@@ -4,10 +4,10 @@ const FilterContext = createContext();
 
 export function FilterProvider({ children }) {
   const [filterParams, setFilterParams] = useState({
-    specialty: '',
-    city: '',
-    symptom: '',
-    hospital: '',
+    specialty: [],
+    city: [],
+    symptom: [],
+    hospital: [],
   });
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 

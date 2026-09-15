@@ -7,6 +7,10 @@ const CITIES = ['Dhaka', 'Sylhet', 'Mymensingh', 'Chittagong', 'Rajshahi'];
 const SPECIALTIES = ['ENT', 'Cardiology', 'Pediatrics', 'Gynecology', 'Dermatology', 'General Physician'];
 const SYMPTOMS = ['Fever', 'Body Ache', 'Sore Throat', 'Asthma', 'Back Pain', 'Diabetes'];
 
+function toggleInArray(arr, item) {
+  return arr.includes(item) ? arr.filter(i => i !== item) : [...arr, item];
+}
+
 export default function FilterDrawer({ mode = 'specialty' }) {
   const { t } = useTranslation();
   const { isFilterOpen, setIsFilterOpen, filterParams, setFilterParams } = useFilter();
@@ -16,6 +20,8 @@ export default function FilterDrawer({ mode = 'specialty' }) {
   const listItems = mode === 'symptom' ? SYMPTOMS : SPECIALTIES;
   const filteredList = listItems.filter(s => s.toLowerCase().includes(specSearch.toLowerCase()));
   const filteredCities = CITIES.filter(c => c.toLowerCase().includes(citySearch.toLowerCase()));
+  const listKey = mode === 'symptom' ? 'symptom' : 'specialty';
+  const selectedList = filterParams[listKey];
 
   if (!isFilterOpen) return null;
 
@@ -47,12 +53,9 @@ export default function FilterDrawer({ mode = 'specialty' }) {
               {filteredList.map(item => (
                 <button
                   key={item}
-                  onClick={() => setFilterParams(p => ({
-                    ...p,
-                    [mode === 'symptom' ? 'symptom' : 'specialty']: item
-                  }))}
+                  onClick={() => setFilterParams(p => ({ ...p, [listKey]: toggleInArray(p[listKey], item) }))}
                   className={`text-left px-3 py-2 rounded-lg text-sm transition-colors
-                    ${filterParams.specialty === item || filterParams.symptom === item
+                    ${selectedList.includes(item)
                       ? 'bg-primary text-white' : 'hover:bg-gray-50 text-gray-700'}`}>
                   {item}
                 </button>
@@ -72,9 +75,9 @@ export default function FilterDrawer({ mode = 'specialty' }) {
               {filteredCities.map(city => (
                 <button
                   key={city}
-                  onClick={() => setFilterParams(p => ({ ...p, city }))}
+                  onClick={() => setFilterParams(p => ({ ...p, city: toggleInArray(p.city, city) }))}
                   className={`text-left px-3 py-2 rounded-lg text-sm transition-colors
-                    ${filterParams.city === city
+                    ${filterParams.city.includes(city)
                       ? 'bg-primary text-white' : 'hover:bg-gray-50 text-gray-700'}`}>
                   {city}
                 </button>
@@ -85,7 +88,7 @@ export default function FilterDrawer({ mode = 'specialty' }) {
 
         <div className="p-4 border-t">
           <button
-            onClick={() => { setFilterParams({ specialty: '', city: '', symptom: '', hospital: '' }); setIsFilterOpen(false); }}
+            onClick={() => { setFilterParams({ specialty: [], city: [], symptom: [], hospital: [] }); setIsFilterOpen(false); }}
             className="w-full py-2 border border-gray-300 rounded-lg text-sm text-gray-600">
             Clear Filters
           </button>

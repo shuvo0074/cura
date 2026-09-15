@@ -21,8 +21,8 @@ function FilterSection({ title, searchValue, onSearchChange, items, selected, on
           <label key={item} className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
             <input
               type="checkbox"
-              checked={selected === item}
-              onChange={() => onToggle(selected === item ? '' : item)}
+              checked={selected.includes(item)}
+              onChange={() => onToggle(item)}
               className="accent-primary"
             />
             {item}
@@ -32,6 +32,10 @@ function FilterSection({ title, searchValue, onSearchChange, items, selected, on
       </div>
     </div>
   );
+}
+
+function toggleInArray(arr, item) {
+  return arr.includes(item) ? arr.filter(i => i !== item) : [...arr, item];
 }
 
 export default function DoctorFilterSidebar({ cities, specialtyNames, symptomNames, mode = 'specialty' }) {
@@ -49,7 +53,7 @@ export default function DoctorFilterSidebar({ cities, specialtyNames, symptomNam
             <SlidersHorizontal size={15} /> Filter By
           </span>
           <button
-            onClick={() => setFilterParams({ specialty: '', city: '', symptom: '', hospital: '' })}
+            onClick={() => setFilterParams({ specialty: [], city: [], symptom: [], hospital: [] })}
             className="text-xs text-primary font-medium">
             Clear All
           </button>
@@ -62,7 +66,7 @@ export default function DoctorFilterSidebar({ cities, specialtyNames, symptomNam
             onSearchChange={setSpecSearch}
             items={symptomNames}
             selected={filterParams.symptom}
-            onToggle={value => setFilterParams(p => ({ ...p, symptom: value }))}
+            onToggle={value => setFilterParams(p => ({ ...p, symptom: toggleInArray(p.symptom, value) }))}
           />
         ) : (
           <FilterSection
@@ -71,7 +75,7 @@ export default function DoctorFilterSidebar({ cities, specialtyNames, symptomNam
             onSearchChange={setSpecSearch}
             items={specialtyNames}
             selected={filterParams.specialty}
-            onToggle={value => setFilterParams(p => ({ ...p, specialty: value }))}
+            onToggle={value => setFilterParams(p => ({ ...p, specialty: toggleInArray(p.specialty, value) }))}
           />
         )}
 
@@ -81,7 +85,7 @@ export default function DoctorFilterSidebar({ cities, specialtyNames, symptomNam
           onSearchChange={setCitySearch}
           items={cities}
           selected={filterParams.city}
-          onToggle={value => setFilterParams(p => ({ ...p, city: value }))}
+          onToggle={value => setFilterParams(p => ({ ...p, city: toggleInArray(p.city, value) }))}
         />
       </div>
     </aside>
