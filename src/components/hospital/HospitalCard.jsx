@@ -37,7 +37,7 @@ export default function HospitalCard({ hospital }) {
           </button>
         </div>
 
-        <button onClick={() => navigate(`/doctors?hospital=${hospital.id}`)}
+        <button onClick={() => navigate(`/hospitals/${hospital.id}`)}
           className="w-full mt-3 flex items-center justify-center gap-1 border border-primary text-primary text-xs py-2 rounded-lg font-medium">
           {t('show_all_doctors')} <ChevronRight size={12} />
         </button>

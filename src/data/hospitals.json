@@ -9,7 +9,8 @@
     "lat": 24.8949,
     "lng": 91.8687,
     "website": "https://populardiagnostic.com",
-    "doctorCount": 45
+    "doctorCount": 45,
+    "description": "Popular Diagnostic Centre is a healthcare facility in Sylhet. On Cura, 10 doctors currently hold chamber hours here, covering Bariatric Surgery, ENT, General Physician, Gynecology and 5 more."
   },
   {
     "id": "10",
@@ -21,7 +22,8 @@
     "lat": 23.8016,
     "lng": 90.421,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Modern Hospital & Clinic is a healthcare facility in Dhaka. On Cura, 21 doctors currently hold chamber hours here, covering Bariatric Surgery, Cardiology, Critical Care, Dermatology and 10 more."
   },
   {
     "id": "11",
@@ -33,7 +35,8 @@
     "lat": 22.3633,
     "lng": 91.7907,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Panchlaish Medical College Hospital is a healthcare facility in Chattogram. On Cura, 15 doctors currently hold chamber hours here, covering Dermatology, Infectious Diseases, Nephrology, Neurology and 4 more."
   },
   {
     "id": "12",
@@ -45,7 +48,8 @@
     "lat": 23.7925,
     "lng": 90.3975,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "National Medical Centre is a healthcare facility in Dhaka. On Cura, 26 doctors currently hold chamber hours here, covering Bariatric Surgery, Cardiology, Critical Care, Dentistry and 16 more."
   },
   {
     "id": "13",
@@ -57,7 +61,8 @@
     "lat": 23.8097,
     "lng": 90.4003,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Bashundhara General Hospital is a healthcare facility in Dhaka. On Cura, 21 doctors currently hold chamber hours here, covering Bariatric Surgery, Cardiology, Dentistry, Dermatology and 12 more."
   },
   {
     "id": "14",
@@ -69,7 +74,8 @@
     "lat": 23.806,
     "lng": 90.4161,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Dhaka City Diagnostic & Hospital is a healthcare facility in Dhaka. On Cura, 17 doctors currently hold chamber hours here, covering Critical Care, Dentistry, Dermatology, ENT and 8 more."
   },
   {
     "id": "15",
@@ -81,7 +87,8 @@
     "lat": 23.4801,
     "lng": 91.1912,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Concord Specialized Hospital is a healthcare facility in Comilla. On Cura, 15 doctors currently hold chamber hours here, covering Bariatric Surgery, Critical Care, Dermatology, Emergency Medicine and 8 more."
   },
   {
     "id": "16",
@@ -93,7 +100,8 @@
     "lat": 23.8274,
     "lng": 90.3969,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Dhaka Crescent Diagnostic & Hospital is a healthcare facility in Dhaka. On Cura, 21 doctors currently hold chamber hours here, covering Cardiology, Critical Care, Dermatology, ENT and 10 more."
   },
   {
     "id": "17",
@@ -105,7 +113,8 @@
     "lat": 23.834,
     "lng": 90.4286,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Motijheel Diagnostic & Hospital is a healthcare facility in Dhaka. On Cura, 29 doctors currently hold chamber hours here, covering Bariatric Surgery, Cardiology, Critical Care, Dermatology and 15 more."
   },
   {
     "id": "18",
@@ -117,7 +126,8 @@
     "lat": 24.8964,
     "lng": 91.8605,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Sylhet Millennium Hospital Ltd. is a healthcare facility in Sylhet. On Cura, 9 doctors currently hold chamber hours here, covering Bariatric Surgery, General Physician, Gynecology, Neurology and 4 more."
   },
   {
     "id": "19",
@@ -129,7 +139,8 @@
     "lat": 22.359,
     "lng": 91.7672,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Halishahar Health Centre is a healthcare facility in Chattogram. On Cura, 23 doctors currently hold chamber hours here, covering Bariatric Surgery, Critical Care, Dentistry, ENT and 10 more."
   },
   {
     "id": "2",
@@ -141,7 +152,8 @@
     "lat": 23.7461,
     "lng": 90.3742,
     "website": "https://ibnsinahospital.com",
-    "doctorCount": 120
+    "doctorCount": 120,
+    "description": "Ibn Sina Hospital is a healthcare facility in Dhaka. On Cura, 14 doctors currently hold chamber hours here, covering Bariatric Surgery, Cardiology, Critical Care, Emergency Medicine and 8 more."
   },
   {
     "id": "20",
@@ -153,7 +165,8 @@
     "lat": 23.8277,
     "lng": 90.422,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Dhaka Prime Medical Centre is a healthcare facility in Dhaka. On Cura, 23 doctors currently hold chamber hours here, covering Cardiology, Critical Care, Dentistry, ENT and 16 more."
   },
   {
     "id": "21",
@@ -165,7 +178,8 @@
     "lat": 22.7038,
     "lng": 90.3592,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "National Medical College Hospital is a healthcare facility in Barishal. On Cura, 19 doctors currently hold chamber hours here, covering Bariatric Surgery, Dentistry, Dermatology, Emergency Medicine and 8 more."
   },
   {
     "id": "22",
@@ -177,7 +191,8 @@
     "lat": 22.35,
     "lng": 91.7746,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Riverside Hospital & Clinic is a healthcare facility in Chattogram. On Cura, 19 doctors currently hold chamber hours here, covering Cardiology, Critical Care, Dentistry, Dermatology and 10 more."
   },
   {
     "id": "23",
@@ -189,7 +204,8 @@
     "lat": 23.8006,
     "lng": 90.4149,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Dhaka National Hospital Ltd. is a healthcare facility in Dhaka. On Cura, 18 doctors currently hold chamber hours here, covering Bariatric Surgery, Cardiology, Critical Care, Dentistry and 11 more."
   },
   {
     "id": "24",
@@ -201,7 +217,8 @@
     "lat": 24.3914,
     "lng": 88.5809,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Rajshahi United Specialized Hospital is a healthcare facility in Rajshahi. On Cura, 17 doctors currently hold chamber hours here, covering Cardiology, Emergency Medicine, Hematology, Infectious Diseases and 10 more."
   },
   {
     "id": "25",
@@ -213,7 +230,8 @@
     "lat": 23.7863,
     "lng": 90.4115,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Badda Medical College Hospital is a healthcare facility in Dhaka. On Cura, 12 doctors currently hold chamber hours here, covering Bariatric Surgery, Cardiology, Critical Care, Dermatology and 7 more."
   },
   {
     "id": "26",
@@ -225,7 +243,8 @@
     "lat": 25.7274,
     "lng": 89.2933,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "United Medical College Hospital is a healthcare facility in Rangpur. On Cura, 9 doctors currently hold chamber hours here, covering Dentistry, Dermatology, Gastroenterology, General Physician and 4 more."
   },
   {
     "id": "27",
@@ -237,7 +256,8 @@
     "lat": 23.4385,
     "lng": 91.1784,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Wellcare Medical Centre is a healthcare facility in Comilla. On Cura, 15 doctors currently hold chamber hours here, covering Bariatric Surgery, Critical Care, Dermatology, Emergency Medicine and 8 more."
   },
   {
     "id": "28",
@@ -249,7 +269,8 @@
     "lat": 22.7163,
     "lng": 90.3535,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Barishal Horizon General Hospital is a healthcare facility in Barishal. On Cura, 17 doctors currently hold chamber hours here, covering Dentistry, ENT, General Surgery, Geriatric Medicine and 8 more."
   },
   {
     "id": "29",
@@ -261,7 +282,8 @@
     "lat": 22.3715,
     "lng": 91.772,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Chattogram Metro General Hospital is a healthcare facility in Chattogram. On Cura, 20 doctors currently hold chamber hours here, covering Bariatric Surgery, Critical Care, Dermatology, ENT and 9 more."
   },
   {
     "id": "3",
@@ -273,7 +295,8 @@
     "lat": 23.8223,
     "lng": 90.4265,
     "website": "https://evercarebd.com",
-    "doctorCount": 200
+    "doctorCount": 200,
+    "description": "Evercare Hospital is a healthcare facility in Dhaka. On Cura, 17 doctors currently hold chamber hours here, covering Dentistry, ENT, Emergency Medicine, Endocrinology and 10 more."
   },
   {
     "id": "30",
@@ -285,7 +308,8 @@
     "lat": 23.8306,
     "lng": 90.4317,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Dhaka Prime Hospital Ltd. is a healthcare facility in Dhaka. On Cura, 24 doctors currently hold chamber hours here, covering Bariatric Surgery, Cardiology, Critical Care, Dentistry and 15 more."
   },
   {
     "id": "31",
@@ -297,7 +321,8 @@
     "lat": 24.3647,
     "lng": 88.6083,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Green Life Hospital & Clinic is a healthcare facility in Rajshahi. On Cura, 30 doctors currently hold chamber hours here, covering Dentistry, Dermatology, Emergency Medicine, General Physician and 13 more."
   },
   {
     "id": "32",
@@ -309,7 +334,8 @@
     "lat": 23.8068,
     "lng": 90.4134,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Crescent Hospital Ltd. is a healthcare facility in Dhaka. On Cura, 24 doctors currently hold chamber hours here, covering Dentistry, ENT, Endocrinology, Gastroenterology and 13 more."
   },
   {
     "id": "33",
@@ -321,7 +347,8 @@
     "lat": 23.7969,
     "lng": 90.4061,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Dhaka Green Life Hospital Ltd. is a healthcare facility in Dhaka. On Cura, 20 doctors currently hold chamber hours here, covering Critical Care, Dentistry, Dermatology, General Physician and 8 more."
   },
   {
     "id": "34",
@@ -333,7 +360,8 @@
     "lat": 23.8033,
     "lng": 90.4356,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Unity Specialized Hospital is a healthcare facility in Dhaka. On Cura, 25 doctors currently hold chamber hours here, covering Bariatric Surgery, Critical Care, Dentistry, Dermatology and 15 more."
   },
   {
     "id": "35",
@@ -345,7 +373,8 @@
     "lat": 23.8082,
     "lng": 90.42,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Dhaka Central Diagnostic & Hospital is a healthcare facility in Dhaka. On Cura, 18 doctors currently hold chamber hours here, covering Cardiology, Critical Care, Dentistry, ENT and 8 more."
   },
   {
     "id": "36",
@@ -357,7 +386,8 @@
     "lat": 24.7626,
     "lng": 90.433,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Prime Health Centre is a healthcare facility in Mymensingh. On Cura, 11 doctors currently hold chamber hours here, covering Cardiology, Critical Care, Geriatric Medicine, Hematology and 5 more."
   },
   {
     "id": "37",
@@ -369,7 +399,8 @@
     "lat": 23.8139,
     "lng": 90.4061,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Prime Diagnostic & Hospital is a healthcare facility in Dhaka. On Cura, 24 doctors currently hold chamber hours here, covering Bariatric Surgery, Cardiology, Critical Care, ENT and 15 more."
   },
   {
     "id": "38",
@@ -381,7 +412,8 @@
     "lat": 22.8655,
     "lng": 89.5292,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Khulna Green Life Health Centre is a healthcare facility in Khulna. On Cura, 13 doctors currently hold chamber hours here, covering Cardiology, Dentistry, Emergency Medicine, Gastroenterology and 6 more."
   },
   {
     "id": "39",
@@ -393,7 +425,8 @@
     "lat": 23.7976,
     "lng": 90.4022,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Mogbazar Diagnostic & Hospital is a healthcare facility in Dhaka. On Cura, 14 doctors currently hold chamber hours here, covering Cardiology, Critical Care, Dentistry, Dermatology and 8 more."
   },
   {
     "id": "4",
@@ -405,7 +438,8 @@
     "lat": 24.7471,
     "lng": 90.4203,
     "website": "https://shishuhospital.com",
-    "doctorCount": 30
+    "doctorCount": 30,
+    "description": "Shishu Hospital is a healthcare facility in Mymensingh. On Cura, 12 doctors currently hold chamber hours here, covering Cardiology, Critical Care, Geriatric Medicine, Hematology and 6 more."
   },
   {
     "id": "40",
@@ -417,7 +451,8 @@
     "lat": 23.8098,
     "lng": 90.4255,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Mirpur Diagnostic & Hospital is a healthcare facility in Dhaka. On Cura, 26 doctors currently hold chamber hours here, covering Critical Care, Dermatology, ENT, Gastroenterology and 15 more."
   },
   {
     "id": "41",
@@ -429,7 +464,8 @@
     "lat": 23.8153,
     "lng": 90.4066,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Rampura Medical Centre is a healthcare facility in Dhaka. On Cura, 26 doctors currently hold chamber hours here, covering Bariatric Surgery, Critical Care, Dentistry, Dermatology and 15 more."
   },
   {
     "id": "42",
@@ -441,7 +477,8 @@
     "lat": 24.3917,
     "lng": 88.6216,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Kazla Specialized Hospital is a healthcare facility in Rajshahi. On Cura, 18 doctors currently hold chamber hours here, covering Emergency Medicine, General Physician, Geriatric Medicine, Gynecology and 10 more."
   },
   {
     "id": "43",
@@ -453,7 +490,8 @@
     "lat": 23.8013,
     "lng": 90.4255,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Dhaka Wellcare Medical Centre is a healthcare facility in Dhaka. On Cura, 21 doctors currently hold chamber hours here, covering Bariatric Surgery, Cardiology, Critical Care, Dentistry and 8 more."
   },
   {
     "id": "44",
@@ -465,7 +503,8 @@
     "lat": 22.3439,
     "lng": 91.7815,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "United Diagnostic & Hospital is a healthcare facility in Chattogram. On Cura, 22 doctors currently hold chamber hours here, covering Bariatric Surgery, Cardiology, Dermatology, Emergency Medicine and 10 more."
   },
   {
     "id": "45",
@@ -477,7 +516,8 @@
     "lat": 24.3693,
     "lng": 88.5975,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Crescent Hospital & Clinic is a healthcare facility in Rajshahi. On Cura, 25 doctors currently hold chamber hours here, covering Dentistry, Emergency Medicine, Gastroenterology, Geriatric Medicine and 11 more."
   },
   {
     "id": "46",
@@ -489,7 +529,8 @@
     "lat": 23.823,
     "lng": 90.4291,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Dhaka City Medical College Hospital is a healthcare facility in Dhaka. On Cura, 22 doctors currently hold chamber hours here, covering Bariatric Surgery, Dentistry, ENT, Emergency Medicine and 10 more."
   },
   {
     "id": "47",
@@ -501,7 +542,8 @@
     "lat": 23.8211,
     "lng": 90.3903,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Shantinagar Medical College Hospital is a healthcare facility in Dhaka. On Cura, 22 doctors currently hold chamber hours here, covering Critical Care, Dentistry, Dermatology, Emergency Medicine and 9 more."
   },
   {
     "id": "48",
@@ -513,7 +555,8 @@
     "lat": 23.8278,
     "lng": 90.3876,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Unity Medical College Hospital is a healthcare facility in Dhaka. On Cura, 21 doctors currently hold chamber hours here, covering Cardiology, ENT, Emergency Medicine, Geriatric Medicine and 8 more."
   },
   {
     "id": "49",
@@ -525,7 +568,8 @@
     "lat": 23.8143,
     "lng": 90.401,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Mirpur Hospital Ltd. is a healthcare facility in Dhaka. On Cura, 28 doctors currently hold chamber hours here, covering Bariatric Surgery, Cardiology, Critical Care, Dermatology and 13 more."
   },
   {
     "id": "5",
@@ -537,7 +581,8 @@
     "lat": 23.7989,
     "lng": 90.4271,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Dhaka Millennium Hospital Ltd. is a healthcare facility in Dhaka. On Cura, 26 doctors currently hold chamber hours here, covering Bariatric Surgery, Critical Care, ENT, Emergency Medicine and 12 more."
   },
   {
     "id": "50",
@@ -549,7 +594,8 @@
     "lat": 24.3772,
     "lng": 88.6258,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Boalia Hospital Ltd. is a healthcare facility in Rajshahi. On Cura, 24 doctors currently hold chamber hours here, covering Cardiology, Dentistry, Emergency Medicine, Geriatric Medicine and 12 more."
   },
   {
     "id": "6",
@@ -561,7 +607,8 @@
     "lat": 24.3873,
     "lng": 88.6106,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Riverside Diagnostic & Hospital is a healthcare facility in Rajshahi. On Cura, 23 doctors currently hold chamber hours here, covering Dentistry, Dermatology, Emergency Medicine, Gastroenterology and 14 more."
   },
   {
     "id": "7",
@@ -573,7 +620,8 @@
     "lat": 22.7095,
     "lng": 90.3506,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Riverside Specialized Hospital is a healthcare facility in Barishal. On Cura, 14 doctors currently hold chamber hours here, covering Bariatric Surgery, Dentistry, Dermatology, ENT and 8 more."
   },
   {
     "id": "8",
@@ -585,7 +633,8 @@
     "lat": 24.3882,
     "lng": 88.6059,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Shaheb Bazar Specialized Hospital is a healthcare facility in Rajshahi. On Cura, 13 doctors currently hold chamber hours here, covering Cardiology, Dentistry, Emergency Medicine, Gastroenterology and 7 more."
   },
   {
     "id": "9",
@@ -597,6 +646,7 @@
     "lat": 22.3678,
     "lng": 91.8059,
     "website": "https://cura.health",
-    "doctorCount": 0
+    "doctorCount": 0,
+    "description": "Lifecare Health Centre is a healthcare facility in Chattogram. On Cura, 17 doctors currently hold chamber hours here, covering Bariatric Surgery, Critical Care, Dentistry, ENT and 11 more."
   }
 ]
