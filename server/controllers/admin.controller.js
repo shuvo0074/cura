@@ -1,4 +1,5 @@
 import { query } from '../db.js';
+import { logger } from '../logger.js';
 
 function toNum(value) {
   if (value === '' || value === undefined || value === null) return null;
@@ -48,6 +49,10 @@ export async function createDoctor(req, res, next) {
         d.phone, d.photo, toNum(d.rating), d.about, toNum(d.lat), toNum(d.lng), d.website,
         d.bmdcNo, d.education, d.languages, d.consultingHours, d.address, toArray(d.clinicalExpertise), toArray(d.treatments)]
     );
+    logger.info(
+      { event: 'admin_doctor_created', adminId: req.user?.sub, doctorId: rows[0].id, name: rows[0].name },
+      'Admin created doctor'
+    );
     res.status(201).json(rows[0]);
   } catch (err) {
     next(err);
@@ -67,6 +72,10 @@ export async function updateDoctor(req, res, next) {
         d.bmdcNo, d.education, d.languages, d.consultingHours, d.address, toArray(d.clinicalExpertise), toArray(d.treatments), req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Doctor not found' });
+    logger.info(
+      { event: 'admin_doctor_updated', adminId: req.user?.sub, doctorId: rows[0].id, name: rows[0].name },
+      'Admin updated doctor'
+    );
     res.json(rows[0]);
   } catch (err) {
     next(err);
@@ -80,6 +89,10 @@ export async function createHospital(req, res, next) {
       `INSERT INTO hospitals (name, location, address, hotline, photo, lat, lng, website, doctor_count)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,0) RETURNING *`,
       [h.name, h.location, h.address, h.hotline, h.photo, toNum(h.lat), toNum(h.lng), h.website]
+    );
+    logger.info(
+      { event: 'admin_hospital_created', adminId: req.user?.sub, hospitalId: rows[0].id, name: rows[0].name },
+      'Admin created hospital'
     );
     res.status(201).json(rows[0]);
   } catch (err) {
@@ -96,6 +109,10 @@ export async function updateHospital(req, res, next) {
       [h.name, h.location, h.address, h.hotline, h.photo, toNum(h.lat), toNum(h.lng), h.website, req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Hospital not found' });
+    logger.info(
+      { event: 'admin_hospital_updated', adminId: req.user?.sub, hospitalId: rows[0].id, name: rows[0].name },
+      'Admin updated hospital'
+    );
     res.json(rows[0]);
   } catch (err) {
     next(err);

@@ -1,4 +1,5 @@
 import { query } from '../db.js';
+import { logger } from '../logger.js';
 
 export async function listDoctors(_req, res, next) {
   try {
@@ -35,6 +36,7 @@ export async function shareDoctor(req, res, next) {
       [req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Doctor not found' });
+    logger.info({ event: 'doctor_shared', doctorId: rows[0].id, shareCount: rows[0].share_count }, 'Doctor profile shared');
     res.json(rows[0]);
   } catch (err) {
     next(err);
@@ -50,6 +52,10 @@ export async function logCall(req, res, next) {
     const { rows } = await query(
       `INSERT INTO call_logs (doctor_id, venue, phone) VALUES ($1, $2, $3) RETURNING id, created_at`,
       [req.params.id, venue || null, phone || null]
+    );
+    logger.info(
+      { event: 'call_tap', doctorId: req.params.id, venue, phone, callLogId: rows[0].id },
+      'Call tapped'
     );
     res.json({ id: rows[0].id, created_at: rows[0].created_at });
   } catch (err) {

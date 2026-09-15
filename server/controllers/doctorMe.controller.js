@@ -1,4 +1,5 @@
 import { query } from '../db.js';
+import { logger } from '../logger.js';
 
 export async function myAppointments(req, res, next) {
   try {
@@ -26,6 +27,10 @@ export async function completeAppointment(req, res, next) {
       [req.params.id, req.user.sub]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Appointment not found or not completable' });
+    logger.info(
+      { event: 'appointment_completed', appointmentId: rows[0].id, doctorId: req.user.sub },
+      'Appointment marked completed'
+    );
     res.json(rows[0]);
   } catch (err) {
     next(err);

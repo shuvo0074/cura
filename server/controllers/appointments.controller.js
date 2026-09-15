@@ -1,4 +1,5 @@
 import { query } from '../db.js';
+import { logger } from '../logger.js';
 
 export async function createAppointment(req, res, next) {
   try {
@@ -10,6 +11,10 @@ export async function createAppointment(req, res, next) {
       `INSERT INTO appointments (patient_id, doctor_id, appointment_date, appointment_time, notes)
        VALUES ($1, $2, $3, $4, $5) RETURNING *`,
       [req.user.sub, doctorId, date, time, notes || null]
+    );
+    logger.info(
+      { event: 'appointment_created', appointmentId: rows[0].id, patientId: req.user.sub, doctorId, date, time },
+      'Appointment booked'
     );
     res.status(201).json(rows[0]);
   } catch (err) {
@@ -46,6 +51,10 @@ export async function cancelAppointment(req, res, next) {
       [req.params.id, req.user.sub]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Appointment not found' });
+    logger.info(
+      { event: 'appointment_cancelled', appointmentId: rows[0].id, patientId: req.user.sub, doctorId: rows[0].doctor_id },
+      'Appointment cancelled'
+    );
     res.json(rows[0]);
   } catch (err) {
     next(err);

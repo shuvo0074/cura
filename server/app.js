@@ -9,12 +9,14 @@ import appointmentsRoutes from './routes/appointments.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import doctorMeRoutes from './routes/doctorMe.routes.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { httpLogger } from './logger.js';
 
 export const app = express();
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
+app.use(httpLogger);
 
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 app.use('/api/doctors/me', doctorMeRoutes);
