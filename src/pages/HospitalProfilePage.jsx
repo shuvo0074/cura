@@ -31,7 +31,7 @@ function isOnDutyNow(venueSchedule) {
 // the shared FilterContext used by /doctors, /specialties/:slug, etc., since
 // a hospital page has no city dimension to filter (everyone's already here)
 // and shouldn't reset filter state other pages rely on.
-function SpecialtyFilter({ specialties, selected, onSelect, search, onSearch }) {
+function SpecialtyFilter({ specialties, selected, onToggle, onClear, search, onSearch }) {
   const { t } = useTranslation();
   const filtered = specialties.filter(s => s.toLowerCase().includes(search.toLowerCase()));
   return (
@@ -41,7 +41,7 @@ function SpecialtyFilter({ specialties, selected, onSelect, search, onSearch }) 
           <span className="flex items-center gap-2 font-semibold text-gray-800 text-sm">
             <SlidersHorizontal size={15} /> {t('filter_by')}
           </span>
-          <button onClick={() => onSelect('')} className="text-xs text-primary font-medium">
+          <button onClick={onClear} className="text-xs text-primary font-medium">
             Clear All
           </button>
         </div>
@@ -61,8 +61,8 @@ function SpecialtyFilter({ specialties, selected, onSelect, search, onSearch }) 
             <label key={item} className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
               <input
                 type="checkbox"
-                checked={selected === item}
-                onChange={() => onSelect(selected === item ? '' : item)}
+                checked={selected.includes(item)}
+                onChange={() => onToggle(item)}
                 className="accent-primary"
               />
               {item}
@@ -82,12 +82,12 @@ export default function HospitalProfilePage() {
   const [hospital, setHospital] = useState(null);
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [specialtyFilter, setSpecialtyFilter] = useState('');
+  const [specialtyFilter, setSpecialtyFilter] = useState([]);
   const [specSearch, setSpecSearch] = useState('');
 
   useEffect(() => {
     setLoading(true);
-    setSpecialtyFilter('');
+    setSpecialtyFilter([]);
     Promise.all([
       api.get(`/hospitals/${id}`),
       api.get(`/hospitals/${id}/doctors`),
@@ -101,7 +101,13 @@ export default function HospitalProfilePage() {
     () => [...new Set(doctors.map(d => d.specialty))].sort(),
     [doctors]
   );
-  const filteredDoctors = specialtyFilter ? doctors.filter(d => d.specialty === specialtyFilter) : doctors;
+  const filteredDoctors = specialtyFilter.length
+    ? doctors.filter(d => specialtyFilter.includes(d.specialty))
+    : doctors;
+
+  function toggleSpecialty(item) {
+    setSpecialtyFilter(prev => prev.includes(item) ? prev.filter(s => s !== item) : [...prev, item]);
+  }
 
   if (loading) {
     return <div className="flex items-center justify-center h-64 text-gray-400">Loading...</div>;
@@ -126,7 +132,8 @@ export default function HospitalProfilePage() {
         <SpecialtyFilter
           specialties={specialtyNames}
           selected={specialtyFilter}
-          onSelect={setSpecialtyFilter}
+          onToggle={toggleSpecialty}
+          onClear={() => setSpecialtyFilter([])}
           search={specSearch}
           onSearch={setSpecSearch}
         />
