@@ -35,8 +35,8 @@ function SpecialtyFilter({ specialties, selected, onToggle, onClear, search, onS
   const { t } = useTranslation();
   const filtered = specialties.filter(s => s.toLowerCase().includes(search.toLowerCase()));
   return (
-    <aside className="w-full md:w-64 flex-shrink-0">
-      <div className={`${CARD} p-4 md:sticky md:top-20`}>
+    <aside className="w-full md:w-64 flex-shrink-0 md:sticky md:top-20">
+      <div className={`${CARD} p-4`}>
         <div className="flex items-center justify-between mb-4">
           <span className="flex items-center gap-2 font-semibold text-gray-800 text-sm">
             <SlidersHorizontal size={15} /> {t('filter_by')}

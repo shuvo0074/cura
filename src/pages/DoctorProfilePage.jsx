@@ -222,7 +222,7 @@ export default function DoctorProfilePage() {
 
         <div className="w-full lg:w-[534px] flex-shrink-0 lg:sticky lg:top-24 flex flex-col gap-5">
           <ScheduleBox selectedDate={selectedDate} onSelectDate={setSelectedDate} />
-          <ChamberList schedule={doctor.weekly_schedule} selectedDow={selectedDow} />
+          <ChamberList doctorId={doctor.id} schedule={doctor.weekly_schedule} selectedDow={selectedDow} />
         </div>
       </div>
 

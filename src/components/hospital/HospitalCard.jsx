@@ -6,12 +6,14 @@ export default function HospitalCard({ hospital }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  function openMaps() {
+  function openMaps(e) {
+    e.stopPropagation();
     window.open(`https://www.google.com/maps/dir/?api=1&destination=${hospital.lat},${hospital.lng}`, '_blank');
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+    <div onClick={() => navigate(`/hospitals/${hospital.id}`)}
+      className="bg-white rounded-xl shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow">
       <img src={hospital.photo} alt={hospital.name} className="w-full h-36 object-cover" />
       <div className="p-4">
         <h3 className="font-semibold text-gray-800">{hospital.name}</h3>
@@ -23,11 +25,11 @@ export default function HospitalCard({ hospital }) {
         </p>
 
         <div className="flex gap-2 mt-3">
-          <a href={`tel:${hospital.hotline}`}
+          <a href={`tel:${hospital.hotline}`} onClick={e => e.stopPropagation()}
             className="flex-1 flex items-center justify-center gap-1 bg-primary text-white text-xs py-1.5 rounded-lg font-medium">
             <Phone size={12} /> {t('call')}
           </a>
-          <a href={hospital.website} target="_blank" rel="noreferrer"
+          <a href={hospital.website} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
             className="flex-1 flex items-center justify-center gap-1 border border-gray-300 text-gray-600 text-xs py-1.5 rounded-lg font-medium">
             <Globe size={12} /> {t('website')}
           </a>
@@ -37,7 +39,7 @@ export default function HospitalCard({ hospital }) {
           </button>
         </div>
 
-        <button onClick={() => navigate(`/hospitals/${hospital.id}`)}
+        <button onClick={(e) => { e.stopPropagation(); navigate(`/hospitals/${hospital.id}`); }}
           className="w-full mt-3 flex items-center justify-center gap-1 border border-primary text-primary text-xs py-2 rounded-lg font-medium">
           {t('show_all_doctors')} <ChevronRight size={12} />
         </button>
