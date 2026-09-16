@@ -13,17 +13,20 @@ export default function DoctorCard({ doctor }) {
   const [callAnchor, setCallAnchor] = useState(null);
 
   function toggleShare(e) {
+    e.stopPropagation();
     const target = e.currentTarget;
     setShareAnchor(prev => (prev ? null : target));
   }
 
   function toggleCall(e) {
+    e.stopPropagation();
     const target = e.currentTarget;
     setCallAnchor(prev => (prev ? null : target));
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-4 flex gap-3 relative">
+    <div onClick={() => navigate(`/doctors/${doctor.id}`)}
+      className="bg-white rounded-xl shadow-sm p-4 flex gap-3 relative cursor-pointer hover:shadow-md transition-shadow">
       <img src={doctor.photo} alt={doctor.name}
         className="w-16 h-16 rounded-full object-cover flex-shrink-0" />
 
@@ -50,7 +53,7 @@ export default function DoctorCard({ doctor }) {
             className="flex-1 flex items-center justify-center gap-1 bg-primary text-white text-xs py-1.5 rounded-lg font-medium">
             <Phone size={12} /> {t('call_now')}
           </button>
-          <button onClick={() => navigate(`/doctors/${doctor.id}`)}
+          <button onClick={(e) => { e.stopPropagation(); navigate(`/doctors/${doctor.id}`); }}
             className="flex-1 flex items-center justify-center gap-1 border border-primary text-primary text-xs py-1.5 rounded-lg font-medium">
             <Info size={12} /> {t('view_details')}
           </button>

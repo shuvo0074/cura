@@ -4,14 +4,14 @@ import { useEffect, useState } from 'react';
 import {
   Phone, Globe, Navigation, Share2, ArrowLeft, MapPin, ChevronDown, ChevronUp,
   Star, ShieldCheck, GraduationCap, Languages as LanguagesIcon, Clock, Stethoscope,
-  ClipboardList, CalendarClock,
+  ClipboardList,
 } from 'lucide-react';
 import { api } from '../api/client';
 import { buildShareUrl } from '../utils/share';
 import { getDhakaNow } from '../utils/dhakaTime';
 import SharePopover from '../components/doctor/SharePopover';
 import CallPopover from '../components/doctor/CallPopover';
-import BookingModal from '../components/booking/BookingModal';
+import ScheduleBox from '../components/booking/ScheduleBox';
 import ChamberList from '../components/booking/ChamberList';
 
 function LinkedInIcon({ size = 16 }) {
@@ -26,10 +26,6 @@ function LinkedInIcon({ size = 16 }) {
 }
 
 const CARD = 'bg-white rounded-xl border border-gray-100 shadow-sm';
-const BOOKING_DAYS = [
-  { label: 'Sat', dow: 6 }, { label: 'Sun', dow: 0 }, { label: 'Mon', dow: 1 }, { label: 'Tue', dow: 2 },
-  { label: 'Wed', dow: 3 }, { label: 'Thu', dow: 4 }, { label: 'Fri', dow: 5 },
-];
 
 function SectionHeading({ icon: Icon, children }) {
   return (
@@ -48,12 +44,11 @@ export default function DoctorProfilePage() {
   const [loading, setLoading] = useState(true);
   const [shareAnchor, setShareAnchor] = useState(null);
   const [callAnchor, setCallAnchor] = useState(null);
-  const [bookingDay, setBookingDay] = useState(undefined); // undefined = closed, null = open with no day preselected
-  const [selectedDay, setSelectedDay] = useState(null); // drives the Chamber List's per-day view + Call popover
+  const [selectedDate, setSelectedDate] = useState(null); // drives ScheduleBox selection + Chamber List's per-day view + Call popover
 
   useEffect(() => {
     setLoading(true);
-    setSelectedDay(getDhakaNow().dow); // default to Bangladesh's current weekday
+    setSelectedDate(getDhakaNow().date); // default to Bangladesh's current date
     api.get(`/doctors/${id}`)
       .then(setDoctor)
       .catch(() => setDoctor(null))
@@ -93,6 +88,7 @@ export default function DoctorProfilePage() {
 
   const aboutText = doctor.about || '';
   const truncated = aboutText.length > 150 && !aboutExpanded;
+  const selectedDow = selectedDate != null ? selectedDate.getDay() : null;
 
   return (
     <div>
@@ -225,22 +221,8 @@ export default function DoctorProfilePage() {
         </div>
 
         <div className="w-full lg:w-[534px] flex-shrink-0 lg:sticky lg:top-24 flex flex-col gap-5">
-          <div className={`${CARD} p-6`}>
-            <SectionHeading icon={CalendarClock}>{t('scheduling')}</SectionHeading>
-            <div className="grid grid-cols-4 gap-2">
-              {BOOKING_DAYS.map(({ label, dow }) => (
-                <button key={dow} onClick={() => { setSelectedDay(dow); setBookingDay(dow); }}
-                  className={`border rounded-lg py-2 text-xs font-medium transition-all
-                    ${selectedDay === dow ? 'bg-primary text-white border-primary shadow-sm' : 'border-gray-200 text-gray-600 hover:border-primary hover:text-primary hover:-translate-y-0.5'}`}>
-                  {label}
-                </button>
-              ))}
-            </div>
-            <p className="text-[11px] text-gray-400 mt-3 text-center">
-              Demo booking — Cura is not a real hospital network; this does not create a real medical appointment.
-            </p>
-          </div>
-          <ChamberList schedule={doctor.weekly_schedule} selectedDow={selectedDay} />
+          <ScheduleBox selectedDate={selectedDate} onSelectDate={setSelectedDate} />
+          <ChamberList schedule={doctor.weekly_schedule} selectedDow={selectedDow} />
         </div>
       </div>
 
@@ -249,11 +231,7 @@ export default function DoctorProfilePage() {
       )}
 
       {callAnchor && (
-        <CallPopover doctor={doctor} schedule={doctor.weekly_schedule} dow={selectedDay} anchorEl={callAnchor} onClose={() => setCallAnchor(null)} />
-      )}
-
-      {bookingDay !== undefined && (
-        <BookingModal doctorId={doctor.id} initialDay={bookingDay} onClose={() => setBookingDay(undefined)} />
+        <CallPopover doctor={doctor} schedule={doctor.weekly_schedule} dow={selectedDow} anchorEl={callAnchor} onClose={() => setCallAnchor(null)} />
       )}
     </div>
   );

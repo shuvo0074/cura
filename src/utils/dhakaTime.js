@@ -7,6 +7,9 @@ export function getDhakaNow() {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: 'Asia/Dhaka',
     weekday: 'short',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
     hourCycle: 'h23',
@@ -15,7 +18,11 @@ export function getDhakaNow() {
   const get = (type) => parts.find(p => p.type === type)?.value;
   const dow = DOW_MAP[get('weekday')];
   const minutes = parseInt(get('hour'), 10) * 60 + parseInt(get('minute'), 10);
-  return { dow, minutes };
+  // Calendar date in the Dhaka timezone, as a local (timezone-agnostic) Date
+  // at midnight — safe to feed into Date-based calendar math (getDay(),
+  // month grids, etc.) without the visitor's own browser timezone skewing it.
+  const date = new Date(parseInt(get('year'), 10), parseInt(get('month'), 10) - 1, parseInt(get('day'), 10));
+  return { dow, minutes, date };
 }
 
 function parseClockTime(str) {

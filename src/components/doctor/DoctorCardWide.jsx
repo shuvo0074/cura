@@ -23,7 +23,8 @@ export default function DoctorCardWide({ doctor }) {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
+    <div onClick={() => navigate(`/doctors/${doctor.id}`)}
+      className="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col cursor-pointer hover:shadow-md transition-shadow">
       <div className="flex gap-4 p-4">
         <img src={doctor.photo} alt={doctor.name}
           className="w-32 h-32 rounded-lg object-cover flex-shrink-0" />
@@ -46,7 +47,7 @@ export default function DoctorCardWide({ doctor }) {
       </div>
 
       <div className="flex mt-auto border-t border-gray-100">
-        <button onClick={() => navigate(`/doctors/${doctor.id}`)}
+        <button onClick={(e) => { e.stopPropagation(); navigate(`/doctors/${doctor.id}`); }}
           className="flex-1 bg-primary text-white text-sm font-medium py-2.5">
           View Details
         </button>
