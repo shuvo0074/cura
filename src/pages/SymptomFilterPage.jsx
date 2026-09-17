@@ -7,6 +7,13 @@ import { useFilter } from '../context/FilterContext';
 import { api } from '../api/client';
 import symptoms from '../data/symptoms.json';
 
+// Lowercases and folds curly apostrophes to straight ones, since doctor
+// profile data (clinical_expertise/treatments) uses curly quotes (e.g.
+// "Parkinson’s Disease") while symptoms.json uses straight ones.
+function normalize(str) {
+  return (str || '').toLowerCase().replace(/[‘’]/g, "'");
+}
+
 export default function SymptomFilterPage() {
   const { slug } = useParams();
   const { filterParams, setFilterParams } = useFilter();
@@ -36,10 +43,19 @@ export default function SymptomFilterPage() {
       const matchQ = !q || d.name.toLowerCase().includes(q);
       const matchCity = !filterParams.city.length || filterParams.city.includes(d.city);
       const matchSymptom = !filterParams.symptom.length || filterParams.symptom.some(sym => {
-        const s = sym.toLowerCase();
-        return d.specialty?.toLowerCase().includes(s) ||
-          d.name?.toLowerCase().includes(s) ||
-          d.about?.toLowerCase().includes(s);
+        const s = normalize(sym);
+        if (normalize(d.specialty).includes(s) || normalize(d.name).includes(s) || normalize(d.about).includes(s)) {
+          return true;
+        }
+        // clinical_expertise/treatments are short discrete phrases (e.g. "COPD",
+        // "Hepatitis") rather than prose, so match either direction: the symptom
+        // name may embed an acronym ("...(COPD)") that equals a short entry, or
+        // an entry may be a broader phrase containing the symptom name.
+        const entries = [...(d.clinical_expertise || []), ...(d.treatments || [])];
+        return entries.some(entry => {
+          const e = normalize(entry);
+          return s.includes(e) || e.includes(s);
+        });
       });
       return matchQ && matchCity && matchSymptom;
     });

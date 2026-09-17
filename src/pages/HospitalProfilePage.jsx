@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useMemo, useState } from 'react';
-import { Phone, Globe, Navigation, ArrowLeft, MapPin, Star, Users, Clock, SlidersHorizontal, Search } from 'lucide-react';
+import { Phone, Globe, Navigation, ArrowLeft, MapPin, Star, Users, SlidersHorizontal, Search } from 'lucide-react';
 import { api } from '../api/client';
 import { getDhakaNow, parseTimeRangeToMinutes } from '../utils/dhakaTime';
 
@@ -205,12 +205,6 @@ export default function HospitalProfilePage() {
                           </span>
                         )}
                       </div>
-                      {doc.venue_schedule?.length > 0 && (
-                        <div className="flex items-start gap-1.5 mt-2 text-xs text-gray-500">
-                          <Clock size={12} className="text-gray-400 flex-shrink-0 mt-0.5" />
-                          <span>{doc.venue_schedule.map(s => s.time).join(', ')}</span>
-                        </div>
-                      )}
                     </div>
                     <button onClick={() => navigate(`/doctors/${doc.id}`)}
                       className="flex-shrink-0 bg-primary text-white text-xs font-medium px-4 py-2 rounded-lg hover:shadow-sm hover:-translate-y-0.5 transition-all">
