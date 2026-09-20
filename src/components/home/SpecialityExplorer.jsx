@@ -1,23 +1,38 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import specialties from '../../data/specialties.json';
 import SpecialtyCard from './SpecialtyCard';
 
-const PILLS_PER_PAGE = 3;
-const PAGE_COUNT = Math.ceil(specialties.length / PILLS_PER_PAGE);
+const VISIBLE_COUNT = 3;
+const SWIPE_THRESHOLD = 40;
 
 export default function SpecialityExplorer() {
   const navigate = useNavigate();
-  const [pillPage, setPillPage] = useState(0);
+  const [startIndex, setStartIndex] = useState(0);
   const [highlighted, setHighlighted] = useState(0);
+  const dragStartX = useRef(null);
 
-  const visible = specialties.slice(pillPage * PILLS_PER_PAGE, pillPage * PILLS_PER_PAGE + PILLS_PER_PAGE);
+  const total = specialties.length;
+  const visible = Array.from({ length: VISIBLE_COUNT }, (_, i) => specialties[(startIndex + i) % total]);
 
   function pageBy(delta) {
-    const next = (pillPage + delta + PAGE_COUNT) % PAGE_COUNT;
-    setPillPage(next);
-    setHighlighted(next * PILLS_PER_PAGE);
+    const next = (startIndex + delta + total) % total;
+    setStartIndex(next);
+    setHighlighted(next);
+  }
+
+  function handlePointerDown(e) {
+    dragStartX.current = e.clientX;
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* no-op */ }
+  }
+
+  function handlePointerUp(e) {
+    if (dragStartX.current == null) return;
+    const dx = e.clientX - dragStartX.current;
+    dragStartX.current = null;
+    if (dx > SWIPE_THRESHOLD) pageBy(-1);
+    else if (dx < -SWIPE_THRESHOLD) pageBy(1);
   }
 
   return (
@@ -35,15 +50,21 @@ export default function SpecialityExplorer() {
           <ChevronLeft size={18} />
         </button>
 
-        <div key={pillPage} className="fade-slide grid grid-cols-1 md:grid-cols-3 gap-4">
-          {visible.map(s => {
-            const i = specialties.findIndex(x => x.id === s.id);
+        <div
+          key={startIndex}
+          onPointerDown={handlePointerDown}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={() => { dragStartX.current = null; }}
+          style={{ touchAction: 'pan-y' }}
+          className="fade-slide grid grid-cols-1 md:grid-cols-3 gap-4 cursor-grab active:cursor-grabbing select-none">
+          {visible.map((s, i) => {
+            const actualIndex = (startIndex + i) % total;
             return (
               <SpecialtyCard
                 key={s.id}
                 specialty={s}
-                highlighted={highlighted === i}
-                onSelect={() => setHighlighted(i)}
+                highlighted={highlighted === actualIndex}
+                onSelect={() => setHighlighted(actualIndex)}
               />
             );
           })}
