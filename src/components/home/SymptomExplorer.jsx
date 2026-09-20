@@ -37,10 +37,7 @@ export default function SymptomExplorer() {
 
   return (
     <section>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="font-semibold text-gray-700">Symptoms</h2>
-        <button onClick={() => navigate('/symptoms')} className="text-primary text-sm">View More</button>
-      </div>
+      <h2 className="font-semibold text-gray-700 mb-4">Symptoms</h2>
 
       <div className="relative">
         <button
@@ -76,6 +73,10 @@ export default function SymptomExplorer() {
           className="flex items-center justify-center absolute -right-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-primary text-white shadow-md hover:brightness-110">
           <ChevronRight size={18} />
         </button>
+      </div>
+
+      <div className="flex justify-end mt-3">
+        <button onClick={() => navigate('/symptoms')} className="text-primary text-sm">View More</button>
       </div>
     </section>
   );
