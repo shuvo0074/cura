@@ -2,29 +2,38 @@ import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import symptoms from '../../data/symptoms.json';
-import SymptomCard from './SymptomCard';
+import symptomDetails from '../../data/symptomDetails.json';
+import ImageTile from './ImageTile';
 
 const VISIBLE_COUNT = 4;
 const SWIPE_THRESHOLD = 40;
+const DRAG_CAPTURE_THRESHOLD = 8;
 
 export default function SymptomExplorer() {
   const navigate = useNavigate();
   const [startIndex, setStartIndex] = useState(0);
-  const [highlighted, setHighlighted] = useState(0);
   const dragStartX = useRef(null);
+  const dragged = useRef(false);
 
   const total = symptoms.length;
   const visible = Array.from({ length: VISIBLE_COUNT }, (_, i) => symptoms[(startIndex + i) % total]);
 
   function pageBy(delta) {
-    const next = (startIndex + delta + total) % total;
-    setStartIndex(next);
-    setHighlighted(next);
+    setStartIndex((startIndex + delta + total) % total);
   }
 
   function handlePointerDown(e) {
     dragStartX.current = e.clientX;
-    try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* no-op */ }
+    dragged.current = false;
+  }
+
+  // Capture the pointer only once it's clearly a drag, so a plain click still lands on the tile.
+  function handlePointerMove(e) {
+    if (dragStartX.current == null || dragged.current) return;
+    if (Math.abs(e.clientX - dragStartX.current) > DRAG_CAPTURE_THRESHOLD) {
+      dragged.current = true;
+      try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* no-op */ }
+    }
   }
 
   function handlePointerUp(e) {
@@ -35,33 +44,41 @@ export default function SymptomExplorer() {
     else if (dx < -SWIPE_THRESHOLD) pageBy(1);
   }
 
+  function openSymptom(slug) {
+    if (dragged.current) { dragged.current = false; return; }
+    navigate(`/symptoms/${slug}`);
+  }
+
   return (
     <section>
-      <h2 className="font-semibold text-gray-700 mb-4">Symptoms</h2>
+      <h2 className="text-2xl font-bold text-[#1a1a1a] mb-4">Symptoms</h2>
 
       <div className="relative">
         <button
           onClick={() => pageBy(-1)}
           aria-label="Previous symptoms"
-          className="flex items-center justify-center absolute -left-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-primary text-white shadow-md hover:brightness-110">
+          className="flex items-center justify-center absolute -left-[18px] top-[100px] z-10 w-9 h-9 rounded-full bg-white text-[#1a1a1a] shadow-md border border-gray-200 hover:bg-gray-50">
           <ChevronLeft size={18} />
         </button>
 
         <div
           key={startIndex}
           onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={() => { dragStartX.current = null; }}
           style={{ touchAction: 'pan-y' }}
-          className="fade-slide grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 cursor-grab active:cursor-grabbing select-none">
-          {visible.map((s, i) => {
-            const actualIndex = (startIndex + i) % total;
+          className="fade-slide grid grid-cols-4 gap-4 select-none">
+          {visible.map(s => {
+            const detail = symptomDetails[s.name] || {};
             return (
-              <SymptomCard
+              <ImageTile
                 key={s.id}
-                symptom={s}
-                highlighted={highlighted === actualIndex}
-                onSelect={() => setHighlighted(actualIndex)}
+                image={`https://images.unsplash.com/photo-${detail.image}?w=600&h=480&fit=crop`}
+                title={s.name}
+                description={detail.description}
+                cta="Find Doctor"
+                onClick={() => openSymptom(s.slug)}
               />
             );
           })}
@@ -70,7 +87,7 @@ export default function SymptomExplorer() {
         <button
           onClick={() => pageBy(1)}
           aria-label="Next symptoms"
-          className="flex items-center justify-center absolute -right-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-primary text-white shadow-md hover:brightness-110">
+          className="flex items-center justify-center absolute -right-[18px] top-[100px] z-10 w-9 h-9 rounded-full bg-white text-[#1a1a1a] shadow-md border border-gray-200 hover:bg-gray-50">
           <ChevronRight size={18} />
         </button>
       </div>

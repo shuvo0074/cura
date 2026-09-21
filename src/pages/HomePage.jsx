@@ -6,7 +6,7 @@ import BannerCarousel from '../components/home/BannerCarousel';
 import SpecialityExplorer from '../components/home/SpecialityExplorer';
 import SymptomExplorer from '../components/home/SymptomExplorer';
 import FaqAccordion from '../components/home/FaqAccordion';
-import HospitalCard from '../components/hospital/HospitalCard';
+import ImageTile from '../components/home/ImageTile';
 import DoctorCardWide from '../components/doctor/DoctorCardWide';
 import { api } from '../api/client';
 
@@ -33,7 +33,7 @@ export default function HomePage() {
       <HomeHero />
 
       <section>
-        <h2 className="text-xl font-bold text-gray-800 mb-1">Clinical Care You Can Trust</h2>
+        <h2 className="text-2xl font-bold text-[#1a1a1a] mb-1">Clinical Care You Can Trust</h2>
         <p className="text-gray-500 text-sm max-w-3xl">
           Cura connects you with experienced doctors across specialities and hospitals near you.
           Search by symptom or speciality, compare doctors, and book a visit in minutes — this is
@@ -45,9 +45,19 @@ export default function HomePage() {
       <SpecialityExplorer />
 
       <section>
-        <h2 className="font-semibold text-gray-700 mb-3">Our Hospitals</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          {hospitals.slice(0, 4).map(h => <HospitalCard key={h.id} hospital={h} />)}
+        <h2 className="text-2xl font-bold text-[#1a1a1a] mb-4">Our Hospitals</h2>
+        <div className="grid grid-cols-4 gap-4">
+          {hospitals.slice(0, 4).map(h => (
+            <ImageTile
+              key={h.id}
+              image={h.photo?.replace(/w=\d+&h=\d+/, 'w=600&h=480')}
+              title={h.name}
+              subtitle={h.location}
+              description={h.description}
+              cta="Show All Doctor List"
+              onClick={() => navigate(`/hospitals/${h.id}`)}
+            />
+          ))}
         </div>
         <div className="flex justify-end mt-3">
           <button onClick={() => navigate('/hospitals')} className="text-primary text-sm">{t('view_all')}</button>
@@ -59,7 +69,7 @@ export default function HomePage() {
       <BannerCarousel />
 
       <section>
-        <h2 className="font-semibold text-gray-700 mb-3">Meet Our Doctors</h2>
+        <h2 className="text-2xl font-bold text-[#1a1a1a] mb-4">Meet Our Doctors</h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {featuredDoctors.map(d => <DoctorCardWide key={d.id} doctor={d} />)}
         </div>

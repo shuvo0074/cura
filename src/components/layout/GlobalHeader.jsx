@@ -33,19 +33,22 @@ export default function GlobalHeader() {
   if (user?.role === 'admin') accountLink = { label: 'Admin Dashboard', path: '/admin' };
 
   return (
-    <header className="sticky top-0 z-50 bg-white shadow-sm">
+    <header className="sticky top-0 z-50 bg-primary text-white">
       <div className="app-container flex items-center justify-between gap-6 py-3">
-        <button onClick={() => navigate('/')} className="text-primary font-bold text-2xl tracking-tight flex-shrink-0">
+        <button onClick={() => navigate('/')} className="text-white font-bold text-2xl tracking-tight flex-shrink-0">
           Cura
         </button>
 
-        <nav className="hidden md:flex items-center gap-6 flex-1">
+        <nav className="hidden md:flex items-center gap-1 flex-1">
           {NAV_LINKS.map(item => (
             <NavLink
               key={item.path}
               to={item.path}
+              end={item.path === '/'}
               className={({ isActive }) =>
-                `text-sm font-medium transition-colors ${isActive ? 'text-primary' : 'text-gray-600 hover:text-primary'}`
+                `text-sm font-medium rounded-full px-4 py-2.5 border transition-colors ${
+                  isActive ? 'border-white' : 'border-transparent hover:bg-white/10'
+                }`
               }>
               {item.label}
             </NavLink>
@@ -53,21 +56,21 @@ export default function GlobalHeader() {
         </nav>
 
         <div className="flex items-center gap-3 flex-shrink-0">
-          <button onClick={() => navigate('/search-results')} className="text-gray-600 hover:text-primary" title="Search">
+          <button onClick={() => navigate('/search-results')} className="text-white hover:bg-white/10 rounded-full p-2" title="Search">
             <Search size={18} />
           </button>
-          <a href="tel:16966" className="hidden lg:flex items-center gap-1.5 text-xs font-semibold text-primary border border-primary rounded-lg px-3 py-1.5">
+          <a href="tel:16966" className="hidden lg:flex items-center gap-1.5 text-xs font-semibold text-white border border-white rounded px-3 py-1.5 hover:bg-white/10">
             <Phone size={13} /> 16966
           </a>
-          <button onClick={toggleLang} className="text-xs font-semibold text-primary border border-primary rounded px-2 py-1">
+          <button onClick={toggleLang} className="text-xs font-semibold text-white border border-white rounded px-2 py-1.5 hover:bg-white/10">
             {i18n.language === 'en' ? 'বাং' : 'EN'}
           </button>
           <NavLink to={accountLink.path}
-            className="text-sm font-medium bg-primary text-white rounded-lg px-3 py-1.5 whitespace-nowrap">
+            className="text-sm font-medium bg-white text-action rounded px-3 py-1.5 whitespace-nowrap hover:bg-gray-100">
             {accountLink.label}
           </NavLink>
           {user && (
-            <button onClick={handleLogout} className="text-sm font-medium text-gray-500 hover:text-red-500">
+            <button onClick={handleLogout} className="text-sm font-medium text-white/80 hover:text-white">
               Logout
             </button>
           )}

@@ -25,7 +25,7 @@ export default function FaqAccordion() {
 
   return (
     <section>
-      <h2 className="text-xl font-bold text-gray-800 mb-4">Frequently Asked Questions</h2>
+      <h2 className="text-2xl font-bold text-[#1a1a1a] mb-4">Frequently Asked Questions</h2>
       <div className="flex flex-col gap-2 max-w-3xl">
         {FAQS.map((item, i) => (
           <div key={i} className="bg-white rounded-xl shadow-sm overflow-hidden">
