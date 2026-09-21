@@ -1,6 +1,7 @@
 import { Phone, Globe, Navigation, MapPin, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { withDivision } from '../../utils/place';
 
 export default function HospitalCard({ hospital }) {
   const { t } = useTranslation();
@@ -18,7 +19,7 @@ export default function HospitalCard({ hospital }) {
       <div className="p-4">
         <h3 className="font-semibold text-gray-800">{hospital.name}</h3>
         <p className="text-gray-500 text-xs flex items-center gap-1 mt-1">
-          <MapPin size={11} /> {t('location')}: {hospital.location}
+          <MapPin size={11} /> {t('location')}: {withDivision(hospital.location, hospital.location, hospital.division)}
         </p>
         <p className="text-gray-500 text-xs flex items-center gap-1 mt-0.5">
           <Phone size={11} /> {t('hotline')}: {hospital.hotline}

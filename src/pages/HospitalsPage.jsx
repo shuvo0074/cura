@@ -4,12 +4,11 @@ import SearchInput from '../components/ui/SearchInput';
 import HospitalCard from '../components/hospital/HospitalCard';
 import PillCarousel from '../components/ui/PillCarousel';
 import { api } from '../api/client';
+import divisions from '../data/divisions.json';
 
 const CITIES = [
   { id: 'all', name: 'All' },
-  { id: 'dhaka', name: 'Dhaka' },
-  { id: 'sylhet', name: 'Sylhet' },
-  { id: 'mymensingh', name: 'Mymensingh' },
+  ...divisions.map(d => ({ id: d.toLowerCase(), name: d })),
 ];
 
 export default function HospitalsPage() {
@@ -26,8 +25,8 @@ export default function HospitalsPage() {
   const filtered = useMemo(() => {
     return hospitals.filter(h => {
       const q = query.toLowerCase();
-      const matchQ = !q || h.name.toLowerCase().includes(q) || h.location.toLowerCase().includes(q);
-      const matchCity = selectedCity.id === 'all' || h.location.toLowerCase() === selectedCity.name.toLowerCase();
+      const matchQ = !q || h.name.toLowerCase().includes(q) || h.location.toLowerCase().includes(q) || (h.division || '').toLowerCase().includes(q);
+      const matchCity = selectedCity.id === 'all' || h.division === selectedCity.name;
       return matchQ && matchCity;
     });
   }, [hospitals, query, selectedCity]);

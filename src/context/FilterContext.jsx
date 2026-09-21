@@ -6,6 +6,7 @@ export function FilterProvider({ children }) {
   const [filterParams, setFilterParams] = useState({
     specialty: [],
     city: [],
+    division: [],
     symptom: [],
     hospital: [],
   });

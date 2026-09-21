@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Phone, Globe, Navigation, ArrowLeft, MapPin, Star, Users, SlidersHorizontal, Search } from 'lucide-react';
 import { api } from '../api/client';
 import { getDhakaNow, parseTimeRangeToMinutes } from '../utils/dhakaTime';
+import { withDivision } from '../utils/place';
 
 const CARD = 'bg-white rounded-xl border border-gray-100 shadow-sm';
 
@@ -144,7 +145,7 @@ export default function HospitalProfilePage() {
             <div className="p-6">
               <h1 className="font-bold text-gray-900 text-2xl leading-tight">{hospital.name}</h1>
               <p className="flex items-center gap-1.5 text-sm text-gray-500 mt-2">
-                <MapPin size={14} className="text-primary" /> {hospital.location}
+                <MapPin size={14} className="text-primary" /> {withDivision(hospital.location, hospital.location, hospital.division)}
               </p>
               {hospital.address && <p className="text-xs text-gray-400 mt-1">{hospital.address}</p>}
 

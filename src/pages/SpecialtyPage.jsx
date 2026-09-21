@@ -29,24 +29,21 @@ export default function SpecialtyPage() {
     () => [...new Set(doctors.map(d => d.specialty))].sort(),
     [doctors]
   );
-  const cityNames = useMemo(
-    () => [...new Set(doctors.map(d => d.city).filter(Boolean))].sort(),
-    [doctors]
-  );
 
   const filtered = useMemo(() => {
     return doctors.filter(d => {
       const q = query.toLowerCase();
       const matchQ = !q || d.name.toLowerCase().includes(q);
       const matchCity = !filterParams.city.length || filterParams.city.includes(d.city);
+      const matchDivision = !filterParams.division.length || filterParams.division.includes(d.division);
       const matchSpec = !filterParams.specialty.length || filterParams.specialty.includes(d.specialty);
-      return matchQ && matchCity && matchSpec;
+      return matchQ && matchCity && matchDivision && matchSpec;
     });
   }, [doctors, query, filterParams]);
 
   return (
     <div className="flex flex-col md:flex-row gap-6">
-      <DoctorFilterSidebar cities={cityNames} specialtyNames={specialtyNames} />
+      <DoctorFilterSidebar specialtyNames={specialtyNames} />
 
       <div className="flex-1 min-w-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">

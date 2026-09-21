@@ -32,16 +32,13 @@ export default function SymptomFilterPage() {
   }, [slug]);
 
   const symptomNames = useMemo(() => symptoms.map(s => s.name), []);
-  const cityNames = useMemo(
-    () => [...new Set(doctors.map(d => d.city).filter(Boolean))].sort(),
-    [doctors]
-  );
 
   const filtered = useMemo(() => {
     return doctors.filter(d => {
       const q = query.toLowerCase();
       const matchQ = !q || d.name.toLowerCase().includes(q);
       const matchCity = !filterParams.city.length || filterParams.city.includes(d.city);
+      const matchDivision = !filterParams.division.length || filterParams.division.includes(d.division);
       const matchSymptom = !filterParams.symptom.length || filterParams.symptom.some(sym => {
         const s = normalize(sym);
         if (normalize(d.specialty).includes(s) || normalize(d.name).includes(s) || normalize(d.about).includes(s)) {
@@ -57,13 +54,13 @@ export default function SymptomFilterPage() {
           return s.includes(e) || e.includes(s);
         });
       });
-      return matchQ && matchCity && matchSymptom;
+      return matchQ && matchCity && matchDivision && matchSymptom;
     });
   }, [doctors, query, filterParams]);
 
   return (
     <div className="flex flex-col md:flex-row gap-6">
-      <DoctorFilterSidebar cities={cityNames} symptomNames={symptomNames} mode="symptom" />
+      <DoctorFilterSidebar symptomNames={symptomNames} mode="symptom" />
 
       <div className="flex-1 min-w-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">

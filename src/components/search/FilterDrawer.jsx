@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useFilter } from '../../context/FilterContext';
+import divisions from '../../data/divisions.json';
+import { citiesForDivisions, toggleDivision } from '../../utils/geo';
 
-const CITIES = ['Dhaka', 'Sylhet', 'Mymensingh', 'Chittagong', 'Rajshahi'];
 const SPECIALTIES = ['ENT', 'Cardiology', 'Pediatrics', 'Gynecology', 'Dermatology', 'General Physician'];
 const SYMPTOMS = ['Fever', 'Body Ache', 'Sore Throat', 'Asthma', 'Back Pain', 'Diabetes'];
 
@@ -19,7 +20,7 @@ export default function FilterDrawer({ mode = 'specialty' }) {
 
   const listItems = mode === 'symptom' ? SYMPTOMS : SPECIALTIES;
   const filteredList = listItems.filter(s => s.toLowerCase().includes(specSearch.toLowerCase()));
-  const filteredCities = CITIES.filter(c => c.toLowerCase().includes(citySearch.toLowerCase()));
+  const filteredCities = citiesForDivisions(filterParams.division).filter(c => c.toLowerCase().includes(citySearch.toLowerCase()));
   const listKey = mode === 'symptom' ? 'symptom' : 'specialty';
   const selectedList = filterParams[listKey];
 
@@ -39,7 +40,7 @@ export default function FilterDrawer({ mode = 'specialty' }) {
         </div>
 
         <div className="flex-1 overflow-hidden flex flex-col">
-          <div className="p-4 flex flex-col gap-2 border-b" style={{ maxHeight: '50%' }}>
+          <div className="p-4 flex flex-col gap-2 border-b" style={{ maxHeight: '34%' }}>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
               {mode === 'symptom' ? 'Symptoms' : 'Specialty'}
             </p>
@@ -63,7 +64,23 @@ export default function FilterDrawer({ mode = 'specialty' }) {
             </div>
           </div>
 
-          <div className="p-4 flex flex-col gap-2" style={{ maxHeight: '50%' }}>
+          <div className="p-4 flex flex-col gap-2 border-b" style={{ maxHeight: '34%' }}>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Division</p>
+            <div className="overflow-y-auto flex flex-col gap-1">
+              {divisions.map(division => (
+                <button
+                  key={division}
+                  onClick={() => setFilterParams(p => toggleDivision(p, division))}
+                  className={`text-left px-3 py-2 rounded-lg text-sm transition-colors
+                    ${filterParams.division.includes(division)
+                      ? 'bg-primary text-white' : 'hover:bg-gray-50 text-gray-700'}`}>
+                  {division}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="p-4 flex flex-col gap-2" style={{ maxHeight: '34%' }}>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">City</p>
             <input
               placeholder="Search city..."
@@ -88,7 +105,7 @@ export default function FilterDrawer({ mode = 'specialty' }) {
 
         <div className="p-4 border-t">
           <button
-            onClick={() => { setFilterParams({ specialty: [], city: [], symptom: [], hospital: [] }); setIsFilterOpen(false); }}
+            onClick={() => { setFilterParams({ specialty: [], city: [], division: [], symptom: [], hospital: [] }); setIsFilterOpen(false); }}
             className="w-full py-2 border border-gray-300 rounded-lg text-sm text-gray-600">
             Clear Filters
           </button>

@@ -31,9 +31,9 @@ async function main() {
   const hospitalIdMap = {};
   for (const h of hospitals) {
     const { rows } = await pool.query(
-      `INSERT INTO hospitals (name, location, address, hotline, photo, lat, lng, website, doctor_count)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
-      [h.name, h.location, h.address, h.hotline, h.photo, h.lat, h.lng, h.website, h.doctorCount || 0]
+      `INSERT INTO hospitals (name, location, division, address, hotline, photo, lat, lng, website, doctor_count)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
+      [h.name, h.location, h.division, h.address, h.hotline, h.photo, h.lat, h.lng, h.website, h.doctorCount || 0]
     );
     hospitalIdMap[h.id] = rows[0].id;
   }
@@ -50,12 +50,12 @@ async function main() {
     const email = `${d.name.toLowerCase().replace(/^dr\.?\s*/, '').replace(/[^a-z]+/g, '.')}@cura.health`;
     const { rows } = await pool.query(
       `INSERT INTO doctors (name, specialty, department, experience, chamber, fees, city, hospital_id, phone, photo, rating, about, lat, lng, website, email, password_hash,
-        bmdc_no, education, languages, consulting_hours, address, clinical_expertise, treatments, weekly_schedule)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25) RETURNING id`,
+        bmdc_no, education, languages, consulting_hours, address, clinical_expertise, treatments, weekly_schedule, division)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26) RETURNING id`,
       [d.name, d.specialty, d.department, d.experience, d.chamber, d.fees, d.city, mappedHospitalId,
         d.phone, d.photo, d.rating, d.about, d.lat, d.lng, d.website, email, doctorPasswordHash,
         d.bmdcNo, d.education, d.languages, d.consultingHours, d.address, d.clinicalExpertise, d.treatments,
-        d.weeklySchedule ? JSON.stringify(d.weeklySchedule) : null]
+        d.weeklySchedule ? JSON.stringify(d.weeklySchedule) : null, d.division]
     );
     doctorIdMap[d.id] = rows[0].id;
 

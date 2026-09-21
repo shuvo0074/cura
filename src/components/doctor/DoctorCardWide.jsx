@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Phone, MapPin, Share2 } from 'lucide-react';
+import { withDivision } from '../../utils/place';
 import SharePopover from './SharePopover';
 import CallPopover from './CallPopover';
 import { getDhakaNow } from '../../utils/dhakaTime';
@@ -41,7 +42,7 @@ export default function DoctorCardWide({ doctor }) {
           <div className="border-b border-gray-100 my-2 w-16" />
           <p className="text-gray-600 text-sm flex items-center gap-1">
             <MapPin size={13} className="text-primary flex-shrink-0" />
-            {doctor.hospital_name ? `${doctor.hospital_name}, ` : ''}{doctor.city}
+            {withDivision(`${doctor.hospital_name ? `${doctor.hospital_name}, ` : ''}${doctor.city}`, doctor.city, doctor.division)}
           </p>
         </div>
       </div>

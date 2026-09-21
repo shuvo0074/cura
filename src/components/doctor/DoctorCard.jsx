@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Phone, Info, Share2, MapPin } from 'lucide-react';
+import { withDivision } from '../../utils/place';
 import { useTranslation } from 'react-i18next';
 import SharePopover from './SharePopover';
 import CallPopover from './CallPopover';
@@ -37,7 +38,7 @@ export default function DoctorCard({ doctor }) {
             <p className="text-primary text-xs font-medium">{doctor.specialty}</p>
             <p className="text-gray-500 text-xs">{doctor.experience} {t('experience')}</p>
             <p className="text-gray-500 text-xs flex items-center gap-1 mt-0.5">
-              <MapPin size={10} /> {doctor.chamber}
+              <MapPin size={10} /> {withDivision(doctor.chamber, doctor.city, doctor.division)}
             </p>
             <p className="text-gray-700 text-xs font-medium mt-1">
               {t('fees')}: ৳{doctor.fees}

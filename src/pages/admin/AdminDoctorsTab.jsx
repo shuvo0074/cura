@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Plus, Pencil } from 'lucide-react';
 import { api } from '../../api/client';
+import divisions from '../../data/divisions.json';
 
 const BLANK = {
   name: '', specialty: '', department: '', experience: '', chamber: '', fees: '',
-  city: '', hospitalId: '', phone: '', photo: '', rating: '', about: '', website: '',
+  city: '', division: '', hospitalId: '', phone: '', photo: '', rating: '', about: '', website: '',
   bmdcNo: '', education: '', languages: '', consultingHours: '', address: '',
   clinicalExpertise: '', treatments: '',
 };
@@ -62,6 +63,11 @@ export default function AdminDoctorsTab() {
             className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm outline-none">
             <option value="">No hospital</option>
             {hospitals.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
+          </select>
+          <select value={form.division ?? ''} onChange={e => setForm(f => ({ ...f, division: e.target.value }))}
+            className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm outline-none">
+            <option value="">No division</option>
+            {divisions.map(d => <option key={d} value={d}>{d} Division</option>)}
           </select>
           <div className="flex gap-2 mt-2 sm:col-span-2">
             <button type="submit" className="flex-1 bg-primary text-white py-2 rounded-lg text-sm font-medium">Save</button>

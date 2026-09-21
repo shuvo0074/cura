@@ -7,6 +7,7 @@ import SpecialityExplorer from '../components/home/SpecialityExplorer';
 import SymptomExplorer from '../components/home/SymptomExplorer';
 import FaqAccordion from '../components/home/FaqAccordion';
 import ImageTile from '../components/home/ImageTile';
+import { withDivision } from '../utils/place';
 import DoctorCardWide from '../components/doctor/DoctorCardWide';
 import { api } from '../api/client';
 
@@ -52,7 +53,7 @@ export default function HomePage() {
               key={h.id}
               image={h.photo?.replace(/w=\d+&h=\d+/, 'w=600&h=480')}
               title={h.name}
-              subtitle={h.location}
+              subtitle={withDivision(h.location, h.location, h.division)}
               description={h.description}
               cta="Show All Doctor List"
               onClick={() => navigate(`/hospitals/${h.id}`)}

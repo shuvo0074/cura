@@ -34,12 +34,13 @@ export default function SearchResultsPage() {
   // filter can still be intentionally combined with in-page typing.
   useEffect(() => {
     setQuery(urlQuery);
-    setFilterParams(p => ({ ...p, specialty: [], city: [] }));
+    setFilterParams(p => ({ ...p, specialty: [], city: [], division: [] }));
   }, [urlQuery]);
 
   const activeFilterChips = [
     ...filterParams.specialty.map(v => ({ key: 'specialty', value: v })),
     ...filterParams.city.map(v => ({ key: 'city', value: v })),
+    ...filterParams.division.map(v => ({ key: 'division', value: `${v} Division` , raw: v })),
   ];
 
   function removeChip(key, value) {
@@ -49,17 +50,18 @@ export default function SearchResultsPage() {
   const filteredDoctors = useMemo(() => {
     return doctors.filter(d => {
       const q = query.toLowerCase();
-      const matchQuery = !q || d.name.toLowerCase().includes(q) || d.specialty.toLowerCase().includes(q) || d.city.toLowerCase().includes(q);
+      const matchQuery = !q || d.name.toLowerCase().includes(q) || d.specialty.toLowerCase().includes(q) || d.city.toLowerCase().includes(q) || (d.division || '').toLowerCase().includes(q);
       const matchCity = !filterParams.city.length || filterParams.city.includes(d.city);
+      const matchDivision = !filterParams.division.length || filterParams.division.includes(d.division);
       const matchSpec = !filterParams.specialty.length || filterParams.specialty.includes(d.specialty);
-      return matchQuery && matchCity && matchSpec;
+      return matchQuery && matchCity && matchDivision && matchSpec;
     });
   }, [doctors, query, filterParams]);
 
   const filteredHospitals = useMemo(() => {
     return hospitals.filter(h => {
       const q = query.toLowerCase();
-      return !q || h.name.toLowerCase().includes(q) || h.location.toLowerCase().includes(q);
+      return !q || h.name.toLowerCase().includes(q) || h.location.toLowerCase().includes(q) || (h.division || '').toLowerCase().includes(q);
     });
   }, [hospitals, query]);
 
@@ -89,14 +91,14 @@ export default function SearchResultsPage() {
       {activeFilterChips.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 mb-6">
           <span className="text-xs text-gray-400">Filtering by:</span>
-          {activeFilterChips.map(({ key, value }) => (
-            <button key={`${key}-${value}`} onClick={() => removeChip(key, value)}
+          {activeFilterChips.map(({ key, value, raw = value }) => (
+            <button key={`${key}-${value}`} onClick={() => removeChip(key, raw)}
               className="flex items-center gap-1 bg-primary/10 text-primary text-xs font-medium pl-2.5 pr-1.5 py-1 rounded-full hover:bg-primary/20 transition-colors">
               {value} <X size={12} />
             </button>
           ))}
           <button
-            onClick={() => setFilterParams(p => ({ ...p, specialty: [], city: [] }))}
+            onClick={() => setFilterParams(p => ({ ...p, specialty: [], city: [], division: [] }))}
             className="text-xs text-gray-400 hover:text-primary underline">
             Clear all
           </button>

@@ -13,6 +13,7 @@ import SharePopover from '../components/doctor/SharePopover';
 import CallPopover from '../components/doctor/CallPopover';
 import ScheduleBox from '../components/booking/ScheduleBox';
 import ChamberList from '../components/booking/ChamberList';
+import { withDivision } from '../utils/place';
 
 function LinkedInIcon({ size = 16 }) {
   return (
@@ -173,7 +174,7 @@ export default function DoctorProfilePage() {
 
           <div className={`${CARD} p-6`}>
             <SectionHeading icon={MapPin}>{t('location')}</SectionHeading>
-            <p className="text-sm font-medium text-gray-800">{doctor.chamber}</p>
+            <p className="text-sm font-medium text-gray-800">{withDivision(doctor.chamber, doctor.city, doctor.division)}</p>
             {doctor.address && <p className="text-xs text-gray-500 mt-1">{doctor.address}</p>}
             {doctor.phone && <p className="text-xs text-gray-500 mt-1">{doctor.phone}</p>}
             <p className="text-xs text-gray-400 mt-2 pt-2 border-t border-gray-100">{t('fees')}: <span className="text-gray-600 font-medium">৳{doctor.fees}</span></p>

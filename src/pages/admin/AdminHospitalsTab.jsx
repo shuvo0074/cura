@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Plus, Pencil } from 'lucide-react';
 import { api } from '../../api/client';
+import divisions from '../../data/divisions.json';
 
-const BLANK = { name: '', location: '', address: '', hotline: '', photo: '', website: '' };
+const BLANK = { name: '', location: '', division: '', address: '', hotline: '', photo: '', website: '' };
 
 export default function AdminHospitalsTab() {
   const [hospitals, setHospitals] = useState([]);
@@ -39,6 +40,11 @@ export default function AdminHospitalsTab() {
               onChange={e => setForm(f => ({ ...f, [field]: e.target.value }))}
               className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm outline-none" />
           ))}
+          <select value={form.division ?? ''} onChange={e => setForm(f => ({ ...f, division: e.target.value }))}
+            className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm outline-none">
+            <option value="">No division</option>
+            {divisions.map(d => <option key={d} value={d}>{d} Division</option>)}
+          </select>
           <div className="flex gap-2 mt-2 sm:col-span-2">
             <button type="submit" className="flex-1 bg-primary text-white py-2 rounded-lg text-sm font-medium">Save</button>
             <button type="button" onClick={() => setForm(null)} className="flex-1 border border-gray-300 py-2 rounded-lg text-sm bg-white">Cancel</button>
