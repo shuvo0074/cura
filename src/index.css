@@ -22,13 +22,13 @@ body {
   padding-right: 1.5rem;
 }
 
-@keyframes fadeSlide {
-  from { opacity: 0; transform: translateX(16px); }
-  to { opacity: 1; transform: translateX(0); }
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-.fade-slide {
-  animation: fadeSlide 0.25s ease-out;
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 /* Extends an element's background to the full viewport width without causing horizontal scroll. */

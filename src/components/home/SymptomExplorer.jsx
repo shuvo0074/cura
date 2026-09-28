@@ -1,51 +1,28 @@
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import symptoms from '../../data/symptoms.json';
 import symptomDetails from '../../data/symptomDetails.json';
 import ImageTile from './ImageTile';
 
-const VISIBLE_COUNT = 4;
-const SWIPE_THRESHOLD = 40;
-const DRAG_CAPTURE_THRESHOLD = 8;
+const GAP_PX = 16; // matches gap-4
 
 export default function SymptomExplorer() {
   const navigate = useNavigate();
-  const [startIndex, setStartIndex] = useState(0);
-  const dragStartX = useRef(null);
-  const dragged = useRef(false);
+  const trackRef = useRef(null);
 
-  const total = symptoms.length;
-  const visible = Array.from({ length: VISIBLE_COUNT }, (_, i) => symptoms[(startIndex + i) % total]);
-
-  function pageBy(delta) {
-    setStartIndex((startIndex + delta + total) % total);
-  }
-
-  function handlePointerDown(e) {
-    dragStartX.current = e.clientX;
-    dragged.current = false;
-  }
-
-  // Capture the pointer only once it's clearly a drag, so a plain click still lands on the tile.
-  function handlePointerMove(e) {
-    if (dragStartX.current == null || dragged.current) return;
-    if (Math.abs(e.clientX - dragStartX.current) > DRAG_CAPTURE_THRESHOLD) {
-      dragged.current = true;
-      try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* no-op */ }
-    }
-  }
-
-  function handlePointerUp(e) {
-    if (dragStartX.current == null) return;
-    const dx = e.clientX - dragStartX.current;
-    dragStartX.current = null;
-    if (dx > SWIPE_THRESHOLD) pageBy(-1);
-    else if (dx < -SWIPE_THRESHOLD) pageBy(1);
+  // Mirrors Booking.com's "Browse by property type" carousel: a native scroll-snap
+  // track scrolled via scrollBy(), not a React state swap — the browser's own smooth
+  // scroll drives the motion instead of a CSS keyframe fired on every click.
+  function scrollByCards(delta) {
+    const el = trackRef.current;
+    if (!el) return;
+    const card = el.querySelector('[data-tile="true"]');
+    const cardWidth = card ? card.getBoundingClientRect().width : el.clientWidth / 4;
+    el.scrollBy({ left: delta * (cardWidth + GAP_PX), behavior: 'smooth' });
   }
 
   function openSymptom(slug) {
-    if (dragged.current) { dragged.current = false; return; }
     navigate(`/symptoms/${slug}`);
   }
 
@@ -55,37 +32,33 @@ export default function SymptomExplorer() {
 
       <div className="relative">
         <button
-          onClick={() => pageBy(-1)}
+          onClick={() => scrollByCards(-1)}
           aria-label="Previous symptoms"
           className="flex items-center justify-center absolute -left-[18px] top-[100px] z-10 w-9 h-9 rounded-full bg-white text-[#1a1a1a] shadow-md border border-gray-200 hover:bg-gray-50">
           <ChevronLeft size={18} />
         </button>
 
         <div
-          key={startIndex}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={() => { dragStartX.current = null; }}
-          style={{ touchAction: 'pan-y' }}
-          className="fade-slide grid grid-cols-4 gap-4 select-none">
-          {visible.map(s => {
+          ref={trackRef}
+          className="no-scrollbar flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory">
+          {symptoms.map(s => {
             const detail = symptomDetails[s.name] || {};
             return (
-              <ImageTile
-                key={s.id}
-                image={`https://images.unsplash.com/photo-${detail.image}?w=600&h=480&fit=crop`}
-                title={s.name}
-                description={detail.description}
-                cta="Find Doctor"
-                onClick={() => openSymptom(s.slug)}
-              />
+              <div key={s.id} data-tile="true" className="shrink-0 snap-start w-[calc((100%-3rem)/4)]">
+                <ImageTile
+                  image={`https://images.unsplash.com/photo-${detail.image}?w=600&h=480&fit=crop`}
+                  title={s.name}
+                  description={detail.description}
+                  cta="Find Doctor"
+                  onClick={() => openSymptom(s.slug)}
+                />
+              </div>
             );
           })}
         </div>
 
         <button
-          onClick={() => pageBy(1)}
+          onClick={() => scrollByCards(1)}
           aria-label="Next symptoms"
           className="flex items-center justify-center absolute -right-[18px] top-[100px] z-10 w-9 h-9 rounded-full bg-white text-[#1a1a1a] shadow-md border border-gray-200 hover:bg-gray-50">
           <ChevronRight size={18} />
