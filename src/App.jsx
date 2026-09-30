@@ -25,6 +25,10 @@ function PlaceholderPage({ title }) {
   );
 }
 
+function AdminRoute({ children }) {
+  return <ProtectedRoute role="admin">{children}</ProtectedRoute>;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -47,7 +51,10 @@ export default function App() {
               <Route path="/appointments" element={<AppointmentsPage />} />
               <Route path="/login" element={<PatientLoginPage />} />
               <Route path="/staff-login" element={<DoctorAdminLoginPage />} />
-              <Route path="/admin" element={<ProtectedRoute role="admin"><AdminDashboardPage /></ProtectedRoute>} />
+              <Route path="/admin" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
+              <Route path="/admin/doctors" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
+              <Route path="/admin/hospitals" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
+              <Route path="/admin/appointments" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
               <Route path="/doctor-dashboard" element={<ProtectedRoute role="doctor"><DoctorDashboardPage /></ProtectedRoute>} />
               <Route path="/health-blogs" element={<PlaceholderPage title="Health Blogs" />} />
               <Route path="/ambulances" element={<PlaceholderPage title="Ambulances" />} />
