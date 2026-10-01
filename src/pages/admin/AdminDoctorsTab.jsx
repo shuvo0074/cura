@@ -56,7 +56,6 @@ const DOCTOR_FIELDS = [
   { key: 'experience',      label: 'Experience' },
   { key: 'chamber',         label: 'Chamber' },
   { key: 'fees',            label: 'Consultation Fees' },
-  { key: 'city',            label: 'City' },
   { key: 'phone',           label: 'Phone' },
   { key: 'rating',          label: 'Rating' },
   { key: 'about',           label: 'About' },
@@ -73,6 +72,17 @@ const DOCTOR_FIELDS = [
 function DoctorForm({ form, setForm, hospitals, onSave, onCancel, editingId }) {
   const fileRef = useRef(null);
   const [photoLoading, setPhotoLoading] = useState(false);
+
+  const districtOptions = useMemo(
+    () => form.division ? citiesForDivisions([form.division]) : citiesForDivisions(divisions),
+    [form.division]
+  );
+
+  function handleDivisionChange(e) {
+    const div = e.target.value;
+    const allowed = new Set(div ? citiesForDivisions([div]) : citiesForDivisions(divisions));
+    setForm(f => ({ ...f, division: div, city: allowed.has(f.city) ? f.city : '' }));
+  }
 
   async function handleUpload(e) {
     const file = e.target.files[0];
@@ -156,10 +166,18 @@ function DoctorForm({ form, setForm, hospitals, onSave, onCancel, editingId }) {
       </label>
       <label className="flex flex-col gap-1">
         <span className="text-xs font-medium text-gray-500">Division</span>
-        <select value={form.division ?? ''} onChange={e => setForm(f => ({ ...f, division: e.target.value }))}
+        <select value={form.division ?? ''} onChange={handleDivisionChange}
           className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none">
           <option value="">No division</option>
           {divisions.map(d => <option key={d} value={d}>{d} Division</option>)}
+        </select>
+      </label>
+      <label className="flex flex-col gap-1">
+        <span className="text-xs font-medium text-gray-500">District</span>
+        <select value={form.city ?? ''} onChange={e => setForm(f => ({ ...f, city: e.target.value }))}
+          className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none">
+          <option value="">No district</option>
+          {districtOptions.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
       </label>
       <div className="flex gap-2 mt-1 col-span-2 sm:col-span-3">
@@ -235,7 +253,7 @@ export default function AdminDoctorsTab() {
             onToggle={v => setFilters(f => ({ ...f, specialty: toggleInArray(f.specialty, v) }))} />
           <FilterSection title="Select Division" searchable={false} items={divisions}
             selected={filters.division} onToggle={v => setFilters(f => toggleDivision(f, v))} />
-          <FilterSection title="Select City" searchValue={citySearch} onSearchChange={setCitySearch}
+          <FilterSection title="Select District" searchValue={citySearch} onSearchChange={setCitySearch}
             items={cities} selected={filters.city}
             onToggle={v => setFilters(f => ({ ...f, city: toggleInArray(f.city, v) }))} />
         </div>

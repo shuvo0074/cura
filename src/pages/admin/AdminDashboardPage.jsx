@@ -20,7 +20,7 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="flex flex-col md:flex-row gap-6">
+    <div className="flex flex-col md:flex-row gap-4">
       <AdminSidebar />
       <div className="flex-1 min-w-0">
         <h1 className="text-2xl font-bold text-gray-800 mb-4">Admin Dashboard</h1>

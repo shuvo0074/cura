@@ -11,8 +11,8 @@ export default function AdminSidebar() {
   const { pathname } = useLocation();
 
   return (
-    <aside className="w-full md:w-56 flex-shrink-0">
-      <div className="bg-white rounded-xl shadow-sm p-4 md:sticky md:top-20 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 6rem)' }}>
+    <aside className="w-full md:w-44 flex-shrink-0">
+      <div className="bg-white rounded-xl shadow-sm p-4 mt-2 md:sticky md:top-24 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 6rem)' }}>
         <div className="flex items-center gap-2 mb-5">
           <LayoutDashboard size={15} className="text-primary" />
           <span className="font-semibold text-gray-800 text-sm">Admin Panel</span>
