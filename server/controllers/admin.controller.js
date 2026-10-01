@@ -1,5 +1,10 @@
+import fs from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { query } from '../db.js';
 import { logger } from '../logger.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function toNum(value) {
   if (value === '' || value === undefined || value === null) return null;
@@ -82,6 +87,33 @@ export async function updateDoctor(req, res, next) {
   }
 }
 
+export async function setDoctorPhoto(req, res, next) {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const photoPath = `/doctor-photos/${req.file.filename}`;
+    await query('UPDATE doctors SET photo = $1 WHERE id = $2', [photoPath, req.params.id]);
+    res.json({ photo: photoPath });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function deleteDoctorPhoto(req, res, next) {
+  try {
+    const { rows } = await query('SELECT photo FROM doctors WHERE id = $1', [req.params.id]);
+    if (!rows[0]) return res.status(404).json({ error: 'Doctor not found' });
+    const photo = rows[0].photo;
+    await query('UPDATE doctors SET photo = NULL WHERE id = $1', [req.params.id]);
+    // Only delete custom-uploaded files, not the shared seed photos (doctor-1.jpg … doctor-70.jpg)
+    if (photo && photo.startsWith('/doctor-photos/doctor-upload-')) {
+      await fs.unlink(path.join(__dirname, '../public', photo)).catch(() => {});
+    }
+    res.json({ photo: null });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function createHospital(req, res, next) {
   try {
     const h = req.body;
@@ -114,6 +146,33 @@ export async function updateHospital(req, res, next) {
       'Admin updated hospital'
     );
     res.json(rows[0]);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function setHospitalPhoto(req, res, next) {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const photoPath = `/hospital-photos/${req.file.filename}`;
+    await query('UPDATE hospitals SET photo = $1 WHERE id = $2', [photoPath, req.params.id]);
+    res.json({ photo: photoPath });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function deleteHospitalPhoto(req, res, next) {
+  try {
+    const { rows } = await query('SELECT photo FROM hospitals WHERE id = $1', [req.params.id]);
+    if (!rows[0]) return res.status(404).json({ error: 'Hospital not found' });
+    const photo = rows[0].photo;
+    await query('UPDATE hospitals SET photo = NULL WHERE id = $1', [req.params.id]);
+    // Only delete locally-hosted files, not Unsplash CDN URLs
+    if (photo && photo.startsWith('/hospital-photos/')) {
+      await fs.unlink(path.join(__dirname, '../public', photo)).catch(() => {});
+    }
+    res.json({ photo: null });
   } catch (err) {
     next(err);
   }

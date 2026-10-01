@@ -1,5 +1,5 @@
-import { useEffect, useState, useMemo } from 'react';
-import { Plus, Pencil, SlidersHorizontal, Search, X } from 'lucide-react';
+import { useEffect, useState, useMemo, useRef } from 'react';
+import { Plus, Pencil, SlidersHorizontal, Search, X, UserRound } from 'lucide-react';
 import { api } from '../../api/client';
 import divisions from '../../data/divisions.json';
 import { citiesForDivisions, toggleDivision } from '../../utils/geo';
@@ -48,6 +48,7 @@ function FilterSection({ title, searchValue = '', onSearchChange, items, selecte
   );
 }
 
+// Fields rendered as generic text inputs (photo is handled separately)
 const DOCTOR_FIELDS = [
   { key: 'name',            label: 'Full Name' },
   { key: 'specialty',       label: 'Specialty' },
@@ -57,7 +58,6 @@ const DOCTOR_FIELDS = [
   { key: 'fees',            label: 'Consultation Fees' },
   { key: 'city',            label: 'City' },
   { key: 'phone',           label: 'Phone' },
-  { key: 'photo',           label: 'Photo URL' },
   { key: 'rating',          label: 'Rating' },
   { key: 'about',           label: 'About' },
   { key: 'website',         label: 'Website' },
@@ -70,9 +70,74 @@ const DOCTOR_FIELDS = [
   { key: 'treatments',      label: 'Treatments' },
 ];
 
-function DoctorForm({ form, setForm, hospitals, onSave, onCancel }) {
+function DoctorForm({ form, setForm, hospitals, onSave, onCancel, editingId }) {
+  const fileRef = useRef(null);
+  const [photoLoading, setPhotoLoading] = useState(false);
+
+  async function handleUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    setPhotoLoading(true);
+    try {
+      const fd = new FormData();
+      fd.append('photo', file);
+      const res = await api.upload(`/admin/doctors/${editingId}/photo`, fd);
+      setForm(f => ({ ...f, photo: res.photo }));
+    } finally {
+      setPhotoLoading(false);
+      e.target.value = '';
+    }
+  }
+
+  async function handleRemove() {
+    setPhotoLoading(true);
+    try {
+      await api.del(`/admin/doctors/${editingId}/photo`);
+      setForm(f => ({ ...f, photo: null }));
+    } finally {
+      setPhotoLoading(false);
+    }
+  }
+
   return (
     <form onSubmit={onSave} className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      {/* Photo row — upload UI in edit mode, URL text field in add mode */}
+      <div className="col-span-2 sm:col-span-3 flex items-center gap-4 pb-3 border-b border-gray-100">
+        {editingId ? (
+          <>
+            {form.photo
+              ? <img src={form.photo} alt="" className="w-16 h-16 rounded-full object-cover border border-gray-200 flex-shrink-0" />
+              : <div className="w-16 h-16 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center flex-shrink-0">
+                  <UserRound size={26} className="text-gray-300" />
+                </div>
+            }
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-medium text-gray-500">Photo</span>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => fileRef.current?.click()} disabled={photoLoading}
+                  className="text-xs px-3 py-1.5 border border-primary text-primary rounded-lg font-medium hover:bg-primary/5 disabled:opacity-50 transition-colors">
+                  {photoLoading ? 'Uploading…' : 'Upload Photo'}
+                </button>
+                {form.photo && (
+                  <button type="button" onClick={handleRemove} disabled={photoLoading}
+                    className="text-xs px-3 py-1.5 border border-red-200 text-red-500 rounded-lg font-medium hover:bg-red-50 disabled:opacity-50 transition-colors">
+                    Remove
+                  </button>
+                )}
+              </div>
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
+            </div>
+          </>
+        ) : (
+          <label className="flex flex-col gap-1 w-full">
+            <span className="text-xs font-medium text-gray-500">Photo URL</span>
+            <input placeholder="Photo URL" value={form.photo ?? ''}
+              onChange={e => setForm(f => ({ ...f, photo: e.target.value }))}
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none" />
+          </label>
+        )}
+      </div>
+
       {DOCTOR_FIELDS.map(({ key, label }) => (
         <label key={key} className="flex flex-col gap-1">
           <span className="text-xs font-medium text-gray-500">{label}</span>
@@ -207,12 +272,20 @@ export default function AdminDoctorsTab() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
           {filtered.map(d => (
             <div key={d.id} className="bg-white rounded-xl shadow-sm p-3 flex justify-between items-center text-sm">
-              <div>
-                <p className="font-medium text-gray-800">{d.name}</p>
-                <p className="text-xs text-gray-500">{d.specialty} · {d.hospital_name || 'No hospital'}</p>
+              <div className="flex items-center gap-2.5 min-w-0">
+                {d.photo
+                  ? <img src={d.photo} alt="" className="w-9 h-9 rounded-full object-cover flex-shrink-0 border border-gray-100" />
+                  : <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                      <UserRound size={16} className="text-gray-300" />
+                    </div>
+                }
+                <div className="min-w-0">
+                  <p className="font-medium text-gray-800 truncate">{d.name}</p>
+                  <p className="text-xs text-gray-500 truncate">{d.specialty} · {d.hospital_name || 'No hospital'}</p>
+                </div>
               </div>
               <button onClick={() => { setEditForm(toEditableForm({ ...d, hospitalId: d.hospital_id ?? '' })); setAddForm(null); }}
-                className="text-gray-400 hover:text-primary">
+                className="text-gray-400 hover:text-primary flex-shrink-0 ml-2">
                 <Pencil size={16} />
               </button>
             </div>
@@ -228,7 +301,7 @@ export default function AdminDoctorsTab() {
       {editForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
           onClick={e => { if (e.target === e.currentTarget) setEditForm(null); }}>
-          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-3xl mx-4">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-gray-800 text-base">Edit Doctor</h3>
               <button onClick={() => setEditForm(null)} className="text-gray-400 hover:text-gray-600">
@@ -236,6 +309,7 @@ export default function AdminDoctorsTab() {
               </button>
             </div>
             <DoctorForm form={editForm} setForm={setEditForm} hospitals={hospitals}
+              editingId={editForm.id}
               onSave={e => { e.preventDefault(); handleSave(editForm, () => setEditForm(null)); }}
               onCancel={() => setEditForm(null)} />
           </div>

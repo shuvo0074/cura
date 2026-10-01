@@ -1,5 +1,5 @@
-import { useEffect, useState, useMemo } from 'react';
-import { Plus, Pencil, SlidersHorizontal, Search, X } from 'lucide-react';
+import { useEffect, useState, useMemo, useRef } from 'react';
+import { Plus, Pencil, SlidersHorizontal, Search, X, Building2 } from 'lucide-react';
 import { api } from '../../api/client';
 import divisions from '../../data/divisions.json';
 import { citiesForDivisions } from '../../utils/geo';
@@ -34,17 +34,80 @@ function FilterSection({ title, placeholder, items, selected, onToggle }) {
   );
 }
 
-function HospitalForm({ form, setForm, onSave, onCancel }) {
+function HospitalForm({ form, setForm, onSave, onCancel, editingId }) {
+  const fileRef = useRef(null);
+  const [photoLoading, setPhotoLoading] = useState(false);
+
+  async function handleUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    setPhotoLoading(true);
+    try {
+      const fd = new FormData();
+      fd.append('photo', file);
+      const res = await api.upload(`/admin/hospitals/${editingId}/photo`, fd);
+      setForm(f => ({ ...f, photo: res.photo }));
+    } finally {
+      setPhotoLoading(false);
+      e.target.value = '';
+    }
+  }
+
+  async function handleRemove() {
+    setPhotoLoading(true);
+    try {
+      await api.del(`/admin/hospitals/${editingId}/photo`);
+      setForm(f => ({ ...f, photo: null }));
+    } finally {
+      setPhotoLoading(false);
+    }
+  }
+
   return (
     <form onSubmit={onSave} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      {/* Row 1 */}
+      {/* Photo row — upload UI in edit mode, URL text field in add mode */}
+      <div className="sm:col-span-2 flex items-center gap-4 pb-3 border-b border-gray-100">
+        {editingId ? (
+          <>
+            {form.photo
+              ? <img src={form.photo} alt="" className="w-16 h-16 rounded-lg object-cover border border-gray-200 flex-shrink-0" />
+              : <div className="w-16 h-16 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center flex-shrink-0">
+                  <Building2 size={26} className="text-gray-300" />
+                </div>
+            }
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-medium text-gray-500">Photo</span>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => fileRef.current?.click()} disabled={photoLoading}
+                  className="text-xs px-3 py-1.5 border border-primary text-primary rounded-lg font-medium hover:bg-primary/5 disabled:opacity-50 transition-colors">
+                  {photoLoading ? 'Uploading…' : 'Upload Photo'}
+                </button>
+                {form.photo && (
+                  <button type="button" onClick={handleRemove} disabled={photoLoading}
+                    className="text-xs px-3 py-1.5 border border-red-200 text-red-500 rounded-lg font-medium hover:bg-red-50 disabled:opacity-50 transition-colors">
+                    Remove
+                  </button>
+                )}
+              </div>
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
+            </div>
+          </>
+        ) : (
+          <label className="flex flex-col gap-1 w-full">
+            <span className="text-xs font-medium text-gray-500">Photo URL</span>
+            <input placeholder="Photo URL" value={form.photo ?? ''}
+              onChange={e => setForm(f => ({ ...f, photo: e.target.value }))}
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none" />
+          </label>
+        )}
+      </div>
+
       <label className="flex flex-col gap-1 sm:col-span-2">
         <span className="text-xs font-medium text-gray-500">Hospital Name</span>
         <input placeholder="Hospital Name" value={form.name ?? ''}
           onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
           className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none" />
       </label>
-      {/* Row 2 */}
       <label className="flex flex-col gap-1">
         <span className="text-xs font-medium text-gray-500">City / Location</span>
         <input placeholder="City / Location" value={form.location ?? ''}
@@ -59,14 +122,12 @@ function HospitalForm({ form, setForm, onSave, onCancel }) {
           {divisions.map(d => <option key={d} value={d}>{d} Division</option>)}
         </select>
       </label>
-      {/* Row 3 */}
       <label className="flex flex-col gap-1 sm:col-span-2">
         <span className="text-xs font-medium text-gray-500">Address</span>
         <input placeholder="Address" value={form.address ?? ''}
           onChange={e => setForm(f => ({ ...f, address: e.target.value }))}
           className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none" />
       </label>
-      {/* Row 4 */}
       <label className="flex flex-col gap-1">
         <span className="text-xs font-medium text-gray-500">Hotline</span>
         <input placeholder="Hotline" value={form.hotline ?? ''}
@@ -77,13 +138,6 @@ function HospitalForm({ form, setForm, onSave, onCancel }) {
         <span className="text-xs font-medium text-gray-500">Website</span>
         <input placeholder="Website" value={form.website ?? ''}
           onChange={e => setForm(f => ({ ...f, website: e.target.value }))}
-          className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none" />
-      </label>
-      {/* Row 5 */}
-      <label className="flex flex-col gap-1 sm:col-span-2">
-        <span className="text-xs font-medium text-gray-500">Photo URL</span>
-        <input placeholder="Photo URL" value={form.photo ?? ''}
-          onChange={e => setForm(f => ({ ...f, photo: e.target.value }))}
           className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none" />
       </label>
       <div className="flex gap-2 sm:col-span-2 mt-1">
@@ -98,8 +152,8 @@ const EMPTY_FILTERS = { division: [], district: [] };
 
 export default function AdminHospitalsTab() {
   const [hospitals, setHospitals] = useState([]);
-  const [addForm, setAddForm] = useState(null);   // inline add form
-  const [editForm, setEditForm] = useState(null); // modal edit form
+  const [addForm, setAddForm] = useState(null);
+  const [editForm, setEditForm] = useState(null);
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [search, setSearch] = useState('');
 
@@ -190,11 +244,19 @@ export default function AdminHospitalsTab() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
           {filtered.map(h => (
             <div key={h.id} className="bg-white rounded-xl shadow-sm p-3 flex justify-between items-center text-sm">
-              <div>
-                <p className="font-medium text-gray-800">{h.name}</p>
-                <p className="text-xs text-gray-500">{h.location}</p>
+              <div className="flex items-center gap-2.5 min-w-0">
+                {h.photo
+                  ? <img src={h.photo} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0 border border-gray-100" />
+                  : <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                      <Building2 size={16} className="text-gray-300" />
+                    </div>
+                }
+                <div className="min-w-0">
+                  <p className="font-medium text-gray-800 truncate">{h.name}</p>
+                  <p className="text-xs text-gray-500 truncate">{h.location}</p>
+                </div>
               </div>
-              <button onClick={() => { setEditForm(h); setAddForm(null); }} className="text-gray-400 hover:text-primary">
+              <button onClick={() => { setEditForm(h); setAddForm(null); }} className="text-gray-400 hover:text-primary flex-shrink-0 ml-2">
                 <Pencil size={16} />
               </button>
             </div>
@@ -218,6 +280,7 @@ export default function AdminHospitalsTab() {
               </button>
             </div>
             <HospitalForm form={editForm} setForm={setEditForm}
+              editingId={editForm.id}
               onSave={e => { e.preventDefault(); handleSave(editForm, () => setEditForm(null)); }}
               onCancel={() => setEditForm(null)} />
           </div>
