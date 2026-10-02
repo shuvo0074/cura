@@ -250,7 +250,7 @@ export default function AdminHospitalsTab() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
           {filtered.map(h => (
-            <div key={h.id} className="bg-white rounded-xl shadow-sm p-3 flex justify-between items-center text-sm">
+            <div key={h.id} onClick={() => { setEditForm(h); setAddForm(null); }} className="bg-white rounded-xl shadow-sm p-3 flex justify-between items-center text-sm cursor-pointer hover:shadow-md hover:bg-gray-50 transition-shadow">
               <div className="flex items-center gap-2.5 min-w-0">
                 {h.photo
                   ? <img src={h.photo} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0 border border-gray-100" />
@@ -263,9 +263,7 @@ export default function AdminHospitalsTab() {
                   <p className="text-xs text-gray-500 truncate">{h.location}</p>
                 </div>
               </div>
-              <button onClick={() => { setEditForm(h); setAddForm(null); }} className="text-gray-400 hover:text-primary flex-shrink-0 ml-2">
-                <Pencil size={16} />
-              </button>
+              <Pencil size={16} className="text-gray-400 flex-shrink-0 ml-2" />
             </div>
           ))}
         </div>
