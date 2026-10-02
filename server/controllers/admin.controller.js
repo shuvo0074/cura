@@ -114,9 +114,9 @@ export async function createHospital(req, res, next) {
   try {
     const h = req.body;
     const { rows } = await query(
-      `INSERT INTO hospitals (name, location, address, hotline, photo, lat, lng, website, doctor_count, division)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,0,$9) RETURNING *`,
-      [h.name, h.location, h.address, h.hotline, h.photo, toNum(h.lat), toNum(h.lng), h.website, h.division || null]
+      `INSERT INTO hospitals (name, location, address, hotline, photo, lat, lng, website, doctor_count, division, description)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,0,$9,$10) RETURNING *`,
+      [h.name, h.location, h.address, h.hotline, h.photo, toNum(h.lat), toNum(h.lng), h.website, h.division || null, h.description || null]
     );
     logger.info(
       { event: 'admin_hospital_created', adminId: req.user?.sub, hospitalId: rows[0].id, name: rows[0].name },
@@ -132,9 +132,9 @@ export async function updateHospital(req, res, next) {
   try {
     const h = req.body;
     const { rows } = await query(
-      `UPDATE hospitals SET name=$1, location=$2, address=$3, hotline=$4, photo=$5, lat=$6, lng=$7, website=$8, division=$9
-       WHERE id = $10 RETURNING *`,
-      [h.name, h.location, h.address, h.hotline, h.photo, toNum(h.lat), toNum(h.lng), h.website, h.division || null, req.params.id]
+      `UPDATE hospitals SET name=$1, location=$2, address=$3, hotline=$4, photo=$5, lat=$6, lng=$7, website=$8, division=$9, description=$10
+       WHERE id = $11 RETURNING *`,
+      [h.name, h.location, h.address, h.hotline, h.photo, toNum(h.lat), toNum(h.lng), h.website, h.division || null, h.description || null, req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Hospital not found' });
     logger.info(

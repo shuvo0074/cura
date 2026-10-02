@@ -4,7 +4,7 @@ import { api } from '../../api/client';
 import divisions from '../../data/divisions.json';
 import { citiesForDivisions } from '../../utils/geo';
 
-const BLANK = { name: '', location: '', division: '', address: '', hotline: '', photo: '', website: '' };
+const BLANK = { name: '', location: '', division: '', address: '', hotline: '', photo: '', website: '', description: '' };
 
 function toggleInArray(arr, item) {
   return arr.includes(item) ? arr.filter(i => i !== item) : [...arr, item];
@@ -139,6 +139,13 @@ function HospitalForm({ form, setForm, onSave, onCancel, editingId }) {
         <input placeholder="Website" value={form.website ?? ''}
           onChange={e => setForm(f => ({ ...f, website: e.target.value }))}
           className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none" />
+      </label>
+      <label className="flex flex-col gap-1 sm:col-span-2">
+        <span className="text-xs font-medium text-gray-500">Description</span>
+        <textarea placeholder="Short description of the hospital…" value={form.description ?? ''}
+          onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+          rows={3}
+          className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none resize-none" />
       </label>
       <div className="flex gap-2 sm:col-span-2 mt-1">
         <button type="submit" className="flex-1 bg-primary text-white py-2 rounded-lg text-sm font-medium">Save</button>

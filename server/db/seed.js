@@ -31,9 +31,9 @@ async function main() {
   const hospitalIdMap = {};
   for (const h of hospitals) {
     const { rows } = await pool.query(
-      `INSERT INTO hospitals (name, location, division, address, hotline, photo, lat, lng, website, doctor_count)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
-      [h.name, h.location, h.division, h.address, h.hotline, h.photo, h.lat, h.lng, h.website, h.doctorCount || 0]
+      `INSERT INTO hospitals (name, location, division, address, hotline, photo, lat, lng, website, doctor_count, description)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id`,
+      [h.name, h.location, h.division, h.address, h.hotline, h.photo, h.lat, h.lng, h.website, h.doctorCount || 0, h.description || null]
     );
     hospitalIdMap[h.id] = rows[0].id;
   }
