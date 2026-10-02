@@ -289,7 +289,7 @@ export default function AdminDoctorsTab() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
           {filtered.map(d => (
-            <div key={d.id} className="bg-white rounded-xl shadow-sm p-3 flex justify-between items-center text-sm">
+            <div key={d.id} onClick={() => { setEditForm(toEditableForm({ ...d, hospitalId: d.hospital_id ?? '' })); setAddForm(null); }} className="bg-white rounded-xl shadow-sm p-3 flex justify-between items-center text-sm cursor-pointer hover:shadow-md hover:bg-gray-50 transition-shadow">
               <div className="flex items-center gap-2.5 min-w-0">
                 {d.photo
                   ? <img src={d.photo} alt="" className="w-9 h-9 rounded-full object-cover flex-shrink-0 border border-gray-100" />
@@ -302,10 +302,7 @@ export default function AdminDoctorsTab() {
                   <p className="text-xs text-gray-500 truncate">{d.specialty} · {d.hospital_name || 'No hospital'}</p>
                 </div>
               </div>
-              <button onClick={() => { setEditForm(toEditableForm({ ...d, hospitalId: d.hospital_id ?? '' })); setAddForm(null); }}
-                className="text-gray-400 hover:text-primary flex-shrink-0 ml-2">
-                <Pencil size={16} />
-              </button>
+              <Pencil size={16} className="text-gray-400 flex-shrink-0 ml-2" />
             </div>
           ))}
         </div>
