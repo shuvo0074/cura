@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Phone, MapPin, Share2 } from 'lucide-react';
+import { Phone, ChevronRight, Share2, MapPin, Star } from 'lucide-react';
 import { withDivision } from '../../utils/place';
 import SharePopover from './SharePopover';
 import CallPopover from './CallPopover';
@@ -13,55 +13,75 @@ export default function DoctorCardWide({ doctor }) {
 
   function toggleShare(e) {
     e.stopPropagation();
-    const target = e.currentTarget;
-    setShareAnchor(prev => (prev ? null : target));
+    setShareAnchor(prev => (prev ? null : e.currentTarget));
   }
 
   function toggleCall(e) {
     e.stopPropagation();
-    const target = e.currentTarget;
-    setCallAnchor(prev => (prev ? null : target));
+    setCallAnchor(prev => (prev ? null : e.currentTarget));
   }
 
   return (
-    <div onClick={() => navigate(`/doctors/${doctor.id}`)}
-      className="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col cursor-pointer hover:shadow-md transition-shadow">
+    <div
+      onClick={() => navigate(`/doctors/${doctor.id}`)}
+      className="bg-white rounded-2xl shadow-sm overflow-hidden cursor-pointer active:scale-[0.99] transition-transform">
+
+      {/* Card body */}
       <div className="flex gap-4 p-4">
-        <img src={doctor.photo} alt={doctor.name}
-          className="w-32 h-32 rounded-lg object-cover flex-shrink-0" />
+        <img
+          src={doctor.photo}
+          alt={doctor.name}
+          className="w-20 h-20 sm:w-28 sm:h-28 rounded-xl object-cover flex-shrink-0"
+        />
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
-            <h3 className="font-semibold text-gray-800 leading-tight">{doctor.name}</h3>
+            <div className="min-w-0">
+              <h3 className="font-semibold text-gray-900 leading-tight">{doctor.name}</h3>
+              <p className="text-primary text-sm font-medium mt-0.5">
+                {doctor.specialty}{doctor.department ? ` · ${doctor.department}` : ''}
+              </p>
+            </div>
             <button onClick={toggleShare} aria-label="Share doctor"
-              className="text-gray-400 hover:text-primary mt-0.5 flex-shrink-0">
+              className="text-gray-400 hover:text-primary p-1 -mt-1 flex-shrink-0">
               <Share2 size={15} />
             </button>
           </div>
-          <p className="text-gray-500 text-sm mt-0.5">{doctor.specialty}{doctor.department ? ` · ${doctor.department}` : ''}</p>
-          <p className="text-gray-600 text-sm mt-2">{doctor.experience} · Fees ৳{doctor.fees}</p>
-          <div className="border-b border-gray-100 my-2 w-16" />
-          <p className="text-gray-600 text-sm flex items-center gap-1">
-            <MapPin size={13} className="text-primary flex-shrink-0" />
-            {withDivision(`${doctor.hospital_name ? `${doctor.hospital_name}, ` : ''}${doctor.city}`, doctor.city, doctor.division)}
-          </p>
+
+          <p className="text-gray-500 text-sm mt-1">{doctor.experience} · <span className="text-primary font-semibold">৳{doctor.fees}</span></p>
+
+          <div className="flex items-center gap-1 mt-1.5">
+            <MapPin size={12} className="text-primary flex-shrink-0" />
+            <p className="text-gray-500 text-sm truncate">
+              {withDivision(`${doctor.hospital_name ? `${doctor.hospital_name}, ` : ''}${doctor.city}`, doctor.city, doctor.division)}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-0.5 mt-1.5">
+            <Star size={13} fill="#F59E0B" className="text-amber-400" />
+            <span className="text-xs text-gray-500 font-medium">4.8 · Verified</span>
+          </div>
         </div>
       </div>
 
-      <div className="flex mt-auto border-t border-gray-100">
-        <button onClick={(e) => { e.stopPropagation(); navigate(`/doctors/${doctor.id}`); }}
-          className="flex-1 bg-primary text-white text-sm font-medium py-2.5">
-          View Details
+      {/* Action buttons */}
+      <div className="grid grid-cols-2 border-t border-gray-100">
+        <button
+          onClick={toggleCall}
+          className="flex items-center justify-center gap-2 py-3.5 bg-green-50 text-green-700 text-sm font-semibold border-r border-gray-100 active:bg-green-100 transition-colors">
+          <Phone size={15} fill="currentColor" className="text-green-600" />
+          Call Now
         </button>
-        <button onClick={toggleCall}
-          className="flex-1 flex items-center justify-center gap-1.5 border-l border-gray-100 text-primary text-sm font-medium py-2.5">
-          <Phone size={14} /> Call Now
+        <button
+          onClick={(e) => { e.stopPropagation(); navigate(`/doctors/${doctor.id}`); }}
+          className="flex items-center justify-center gap-1.5 py-3.5 bg-primary/5 text-primary text-sm font-semibold active:bg-primary/10 transition-colors">
+          View Details
+          <ChevronRight size={15} />
         </button>
       </div>
 
       {shareAnchor && (
         <SharePopover doctor={doctor} anchorEl={shareAnchor} onClose={() => setShareAnchor(null)} />
       )}
-
       {callAnchor && (
         <CallPopover doctor={doctor} schedule={doctor.weekly_schedule} dow={getDhakaNow().dow} anchorEl={callAnchor} onClose={() => setCallAnchor(null)} />
       )}

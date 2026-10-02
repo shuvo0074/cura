@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useEffect, useMemo, useState } from 'react';
-import { Phone, Globe, Navigation, ArrowLeft, MapPin, Star, Users, SlidersHorizontal, Search } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Phone, Globe, Navigation, ArrowLeft, MapPin, Star, Users, SlidersHorizontal, Search, X } from 'lucide-react';
 import { api } from '../api/client';
 import { getDhakaNow, parseTimeRangeToMinutes } from '../utils/dhakaTime';
 import { withDivision } from '../utils/place';
@@ -28,51 +28,89 @@ function isOnDutyNow(venueSchedule) {
   });
 }
 
-// Page-local specialty filter, scoped to just this hospital's doctors — not
-// the shared FilterContext used by /doctors, /specialties/:slug, etc., since
-// a hospital page has no city dimension to filter (everyone's already here)
-// and shouldn't reset filter state other pages rely on.
+// Page-local specialty filter — mobile bottom sheet, desktop sticky sidebar.
 function SpecialtyFilter({ specialties, selected, onToggle, onClear, search, onSearch }) {
   const { t } = useTranslation();
+  const [mobileOpen, setMobileOpen] = React.useState(false);
   const filtered = specialties.filter(s => s.toLowerCase().includes(search.toLowerCase()));
-  return (
-    <aside className="w-full md:w-64 flex-shrink-0 md:sticky md:top-20">
-      <div className={`${CARD} p-4`}>
-        <div className="flex items-center justify-between mb-4">
-          <span className="flex items-center gap-2 font-semibold text-gray-800 text-sm">
-            <SlidersHorizontal size={15} /> {t('filter_by')}
-          </span>
-          <button onClick={onClear} className="text-xs text-primary font-medium">
-            Clear All
-          </button>
-        </div>
 
-        <p className="text-sm font-semibold text-gray-800 mb-2">{t('specialities')}</p>
-        <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-2.5 py-1.5 mb-2">
-          <Search size={13} className="text-gray-400 flex-shrink-0" />
-          <input
-            value={search}
-            onChange={e => onSearch(e.target.value)}
-            placeholder={t('specialities')}
-            className="flex-1 text-xs outline-none bg-transparent"
-          />
-        </div>
-        <div className="flex flex-col gap-1.5 max-h-64 overflow-y-auto pr-1">
-          {filtered.map(item => (
-            <label key={item} className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={selected.includes(item)}
-                onChange={() => onToggle(item)}
-                className="accent-primary"
-              />
-              {item}
-            </label>
-          ))}
-          {filtered.length === 0 && <p className="text-xs text-gray-400">No matches.</p>}
-        </div>
+  const checkboxList = (
+    <div className="flex flex-col gap-1.5 overflow-y-auto pr-1" style={{ maxHeight: '55vh' }}>
+      {filtered.map(item => (
+        <label key={item} className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
+          <input type="checkbox" checked={selected.includes(item)} onChange={() => onToggle(item)} className="accent-primary" />
+          {item}
+        </label>
+      ))}
+      {filtered.length === 0 && <p className="text-xs text-gray-400">No matches.</p>}
+    </div>
+  );
+
+  return (
+    <>
+      {/* Mobile trigger */}
+      <div className="md:hidden mb-3">
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-xl px-4 py-2.5 shadow-sm active:bg-gray-50">
+          <SlidersHorizontal size={15} className="text-primary" />
+          {t('filter_by')}
+          {selected.length > 0 && (
+            <span className="bg-primary text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center leading-none">
+              {selected.length}
+            </span>
+          )}
+        </button>
       </div>
-    </aside>
+
+      {/* Mobile bottom sheet */}
+      {mobileOpen && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/40 md:hidden" onClick={() => setMobileOpen(false)} />
+          <div className="fixed inset-x-0 bottom-0 z-50 md:hidden bg-white rounded-t-2xl max-h-[80vh] flex flex-col">
+            <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
+              <div className="w-10 h-1 rounded-full bg-gray-300" />
+            </div>
+            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 flex-shrink-0">
+              <span className="font-semibold text-gray-900">{t('filter_by')}</span>
+              <button onClick={() => setMobileOpen(false)} className="text-gray-400 p-1">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-5 py-4">
+              <p className="text-sm font-semibold text-gray-800 mb-2">{t('specialities')}</p>
+              <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-2.5 py-1.5 mb-3">
+                <Search size={13} className="text-gray-400 flex-shrink-0" />
+                <input value={search} onChange={e => onSearch(e.target.value)} placeholder={t('specialities')} className="flex-1 text-xs outline-none bg-transparent" />
+              </div>
+              {checkboxList}
+            </div>
+            <div className="flex gap-3 px-5 py-4 border-t border-gray-100 flex-shrink-0">
+              <button onClick={() => { onClear(); }} className="flex-1 border border-gray-200 rounded-xl py-3 text-sm text-gray-600 font-medium">Clear All</button>
+              <button onClick={() => setMobileOpen(false)} className="flex-1 bg-primary text-white rounded-xl py-3 text-sm font-semibold">Show Results</button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Desktop sidebar */}
+      <aside className="hidden md:block w-64 flex-shrink-0 md:sticky md:top-20">
+        <div className={`${CARD} p-4`}>
+          <div className="flex items-center justify-between mb-4">
+            <span className="flex items-center gap-2 font-semibold text-gray-800 text-sm">
+              <SlidersHorizontal size={15} /> {t('filter_by')}
+            </span>
+            <button onClick={onClear} className="text-xs text-primary font-medium">Clear All</button>
+          </div>
+          <p className="text-sm font-semibold text-gray-800 mb-2">{t('specialities')}</p>
+          <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-2.5 py-1.5 mb-2">
+            <Search size={13} className="text-gray-400 flex-shrink-0" />
+            <input value={search} onChange={e => onSearch(e.target.value)} placeholder={t('specialities')} className="flex-1 text-xs outline-none bg-transparent" />
+          </div>
+          <div className="flex flex-col gap-1.5 max-h-64 overflow-y-auto pr-1">{checkboxList}</div>
+        </div>
+      </aside>
+    </>
   );
 }
 

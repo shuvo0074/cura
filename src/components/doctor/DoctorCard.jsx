@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Phone, Info, Share2, MapPin } from 'lucide-react';
+import { Phone, ChevronRight, Share2, MapPin, Star } from 'lucide-react';
 import { withDivision } from '../../utils/place';
 import { useTranslation } from 'react-i18next';
 import SharePopover from './SharePopover';
@@ -15,56 +15,77 @@ export default function DoctorCard({ doctor }) {
 
   function toggleShare(e) {
     e.stopPropagation();
-    const target = e.currentTarget;
-    setShareAnchor(prev => (prev ? null : target));
+    setShareAnchor(prev => (prev ? null : e.currentTarget));
   }
 
   function toggleCall(e) {
     e.stopPropagation();
-    const target = e.currentTarget;
-    setCallAnchor(prev => (prev ? null : target));
+    setCallAnchor(prev => (prev ? null : e.currentTarget));
   }
 
   return (
-    <div onClick={() => navigate(`/doctors/${doctor.id}`)}
-      className="bg-white rounded-xl shadow-sm p-4 flex gap-3 relative cursor-pointer hover:shadow-md transition-shadow">
-      <img src={doctor.photo} alt={doctor.name}
-        className="w-16 h-16 rounded-full object-cover flex-shrink-0" />
+    <div
+      onClick={() => navigate(`/doctors/${doctor.id}`)}
+      className="bg-white rounded-2xl shadow-sm overflow-hidden cursor-pointer active:scale-[0.99] transition-transform">
 
-      <div className="flex-1 min-w-0">
-        <div className="flex justify-between items-start">
-          <div>
-            <h3 className="font-semibold text-gray-800 text-sm">{doctor.name}</h3>
-            <p className="text-primary text-xs font-medium">{doctor.specialty}</p>
-            <p className="text-gray-500 text-xs">{doctor.experience} {t('experience')}</p>
-            <p className="text-gray-500 text-xs flex items-center gap-1 mt-0.5">
-              <MapPin size={10} /> {withDivision(doctor.chamber, doctor.city, doctor.division)}
-            </p>
-            <p className="text-gray-700 text-xs font-medium mt-1">
-              {t('fees')}: ৳{doctor.fees}
+      {/* Card body */}
+      <div className="flex gap-3 p-4">
+        <img
+          src={doctor.photo}
+          alt={doctor.name}
+          className="w-[72px] h-[72px] rounded-xl object-cover flex-shrink-0"
+        />
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-1">
+            <div className="min-w-0">
+              <h3 className="font-semibold text-gray-900 text-sm leading-tight truncate">{doctor.name}</h3>
+              <p className="text-primary text-xs font-medium mt-0.5">{doctor.specialty}</p>
+            </div>
+            <button
+              onClick={toggleShare}
+              className="text-gray-400 hover:text-primary p-1 -mt-1 flex-shrink-0">
+              <Share2 size={15} />
+            </button>
+          </div>
+
+          <p className="text-gray-500 text-xs mt-1">{doctor.experience} {t('experience')}</p>
+
+          <div className="flex items-center gap-1 mt-1">
+            <MapPin size={10} className="text-primary flex-shrink-0" />
+            <p className="text-gray-500 text-xs truncate">
+              {withDivision(doctor.chamber, doctor.city, doctor.division)}
             </p>
           </div>
-          <button onClick={toggleShare} className="text-gray-400 hover:text-primary">
-            <Share2 size={16} />
-          </button>
-        </div>
 
-        <div className="flex gap-2 mt-3">
-          <button onClick={toggleCall}
-            className="flex-1 flex items-center justify-center gap-1 bg-primary text-white text-xs py-1.5 rounded-lg font-medium">
-            <Phone size={12} /> {t('call_now')}
-          </button>
-          <button onClick={(e) => { e.stopPropagation(); navigate(`/doctors/${doctor.id}`); }}
-            className="flex-1 flex items-center justify-center gap-1 border border-primary text-primary text-xs py-1.5 rounded-lg font-medium">
-            <Info size={12} /> {t('view_details')}
-          </button>
+          <div className="flex items-center justify-between mt-2">
+            <span className="text-primary text-sm font-bold">৳{doctor.fees}</span>
+            <span className="flex items-center gap-0.5 text-xs text-amber-500 font-medium">
+              <Star size={11} fill="currentColor" /> 4.8
+            </span>
+          </div>
         </div>
+      </div>
+
+      {/* Action buttons */}
+      <div className="grid grid-cols-2 border-t border-gray-100">
+        <button
+          onClick={toggleCall}
+          className="flex items-center justify-center gap-2 py-3 bg-green-50 text-green-700 text-sm font-semibold border-r border-gray-100 active:bg-green-100 transition-colors">
+          <Phone size={15} fill="currentColor" className="text-green-600" />
+          {t('call_now')}
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); navigate(`/doctors/${doctor.id}`); }}
+          className="flex items-center justify-center gap-1.5 py-3 bg-primary/5 text-primary text-sm font-semibold active:bg-primary/10 transition-colors">
+          Details
+          <ChevronRight size={15} />
+        </button>
       </div>
 
       {shareAnchor && (
         <SharePopover doctor={doctor} anchorEl={shareAnchor} onClose={() => setShareAnchor(null)} />
       )}
-
       {callAnchor && (
         <CallPopover doctor={doctor} schedule={doctor.weekly_schedule} dow={getDhakaNow().dow} anchorEl={callAnchor} onClose={() => setCallAnchor(null)} />
       )}

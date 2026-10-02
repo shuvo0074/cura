@@ -5,25 +5,18 @@ import specialties from '../../data/specialties.json';
 import specialtyDetails from '../../data/specialtyDetails.json';
 import ImageTile from './ImageTile';
 
-const GAP_PX = 16; // matches gap-4
+const GAP_PX = 16;
 
 export default function SpecialityExplorer() {
   const navigate = useNavigate();
   const trackRef = useRef(null);
 
-  // Mirrors Booking.com's "Browse by property type" carousel: a native scroll-snap
-  // track scrolled via scrollBy(), not a React state swap — the browser's own smooth
-  // scroll drives the motion instead of a CSS keyframe fired on every click.
   function scrollByCards(delta) {
     const el = trackRef.current;
     if (!el) return;
     const card = el.querySelector('[data-tile="true"]');
     const cardWidth = card ? card.getBoundingClientRect().width : el.clientWidth / 4;
     el.scrollBy({ left: delta * (cardWidth + GAP_PX), behavior: 'smooth' });
-  }
-
-  function openSpecialty(slug) {
-    navigate(`/specialties/${slug}`);
   }
 
   return (
@@ -34,7 +27,7 @@ export default function SpecialityExplorer() {
         <button
           onClick={() => scrollByCards(-1)}
           aria-label="Previous specialities"
-          className="flex items-center justify-center absolute -left-[18px] top-[100px] z-10 w-9 h-9 rounded-full bg-white text-[#1a1a1a] shadow-md border border-gray-200 hover:bg-gray-50">
+          className="hidden md:flex items-center justify-center absolute -left-[18px] top-[100px] z-10 w-9 h-9 rounded-full bg-white text-[#1a1a1a] shadow-md border border-gray-200 hover:bg-gray-50">
           <ChevronLeft size={18} />
         </button>
 
@@ -44,13 +37,14 @@ export default function SpecialityExplorer() {
           {specialties.map(s => {
             const detail = specialtyDetails[s.name] || {};
             return (
-              <div key={s.id} data-tile="true" className="shrink-0 snap-start w-[calc((100%-3rem)/4)]">
+              <div key={s.id} data-tile="true"
+                className="shrink-0 snap-start w-52 md:w-[calc((100%-3rem)/4)]">
                 <ImageTile
                   image={`https://images.unsplash.com/photo-${detail.image}?w=600&h=480&fit=crop`}
                   title={s.name}
                   description={detail.description}
                   cta="Find Doctor"
-                  onClick={() => openSpecialty(s.slug)}
+                  onClick={() => navigate(`/specialties/${s.slug}`)}
                 />
               </div>
             );
@@ -60,7 +54,7 @@ export default function SpecialityExplorer() {
         <button
           onClick={() => scrollByCards(1)}
           aria-label="Next specialities"
-          className="flex items-center justify-center absolute -right-[18px] top-[100px] z-10 w-9 h-9 rounded-full bg-white text-[#1a1a1a] shadow-md border border-gray-200 hover:bg-gray-50">
+          className="hidden md:flex items-center justify-center absolute -right-[18px] top-[100px] z-10 w-9 h-9 rounded-full bg-white text-[#1a1a1a] shadow-md border border-gray-200 hover:bg-gray-50">
           <ChevronRight size={18} />
         </button>
       </div>

@@ -47,7 +47,7 @@ export default function HomePage() {
 
       <section>
         <h2 className="text-2xl font-bold text-[#1a1a1a] mb-4">Our Hospitals</h2>
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {hospitals.slice(0, 4).map(h => (
             <ImageTile
               key={h.id}
