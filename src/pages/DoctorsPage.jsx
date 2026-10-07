@@ -42,7 +42,8 @@ export default function DoctorsPage() {
   const { page, totalPages, setPage, pageItems } = usePagination(
     filtered,
     PAGE_SIZE,
-    JSON.stringify([query, filterParams])
+    JSON.stringify([query, filterParams]),
+    'doctors'
   );
 
   return (

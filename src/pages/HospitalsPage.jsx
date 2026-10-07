@@ -40,7 +40,8 @@ export default function HospitalsPage() {
   const { page, totalPages, setPage, pageItems } = usePagination(
     filtered,
     PAGE_SIZE,
-    `${query}|${selectedCity.id}`
+    `${query}|${selectedCity.id}`,
+    'hospitals'
   );
 
   return (
