@@ -1,10 +1,17 @@
 import { query } from '../db.js';
 import { logger } from '../logger.js';
 
+// Columns safe to expose publicly. Never select d.* in a public endpoint:
+// the doctors table also holds login credentials (email, password_hash).
+const PUBLIC_DOCTOR_COLUMNS = `d.id, d.name, d.specialty, d.department, d.experience, d.chamber, d.fees,
+  d.city, d.division, d.hospital_id, d.phone, d.photo, d.rating, d.about, d.lat, d.lng, d.website,
+  d.share_count, d.bmdc_no, d.education, d.languages, d.consulting_hours, d.address,
+  d.clinical_expertise, d.treatments, d.weekly_schedule`;
+
 export async function listDoctors(_req, res, next) {
   try {
     const { rows } = await query(
-      `SELECT d.*, h.name AS hospital_name FROM doctors d
+      `SELECT ${PUBLIC_DOCTOR_COLUMNS}, h.name AS hospital_name FROM doctors d
        LEFT JOIN hospitals h ON h.id = d.hospital_id
        ORDER BY d.id`
     );
@@ -17,7 +24,7 @@ export async function listDoctors(_req, res, next) {
 export async function getDoctor(req, res, next) {
   try {
     const { rows } = await query(
-      `SELECT d.*, h.name AS hospital_name FROM doctors d
+      `SELECT ${PUBLIC_DOCTOR_COLUMNS}, h.name AS hospital_name FROM doctors d
        LEFT JOIN hospitals h ON h.id = d.hospital_id
        WHERE d.id = $1`,
       [req.params.id]
