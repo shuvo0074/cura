@@ -171,3 +171,46 @@ export async function getDoctorSessions(req, res, next) {
     next(err);
   }
 }
+
+// A few doctors for the home page, without downloading the whole directory.
+// No curation exists yet, so this is highest-rated first.
+export async function featuredDoctors(req, res, next) {
+  try {
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 6, 1), 24);
+    const { rows } = await query(
+      `SELECT ${PUBLIC_DOCTOR_COLUMNS}, h.name AS hospital_name FROM doctors d
+       LEFT JOIN hospitals h ON h.id = d.hospital_id
+       ORDER BY d.rating DESC NULLS LAST, d.share_count DESC, d.id
+       LIMIT $1`,
+      [limit]
+    );
+    res.json(rows);
+  } catch (err) {
+    next(err);
+  }
+}
+
+// Directory-wide numbers for the home page: totals plus doctor counts per
+// specialty, per division and per district (city).
+export async function directoryStats(_req, res, next) {
+  try {
+    const [{ rows: [totals] }, { rows: bySpecialty }, { rows: byDivision }, { rows: byCity }] = await Promise.all([
+      query(`SELECT (SELECT COUNT(*) FROM doctors)::int AS doctors,
+                    (SELECT COUNT(*) FROM hospitals)::int AS hospitals,
+                    (SELECT COUNT(DISTINCT specialty) FROM doctors)::int AS specialties,
+                    (SELECT COUNT(DISTINCT division) FROM doctors WHERE division IS NOT NULL)::int AS divisions,
+                    (SELECT COUNT(*) FROM doctors WHERE bmdc_no IS NOT NULL)::int AS with_bmdc`),
+      query(`SELECT specialty, COUNT(*)::int AS doctors FROM doctors GROUP BY specialty`),
+      query(`SELECT division, COUNT(*)::int AS doctors FROM doctors WHERE division IS NOT NULL GROUP BY division`),
+      query(`SELECT city, COUNT(*)::int AS doctors FROM doctors WHERE city IS NOT NULL GROUP BY city`),
+    ]);
+    res.json({
+      ...totals,
+      bySpecialty: Object.fromEntries(bySpecialty.map(r => [r.specialty, r.doctors])),
+      byDivision: Object.fromEntries(byDivision.map(r => [r.division, r.doctors])),
+      byCity: Object.fromEntries(byCity.map(r => [r.city, r.doctors])),
+    });
+  } catch (err) {
+    next(err);
+  }
+}

@@ -1,83 +1,53 @@
-import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import HomeHero from '../components/home/HomeHero';
-import BannerCarousel from '../components/home/BannerCarousel';
-import SpecialityExplorer from '../components/home/SpecialityExplorer';
-import SymptomExplorer from '../components/home/SymptomExplorer';
+import ServiceCards from '../components/home/ServiceCards';
+import HowItWorks from '../components/home/HowItWorks';
+import PopularSpecialties from '../components/home/PopularSpecialties';
+import CommonProblems from '../components/home/CommonProblems';
+import DivisionGrid from '../components/home/DivisionGrid';
+import HomeSection from '../components/home/HomeSection';
 import FaqAccordion from '../components/home/FaqAccordion';
-import ImageTile from '../components/home/ImageTile';
-import { withDivision } from '../utils/place';
+import BangladeshMap from '../components/home/BangladeshMap';
 import DoctorCardWide from '../components/doctor/DoctorCardWide';
 import { api } from '../api/client';
 
-const FEATURED_DOCTOR_COUNT = 20;
-
+// Landing page, ordered for how patients in Bangladesh look for care: search
+// or a popular speciality first; then the core job (book a serial) with a
+// clear emergency route; then browse by speciality, everyday problem, or
+// division; then top doctors and a district map of Bangladesh. Loads two
+// small endpoints instead of the whole doctor directory (the map loads lazily).
 export default function HomePage() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
-  const [hospitals, setHospitals] = useState([]);
-  const [doctors, setDoctors] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [featured, setFeatured] = useState([]);
 
   useEffect(() => {
-    api.get('/hospitals').then(setHospitals);
-    api.get('/doctors').then(setDoctors);
+    api.get('/doctors/stats').then(setStats).catch(() => {});
+    api.get('/doctors/featured?limit=6').then(setFeatured).catch(() => {});
   }, []);
 
-  // No admin curation exists yet for which doctors to feature on the home page,
-  // so this is a placeholder: alphabetical by name, capped at 50. Swap for an
-  // admin-controlled "featured" flag once that exists.
-  const featuredDoctors = [...doctors].sort((a, b) => a.name.localeCompare(b.name)).slice(0, FEATURED_DOCTOR_COUNT);
-
   return (
-    <div className="flex flex-col gap-10">
-      <HomeHero />
+    <div className="flex flex-col gap-9 sm:gap-12">
+      <HomeHero stats={stats} />
+      <ServiceCards />
+      <PopularSpecialties counts={stats?.bySpecialty} />
+      <HowItWorks />
+      <CommonProblems />
+      <DivisionGrid counts={stats?.byDivision} />
 
-      <section>
-        <h2 className="text-2xl font-bold text-[#1a1a1a] mb-1">Clinical Care You Can Trust</h2>
-        <p className="text-gray-500 text-sm max-w-3xl">
-          Cura connects you with experienced doctors across specialities and hospitals near you.
-          Search by symptom or speciality, compare doctors, and book a visit in minutes — this is
-          a demo build, so no real medical services are delivered here, but the browsing and
-          booking flow is fully functional.
-        </p>
-      </section>
+      {featured.length > 0 && (
+        <HomeSection title={t('home_featured_title')} linkTo="/doctors" linkLabel={t('view_all')}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+            {/* 4 on phones keeps the page short; 6 from lg up fills the grid. */}
+            {featured.map((d, i) => (
+              <div key={d.id} className={i >= 4 ? 'hidden lg:block' : ''}><DoctorCardWide doctor={d} /></div>
+            ))}
+          </div>
+        </HomeSection>
+      )}
 
-      <SpecialityExplorer />
-
-      <section>
-        <h2 className="text-2xl font-bold text-[#1a1a1a] mb-4">Our Hospitals</h2>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {hospitals.slice(0, 4).map(h => (
-            <ImageTile
-              key={h.id}
-              image={h.photo?.replace(/w=\d+&h=\d+/, 'w=600&h=480')}
-              title={h.name}
-              subtitle={withDivision(h.location, h.location, h.division)}
-              description={h.description}
-              cta="Show All Doctor List"
-              onClick={() => navigate(`/hospitals/${h.id}`)}
-            />
-          ))}
-        </div>
-        <div className="flex justify-end mt-3">
-          <button onClick={() => navigate('/hospitals')} className="text-primary text-sm">{t('view_all')}</button>
-        </div>
-      </section>
-
-      <SymptomExplorer />
-
-      <BannerCarousel />
-
-      <section>
-        <h2 className="text-2xl font-bold text-[#1a1a1a] mb-4">Meet Our Doctors</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {featuredDoctors.map(d => <DoctorCardWide key={d.id} doctor={d} />)}
-        </div>
-        <div className="flex justify-end mt-3">
-          <button onClick={() => navigate('/doctors')} className="text-primary text-sm">{t('view_all')}</button>
-        </div>
-      </section>
+      <BangladeshMap counts={stats?.byCity} />
 
       <FaqAccordion />
     </div>

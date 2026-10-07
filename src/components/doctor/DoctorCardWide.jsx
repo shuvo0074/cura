@@ -5,9 +5,11 @@ import { withDivision } from '../../utils/place';
 import SharePopover from './SharePopover';
 import CallPopover from './CallPopover';
 import { getDhakaNow } from '../../utils/dhakaTime';
+import { useTranslation } from 'react-i18next';
 import Photo from '../ui/Photo';
 
 export default function DoctorCardWide({ doctor }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [shareAnchor, setShareAnchor] = useState(null);
   const [callAnchor, setCallAnchor] = useState(null);
@@ -57,10 +59,13 @@ export default function DoctorCardWide({ doctor }) {
             </p>
           </div>
 
-          <div className="flex items-center gap-0.5 mt-1.5">
-            <Star size={13} fill="#F59E0B" className="text-amber-400" />
-            <span className="text-xs text-gray-500 font-medium">4.8 · Verified</span>
-          </div>
+          {(doctor.rating || doctor.bmdc_no) && (
+            <div className="flex items-center gap-0.5 mt-1.5 text-xs text-gray-500 font-medium">
+              {doctor.rating && <><Star size={13} fill="#F59E0B" className="text-amber-400" /> {Number(doctor.rating).toFixed(1)}</>}
+              {doctor.rating && doctor.bmdc_no && <span className="mx-1">·</span>}
+              {doctor.bmdc_no && <span>{t('bmdc_registered')}</span>}
+            </div>
+          )}
         </div>
       </div>
 
