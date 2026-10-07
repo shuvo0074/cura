@@ -11,6 +11,8 @@ import { api } from '../api/client';
 import PageHeader from '../components/ui/PageHeader';
 import EmptyState from '../components/ui/EmptyState';
 import specialtyDetails from '../data/specialtyDetails.json';
+import Pagination from '../components/ui/Pagination';
+import { usePagination } from '../hooks/usePagination';
 
 // Lets plain-language searches reach the right specialists: "heart" finds
 // Cardiology via its description, "dialysis" finds Nephrology via its tags.
@@ -27,13 +29,24 @@ function doctorMatches(d, q) {
 }
 
 const TABS = ['doctor', 'hospital', 'diagnostic_center'];
+const PAGE_SIZE = 12;
 
 export default function SearchResultsPage() {
   const { t } = useTranslation();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const urlQuery = searchParams.get('q') || '';
   const { filterParams, setFilterParams, setIsFilterOpen } = useFilter();
-  const [activeTab, setActiveTab] = useState('doctor');
+  // The tab lives in the URL (?tab=hospital) alongside ?page=, so returning
+  // from a profile lands on the same tab and page.
+  const activeTab = TABS.includes(searchParams.get('tab')) ? searchParams.get('tab') : 'doctor';
+  function setActiveTab(tab) {
+    setSearchParams(prev => {
+      const params = new URLSearchParams(prev);
+      if (tab === 'doctor') params.delete('tab');
+      else params.set('tab', tab);
+      return params;
+    }, { replace: true });
+  }
   const [query, setQuery] = useState(urlQuery);
   const [doctors, setDoctors] = useState([]);
   const [hospitals, setHospitals] = useState([]);
@@ -82,6 +95,13 @@ export default function SearchResultsPage() {
     });
   }, [hospitals, query]);
 
+  const results = activeTab === 'hospital' ? filteredHospitals : activeTab === 'doctor' ? filteredDoctors : [];
+  const { page, totalPages, setPage, pageItems } = usePagination(
+    results,
+    PAGE_SIZE,
+    JSON.stringify([activeTab, query, filterParams])
+  );
+
   const clearAll = () => { setQuery(''); setFilterParams(p => ({ ...p, specialty: [], city: [], division: [] })); };
   const noResults = (
     <EmptyState
@@ -97,7 +117,9 @@ export default function SearchResultsPage() {
 
   return (
     <div>
-      <PageHeader title={query.trim() ? t('results_for', { q: query.trim() }) : t('search_results')}>
+      <PageHeader
+        title={query.trim() ? t('results_for', { q: query.trim() }) : t('search_results')}
+        count={activeTab === 'diagnostic_center' ? null : results.length}>
         <SearchInput value={query} onChange={setQuery} placeholder={t('search_doctors')} />
       </PageHeader>
 
@@ -135,12 +157,13 @@ export default function SearchResultsPage() {
         </div>
       )}
 
-      {activeTab === 'doctor' && (filteredDoctors.length ? <DoctorGrid doctors={filteredDoctors} /> : noResults)}
+      {activeTab === 'doctor' && (filteredDoctors.length ? <DoctorGrid doctors={pageItems} /> : noResults)}
       {activeTab === 'hospital' && (filteredHospitals.length ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filteredHospitals.map(h => <HospitalCard key={h.id} hospital={h} />)}
+          {pageItems.map(h => <HospitalCard key={h.id} hospital={h} />)}
         </div>
       ) : noResults)}
+      {results.length > 0 && <Pagination page={page} totalPages={totalPages} onChange={setPage} />}
       {activeTab === 'diagnostic_center' && (
         <EmptyState
           icon={Microscope}
