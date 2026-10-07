@@ -33,7 +33,7 @@ body {
 
 /* Extends an element's background to the full viewport width without causing horizontal scroll. */
 .hero-bleed {
-  box-shadow: 0 0 0 100vmax var(--hero-bleed-color, #CC0000);
+  box-shadow: 0 0 0 100vmax var(--hero-bleed-color, #003580);
   clip-path: inset(0 -100vmax);
 }
 
