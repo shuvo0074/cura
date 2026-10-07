@@ -24,7 +24,7 @@ export default function SymptomCard({ symptom, highlighted, onSelect }) {
 
         <div className="flex flex-wrap gap-1 mt-3">
           {(detail.tags || []).map(tag => (
-            <span key={tag} className="text-[10px] font-medium text-gray-600 border border-gray-200 rounded-full px-2 py-0.5">
+            <span key={tag} className="text-xs font-medium text-gray-600 border border-gray-200 rounded-full px-2.5 py-0.5">
               {tag}
             </span>
           ))}

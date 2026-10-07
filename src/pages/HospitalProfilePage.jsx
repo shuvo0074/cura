@@ -54,10 +54,10 @@ function SpecialtyFilter({ specialties, selected, onToggle, onClear, search, onS
   const filtered = specialties.filter(s => s.toLowerCase().includes(search.toLowerCase()));
 
   const checkboxList = (
-    <div className="flex flex-col gap-1.5 overflow-y-auto pr-1" style={{ maxHeight: '55vh' }}>
+    <div className="flex flex-col overflow-y-auto pr-1" style={{ maxHeight: '55vh' }}>
       {filtered.map(item => (
-        <label key={item} className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
-          <input type="checkbox" checked={selected.includes(item)} onChange={() => onToggle(item)} className="accent-primary" />
+        <label key={item} className="flex items-center gap-2.5 py-1 text-sm text-gray-600 hover:text-gray-900 cursor-pointer select-none">
+          <input type="checkbox" checked={selected.includes(item)} onChange={() => onToggle(item)} className="accent-primary w-4 h-4 flex-shrink-0" />
           {item}
         </label>
       ))}
@@ -77,15 +77,15 @@ function SpecialtyFilter({ specialties, selected, onToggle, onClear, search, onS
             </div>
             <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 flex-shrink-0">
               <span className="font-semibold text-gray-900">{t('filter_by')}</span>
-              <button onClick={() => setMobileOpen(false)} className="text-gray-400 p-1">
+              <button onClick={() => setMobileOpen(false)} aria-label="Close filters" className="text-gray-400 p-2 -mr-2">
                 <X size={20} />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto px-5 py-4">
               <p className="text-sm font-semibold text-gray-800 mb-2">{t('specialities')}</p>
-              <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-2.5 py-1.5 mb-3">
+              <div className="field flex items-center gap-2 border border-gray-200 rounded-lg px-2.5 py-1.5 mb-3">
                 <Search size={13} className="text-gray-400 flex-shrink-0" />
-                <input value={search} onChange={e => onSearch(e.target.value)} placeholder={t('specialities')} className="flex-1 text-xs outline-none bg-transparent" />
+                <input value={search} onChange={e => onSearch(e.target.value)} placeholder={t('search_specialities')} aria-label={t('search_specialities')} className="flex-1 min-w-0 text-xs outline-none bg-transparent" />
               </div>
               {checkboxList}
             </div>
@@ -104,12 +104,12 @@ function SpecialtyFilter({ specialties, selected, onToggle, onClear, search, onS
             <span className="flex items-center gap-2 font-semibold text-gray-800 text-sm">
               <SlidersHorizontal size={15} /> {t('filter_by')}
             </span>
-            <button onClick={onClear} className="text-xs text-primary font-medium">Clear All</button>
+            <button onClick={onClear} className="text-xs text-primary font-medium rounded-md px-2 py-1.5 -mr-2 hover:bg-primary/5">Clear All</button>
           </div>
           <p className="text-sm font-semibold text-gray-800 mb-2">{t('specialities')}</p>
-          <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-2.5 py-1.5 mb-2">
+          <div className="field flex items-center gap-2 border border-gray-200 rounded-lg px-2.5 py-1.5 mb-2">
             <Search size={13} className="text-gray-400 flex-shrink-0" />
-            <input value={search} onChange={e => onSearch(e.target.value)} placeholder={t('specialities')} className="flex-1 text-xs outline-none bg-transparent" />
+            <input value={search} onChange={e => onSearch(e.target.value)} placeholder={t('search_specialities')} aria-label={t('search_specialities')} className="flex-1 min-w-0 text-xs outline-none bg-transparent" />
           </div>
           <div className="flex flex-col gap-1.5 max-h-64 overflow-y-auto pr-1">{checkboxList}</div>
         </div>
@@ -240,7 +240,7 @@ export default function HospitalProfilePage() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-semibold text-gray-800 text-sm">{doc.name}</p>
                         {onDuty && (
-                          <span className="text-[10px] font-semibold text-primary uppercase tracking-wide bg-primary/10 px-2 py-0.5 rounded-full">
+                          <span className="text-xs font-semibold text-primary uppercase tracking-wide bg-primary/10 px-2 py-0.5 rounded-full">
                             {t('on_duty_now')}
                           </span>
                         )}

@@ -41,3 +41,11 @@ body {
   from { opacity: 0; transform: translateY(-8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* Bordered wrapper around a borderless <input>: since the input itself has
+   outline-none, the wrapper shows focus so keyboard users can see it. */
+@layer components {
+  .field {
+    @apply transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15;
+  }
+}

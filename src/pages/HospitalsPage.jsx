@@ -1,6 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { useState, useMemo, useEffect } from 'react';
 import SearchInput from '../components/ui/SearchInput';
+import PageHeader from '../components/ui/PageHeader';
+import EmptyState from '../components/ui/EmptyState';
 import HospitalCard from '../components/hospital/HospitalCard';
 import PillCarousel from '../components/ui/PillCarousel';
 import Pagination from '../components/ui/Pagination';
@@ -43,16 +45,10 @@ export default function HospitalsPage() {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">{t('hospitals')}</h1>
-        <div className="max-w-md w-full">
-          <SearchInput value={query} onChange={setQuery} placeholder={t('search_location_hospital')} />
-        </div>
-      </div>
+      <PageHeader title={t('hospitals')} count={filtered.length}>
+        <SearchInput value={query} onChange={setQuery} placeholder={t('search_location_hospital')} />
+      </PageHeader>
 
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm text-gray-500">{t('all_hospital')} {filtered.length}</span>
-      </div>
       <div className="mb-6">
         <PillCarousel items={CITIES} onSelect={setSelectedCity} selected={selectedCity} />
       </div>
@@ -60,7 +56,14 @@ export default function HospitalsPage() {
       {loading ? (
         <p className="text-center text-gray-400 py-16">Loading...</p>
       ) : filtered.length === 0 ? (
-        <p className="text-center text-gray-400 py-16">{t('no_results')}</p>
+        <EmptyState
+          title={t('no_results')}
+          message={t('empty_try_again')}
+          actions={[
+            { label: t('clear_search_filters'), onClick: () => { setQuery(''); setSelectedCity(CITIES[0]); } },
+            { label: t('find_a_doctor'), to: '/doctors' },
+          ]}
+        />
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

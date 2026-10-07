@@ -45,7 +45,8 @@ export default function DoctorCard({ doctor }) {
             </div>
             <button
               onClick={toggleShare}
-              className="text-gray-400 hover:text-primary p-1 -mt-1 flex-shrink-0">
+              aria-label="Share doctor"
+              className="text-gray-400 hover:text-primary hover:bg-primary/5 rounded-full p-2.5 -mt-2.5 -mr-2.5 flex-shrink-0">
               <Share2 size={15} />
             </button>
           </div>

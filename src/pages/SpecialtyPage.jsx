@@ -1,6 +1,9 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useMemo, useEffect } from 'react';
-import { Search } from 'lucide-react';
+import PageHeader from '../components/ui/PageHeader';
+import SearchInput from '../components/ui/SearchInput';
+import EmptyState from '../components/ui/EmptyState';
+import { useTranslation } from 'react-i18next';
 import DoctorCardWide from '../components/doctor/DoctorCardWide';
 import DoctorFilterSidebar from '../components/doctor/DoctorFilterSidebar';
 import { useFilter } from '../context/FilterContext';
@@ -10,6 +13,7 @@ import specialties from '../data/specialties.json';
 export default function SpecialtyPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { filterParams, setFilterParams } = useFilter();
   const [query, setQuery] = useState('');
   const [doctors, setDoctors] = useState([]);
@@ -46,26 +50,21 @@ export default function SpecialtyPage() {
       <DoctorFilterSidebar specialtyNames={specialtyNames} />
 
       <div className="flex-1 min-w-0">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <h1 className="text-2xl text-gray-800">
-            {filterParams.specialty.length ? filterParams.specialty.join(', ') : specialty?.name || slug}{' '}
-            <span className="text-gray-400 text-lg">({filtered.length})</span>
-          </h1>
-          <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-2 bg-white w-full sm:w-72">
-            <Search size={16} className="text-gray-400 flex-shrink-0" />
-            <input
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              placeholder="Search doctor"
-              className="flex-1 text-sm outline-none bg-transparent"
-            />
-          </div>
-        </div>
+        <PageHeader title={filterParams.specialty.length ? filterParams.specialty.join(', ') : specialty?.name || slug} count={filtered.length}>
+          <SearchInput value={query} onChange={setQuery} placeholder={t('search_doctors')} />
+        </PageHeader>
 
         {loading ? (
           <p className="text-center text-gray-400 py-16">Loading...</p>
         ) : filtered.length === 0 ? (
-          <p className="text-center text-gray-400 py-16">No results found</p>
+          <EmptyState
+            title={t('no_results')}
+            message={t('empty_try_again')}
+            actions={[
+              { label: t('clear_search_filters'), onClick: () => { setQuery(''); setFilterParams(p => ({ ...p, city: [], division: [] })); } },
+              { label: t('browse_specialities'), to: '/specialties' },
+            ]}
+          />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {filtered.map(d => <DoctorCardWide key={d.id} doctor={d} />)}

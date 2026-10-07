@@ -66,42 +66,42 @@ export default function ScheduleBox({ selectedDate, onSelectDate }) {
       <div className="grid grid-cols-2 sm:grid-cols-3 items-center gap-y-2 mb-1">
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t('scheduling')}</p>
         <div className="order-3 sm:order-none col-span-2 sm:col-span-1 flex items-center justify-center gap-2">
-          <button onClick={() => stepDate(-1)} className="text-gray-400 hover:text-primary p-0.5 flex-shrink-0" aria-label="Previous day">
-            <ChevronLeft size={14} />
+          <button onClick={() => stepDate(-1)} className="text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg p-2 -m-1 flex-shrink-0" aria-label="Previous day">
+            <ChevronLeft size={16} />
           </button>
           <p className="text-sm font-medium text-gray-700 whitespace-nowrap w-24 text-center">
             {shownDate.getDate()}/{shownDate.getMonth() + 1}/{shownDate.getFullYear()}
           </p>
-          <button onClick={() => stepDate(1)} className="text-gray-400 hover:text-primary p-0.5 flex-shrink-0" aria-label="Next day">
-            <ChevronRight size={14} />
+          <button onClick={() => stepDate(1)} className="text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg p-2 -m-1 flex-shrink-0" aria-label="Next day">
+            <ChevronRight size={16} />
           </button>
         </div>
         <div className="flex items-center justify-end gap-1.5">
           <button onClick={goToToday}
-            className="text-[11px] font-medium text-gray-500 border border-gray-200 rounded-md px-2 py-1 hover:border-primary hover:text-primary transition-colors">
+            className="text-xs font-medium text-gray-500 border border-gray-200 rounded-md px-2.5 py-1.5 hover:border-primary hover:text-primary transition-colors">
             Today
           </button>
           <button onClick={goToCurrentMonth}
-            className="text-[11px] font-medium text-gray-500 border border-gray-200 rounded-md px-2 py-1 hover:border-primary hover:text-primary transition-colors">
+            className="text-xs font-medium text-gray-500 border border-gray-200 rounded-md px-2.5 py-1.5 hover:border-primary hover:text-primary transition-colors">
             Month
           </button>
         </div>
       </div>
       <div className="flex items-center justify-center gap-3 mb-2">
         <button onClick={() => setMonthCursor(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))}
-          className="text-gray-400 hover:text-primary p-1 flex-shrink-0" aria-label="Previous month">
+          className="text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg p-2 flex-shrink-0" aria-label="Previous month">
           <ChevronLeft size={16} />
         </button>
         <p className="text-sm font-medium text-gray-700 whitespace-nowrap w-36 text-center">
           {MONTH_NAMES[monthCursor.getMonth()]}
         </p>
         <button onClick={() => setMonthCursor(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
-          className="text-gray-400 hover:text-primary p-1 flex-shrink-0" aria-label="Next month">
+          className="text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg p-2 flex-shrink-0" aria-label="Next month">
           <ChevronRight size={16} />
         </button>
       </div>
 
-      <div className="grid grid-cols-7 gap-1 text-center text-[10px] mb-1">
+      <div className="grid grid-cols-7 gap-1 text-center text-xs mb-1">
         {WEEK_LABELS.map((l, i) => (
           <span key={l} className={i === today.getDay() ? 'text-primary font-semibold' : 'text-gray-400'}>{l}</span>
         ))}

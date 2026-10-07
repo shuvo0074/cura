@@ -1,12 +1,26 @@
 import { useNavigate } from 'react-router-dom';
 import { Search, Stethoscope, Building2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+
+// True below Tailwind's `sm` breakpoint; used to pick a placeholder that fits.
+function useIsNarrow() {
+  const query = '(max-width: 639px)';
+  const [narrow, setNarrow] = useState(() => window.matchMedia(query).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const onChange = e => setNarrow(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  return narrow;
+}
 
 export default function HomeHero() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
+  const isNarrow = useIsNarrow();
 
   function handleSearch() {
     if (query.trim()) navigate(`/search-results?q=${encodeURIComponent(query)}`);
@@ -44,18 +58,20 @@ export default function HomeHero() {
       {/* Floating search bar — straddles the hero bottom edge */}
       <div className="absolute inset-x-0 bottom-0 translate-y-1/2 px-0">
         <div className="bg-accent rounded-xl p-1 flex gap-1 shadow-lg">
-          <label className="flex-1 flex items-center gap-2.5 bg-white rounded-lg px-3 h-12 cursor-text min-w-0">
+          <label className="flex-1 flex items-center gap-2.5 bg-white rounded-lg px-3 h-12 cursor-text min-w-0 transition-shadow focus-within:ring-2 focus-within:ring-primary/40">
             <Search size={18} className="text-gray-400 flex-shrink-0" />
             <input
               value={query}
               onChange={e => setQuery(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSearch()}
-              placeholder={t('search_placeholder')}
+              placeholder={t(isNarrow ? 'search_placeholder_short' : 'search_placeholder')}
+              aria-label={t('search_placeholder')}
               className="flex-1 min-w-0 text-sm outline-none bg-transparent text-[#1a1a1a] placeholder:text-gray-400"
             />
           </label>
           <button
             onClick={handleSearch}
+            aria-label={t('search')}
             className="bg-action hover:bg-[#0057b8] text-white text-sm font-semibold rounded-lg px-4 sm:px-7 h-12 flex-shrink-0 transition-colors">
             <span className="hidden sm:inline">Search</span>
             <Search size={18} className="sm:hidden" />

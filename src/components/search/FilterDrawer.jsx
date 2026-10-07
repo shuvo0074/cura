@@ -45,10 +45,11 @@ export default function FilterDrawer({ mode = 'specialty' }) {
               {mode === 'symptom' ? 'Symptoms' : 'Specialty'}
             </p>
             <input
-              placeholder={`Search...`}
+              placeholder={mode === 'symptom' ? 'Search symptoms' : 'Search specialities'}
+              aria-label={mode === 'symptom' ? 'Search symptoms' : 'Search specialities'}
               value={specSearch}
               onChange={e => setSpecSearch(e.target.value)}
-              className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm outline-none"
+              className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 transition-colors"
             />
             <div className="overflow-y-auto flex flex-col gap-1">
               {filteredList.map(item => (
@@ -83,10 +84,11 @@ export default function FilterDrawer({ mode = 'specialty' }) {
           <div className="p-4 flex flex-col gap-2" style={{ maxHeight: '34%' }}>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">City</p>
             <input
-              placeholder="Search city..."
+              placeholder="Search city"
+              aria-label="Search city"
               value={citySearch}
               onChange={e => setCitySearch(e.target.value)}
-              className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm outline-none"
+              className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 transition-colors"
             />
             <div className="overflow-y-auto flex flex-col gap-1">
               {filteredCities.map(city => (

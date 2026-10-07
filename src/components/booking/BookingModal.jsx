@@ -29,7 +29,7 @@ export default function BookingModal({ doctorId, initialDay, onClose }) {
           </button>
         </div>
         <SlotPicker doctorId={doctorId} initialDay={initialDay} />
-        <p className="text-[11px] text-gray-400 mt-3 text-center">
+        <p className="text-xs text-gray-400 mt-3 text-center">
           Demo booking — Cura is not a real hospital network; this does not create a real medical appointment.
         </p>
       </div>

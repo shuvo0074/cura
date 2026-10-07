@@ -1,13 +1,30 @@
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useState, useMemo, useEffect } from 'react';
-import { SlidersHorizontal, X } from 'lucide-react';
+import { SlidersHorizontal, X, Microscope } from 'lucide-react';
 import SearchInput from '../components/ui/SearchInput';
 import DoctorGrid from '../components/doctor/DoctorGrid';
 import HospitalCard from '../components/hospital/HospitalCard';
 import FilterDrawer from '../components/search/FilterDrawer';
 import { useFilter } from '../context/FilterContext';
 import { api } from '../api/client';
+import PageHeader from '../components/ui/PageHeader';
+import EmptyState from '../components/ui/EmptyState';
+import specialtyDetails from '../data/specialtyDetails.json';
+
+// Lets plain-language searches reach the right specialists: "heart" finds
+// Cardiology via its description, "dialysis" finds Nephrology via its tags.
+const SPECIALTY_KEYWORDS = Object.fromEntries(
+  Object.entries(specialtyDetails).map(([name, d]) => [name, `${d.description} ${d.tags.join(' ')}`.toLowerCase()])
+);
+
+function doctorMatches(d, q) {
+  return [
+    d.name, d.specialty, d.department, d.city, d.division,
+    SPECIALTY_KEYWORDS[d.specialty],
+    ...(d.clinical_expertise || []), ...(d.treatments || []),
+  ].some(field => (field || '').toLowerCase().includes(q));
+}
 
 const TABS = ['doctor', 'hospital', 'diagnostic_center'];
 
@@ -49,8 +66,8 @@ export default function SearchResultsPage() {
 
   const filteredDoctors = useMemo(() => {
     return doctors.filter(d => {
-      const q = query.toLowerCase();
-      const matchQuery = !q || d.name.toLowerCase().includes(q) || d.specialty.toLowerCase().includes(q) || d.city.toLowerCase().includes(q) || (d.division || '').toLowerCase().includes(q);
+      const q = query.trim().toLowerCase();
+      const matchQuery = !q || doctorMatches(d, q);
       const matchCity = !filterParams.city.length || filterParams.city.includes(d.city);
       const matchDivision = !filterParams.division.length || filterParams.division.includes(d.division);
       const matchSpec = !filterParams.specialty.length || filterParams.specialty.includes(d.specialty);
@@ -65,11 +82,24 @@ export default function SearchResultsPage() {
     });
   }, [hospitals, query]);
 
+  const clearAll = () => { setQuery(''); setFilterParams(p => ({ ...p, specialty: [], city: [], division: [] })); };
+  const noResults = (
+    <EmptyState
+      title={t('no_results')}
+      message={t('empty_try_again')}
+      actions={[
+        { label: t('clear_search_filters'), onClick: clearAll },
+        { label: t('browse_specialities'), to: '/specialties' },
+        { label: t('browse_hospitals'), to: '/hospitals' },
+      ]}
+    />
+  );
+
   return (
     <div>
-      <div className="max-w-xl mb-4">
+      <PageHeader title={query.trim() ? t('results_for', { q: query.trim() }) : t('search_results')}>
         <SearchInput value={query} onChange={setQuery} placeholder={t('search_doctors')} />
-      </div>
+      </PageHeader>
 
       <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
         <div className="flex gap-2">
@@ -105,14 +135,18 @@ export default function SearchResultsPage() {
         </div>
       )}
 
-      {activeTab === 'doctor' && <DoctorGrid doctors={filteredDoctors} />}
-      {activeTab === 'hospital' && (
+      {activeTab === 'doctor' && (filteredDoctors.length ? <DoctorGrid doctors={filteredDoctors} /> : noResults)}
+      {activeTab === 'hospital' && (filteredHospitals.length ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filteredHospitals.map(h => <HospitalCard key={h.id} hospital={h} />)}
         </div>
-      )}
+      ) : noResults)}
       {activeTab === 'diagnostic_center' && (
-        <p className="text-center text-gray-400 py-16">{t('no_results')}</p>
+        <EmptyState
+          icon={Microscope}
+          title={t('no_diagnostic_centres')}
+          actions={[{ label: t('browse_hospitals'), to: '/hospitals' }]}
+        />
       )}
 
       <FilterDrawer mode="specialty" />
