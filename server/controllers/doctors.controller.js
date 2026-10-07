@@ -1,5 +1,6 @@
 import { query } from '../db.js';
 import { logger } from '../logger.js';
+import { bookingBlocker, dhakaNow, estimatedArrival, parseSessionTime } from '../schedule.js';
 
 // Columns safe to expose publicly. Never select d.* in a public endpoint:
 // the doctors table also holds login credentials (email, password_hash).
@@ -114,6 +115,58 @@ export async function getDoctorSlots(req, res, next) {
       if (!booked.has(slot)) slots.push(slot);
     }
     res.json({ date, slots });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// A date's chamber sessions for one doctor, with serial-booking state:
+// how many serials are taken, the next serial and its estimated arrival,
+// whether it can still be booked, and the viewer's own serial if any.
+export async function getDoctorSessions(req, res, next) {
+  try {
+    const { date } = req.query;
+    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return res.status(400).json({ error: 'date query param (YYYY-MM-DD) is required' });
+    }
+    const { rows: doctorRows } = await query(`SELECT weekly_schedule FROM doctors WHERE id = $1`, [req.params.id]);
+    if (!doctorRows[0]) return res.status(404).json({ error: 'Doctor not found' });
+
+    const { rows: counts } = await query(
+      `SELECT venue, session_time, MAX(serial_no) AS last_serial,
+              COUNT(*) FILTER (WHERE status <> 'cancelled') AS booked
+       FROM appointments
+       WHERE doctor_id = $1 AND appointment_date = $2 AND serial_no IS NOT NULL
+       GROUP BY venue, session_time`,
+      [req.params.id, date]
+    );
+    const patientId = req.user?.role === 'patient' ? req.user.sub : null;
+    const { rows: mine } = patientId
+      ? await query(
+        `SELECT id, venue, session_time, serial_no FROM appointments
+         WHERE doctor_id = $1 AND appointment_date = $2 AND patient_id = $3 AND status <> 'cancelled' AND serial_no IS NOT NULL`,
+        [req.params.id, date, patientId]
+      )
+      : { rows: [] };
+
+    const now = dhakaNow();
+    const sessions = (doctorRows[0].weekly_schedule || []).map(entry => {
+      const time = parseSessionTime(entry.time);
+      const c = counts.find(r => r.venue === entry.venue && r.session_time === entry.time);
+      const nextSerial = (c?.last_serial ?? 0) + 1;
+      const own = mine.find(r => r.venue === entry.venue && r.session_time === entry.time);
+      const blocker = time ? bookingBlocker(date, time, now) : 'This session has no valid time.';
+      return {
+        ...entry,
+        booked: Number(c?.booked ?? 0),
+        nextSerial,
+        estimatedArrival: time ? estimatedArrival(time.start, nextSerial) : null,
+        bookable: !blocker,
+        reason: blocker,
+        mine: own ? { id: own.id, serialNo: own.serial_no, estimatedArrival: estimatedArrival(time.start, own.serial_no) } : null,
+      };
+    });
+    res.json({ date, sessions });
   } catch (err) {
     next(err);
   }

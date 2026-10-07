@@ -29,8 +29,9 @@ export default function AdminAppointmentsTab() {
               <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary capitalize">{a.status}</span>
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              Patient: {a.patient_phone} · {a.appointment_date.slice(0, 10)} {a.appointment_time.slice(0, 5)}
+              Patient: {a.patient_phone} · {a.appointment_date.slice(0, 10)} {a.session_time || a.appointment_time.slice(0, 5)}
             </p>
+            {a.serial_no && <p className="text-xs text-gray-500">Serial #{a.serial_no} · {a.venue}</p>}
           </div>
         ))}
       </div>
