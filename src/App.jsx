@@ -1,8 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { Construction } from 'lucide-react';
 import { FilterProvider } from './context/FilterContext';
 import { AuthProvider } from './context/AuthContext';
 import GlobalHeader from './components/layout/GlobalHeader';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import PageHeader from './components/ui/PageHeader';
+import EmptyState from './components/ui/EmptyState';
 import HomePage from './pages/HomePage';
 import SearchResultsPage from './pages/SearchResultsPage';
 import DoctorsPage from './pages/DoctorsPage';
@@ -19,9 +23,21 @@ import DoctorAdminLoginPage from './pages/DoctorAdminLoginPage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import DoctorDashboardPage from './pages/DoctorDashboardPage';
 
-function PlaceholderPage({ title }) {
+function PlaceholderPage({ titleKey }) {
+  const { t } = useTranslation();
   return (
-    <div className="flex items-center justify-center h-64 text-gray-400 text-sm">{title} — Coming Soon</div>
+    <div>
+      <PageHeader title={t(titleKey)} />
+      <EmptyState
+        icon={Construction}
+        title={t('coming_soon')}
+        message={t('coming_soon_msg')}
+        actions={[
+          { label: t('back_home'), to: '/' },
+          { label: t('find_a_doctor'), to: '/doctors' },
+        ]}
+      />
+    </div>
   );
 }
 
@@ -35,7 +51,7 @@ export default function App() {
       <AuthProvider>
         <FilterProvider>
           <GlobalHeader />
-          <main className="app-container py-6">
+          <main className="app-container pt-4 pb-6 sm:pt-6">
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/home" element={<Navigate to="/" replace />} />
@@ -56,8 +72,8 @@ export default function App() {
               <Route path="/admin/hospitals" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
               <Route path="/admin/appointments" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
               <Route path="/doctor-dashboard" element={<ProtectedRoute role="doctor"><DoctorDashboardPage /></ProtectedRoute>} />
-              <Route path="/health-blogs" element={<PlaceholderPage title="Health Blogs" />} />
-              <Route path="/ambulances" element={<PlaceholderPage title="Ambulances" />} />
+              <Route path="/health-blogs" element={<PlaceholderPage titleKey="health_blogs" />} />
+              <Route path="/ambulances" element={<PlaceholderPage titleKey="ambulances" />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>

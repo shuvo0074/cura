@@ -1,23 +1,15 @@
 import { createContext, useContext, useState } from 'react';
+import { EMPTY_FILTERS } from '../utils/doctorFilters';
 
 const FilterContext = createContext();
 
 export function FilterProvider({ children }) {
-  const [filterParams, setFilterParams] = useState({
-    specialty: [],
-    city: [],
-    division: [],
-    symptom: [],
-    hospital: [],
-  });
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [filterParams, setFilterParams] = useState(EMPTY_FILTERS);
 
   return (
     <FilterContext.Provider value={{
       filterParams,
       setFilterParams,
-      isFilterOpen,
-      setIsFilterOpen,
     }}>
       {children}
     </FilterContext.Provider>

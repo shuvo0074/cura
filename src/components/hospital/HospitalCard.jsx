@@ -2,6 +2,7 @@ import { Phone, Globe, Navigation, MapPin, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { withDivision } from '../../utils/place';
+import Photo from '../ui/Photo';
 
 export default function HospitalCard({ hospital }) {
   const { t } = useTranslation();
@@ -16,7 +17,7 @@ export default function HospitalCard({ hospital }) {
     <div
       onClick={() => navigate(`/hospitals/${hospital.id}`)}
       className="bg-white rounded-2xl shadow-sm overflow-hidden cursor-pointer active:scale-[0.99] transition-transform">
-      <img src={hospital.photo} alt={hospital.name} className="w-full h-36 object-cover" />
+      <Photo src={hospital.photo} alt={hospital.name} kind="building" iconSize={40} className="w-full h-36" />
 
       <div className="p-4">
         <h3 className="font-semibold text-gray-900 leading-tight">{hospital.name}</h3>

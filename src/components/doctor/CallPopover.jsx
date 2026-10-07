@@ -103,7 +103,7 @@ export default function CallPopover({ doctor, schedule, dow, anchorEl, onClose }
                     ${active ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-primary'}`}>
                   <Phone size={16} className={active ? 'text-primary flex-shrink-0' : 'text-gray-400 flex-shrink-0'} />
                   <span className="flex-1 font-medium text-gray-700">{v.venue}</span>
-                  {active && <span className="text-[10px] font-semibold text-primary uppercase tracking-wide flex-shrink-0">Now</span>}
+                  {active && <span className="text-xs font-semibold text-primary uppercase tracking-wide flex-shrink-0">Now</span>}
                 </button>
               );
             })}

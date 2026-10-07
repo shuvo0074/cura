@@ -5,6 +5,7 @@ import { withDivision } from '../../utils/place';
 import SharePopover from './SharePopover';
 import CallPopover from './CallPopover';
 import { getDhakaNow } from '../../utils/dhakaTime';
+import Photo from '../ui/Photo';
 
 export default function DoctorCardWide({ doctor }) {
   const navigate = useNavigate();
@@ -28,10 +29,10 @@ export default function DoctorCardWide({ doctor }) {
 
       {/* Card body */}
       <div className="flex gap-4 p-4">
-        <img
+        <Photo
           src={doctor.photo}
           alt={doctor.name}
-          className="w-20 h-20 sm:w-28 sm:h-28 rounded-xl object-cover flex-shrink-0"
+          className="w-20 h-20 sm:w-28 sm:h-28 rounded-xl flex-shrink-0"
         />
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
@@ -42,7 +43,7 @@ export default function DoctorCardWide({ doctor }) {
               </p>
             </div>
             <button onClick={toggleShare} aria-label="Share doctor"
-              className="text-gray-400 hover:text-primary p-1 -mt-1 flex-shrink-0">
+              className="text-gray-400 hover:text-primary hover:bg-primary/5 rounded-full p-2.5 -mt-2.5 -mr-2.5 flex-shrink-0">
               <Share2 size={15} />
             </button>
           </div>

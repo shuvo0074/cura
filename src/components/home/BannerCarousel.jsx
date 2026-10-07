@@ -57,14 +57,15 @@ export default function BannerCarousel() {
         <ChevronRight size={18} />
       </button>
 
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2">
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center">
         {BANNERS.map((banner, i) => (
           <button
             key={banner.id}
             onClick={() => setIndex(i)}
             aria-label={`Go to banner ${i + 1}`}
-            className={`h-2 rounded-full transition-all ${i === index ? 'w-6 bg-white' : 'w-2 bg-white/60 hover:bg-white/80'}`}
-          />
+            className="group p-2 -m-1">
+            <span className={`block h-2 rounded-full transition-all ${i === index ? 'w-6 bg-white' : 'w-2 bg-white/60 group-hover:bg-white/80'}`} />
+          </button>
         ))}
       </div>
     </div>

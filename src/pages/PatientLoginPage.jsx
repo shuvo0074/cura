@@ -55,7 +55,7 @@ export default function PatientLoginPage() {
 
         {step === 'phone' && (
           <form onSubmit={handleRequestOtp} className="flex flex-col gap-3">
-            <label className="flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-2">
+            <label className="field flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-2">
               <Phone size={16} className="text-gray-400" />
               <input
                 type="tel"
@@ -63,6 +63,7 @@ export default function PatientLoginPage() {
                 value={phone}
                 onChange={e => setPhone(e.target.value)}
                 placeholder="+8801XXXXXXXXX"
+                aria-label="Phone number"
                 className="flex-1 text-sm outline-none bg-transparent"
               />
             </label>
@@ -79,7 +80,7 @@ export default function PatientLoginPage() {
             <p className="text-xs text-gray-500 bg-secondary rounded-lg p-2">
               Dev/demo build: no real SMS is sent. Your OTP is <span className="font-semibold text-primary">{devOtp}</span>.
             </p>
-            <label className="flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-2">
+            <label className="field flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-2">
               <ShieldCheck size={16} className="text-gray-400" />
               <input
                 type="text"
@@ -87,6 +88,7 @@ export default function PatientLoginPage() {
                 value={code}
                 onChange={e => setCode(e.target.value)}
                 placeholder="6-digit code"
+                aria-label="6-digit code"
                 className="flex-1 text-sm outline-none bg-transparent"
               />
             </label>

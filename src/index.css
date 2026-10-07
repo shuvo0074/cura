@@ -8,6 +8,11 @@
   padding: 0;
 }
 
+:root {
+  /* Height of the sticky GlobalHeader; sticky bars below it offset by this. */
+  --header-h: 62px;
+}
+
 body {
   font-family: BlinkMacSystemFont, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   color: #1a1a1a;
@@ -41,3 +46,16 @@ body {
   from { opacity: 0; transform: translateY(-8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* Bordered wrapper around a borderless <input>: since the input itself has
+   outline-none, the wrapper shows focus so keyboard users can see it. */
+@layer components {
+  .field {
+    @apply transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15;
+  }
+}
+
+/* Filter sheet: slide up on phones, slide in from the right on wider screens. */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes panelIn { from { transform: translateX(100%); } to { transform: translateX(0); } }

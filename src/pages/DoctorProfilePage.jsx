@@ -14,6 +14,7 @@ import CallPopover from '../components/doctor/CallPopover';
 import ScheduleBox from '../components/booking/ScheduleBox';
 import ChamberList from '../components/booking/ChamberList';
 import { withDivision } from '../utils/place';
+import Photo from '../components/ui/Photo';
 
 function LinkedInIcon({ size = 16 }) {
   return (
@@ -101,21 +102,21 @@ export default function DoctorProfilePage() {
       <div className="flex flex-col lg:flex-row gap-6 items-start">
         <div className="flex-1 w-full flex flex-col gap-5">
           <div className={`${CARD} overflow-hidden`}>
-            <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-b border-primary/10 px-6 py-6">
-              <div className="flex items-start gap-5">
-                <img src={doctor.photo} alt={doctor.name}
-                  className="w-28 h-28 rounded-full object-cover ring-4 ring-white shadow-md flex-shrink-0" />
-                <div className="flex-1 min-w-0">
+            <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-b border-primary/10 px-6 py-6 relative">
+              <div className="flex flex-col items-center text-center gap-4 sm:flex-row sm:items-start sm:text-left sm:gap-5">
+                <Photo src={doctor.photo} alt={doctor.name} iconSize={44}
+                  className="w-28 h-28 rounded-full ring-4 ring-white shadow-md flex-shrink-0" />
+                <div className="flex-1 min-w-0 w-full">
                   <div className="flex items-start justify-between gap-3">
-                    <div>
+                    <div className="flex-1 min-w-0">
                       {doctor.bmdc_no && (
-                        <p className="flex items-center gap-1 text-xs text-gray-500 mb-1">
+                        <p className="flex items-center justify-center sm:justify-start gap-1 text-xs text-gray-500 mb-1">
                           <ShieldCheck size={13} className="text-primary" /> {t('reg_no')}: BMDC-{doctor.bmdc_no}
                         </p>
                       )}
                       <h1 className="font-bold text-gray-900 text-2xl leading-tight">{doctor.name}</h1>
                       <p className="text-primary font-medium text-sm mt-0.5">{doctor.specialty} — {doctor.department}</p>
-                      <div className="flex flex-wrap items-center gap-2 mt-2">
+                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-2">
                         <span className="bg-primary/10 text-primary text-xs font-medium px-3 py-1 rounded-full">
                           {doctor.experience} {t('experience')}
                         </span>
@@ -126,27 +127,27 @@ export default function DoctorProfilePage() {
                         )}
                       </div>
                     </div>
-                    <button onClick={toggleShare}
-                      className="text-gray-400 hover:text-primary hover:bg-white rounded-full p-2 transition-colors flex-shrink-0">
+                    <button onClick={toggleShare} aria-label="Share doctor"
+                      className="absolute top-3 right-3 sm:static text-gray-400 hover:text-primary hover:bg-white rounded-full p-2 transition-colors flex-shrink-0">
                       <Share2 size={18} />
                     </button>
                   </div>
 
                   <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 mt-4 text-xs">
                     {doctor.education && (
-                      <div className="flex items-start gap-1.5">
+                      <div className="flex items-start justify-center sm:justify-start gap-1.5">
                         <GraduationCap size={14} className="text-gray-400 flex-shrink-0 mt-0.5" />
                         <span className="text-gray-700">{doctor.education}</span>
                       </div>
                     )}
                     {doctor.languages && (
-                      <div className="flex items-start gap-1.5">
+                      <div className="flex items-start justify-center sm:justify-start gap-1.5">
                         <LanguagesIcon size={14} className="text-gray-400 flex-shrink-0 mt-0.5" />
                         <span className="text-gray-700">{doctor.languages}</span>
                       </div>
                     )}
                     {doctor.consulting_hours && (
-                      <div className="flex items-start gap-1.5 sm:col-span-2">
+                      <div className="flex items-start justify-center sm:justify-start gap-1.5 sm:col-span-2">
                         <Clock size={14} className="text-gray-400 flex-shrink-0 mt-0.5" />
                         <span className="text-gray-700">{doctor.consulting_hours}</span>
                       </div>

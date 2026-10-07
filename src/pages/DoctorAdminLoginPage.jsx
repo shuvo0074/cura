@@ -42,15 +42,15 @@ export default function DoctorAdminLoginPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <label className="flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-2">
+          <label className="field flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-2">
             <Mail size={16} className="text-gray-400" />
             <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
-              placeholder="Email" className="flex-1 text-sm outline-none bg-transparent" />
+              placeholder="Email" aria-label="Email" className="flex-1 text-sm outline-none bg-transparent" />
           </label>
-          <label className="flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-2">
+          <label className="field flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-2">
             <Lock size={16} className="text-gray-400" />
             <input type="password" required value={password} onChange={e => setPassword(e.target.value)}
-              placeholder="Password" className="flex-1 text-sm outline-none bg-transparent" />
+              placeholder="Password" aria-label="Password" className="flex-1 text-sm outline-none bg-transparent" />
           </label>
           {error && <p className="text-red-500 text-xs">{error}</p>}
           <button type="submit" disabled={busy}
