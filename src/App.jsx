@@ -51,7 +51,7 @@ export default function App() {
       <AuthProvider>
         <FilterProvider>
           <GlobalHeader />
-          <main className="app-container py-6">
+          <main className="app-container pt-4 pb-6 sm:pt-6">
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/home" element={<Navigate to="/" replace />} />

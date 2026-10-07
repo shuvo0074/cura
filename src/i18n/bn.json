@@ -71,5 +71,22 @@
   "no_diagnostic_centres": "এখনো কোনো ডায়াগনস্টিক সেন্টার যুক্ত হয়নি",
   "health_blogs": "স্বাস্থ্য ব্লগ",
   "ambulances": "অ্যাম্বুলেন্স",
-  "clear_search": "খোঁজ মুছুন"
+  "clear_search": "খোঁজ মুছুন",
+  "filters": "ফিল্টার",
+  "clear_all": "সব মুছুন",
+  "division": "বিভাগ",
+  "city": "শহর",
+  "search_city": "শহর খুঁজুন",
+  "division_label": "{{name}} বিভাগ",
+  "cities_in_divisions": "নির্বাচিত বিভাগের শহরগুলো দেখানো হচ্ছে।",
+  "n_selected_one": "{{count}}টি নির্বাচিত",
+  "n_selected_other": "{{count}}টি নির্বাচিত",
+  "show_all": "সব দেখুন ({{count}})",
+  "show_less": "কম দেখুন",
+  "no_matches": "কিছু মেলেনি",
+  "no_results_adjust": "কোনো ডাক্তার মেলেনি — ফিল্টার বদলান",
+  "show_n_doctors_one": "{{count}} জন ডাক্তার দেখুন",
+  "show_n_doctors_other": "{{count}} জন ডাক্তার দেখুন",
+  "remove_filter": "ফিল্টার সরান: {{name}}",
+  "clear": "মুছুন"
 }

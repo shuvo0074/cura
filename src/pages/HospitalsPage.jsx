@@ -3,6 +3,7 @@ import { useState, useMemo, useEffect } from 'react';
 import SearchInput from '../components/ui/SearchInput';
 import PageHeader from '../components/ui/PageHeader';
 import EmptyState from '../components/ui/EmptyState';
+import FilterBar from '../components/filters/FilterBar';
 import HospitalCard from '../components/hospital/HospitalCard';
 import PillCarousel from '../components/ui/PillCarousel';
 import Pagination from '../components/ui/Pagination';
@@ -46,11 +47,12 @@ export default function HospitalsPage() {
 
   return (
     <div>
-      <PageHeader title={t('hospitals')} count={filtered.length}>
+      <PageHeader title={t('hospitals')} count={filtered.length} controlsOnMobile={false}>
         <SearchInput value={query} onChange={setQuery} placeholder={t('search_location_hospital')} />
       </PageHeader>
+      <FilterBar search={<SearchInput value={query} onChange={setQuery} placeholder={t('search_location_hospital')} className="h-11 py-0" />} />
 
-      <div className="mb-6">
+      <div className="mb-4 sm:mb-6">
         <PillCarousel items={CITIES} onSelect={setSelectedCity} selected={selectedCity} />
       </div>
 

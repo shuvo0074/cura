@@ -32,9 +32,9 @@ export default function HomeHero() {
   ];
 
   return (
-    // -mt-6 cancels <main>'s top padding so the navy band meets the header.
+    // -mt-4 / sm:-mt-6 cancel <main>'s top padding so the navy band meets the header.
     // pb-20 sm:pb-24 reserves space for the floating search bar (half hangs below).
-    <div className="relative -mt-6 mb-10">
+    <div className="relative -mt-4 sm:-mt-6 mb-10">
       <div className="hero-bleed bg-primary pt-4 pb-20 sm:pb-24">
         {/* Quick-link pills */}
         <div className="flex items-center gap-2">

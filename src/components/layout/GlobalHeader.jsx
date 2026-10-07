@@ -20,6 +20,18 @@ export default function GlobalHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
+  // Publish the header's real height as --header-h so sticky bars below it
+  // (e.g. the filter bar) line up at every breakpoint, even when it wraps.
+  useEffect(() => {
+    const el = menuRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(([entry]) => {
+      document.documentElement.style.setProperty('--header-h', `${entry.target.getBoundingClientRect().height}px`);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   // Close on route change
   useEffect(() => {
     setMenuOpen(false);

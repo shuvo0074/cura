@@ -1,7 +1,8 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Phone, Globe, Navigation, ArrowLeft, MapPin, Star, Users, SlidersHorizontal, Search, X } from 'lucide-react';
+import { Phone, Globe, Navigation, ArrowLeft, MapPin, Star, Users, SlidersHorizontal, Search, X, FilterX } from 'lucide-react';
+import FilterSheet from '../components/filters/FilterSheet';
 import { api } from '../api/client';
 import { getDhakaNow, parseTimeRangeToMinutes } from '../utils/dhakaTime';
 import { withDivision } from '../utils/place';
@@ -48,8 +49,8 @@ function isOnDutyNow(venueSchedule) {
   });
 }
 
-// Page-local specialty filter — mobile bottom sheet, desktop sticky sidebar.
-function SpecialtyFilter({ specialties, selected, onToggle, onClear, search, onSearch, mobileOpen, setMobileOpen }) {
+// Page-local specialty filter — desktop sticky sidebar. Phones use FilterSheet.
+function SpecialtyFilter({ specialties, selected, onToggle, onClear, search, onSearch }) {
   const { t } = useTranslation();
   const filtered = specialties.filter(s => s.toLowerCase().includes(search.toLowerCase()));
 
@@ -67,36 +68,6 @@ function SpecialtyFilter({ specialties, selected, onToggle, onClear, search, onS
 
   return (
     <>
-      {/* Mobile bottom sheet */}
-      {mobileOpen && (
-        <>
-          <div className="fixed inset-0 z-40 bg-black/40 md:hidden" onClick={() => setMobileOpen(false)} />
-          <div className="fixed inset-x-0 bottom-0 z-50 md:hidden bg-white rounded-t-2xl max-h-[80vh] flex flex-col">
-            <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-              <div className="w-10 h-1 rounded-full bg-gray-300" />
-            </div>
-            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 flex-shrink-0">
-              <span className="font-semibold text-gray-900">{t('filter_by')}</span>
-              <button onClick={() => setMobileOpen(false)} aria-label="Close filters" className="text-gray-400 p-2 -mr-2">
-                <X size={20} />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto px-5 py-4">
-              <p className="text-sm font-semibold text-gray-800 mb-2">{t('specialities')}</p>
-              <div className="field flex items-center gap-2 border border-gray-200 rounded-lg px-2.5 py-1.5 mb-3">
-                <Search size={13} className="text-gray-400 flex-shrink-0" />
-                <input value={search} onChange={e => onSearch(e.target.value)} placeholder={t('search_specialities')} aria-label={t('search_specialities')} className="flex-1 min-w-0 text-xs outline-none bg-transparent" />
-              </div>
-              {checkboxList}
-            </div>
-            <div className="flex gap-3 px-5 py-4 border-t border-gray-100 flex-shrink-0">
-              <button onClick={() => { onClear(); }} className="flex-1 border border-gray-200 rounded-xl py-3 text-sm text-gray-600 font-medium">Clear All</button>
-              <button onClick={() => setMobileOpen(false)} className="flex-1 bg-primary text-white rounded-xl py-3 text-sm font-semibold">Show Results</button>
-            </div>
-          </div>
-        </>
-      )}
-
       {/* Desktop sidebar */}
       <aside className="hidden md:block w-64 flex-shrink-0 md:sticky md:top-20">
         <div className={`${CARD} p-4`}>
@@ -180,8 +151,6 @@ export default function HospitalProfilePage() {
           onClear={() => setSpecialtyFilter([])}
           search={specSearch}
           onSearch={setSpecSearch}
-          mobileOpen={filterOpen}
-          setMobileOpen={setFilterOpen}
         />
 
         <div className="flex-1 w-full flex flex-col gap-5">
@@ -224,6 +193,20 @@ export default function HospitalProfilePage() {
               <SectionHeading icon={Users}>{t('our_doctors')} ({filteredDoctors.length})</SectionHeading>
               <MobileFilterButton count={specialtyFilter.length} onClick={() => setFilterOpen(true)} />
             </div>
+            {specialtyFilter.length > 0 && (
+              <div className="md:hidden flex flex-wrap gap-2 mb-3">
+                {specialtyFilter.map(name => (
+                  <button key={name} type="button" onClick={() => toggleSpecialty(name)} aria-label={t('remove_filter', { name })}
+                    className="flex items-center gap-1 h-9 pl-3 pr-2 rounded-full text-sm bg-white border border-primary/30 text-primary font-medium">
+                    {name} <X size={14} />
+                  </button>
+                ))}
+                <button type="button" onClick={() => setSpecialtyFilter([])}
+                  className="flex items-center gap-1.5 h-9 px-3 rounded-full text-sm font-medium text-gray-700 bg-white border border-gray-200 active:bg-gray-50">
+                  <FilterX size={14} /> {t('clear')}
+                </button>
+              </div>
+            )}
 
             {filteredDoctors.length === 0 && (
               <p className="text-sm text-gray-400 text-center py-6">{t('no_results')}</p>
@@ -266,6 +249,20 @@ export default function HospitalProfilePage() {
           </div>
         </div>
       </div>
+
+      <FilterSheet
+        open={filterOpen}
+        onClose={() => setFilterOpen(false)}
+        title={t('filters')}
+        value={{ specialty: specialtyFilter }}
+        onApply={draft => setSpecialtyFilter(draft.specialty)}
+        emptyValue={{ specialty: [] }}
+        countFor={draft => doctors.filter(d => !draft.specialty.length || draft.specialty.includes(d.specialty)).length}
+        resultLabel={count => t('show_n_doctors', { count })}
+        getSections={() => [
+          { key: 'specialty', title: t('specialities'), options: specialtyNames, searchable: true, searchPlaceholder: t('search_specialities') },
+        ]}
+      />
     </div>
   );
 }

@@ -71,5 +71,22 @@
   "no_diagnostic_centres": "No diagnostic centres listed yet",
   "health_blogs": "Health Blogs",
   "ambulances": "Ambulances",
-  "clear_search": "Clear search"
+  "clear_search": "Clear search",
+  "filters": "Filters",
+  "clear_all": "Clear all",
+  "division": "Division",
+  "city": "City",
+  "search_city": "Search city",
+  "division_label": "{{name}} Division",
+  "cities_in_divisions": "Showing cities in the selected divisions.",
+  "n_selected_one": "{{count}} selected",
+  "n_selected_other": "{{count}} selected",
+  "show_all": "Show all ({{count}})",
+  "show_less": "Show less",
+  "no_matches": "No matches",
+  "no_results_adjust": "No doctors match — adjust filters",
+  "show_n_doctors_one": "Show 1 doctor",
+  "show_n_doctors_other": "Show {{count}} doctors",
+  "remove_filter": "Remove filter: {{name}}",
+  "clear": "Clear"
 }

@@ -1,11 +1,13 @@
 import { useSearchParams, useNavigationType } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { SlidersHorizontal, X, Microscope } from 'lucide-react';
+import { Microscope } from 'lucide-react';
 import SearchInput from '../components/ui/SearchInput';
 import DoctorGrid from '../components/doctor/DoctorGrid';
 import HospitalCard from '../components/hospital/HospitalCard';
-import FilterDrawer from '../components/search/FilterDrawer';
+import DoctorMobileFilters from '../components/doctor/DoctorMobileFilters';
+import FilterBar from '../components/filters/FilterBar';
+import { matchesDoctorFilters } from '../utils/doctorFilters';
 import { useFilter } from '../context/FilterContext';
 import { api } from '../api/client';
 import PageHeader from '../components/ui/PageHeader';
@@ -36,7 +38,7 @@ export default function SearchResultsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
   const navigationType = useNavigationType();
-  const { filterParams, setFilterParams, setIsFilterOpen } = useFilter();
+  const { filterParams, setFilterParams } = useFilter();
   // The tab lives in the URL (?tab=hospital) alongside ?page=, so returning
   // from a profile lands on the same tab and page.
   const activeTab = TABS.includes(searchParams.get('tab')) ? searchParams.get('tab') : 'doctor';
@@ -83,26 +85,14 @@ export default function SearchResultsPage() {
     setFilterParams(p => ({ ...p, specialty: [], city: [], division: [] }));
   }, [query]);
 
-  const activeFilterChips = [
-    ...filterParams.specialty.map(v => ({ key: 'specialty', value: v })),
-    ...filterParams.city.map(v => ({ key: 'city', value: v })),
-    ...filterParams.division.map(v => ({ key: 'division', value: `${v} Division` , raw: v })),
-  ];
+  const q = query.trim().toLowerCase();
+  const countFor = params => doctors.filter(d => (!q || doctorMatches(d, q)) && matchesDoctorFilters(d, params)).length;
+  const specialtyNames = useMemo(() => [...new Set(doctors.map(d => d.specialty))].sort(), [doctors]);
 
-  function removeChip(key, value) {
-    setFilterParams(p => ({ ...p, [key]: p[key].filter(v => v !== value) }));
-  }
-
-  const filteredDoctors = useMemo(() => {
-    return doctors.filter(d => {
-      const q = query.trim().toLowerCase();
-      const matchQuery = !q || doctorMatches(d, q);
-      const matchCity = !filterParams.city.length || filterParams.city.includes(d.city);
-      const matchDivision = !filterParams.division.length || filterParams.division.includes(d.division);
-      const matchSpec = !filterParams.specialty.length || filterParams.specialty.includes(d.specialty);
-      return matchQuery && matchCity && matchDivision && matchSpec;
-    });
-  }, [doctors, query, filterParams]);
+  const filteredDoctors = useMemo(
+    () => doctors.filter(d => (!q || doctorMatches(d, q)) && matchesDoctorFilters(d, filterParams)),
+    [doctors, q, filterParams]
+  );
 
   const filteredHospitals = useMemo(() => {
     return hospitals.filter(h => {
@@ -131,47 +121,37 @@ export default function SearchResultsPage() {
     />
   );
 
+  const tabs = (
+    <div role="tablist" className="flex gap-2 overflow-x-auto no-scrollbar">
+      {TABS.map(tab => (
+        <button key={tab} role="tab" aria-selected={activeTab === tab} onClick={() => setActiveTab(tab)}
+          className={`flex-shrink-0 h-10 px-4 rounded-full text-sm font-medium border transition-colors
+            ${activeTab === tab ? 'bg-primary text-white border-primary' : 'border-gray-200 text-gray-600 bg-white'}`}>
+          {t(tab)}
+        </button>
+      ))}
+    </div>
+  );
+  const barSearch = <SearchInput value={query} onChange={setQuery} placeholder={t('search_doctors')} className="h-11 py-0" />;
+
   return (
     <div>
       <PageHeader
         title={query.trim() ? t('results_for', { q: query.trim() }) : t('search_results')}
-        count={activeTab === 'diagnostic_center' ? null : results.length}>
+        count={activeTab === 'diagnostic_center' ? null : results.length}
+        controlsOnMobile={false}>
         <SearchInput value={query} onChange={setQuery} placeholder={t('search_doctors')} />
       </PageHeader>
 
-      <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
-        <div className="flex gap-2">
-          {TABS.map(tab => (
-            <button key={tab} onClick={() => setActiveTab(tab)}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors
-                ${activeTab === tab ? 'bg-primary text-white border-primary' : 'border-gray-200 text-gray-600 bg-white'}`}>
-              {t(tab)}
-            </button>
-          ))}
-        </div>
-
-        <button onClick={() => setIsFilterOpen(true)}
-          className="flex items-center gap-1 text-sm text-gray-600 border border-gray-200 px-3 py-1.5 rounded-lg bg-white">
-          <SlidersHorizontal size={13} /> {t('filter_by')}
-        </button>
-      </div>
-
-      {activeFilterChips.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 mb-6">
-          <span className="text-xs text-gray-400">Filtering by:</span>
-          {activeFilterChips.map(({ key, value, raw = value }) => (
-            <button key={`${key}-${value}`} onClick={() => removeChip(key, raw)}
-              className="flex items-center gap-1 bg-primary/10 text-primary text-xs font-medium pl-2.5 pr-1.5 py-1 rounded-full hover:bg-primary/20 transition-colors">
-              {value} <X size={12} />
-            </button>
-          ))}
-          <button
-            onClick={() => setFilterParams(p => ({ ...p, specialty: [], city: [], division: [] }))}
-            className="text-xs text-gray-400 hover:text-primary underline">
-            Clear all
-          </button>
-        </div>
+      {/* Phones: search + filters in the sticky bar, tabs just below it.
+          Desktop: tabs + filters share the sticky bar; search stays in the header.
+          Specialty/division/city filters only apply to doctors. */}
+      {activeTab === 'doctor' ? (
+        <DoctorMobileFilters specialtyNames={specialtyNames} countFor={countFor} mobileOnly={false} search={barSearch} leading={tabs} />
+      ) : (
+        <FilterBar search={barSearch} leading={tabs} />
       )}
+      <div className="md:hidden mb-3">{tabs}</div>
 
       {activeTab === 'doctor' && (filteredDoctors.length ? <DoctorGrid doctors={pageItems} /> : noResults)}
       {activeTab === 'hospital' && (filteredHospitals.length ? (
@@ -188,7 +168,6 @@ export default function SearchResultsPage() {
         />
       )}
 
-      <FilterDrawer mode="specialty" />
     </div>
   );
 }
