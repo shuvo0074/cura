@@ -15,6 +15,7 @@ export const config = {
   minio: {
     endpoint: process.env.MINIO_ENDPOINT || 'localhost',
     port: Number(process.env.MINIO_PORT || 9000),
+    useSSL: process.env.MINIO_USE_SSL === 'true',
     accessKey: required('MINIO_ACCESS_KEY'),
     secretKey: required('MINIO_SECRET_KEY'),
     bucket: process.env.MINIO_BUCKET || 'cura-media',

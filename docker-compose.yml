@@ -1,0 +1,30 @@
+services:
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: ./server/.env
+    ports:
+      - "4000:4000"
+    networks:
+      - cura
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      - API_PROXY_URL=http://api:4000
+      - MINIO_PROXY_URL=http://192.168.100.31:9000
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+    networks:
+      - cura
+
+networks:
+  cura:
+    driver: bridge

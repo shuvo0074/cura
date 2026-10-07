@@ -1,22 +1,25 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
-// https://vite.dev/config/
+const apiProxy = process.env.API_PROXY_URL ?? 'http://localhost:4000'
+const minioProxy = process.env.MINIO_PROXY_URL ?? 'http://192.168.100.31:9000'
+
 export default defineConfig({
   plugins: [react()],
   server: {
     host: true,
     proxy: {
-      '/api': { target: 'http://localhost:4000', changeOrigin: true },
-      '/cura-media': { target: 'http://localhost:9000', changeOrigin: true },
+      '/api': { target: apiProxy, changeOrigin: true },
+      '/cura-media': { target: minioProxy, changeOrigin: true },
     },
   },
   preview: {
     host: true,
     port: 5173,
+    allowedHosts: true,
     proxy: {
-      '/api': { target: 'http://localhost:4000', changeOrigin: true },
-      '/cura-media': { target: 'http://localhost:9000', changeOrigin: true },
+      '/api': { target: apiProxy, changeOrigin: true },
+      '/cura-media': { target: minioProxy, changeOrigin: true },
     },
   },
 })

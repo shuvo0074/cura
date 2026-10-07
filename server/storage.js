@@ -4,7 +4,7 @@ import { config } from './config.js';
 export const minioClient = new Client({
   endPoint: config.minio.endpoint,
   port: config.minio.port,
-  useSSL: false,
+  useSSL: config.minio.useSSL,
   accessKey: config.minio.accessKey,
   secretKey: config.minio.secretKey,
 });
