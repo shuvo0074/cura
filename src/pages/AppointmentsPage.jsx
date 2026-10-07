@@ -4,6 +4,7 @@ import { Calendar, Clock, X, MapPin } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/client';
+import Photo from '../components/ui/Photo';
 
 export default function AppointmentsPage() {
   const { t } = useTranslation();
@@ -50,7 +51,7 @@ export default function AppointmentsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {appointments.map(a => (
             <div key={a.id} className="bg-white rounded-xl shadow-sm p-4 flex gap-3">
-              <img src={a.doctor_photo} alt={a.doctor_name} className="w-14 h-14 rounded-full object-cover flex-shrink-0" />
+              <Photo src={a.doctor_photo} alt={a.doctor_name} iconSize={22} className="w-14 h-14 rounded-full flex-shrink-0" />
               <div className="flex-1">
                 <div className="flex justify-between items-start">
                   <div>

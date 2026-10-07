@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import SharePopover from './SharePopover';
 import CallPopover from './CallPopover';
 import { getDhakaNow } from '../../utils/dhakaTime';
+import Photo from '../ui/Photo';
 
 export default function DoctorCard({ doctor }) {
   const navigate = useNavigate();
@@ -30,10 +31,10 @@ export default function DoctorCard({ doctor }) {
 
       {/* Card body */}
       <div className="flex gap-3 p-4">
-        <img
+        <Photo
           src={doctor.photo}
           alt={doctor.name}
-          className="w-[72px] h-[72px] rounded-xl object-cover flex-shrink-0"
+          className="w-[72px] h-[72px] rounded-xl flex-shrink-0"
         />
 
         <div className="flex-1 min-w-0">

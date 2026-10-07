@@ -5,6 +5,7 @@ import { Phone, Globe, Navigation, ArrowLeft, MapPin, Star, Users, SlidersHorizo
 import { api } from '../api/client';
 import { getDhakaNow, parseTimeRangeToMinutes } from '../utils/dhakaTime';
 import { withDivision } from '../utils/place';
+import Photo from '../components/ui/Photo';
 
 const CARD = 'bg-white rounded-xl border border-gray-100 shadow-sm';
 
@@ -13,6 +14,25 @@ function SectionHeading({ icon: Icon, children }) {
     <p className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
       <Icon size={13} className="text-primary" /> {children}
     </p>
+  );
+}
+
+// Opens the specialty filter bottom sheet on mobile; lives in the doctor list
+// header so it sits next to what it filters rather than above the hospital.
+function MobileFilterButton({ count, onClick }) {
+  const { t } = useTranslation();
+  return (
+    <button
+      onClick={onClick}
+      className="md:hidden flex items-center gap-1.5 border border-gray-200 text-gray-700 text-xs font-medium rounded-lg px-3 py-2 active:bg-gray-50">
+      <SlidersHorizontal size={14} className="text-primary" />
+      {t('filter_by')}
+      {count > 0 && (
+        <span className="bg-primary text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center leading-none">
+          {count}
+        </span>
+      )}
+    </button>
   );
 }
 
@@ -29,9 +49,8 @@ function isOnDutyNow(venueSchedule) {
 }
 
 // Page-local specialty filter — mobile bottom sheet, desktop sticky sidebar.
-function SpecialtyFilter({ specialties, selected, onToggle, onClear, search, onSearch }) {
+function SpecialtyFilter({ specialties, selected, onToggle, onClear, search, onSearch, mobileOpen, setMobileOpen }) {
   const { t } = useTranslation();
-  const [mobileOpen, setMobileOpen] = React.useState(false);
   const filtered = specialties.filter(s => s.toLowerCase().includes(search.toLowerCase()));
 
   const checkboxList = (
@@ -48,21 +67,6 @@ function SpecialtyFilter({ specialties, selected, onToggle, onClear, search, onS
 
   return (
     <>
-      {/* Mobile trigger */}
-      <div className="md:hidden mb-3">
-        <button
-          onClick={() => setMobileOpen(true)}
-          className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-xl px-4 py-2.5 shadow-sm active:bg-gray-50">
-          <SlidersHorizontal size={15} className="text-primary" />
-          {t('filter_by')}
-          {selected.length > 0 && (
-            <span className="bg-primary text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center leading-none">
-              {selected.length}
-            </span>
-          )}
-        </button>
-      </div>
-
       {/* Mobile bottom sheet */}
       {mobileOpen && (
         <>
@@ -123,6 +127,7 @@ export default function HospitalProfilePage() {
   const [loading, setLoading] = useState(true);
   const [specialtyFilter, setSpecialtyFilter] = useState([]);
   const [specSearch, setSpecSearch] = useState('');
+  const [filterOpen, setFilterOpen] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -175,11 +180,13 @@ export default function HospitalProfilePage() {
           onClear={() => setSpecialtyFilter([])}
           search={specSearch}
           onSearch={setSpecSearch}
+          mobileOpen={filterOpen}
+          setMobileOpen={setFilterOpen}
         />
 
         <div className="flex-1 w-full flex flex-col gap-5">
           <div className={`${CARD} overflow-hidden`}>
-            <img src={hospital.photo} alt={hospital.name} className="w-full h-56 object-cover" />
+            <Photo src={hospital.photo} alt={hospital.name} kind="building" iconSize={56} className="w-full h-56" />
             <div className="p-6">
               <h1 className="font-bold text-gray-900 text-2xl leading-tight">{hospital.name}</h1>
               <p className="flex items-center gap-1.5 text-sm text-gray-500 mt-2">
@@ -213,7 +220,10 @@ export default function HospitalProfilePage() {
           </div>
 
           <div className={`${CARD} p-6`}>
-            <SectionHeading icon={Users}>{t('our_doctors')} ({filteredDoctors.length})</SectionHeading>
+            <div className="flex items-start justify-between gap-3">
+              <SectionHeading icon={Users}>{t('our_doctors')} ({filteredDoctors.length})</SectionHeading>
+              <MobileFilterButton count={specialtyFilter.length} onClick={() => setFilterOpen(true)} />
+            </div>
 
             {filteredDoctors.length === 0 && (
               <p className="text-sm text-gray-400 text-center py-6">{t('no_results')}</p>
@@ -225,7 +235,7 @@ export default function HospitalProfilePage() {
                 return (
                   <div key={doc.id}
                     className="flex flex-col sm:flex-row sm:items-center gap-4 border border-gray-100 rounded-xl p-4 hover:border-primary/40 hover:shadow-sm transition-all">
-                    <img src={doc.photo} alt={doc.name} className="w-16 h-16 rounded-full object-cover flex-shrink-0" />
+                    <Photo src={doc.photo} alt={doc.name} iconSize={24} className="w-16 h-16 rounded-full flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-semibold text-gray-800 text-sm">{doc.name}</p>

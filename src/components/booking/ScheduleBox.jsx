@@ -63,9 +63,9 @@ export default function ScheduleBox({ selectedDate, onSelectDate }) {
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-      <div className="grid grid-cols-3 items-center mb-1">
+      <div className="grid grid-cols-2 sm:grid-cols-3 items-center gap-y-2 mb-1">
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t('scheduling')}</p>
-        <div className="flex items-center justify-center gap-2">
+        <div className="order-3 sm:order-none col-span-2 sm:col-span-1 flex items-center justify-center gap-2">
           <button onClick={() => stepDate(-1)} className="text-gray-400 hover:text-primary p-0.5 flex-shrink-0" aria-label="Previous day">
             <ChevronLeft size={14} />
           </button>
