@@ -4,6 +4,10 @@ import DoctorCardWide from '../components/doctor/DoctorCardWide';
 import DoctorFilterSidebar from '../components/doctor/DoctorFilterSidebar';
 import { useFilter } from '../context/FilterContext';
 import { api } from '../api/client';
+import Pagination from '../components/ui/Pagination';
+import { usePagination } from '../hooks/usePagination';
+
+const PAGE_SIZE = 12;
 
 export default function DoctorsPage() {
   const { filterParams } = useFilter();
@@ -31,6 +35,12 @@ export default function DoctorsPage() {
     });
   }, [doctors, query, filterParams]);
 
+  const { page, totalPages, setPage, pageItems } = usePagination(
+    filtered,
+    PAGE_SIZE,
+    JSON.stringify([query, filterParams])
+  );
+
   return (
     <div className="flex flex-col md:flex-row gap-6">
       <DoctorFilterSidebar specialtyNames={specialtyNames} />
@@ -57,9 +67,12 @@ export default function DoctorsPage() {
         ) : filtered.length === 0 ? (
           <p className="text-center text-gray-400 py-16">No results found</p>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {filtered.map(d => <DoctorCardWide key={d.id} doctor={d} />)}
-          </div>
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {pageItems.map(d => <DoctorCardWide key={d.id} doctor={d} />)}
+            </div>
+            <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+          </>
         )}
       </div>
     </div>

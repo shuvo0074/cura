@@ -3,6 +3,8 @@ import { useState, useMemo, useEffect } from 'react';
 import SearchInput from '../components/ui/SearchInput';
 import HospitalCard from '../components/hospital/HospitalCard';
 import PillCarousel from '../components/ui/PillCarousel';
+import Pagination from '../components/ui/Pagination';
+import { usePagination } from '../hooks/usePagination';
 import { api } from '../api/client';
 import divisions from '../data/divisions.json';
 
@@ -10,6 +12,8 @@ const CITIES = [
   { id: 'all', name: 'All' },
   ...divisions.map(d => ({ id: d.toLowerCase(), name: d })),
 ];
+
+const PAGE_SIZE = 12;
 
 export default function HospitalsPage() {
   const { t } = useTranslation();
@@ -30,6 +34,12 @@ export default function HospitalsPage() {
       return matchQ && matchCity;
     });
   }, [hospitals, query, selectedCity]);
+
+  const { page, totalPages, setPage, pageItems } = usePagination(
+    filtered,
+    PAGE_SIZE,
+    `${query}|${selectedCity.id}`
+  );
 
   return (
     <div>
@@ -52,9 +62,12 @@ export default function HospitalsPage() {
       ) : filtered.length === 0 ? (
         <p className="text-center text-gray-400 py-16">{t('no_results')}</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filtered.map(h => <HospitalCard key={h.id} hospital={h} />)}
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {pageItems.map(h => <HospitalCard key={h.id} hospital={h} />)}
+          </div>
+          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+        </>
       )}
     </div>
   );
