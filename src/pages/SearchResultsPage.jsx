@@ -1,6 +1,6 @@
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigationType } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { SlidersHorizontal, X, Microscope } from 'lucide-react';
 import SearchInput from '../components/ui/SearchInput';
 import DoctorGrid from '../components/doctor/DoctorGrid';
@@ -34,7 +34,8 @@ const PAGE_SIZE = 12;
 export default function SearchResultsPage() {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const urlQuery = searchParams.get('q') || '';
+  const query = searchParams.get('q') || '';
+  const navigationType = useNavigationType();
   const { filterParams, setFilterParams, setIsFilterOpen } = useFilter();
   // The tab lives in the URL (?tab=hospital) alongside ?page=, so returning
   // from a profile lands on the same tab and page.
@@ -47,7 +48,20 @@ export default function SearchResultsPage() {
       return params;
     }, { replace: true });
   }
-  const [query, setQuery] = useState(urlQuery);
+  // The search box writes straight to ?q= (replacing, not pushing, so typing
+  // doesn't flood history). Back from a profile then restores exactly what
+  // was typed, together with ?tab= and ?page=.
+  const typedQuery = useRef(null);
+  function setQuery(value) {
+    typedQuery.current = value;
+    setSearchParams(prev => {
+      const params = new URLSearchParams(prev);
+      if (value) params.set('q', value);
+      else params.delete('q');
+      params.delete('page');
+      return params;
+    }, { replace: true });
+  }
   const [doctors, setDoctors] = useState([]);
   const [hospitals, setHospitals] = useState([]);
 
@@ -62,10 +76,12 @@ export default function SearchResultsPage() {
   // produce "No Results Found" with no indication why. Typing directly in
   // this page's own search box does NOT trigger this (see below), so a
   // filter can still be intentionally combined with in-page typing.
+  // Back/Forward (POP) also keeps filters, so returning from a profile shows
+  // the same filtered results and page the user left.
   useEffect(() => {
-    setQuery(urlQuery);
+    if (navigationType === 'POP' || query === typedQuery.current) return;
     setFilterParams(p => ({ ...p, specialty: [], city: [], division: [] }));
-  }, [urlQuery]);
+  }, [query]);
 
   const activeFilterChips = [
     ...filterParams.specialty.map(v => ({ key: 'specialty', value: v })),

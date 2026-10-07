@@ -60,7 +60,7 @@ export function usePagination(items, pageSize, resetKey, storageKey) {
   useEffect(() => {
     if (prevKey.current === resetKey) return;
     prevKey.current = resetKey;
-    setPage(1);
+    if (searchParams.has('page')) setPage(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetKey]);
 
