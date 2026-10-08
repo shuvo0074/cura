@@ -1,9 +1,9 @@
 // Real diagnostic centres (src/data/diagnosticCentres.json): details taken
-// from each centre's own website, with the page and date recorded. None of
-// them publishes test prices, so tests are listed without a price ("call for
-// price") until real prices are entered through admin.
+// from each centre's own website, with the page and date recorded. The API
+// fills missing prices from server/data/publishedTestPrices.json; existing
+// admin-entered prices are kept.
 
-// Common tests listed for every centre: availability and price to confirm by phone.
+// Common tests listed for every centre; unpublished prices stay null.
 export const COMMON_TESTS = [
   ['Complete Blood Count (CBC)', 'blood'], ['Random Blood Sugar (RBS)', 'blood'], ['HbA1c', 'blood'],
   ['Lipid Profile', 'blood'], ['Thyroid (TSH)', 'blood'], ['Serum Creatinine', 'blood'],

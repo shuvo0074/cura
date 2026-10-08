@@ -1,10 +1,13 @@
-import { useSearchParams, useNavigationType } from 'react-router-dom';
+import { Link, useSearchParams, useNavigationType } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { Microscope } from 'lucide-react';
 import SearchInput from '../components/ui/SearchInput';
 import DoctorGrid from '../components/doctor/DoctorGrid';
 import HospitalCard from '../components/hospital/HospitalCard';
+import CentreCard from '../components/hospital/CentreCard';
+import AmbulanceVendorCard from '../components/AmbulanceVendorCard';
+import areas from '../data/dhakaAreas.json';
+import { filterAmbulances } from '../utils/ambulanceFilters';
 import DoctorMobileFilters from '../components/doctor/DoctorMobileFilters';
 import FilterBar from '../components/filters/FilterBar';
 import { matchesDoctorFilters } from '../utils/doctorFilters';
@@ -30,11 +33,11 @@ function doctorMatches(d, q) {
   ].some(field => (field || '').toLowerCase().includes(q));
 }
 
-const TABS = ['doctor', 'hospital', 'diagnostic_center'];
+const TABS = ['doctor', 'hospital', 'diagnostic_center', 'ambulances'];
 const PAGE_SIZE = 12;
 
 export default function SearchResultsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
   const navigationType = useNavigationType();
@@ -66,6 +69,19 @@ export default function SearchResultsPage() {
   }
   const [doctors, setDoctors] = useState([]);
   const [hospitals, setHospitals] = useState([]);
+  const [vendors, setVendors] = useState([]);
+  const [ambulanceLoading, setAmbulanceLoading] = useState(true);
+  const [ambulanceError, setAmbulanceError] = useState(false);
+  const [ambulanceRetry, setAmbulanceRetry] = useState(0);
+
+  useEffect(() => {
+    if (activeTab !== 'ambulances') return;
+    let active = true;
+    api.get('/ambulances').then(list => { if (active) setVendors(list); })
+      .catch(() => { if (active) setAmbulanceError(true); })
+      .finally(() => { if (active) setAmbulanceLoading(false); });
+    return () => { active = false; };
+  }, [activeTab, ambulanceRetry]);
 
   useEffect(() => {
     api.get('/doctors').then(setDoctors);
@@ -97,11 +113,16 @@ export default function SearchResultsPage() {
   const filteredHospitals = useMemo(() => {
     return hospitals.filter(h => {
       const q = query.toLowerCase();
-      return !q || h.name.toLowerCase().includes(q) || h.location.toLowerCase().includes(q) || (h.division || '').toLowerCase().includes(q);
+      return h.type !== 'diagnostic' && (!q || h.name.toLowerCase().includes(q) || h.location.toLowerCase().includes(q) || (h.division || '').toLowerCase().includes(q));
     });
   }, [hospitals, query]);
 
-  const results = activeTab === 'hospital' ? filteredHospitals : activeTab === 'doctor' ? filteredDoctors : [];
+  const filteredCentres = useMemo(() => hospitals.filter(h => h.type === 'diagnostic'
+    && (!q || [h.name, h.location, h.division, h.address, ...(h.tests || []).map(test => test.name)].some(value => value?.toLowerCase().includes(q)))), [hospitals, q]);
+  const filteredVendors = useMemo(() => filterAmbulances(vendors, { query }, areas), [vendors, query]);
+  const results = activeTab === 'hospital' ? filteredHospitals : activeTab === 'doctor' ? filteredDoctors
+    : activeTab === 'diagnostic_center' ? filteredCentres : filteredVendors;
+  const areaName = id => { const a = areas.find(item => item.id === id); return a ? (i18n.language === 'bn' ? a.bn : a.en) : ''; };
   const { page, totalPages, setPage, pageItems } = usePagination(
     results,
     PAGE_SIZE,
@@ -117,6 +138,8 @@ export default function SearchResultsPage() {
         { label: t('clear_search_filters'), onClick: clearAll },
         { label: t('browse_specialities'), to: '/specialties' },
         { label: t('browse_hospitals'), to: '/hospitals' },
+        { label: t('diagnostic_centres'), to: '/diagnostic-centres' },
+        { label: t('find_ambulance'), to: '/ambulances' },
       ]}
     />
   );
@@ -132,15 +155,16 @@ export default function SearchResultsPage() {
       ))}
     </div>
   );
-  const barSearch = <SearchInput value={query} onChange={setQuery} placeholder={t('search_doctors')} className="h-11 py-0" />;
+  const searchPlaceholder = t(activeTab === 'ambulances' ? 'ambulance_search' : activeTab === 'diagnostic_center' ? 'search_diagnostic' : 'search_placeholder');
+  const barSearch = <SearchInput value={query} onChange={setQuery} placeholder={searchPlaceholder} className="h-11 py-0" />;
 
   return (
     <div>
       <PageHeader
         title={query.trim() ? t('results_for', { q: query.trim() }) : t('search_results')}
-        count={activeTab === 'diagnostic_center' ? null : results.length}
+        count={activeTab === 'ambulances' && (ambulanceLoading || ambulanceError) ? null : results.length}
         controlsOnMobile={false}>
-        <SearchInput value={query} onChange={setQuery} placeholder={t('search_doctors')} />
+        <SearchInput value={query} onChange={setQuery} placeholder={searchPlaceholder} />
       </PageHeader>
 
       {/* Phones: search + filters in the sticky bar, tabs just below it.
@@ -159,14 +183,22 @@ export default function SearchResultsPage() {
           {pageItems.map(h => <HospitalCard key={h.id} hospital={h} />)}
         </div>
       ) : noResults)}
-      {results.length > 0 && <Pagination page={page} totalPages={totalPages} onChange={setPage} />}
-      {activeTab === 'diagnostic_center' && (
-        <EmptyState
-          icon={Microscope}
-          title={t('no_diagnostic_centres')}
-          actions={[{ label: t('browse_hospitals'), to: '/hospitals' }]}
-        />
+      {(activeTab === 'diagnostic_center' || activeTab === 'ambulances') && (
+        <div className="mb-4">
+          <Link className="inline-flex items-center min-h-11 px-4 border border-gray-200 rounded-xl bg-white text-primary text-sm font-semibold hover:bg-primary/5"
+            to={`${activeTab === 'ambulances' ? '/ambulances' : '/diagnostic-centres'}${query ? `?q=${encodeURIComponent(query)}` : ''}`}>
+            {t(activeTab === 'ambulances' ? 'ambulance_browse_filters' : 'diagnostic_browse_filters')}
+          </Link>
+        </div>
       )}
+      {activeTab === 'diagnostic_center' && (results.length ? (
+        <ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">{pageItems.map(centre => <CentreCard key={centre.id} centre={centre} />)}</ul>
+      ) : noResults)}
+      {activeTab === 'ambulances' && (ambulanceLoading ? <p role="status" className="text-center text-gray-500 py-16">{t('loading')}</p>
+        : ambulanceError ? <EmptyState title={t('ambulance_load_error')} message={t('ambulance_retry_note')}
+          actions={[{ label: t('retry'), onClick: () => { setAmbulanceLoading(true); setAmbulanceError(false); setAmbulanceRetry(n => n + 1); } }]} />
+          : results.length ? <ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">{pageItems.map(vendor => <AmbulanceVendorCard key={vendor.id} vendor={vendor} areaName={areaName} lang={i18n.language} />)}</ul> : noResults)}
+      {results.length > 0 && !(activeTab === 'ambulances' && (ambulanceLoading || ambulanceError)) && <Pagination page={page} totalPages={totalPages} onChange={setPage} />}
 
     </div>
   );

@@ -1,0 +1,594 @@
+[
+  {
+    "id": "uttara-1",
+    "en": "Uttara sectors 1–3",
+    "bn": "উত্তরা সেক্টর ১–৩",
+    "zone": "North",
+    "lat": 23.86,
+    "lng": 90.4
+  },
+  {
+    "id": "uttara-4",
+    "en": "Uttara sectors 4–6",
+    "bn": "উত্তরা সেক্টর ৪–৬",
+    "zone": "North",
+    "lat": 23.869,
+    "lng": 90.403
+  },
+  {
+    "id": "uttara-7",
+    "en": "Uttara sectors 7–9",
+    "bn": "উত্তরা সেক্টর ৭–৯",
+    "zone": "North",
+    "lat": 23.875,
+    "lng": 90.398
+  },
+  {
+    "id": "uttara-10",
+    "en": "Uttara sectors 10–12",
+    "bn": "উত্তরা সেক্টর ১০–১২",
+    "zone": "North",
+    "lat": 23.881,
+    "lng": 90.39
+  },
+  {
+    "id": "uttara-13",
+    "en": "Uttara sectors 13–14",
+    "bn": "উত্তরা সেক্টর ১৩–১৪",
+    "zone": "North",
+    "lat": 23.873,
+    "lng": 90.383
+  },
+  {
+    "id": "uttara-15",
+    "en": "Uttara sectors 15–18",
+    "bn": "উত্তরা সেক্টর ১৫–১৮",
+    "zone": "North",
+    "lat": 23.864,
+    "lng": 90.366
+  },
+  {
+    "id": "airport",
+    "en": "Airport / Ashkona",
+    "bn": "এয়ারপোর্ট / আশকোনা",
+    "zone": "North",
+    "lat": 23.851,
+    "lng": 90.419
+  },
+  {
+    "id": "khilkhet",
+    "en": "Khilkhet / Nikunja",
+    "bn": "খিলক্ষেত / নিকুঞ্জ",
+    "zone": "North",
+    "lat": 23.831,
+    "lng": 90.421
+  },
+  {
+    "id": "kuril",
+    "en": "Kuril",
+    "bn": "কুড়িল",
+    "zone": "North",
+    "lat": 23.821,
+    "lng": 90.422
+  },
+  {
+    "id": "badda",
+    "en": "Badda",
+    "bn": "বাড্ডা",
+    "zone": "East",
+    "lat": 23.78,
+    "lng": 90.426
+  },
+  {
+    "id": "merul-badda",
+    "en": "Merul Badda",
+    "bn": "মেরুল বাড্ডা",
+    "zone": "East",
+    "lat": 23.77,
+    "lng": 90.426
+  },
+  {
+    "id": "notun-bazar",
+    "en": "Notun Bazar / Shahjadpur",
+    "bn": "নতুন বাজার / শাহজাদপুর",
+    "zone": "East",
+    "lat": 23.797,
+    "lng": 90.425
+  },
+  {
+    "id": "bashundhara",
+    "en": "Bashundhara R/A",
+    "bn": "বসুন্ধরা আবাসিক",
+    "zone": "East",
+    "lat": 23.815,
+    "lng": 90.436
+  },
+  {
+    "id": "vatara",
+    "en": "Vatara",
+    "bn": "ভাটারা",
+    "zone": "East",
+    "lat": 23.804,
+    "lng": 90.443
+  },
+  {
+    "id": "rampura",
+    "en": "Rampura",
+    "bn": "রামপুরা",
+    "zone": "East",
+    "lat": 23.762,
+    "lng": 90.422
+  },
+  {
+    "id": "banasree",
+    "en": "Banasree",
+    "bn": "বনশ্রী",
+    "zone": "East",
+    "lat": 23.762,
+    "lng": 90.438
+  },
+  {
+    "id": "aftabnagar",
+    "en": "Aftabnagar",
+    "bn": "আফতাবনগর",
+    "zone": "East",
+    "lat": 23.772,
+    "lng": 90.438
+  },
+  {
+    "id": "khilgaon",
+    "en": "Khilgaon",
+    "bn": "খিলগাঁও",
+    "zone": "East",
+    "lat": 23.75,
+    "lng": 90.425
+  },
+  {
+    "id": "goran",
+    "en": "Goran / Taltola",
+    "bn": "গোড়ান / তালতলা",
+    "zone": "East",
+    "lat": 23.747,
+    "lng": 90.437
+  },
+  {
+    "id": "sabujbagh",
+    "en": "Sabujbagh / Basabo",
+    "bn": "সবুজবাগ / বাসাবো",
+    "zone": "East",
+    "lat": 23.737,
+    "lng": 90.43
+  },
+  {
+    "id": "mirpur-1",
+    "en": "Mirpur 1 / Mazar Road",
+    "bn": "মিরপুর ১ / মাজার রোড",
+    "zone": "West",
+    "lat": 23.798,
+    "lng": 90.353
+  },
+  {
+    "id": "mirpur-2",
+    "en": "Mirpur 2",
+    "bn": "মিরপুর ২",
+    "zone": "West",
+    "lat": 23.807,
+    "lng": 90.359
+  },
+  {
+    "id": "mirpur-6",
+    "en": "Mirpur 6–7",
+    "bn": "মিরপুর ৬–৭",
+    "zone": "West",
+    "lat": 23.818,
+    "lng": 90.365
+  },
+  {
+    "id": "mirpur-10",
+    "en": "Mirpur 10",
+    "bn": "মিরপুর ১০",
+    "zone": "West",
+    "lat": 23.807,
+    "lng": 90.369
+  },
+  {
+    "id": "mirpur-11",
+    "en": "Mirpur 11",
+    "bn": "মিরপুর ১১",
+    "zone": "West",
+    "lat": 23.818,
+    "lng": 90.372
+  },
+  {
+    "id": "mirpur-12",
+    "en": "Mirpur 12 / Pallabi",
+    "bn": "মিরপুর ১২ / পল্লবী",
+    "zone": "West",
+    "lat": 23.829,
+    "lng": 90.365
+  },
+  {
+    "id": "mirpur-13",
+    "en": "Mirpur 13–14",
+    "bn": "মিরপুর ১৩–১৪",
+    "zone": "West",
+    "lat": 23.809,
+    "lng": 90.383
+  },
+  {
+    "id": "kazipara",
+    "en": "Kazipara / Shewrapara",
+    "bn": "কাজীপাড়া / শেওড়াপাড়া",
+    "zone": "West",
+    "lat": 23.792,
+    "lng": 90.375
+  },
+  {
+    "id": "kafrul",
+    "en": "Kafrul / Ibrahimpur",
+    "bn": "কাফরুল / ইব্রাহিমপুর",
+    "zone": "West",
+    "lat": 23.796,
+    "lng": 90.389
+  },
+  {
+    "id": "agargaon",
+    "en": "Agargaon",
+    "bn": "আগারগাঁও",
+    "zone": "West",
+    "lat": 23.778,
+    "lng": 90.38
+  },
+  {
+    "id": "shyamoli",
+    "en": "Shyamoli",
+    "bn": "শ্যামলী",
+    "zone": "West",
+    "lat": 23.774,
+    "lng": 90.365
+  },
+  {
+    "id": "kallyanpur",
+    "en": "Kallyanpur",
+    "bn": "কল্যাণপুর",
+    "zone": "West",
+    "lat": 23.779,
+    "lng": 90.36
+  },
+  {
+    "id": "gabtoli",
+    "en": "Gabtoli / Darussalam",
+    "bn": "গাবতলী / দারুসসালাম",
+    "zone": "West",
+    "lat": 23.783,
+    "lng": 90.345
+  },
+  {
+    "id": "mohammadpur",
+    "en": "Mohammadpur",
+    "bn": "মোহাম্মদপুর",
+    "zone": "West",
+    "lat": 23.76,
+    "lng": 90.362
+  },
+  {
+    "id": "adabor",
+    "en": "Adabor",
+    "bn": "আদাবর",
+    "zone": "West",
+    "lat": 23.774,
+    "lng": 90.355
+  },
+  {
+    "id": "bosila",
+    "en": "Bosila",
+    "bn": "বসিলা",
+    "zone": "West",
+    "lat": 23.752,
+    "lng": 90.346
+  },
+  {
+    "id": "lalmatia",
+    "en": "Lalmatia",
+    "bn": "লালমাটিয়া",
+    "zone": "West",
+    "lat": 23.754,
+    "lng": 90.37
+  },
+  {
+    "id": "dhanmondi",
+    "en": "Dhanmondi",
+    "bn": "ধানমন্ডি",
+    "zone": "Central",
+    "lat": 23.746,
+    "lng": 90.375
+  },
+  {
+    "id": "rayerbazar",
+    "en": "Rayerbazar / Hazaribagh",
+    "bn": "রায়েরবাজার / হাজারীবাগ",
+    "zone": "Central",
+    "lat": 23.737,
+    "lng": 90.365
+  },
+  {
+    "id": "kalabagan",
+    "en": "Kalabagan",
+    "bn": "কলাবাগান",
+    "zone": "Central",
+    "lat": 23.75,
+    "lng": 90.382
+  },
+  {
+    "id": "panthapath",
+    "en": "Panthapath / Green Road",
+    "bn": "পান্থপথ / গ্রিন রোড",
+    "zone": "Central",
+    "lat": 23.752,
+    "lng": 90.389
+  },
+  {
+    "id": "farmgate",
+    "en": "Farmgate",
+    "bn": "ফার্মগেট",
+    "zone": "Central",
+    "lat": 23.758,
+    "lng": 90.39
+  },
+  {
+    "id": "tejgaon",
+    "en": "Tejgaon",
+    "bn": "তেজগাঁও",
+    "zone": "Central",
+    "lat": 23.766,
+    "lng": 90.4
+  },
+  {
+    "id": "tejgaon-industrial",
+    "en": "Tejgaon Industrial Area",
+    "bn": "তেজগাঁও শিল্পাঞ্চল",
+    "zone": "Central",
+    "lat": 23.774,
+    "lng": 90.402
+  },
+  {
+    "id": "mohakhali",
+    "en": "Mohakhali",
+    "bn": "মহাখালী",
+    "zone": "Central",
+    "lat": 23.778,
+    "lng": 90.4
+  },
+  {
+    "id": "banani",
+    "en": "Banani",
+    "bn": "বনানী",
+    "zone": "Central",
+    "lat": 23.793,
+    "lng": 90.404
+  },
+  {
+    "id": "gulshan-1",
+    "en": "Gulshan 1",
+    "bn": "গুলশান ১",
+    "zone": "Central",
+    "lat": 23.78,
+    "lng": 90.416
+  },
+  {
+    "id": "gulshan-2",
+    "en": "Gulshan 2",
+    "bn": "গুলশান ২",
+    "zone": "Central",
+    "lat": 23.794,
+    "lng": 90.414
+  },
+  {
+    "id": "baridhara",
+    "en": "Baridhara",
+    "bn": "বারিধারা",
+    "zone": "Central",
+    "lat": 23.804,
+    "lng": 90.421
+  },
+  {
+    "id": "cantonment",
+    "en": "Cantonment / DOHS",
+    "bn": "ক্যান্টনমেন্ট / ডিওএইচএস",
+    "zone": "Central",
+    "lat": 23.817,
+    "lng": 90.397
+  },
+  {
+    "id": "moghbazar",
+    "en": "Moghbazar",
+    "bn": "মগবাজার",
+    "zone": "Central",
+    "lat": 23.75,
+    "lng": 90.405
+  },
+  {
+    "id": "malibagh",
+    "en": "Malibagh",
+    "bn": "মালিবাগ",
+    "zone": "Central",
+    "lat": 23.748,
+    "lng": 90.415
+  },
+  {
+    "id": "eskaton",
+    "en": "Eskaton / Banglamotor",
+    "bn": "ইস্কাটন / বাংলামোটর",
+    "zone": "Central",
+    "lat": 23.747,
+    "lng": 90.397
+  },
+  {
+    "id": "ramna",
+    "en": "Ramna / Shahbagh",
+    "bn": "রমনা / শাহবাগ",
+    "zone": "Central",
+    "lat": 23.739,
+    "lng": 90.398
+  },
+  {
+    "id": "kakrail",
+    "en": "Kakrail / Shantinagar",
+    "bn": "কাকরাইল / শান্তিনগর",
+    "zone": "Central",
+    "lat": 23.737,
+    "lng": 90.41
+  },
+  {
+    "id": "paltan",
+    "en": "Paltan",
+    "bn": "পল্টন",
+    "zone": "South",
+    "lat": 23.732,
+    "lng": 90.413
+  },
+  {
+    "id": "motijheel",
+    "en": "Motijheel",
+    "bn": "মতিঝিল",
+    "zone": "South",
+    "lat": 23.728,
+    "lng": 90.421
+  },
+  {
+    "id": "fakirapool",
+    "en": "Fakirapool / Arambagh",
+    "bn": "ফকিরাপুল / আরামবাগ",
+    "zone": "South",
+    "lat": 23.735,
+    "lng": 90.42
+  },
+  {
+    "id": "kamalapur",
+    "en": "Kamalapur",
+    "bn": "কমলাপুর",
+    "zone": "South",
+    "lat": 23.732,
+    "lng": 90.427
+  },
+  {
+    "id": "mugda",
+    "en": "Mugda / Manda",
+    "bn": "মুগদা / মান্ডা",
+    "zone": "South",
+    "lat": 23.726,
+    "lng": 90.441
+  },
+  {
+    "id": "jatrabari",
+    "en": "Jatrabari",
+    "bn": "যাত্রাবাড়ী",
+    "zone": "South",
+    "lat": 23.71,
+    "lng": 90.435
+  },
+  {
+    "id": "sayedabad",
+    "en": "Sayedabad",
+    "bn": "সায়েদাবাদ",
+    "zone": "South",
+    "lat": 23.719,
+    "lng": 90.428
+  },
+  {
+    "id": "demra",
+    "en": "Demra / Sarulia",
+    "bn": "ডেমরা / সারুলিয়া",
+    "zone": "South",
+    "lat": 23.723,
+    "lng": 90.49
+  },
+  {
+    "id": "shonir-akhra",
+    "en": "Shonir Akhra / Rayerbag",
+    "bn": "শনির আখড়া / রায়েরবাগ",
+    "zone": "South",
+    "lat": 23.704,
+    "lng": 90.452
+  },
+  {
+    "id": "kadamtali",
+    "en": "Kadamtali / Shyampur",
+    "bn": "কদমতলী / শ্যামপুর",
+    "zone": "South",
+    "lat": 23.692,
+    "lng": 90.442
+  },
+  {
+    "id": "postogola",
+    "en": "Postogola / Jurain",
+    "bn": "পোস্তগোলা / জুরাইন",
+    "zone": "South",
+    "lat": 23.696,
+    "lng": 90.426
+  },
+  {
+    "id": "wari",
+    "en": "Wari",
+    "bn": "ওয়ারী",
+    "zone": "Old Dhaka",
+    "lat": 23.719,
+    "lng": 90.417
+  },
+  {
+    "id": "sutrapur",
+    "en": "Sutrapur / Gendaria",
+    "bn": "সূত্রাপুর / গেন্ডারিয়া",
+    "zone": "Old Dhaka",
+    "lat": 23.709,
+    "lng": 90.421
+  },
+  {
+    "id": "sadarghat",
+    "en": "Sadarghat / Banglabazar",
+    "bn": "সদরঘাট / বাংলাবাজার",
+    "zone": "Old Dhaka",
+    "lat": 23.707,
+    "lng": 90.41
+  },
+  {
+    "id": "kotwali",
+    "en": "Kotwali / Chawkbazar",
+    "bn": "কোতোয়ালি / চকবাজার",
+    "zone": "Old Dhaka",
+    "lat": 23.717,
+    "lng": 90.396
+  },
+  {
+    "id": "lalbagh",
+    "en": "Lalbagh",
+    "bn": "লালবাগ",
+    "zone": "Old Dhaka",
+    "lat": 23.72,
+    "lng": 90.387
+  },
+  {
+    "id": "azimpur",
+    "en": "Azimpur",
+    "bn": "আজিমপুর",
+    "zone": "Old Dhaka",
+    "lat": 23.727,
+    "lng": 90.385
+  },
+  {
+    "id": "bakshibazar",
+    "en": "Bakshibazar / Chankharpul",
+    "bn": "বকশীবাজার / চানখাঁরপুল",
+    "zone": "Old Dhaka",
+    "lat": 23.723,
+    "lng": 90.399
+  },
+  {
+    "id": "nawabpur",
+    "en": "Nawabpur / Bangshal",
+    "bn": "নবাবপুর / বংশাল",
+    "zone": "Old Dhaka",
+    "lat": 23.718,
+    "lng": 90.409
+  }
+]

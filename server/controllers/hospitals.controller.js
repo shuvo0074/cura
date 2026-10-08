@@ -1,14 +1,16 @@
 import { query } from '../db.js';
+import { withPublishedTestPrices } from '../publishedTestPrices.js';
 
 export async function listHospitals(_req, res, next) {
   try {
-    // Everything but the test price list, which only the profile page shows.
+    // Diagnostic prices also support search and price previews on centre cards.
     const { rows } = await query(
       `SELECT id, name, location, division, address, hotline, photo, lat, lng, website, doctor_count, description,
-        type, services, beds, facilities, payment_methods, opening_hours, visiting_hours, source_url, verified_on
+        type, services, beds, facilities, payment_methods, opening_hours, visiting_hours, source_url, verified_on,
+        CASE WHEN type = 'diagnostic' THEN tests END AS tests
        FROM hospitals ORDER BY id`
     );
-    res.json(rows);
+    res.json(rows.map(withPublishedTestPrices));
   } catch (err) {
     next(err);
   }
@@ -18,7 +20,7 @@ export async function getHospital(req, res, next) {
   try {
     const { rows } = await query(`SELECT * FROM hospitals WHERE id = $1`, [req.params.id]);
     if (!rows[0]) return res.status(404).json({ error: 'Hospital not found' });
-    res.json(rows[0]);
+    res.json(withPublishedTestPrices(rows[0]));
   } catch (err) {
     next(err);
   }
