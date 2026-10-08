@@ -1,4 +1,4 @@
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import { Phone, Share2, ArrowLeft, Star, ShieldCheck, Ticket, CalendarDays, Stethoscope, Briefcase, Wallet } from 'lucide-react';
@@ -52,6 +52,7 @@ export default function DoctorProfilePage() {
   const [selectedDate, setSelectedDate] = useState(defaultBookingDate);
   const [searchParams] = useSearchParams();
   const dateParam = searchParams.get('date');
+  const { hash } = useLocation();
   const hospitalIds = useHospitalIdByName();
 
   useEffect(() => {
@@ -63,6 +64,14 @@ export default function DoctorProfilePage() {
       .catch(() => setDoctor(null))
       .finally(() => setLoading(false));
   }, [id, dateParam]);
+
+  // Arriving from a "Book serial" link (e.g. on a hospital page) lands on the
+  // booking card once the profile has loaded.
+  useEffect(() => {
+    if (!loading && doctor && hash === '#book-serial') {
+      document.getElementById('book-serial')?.scrollIntoView({ block: 'start' });
+    }
+  }, [loading, doctor, hash]);
 
   if (loading) {
     return <div className="flex items-center justify-center h-64 text-gray-400">{t('loading')}</div>;

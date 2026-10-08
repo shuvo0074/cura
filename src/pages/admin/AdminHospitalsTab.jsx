@@ -3,8 +3,12 @@ import { Plus, Pencil, SlidersHorizontal, Search, X, Building2 } from 'lucide-re
 import { api } from '../../api/client';
 import divisions from '../../data/divisions.json';
 import { citiesForDivisions } from '../../utils/geo';
+import HospitalExtrasFields from './HospitalExtrasFields';
 
-const BLANK = { name: '', location: '', division: '', address: '', hotline: '', photo: '', website: '', description: '' };
+const BLANK = {
+  name: '', location: '', division: '', address: '', hotline: '', photo: '', website: '', description: '',
+  type: 'hospital', opening_hours: '', visiting_hours: '', beds: null, services: [], facilities: [], payment_methods: ['cash'], tests: [],
+};
 
 function toggleInArray(arr, item) {
   return arr.includes(item) ? arr.filter(i => i !== item) : [...arr, item];
@@ -34,7 +38,7 @@ function FilterSection({ title, placeholder, items, selected, onToggle }) {
   );
 }
 
-function HospitalForm({ form, setForm, onSave, onCancel, editingId }) {
+function HospitalForm({ form, setForm, onSave, onCancel, editingId, error, saving }) {
   const fileRef = useRef(null);
   const [photoLoading, setPhotoLoading] = useState(false);
 
@@ -147,8 +151,10 @@ function HospitalForm({ form, setForm, onSave, onCancel, editingId }) {
           rows={3}
           className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none resize-none" />
       </label>
+      <HospitalExtrasFields form={form} setForm={setForm} />
+      {error && <p role="alert" className="sm:col-span-2 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
       <div className="flex gap-2 sm:col-span-2 mt-1">
-        <button type="submit" className="flex-1 bg-primary text-white py-2 rounded-lg text-sm font-medium">Save</button>
+        <button type="submit" disabled={saving} className="flex-1 bg-primary text-white py-2 rounded-lg text-sm font-medium disabled:opacity-60">{saving ? 'Saving…' : 'Save'}</button>
         <button type="button" onClick={onCancel} className="flex-1 border border-gray-300 py-2 rounded-lg text-sm bg-white">Cancel</button>
       </div>
     </form>
@@ -163,6 +169,8 @@ export default function AdminHospitalsTab() {
   const [editForm, setEditForm] = useState(null);
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [search, setSearch] = useState('');
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   function reload() { api.get('/hospitals').then(setHospitals); }
   useEffect(reload, []);
@@ -179,13 +187,29 @@ export default function AdminHospitalsTab() {
   const hasActiveFilters = filters.division.length || filters.district.length || search;
 
   async function handleSave(form, closeForm) {
-    if (form.id) {
-      await api.patch(`/admin/hospitals/${form.id}`, form);
-    } else {
-      await api.post('/admin/hospitals', form);
+    setSaving(true);
+    setError('');
+    try {
+      if (form.id) {
+        await api.patch(`/admin/hospitals/${form.id}`, form);
+      } else {
+        await api.post('/admin/hospitals', form);
+      }
+      closeForm();
+      reload();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
     }
-    closeForm();
-    reload();
+  }
+
+  // The list leaves out test prices, so editing loads the full record —
+  // otherwise saving would send an empty price list and wipe it.
+  async function openEdit(id) {
+    setAddForm(null);
+    setError('');
+    setEditForm(await api.get(`/hospitals/${id}`));
   }
 
   function handleDivisionToggle(div) {
@@ -232,7 +256,7 @@ export default function AdminHospitalsTab() {
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search for Hospitals"
                 className="flex-1 text-sm outline-none bg-transparent" />
             </div>
-            <button onClick={() => { setAddForm(BLANK); setEditForm(null); }}
+            <button onClick={() => { setAddForm(BLANK); setEditForm(null); setError(''); }}
               className="flex items-center gap-1 text-sm font-medium text-primary border border-primary rounded-lg px-3 py-2 bg-white whitespace-nowrap">
               <Plus size={14} /> Add Hospital
             </button>
@@ -242,7 +266,7 @@ export default function AdminHospitalsTab() {
         {/* Inline add form */}
         {addForm && (
           <div className="bg-white rounded-xl shadow-sm p-4 mb-4">
-            <HospitalForm form={addForm} setForm={setAddForm}
+            <HospitalForm form={addForm} setForm={setAddForm} error={error} saving={saving}
               onSave={e => { e.preventDefault(); handleSave(addForm, () => setAddForm(null)); }}
               onCancel={() => setAddForm(null)} />
           </div>
@@ -250,7 +274,7 @@ export default function AdminHospitalsTab() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
           {filtered.map(h => (
-            <div key={h.id} onClick={() => { setEditForm(h); setAddForm(null); }} className="bg-white rounded-xl shadow-sm p-3 flex justify-between items-center text-sm cursor-pointer hover:shadow-md hover:bg-gray-50 transition-shadow">
+            <div key={h.id} onClick={() => openEdit(h.id)} className="bg-white rounded-xl shadow-sm p-3 flex justify-between items-center text-sm cursor-pointer hover:shadow-md hover:bg-gray-50 transition-shadow">
               <div className="flex items-center gap-2.5 min-w-0">
                 {h.photo
                   ? <img src={h.photo} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0 border border-gray-100" />
@@ -277,14 +301,14 @@ export default function AdminHospitalsTab() {
       {editForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center glass-scrim"
           onClick={e => { if (e.target === e.currentTarget) setEditForm(null); }}>
-          <div className="glass-panel rounded-2xl p-6 w-full max-w-lg mx-4">
+          <div className="glass-panel rounded-2xl p-6 w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-gray-800 text-base">Edit Hospital</h3>
               <button onClick={() => setEditForm(null)} className="text-gray-400 hover:text-gray-600">
                 <X size={18} />
               </button>
             </div>
-            <HospitalForm form={editForm} setForm={setEditForm}
+            <HospitalForm form={editForm} setForm={setEditForm} error={error} saving={saving}
               editingId={editForm.id}
               onSave={e => { e.preventDefault(); handleSave(editForm, () => setEditForm(null)); }}
               onCancel={() => setEditForm(null)} />

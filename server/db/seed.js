@@ -4,6 +4,7 @@ import { dirname, join } from 'path';
 import bcrypt from 'bcryptjs';
 import pg from 'pg';
 import 'dotenv/config';
+import { hospitalExtras } from './hospitalExtras.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const dataDir = join(__dirname, '..', '..', 'src', 'data');
@@ -31,9 +32,11 @@ async function main() {
   const hospitalIdMap = {};
   for (const h of hospitals) {
     const { rows } = await pool.query(
-      `INSERT INTO hospitals (name, location, division, address, hotline, photo, lat, lng, website, doctor_count, description)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id`,
-      [h.name, h.location, h.division, h.address, h.hotline, h.photo, h.lat, h.lng, h.website, h.doctorCount || 0, h.description || null]
+      `INSERT INTO hospitals (name, location, division, address, hotline, photo, lat, lng, website, doctor_count, description,
+        type, services, beds, tests, facilities, payment_methods, opening_hours, visiting_hours)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) RETURNING id`,
+      [h.name, h.location, h.division, h.address, h.hotline, h.photo, h.lat, h.lng, h.website, h.doctorCount || 0, h.description || null,
+        ...hospitalExtras(h)]
     );
     hospitalIdMap[h.id] = rows[0].id;
   }

@@ -2,7 +2,12 @@ import { query } from '../db.js';
 
 export async function listHospitals(_req, res, next) {
   try {
-    const { rows } = await query(`SELECT * FROM hospitals ORDER BY id`);
+    // Everything but the test price list, which only the profile page shows.
+    const { rows } = await query(
+      `SELECT id, name, location, division, address, hotline, photo, lat, lng, website, doctor_count, description,
+        type, services, beds, facilities, payment_methods, opening_hours, visiting_hours
+       FROM hospitals ORDER BY id`
+    );
     res.json(rows);
   } catch (err) {
     next(err);

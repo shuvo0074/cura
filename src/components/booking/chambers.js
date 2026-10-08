@@ -50,3 +50,23 @@ export function useHospitalIdByName() {
 export function hospitalIdFor(map, venue) {
   return map[venue.trim().toLowerCase()];
 }
+
+// One colour per chamber so the same chamber is easy to spot in both the
+// overview and the booking list. Assigned in weekly_schedule order, so it's
+// stable for a doctor; phone consultations always get their own tone.
+const TONES = [
+  { tile: 'bg-primary text-white', bar: 'bg-primary' },
+  { tile: 'bg-teal-600 text-white', bar: 'bg-teal-600' },
+  { tile: 'bg-violet-600 text-white', bar: 'bg-violet-600' },
+  { tile: 'bg-amber-500 text-white', bar: 'bg-amber-500' },
+];
+const REMOTE_TONE = { tile: 'bg-sky-500 text-white', bar: 'bg-sky-500' };
+
+export function chamberTones(schedule = []) {
+  const tones = new Map();
+  let next = 0;
+  for (const v of groupByVenue(schedule)) {
+    tones.set(v.venue, isRemote(v) ? REMOTE_TONE : TONES[next++ % TONES.length]);
+  }
+  return tones;
+}
