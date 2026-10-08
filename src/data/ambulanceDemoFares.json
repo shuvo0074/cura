@@ -1,0 +1,11 @@
+{
+  "currency": "BDT",
+  "scope": "dhaka_city_one_way",
+  "price_kind": "demo",
+  "categories": {
+    "ac": { "min": 2000, "max": 3500 },
+    "non_ac": { "min": 1200, "max": 2000 },
+    "freezer": { "min": 3000, "max": 5000 },
+    "icu": { "min": 8000, "max": 12000 }
+  }
+}

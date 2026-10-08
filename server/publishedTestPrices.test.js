@@ -44,3 +44,31 @@ test('unpublished individual prices stay unknown', () => {
   assert.equal(result.tests.find(t => t.name === 'Thyroid (TSH)').price, null);
   assert.ok(result.tests.filter(t => t.source_url).every(t => Number.isFinite(t.price) && t.price > 0));
 });
+
+test('demo prices fill common diagnostic tests and are explicitly marked', async () => {
+  const { withDiagnosticTestPrices } = await import('./publishedTestPrices.js');
+  const original = { name: 'LABAID Diagnostics, Dhanmondi', type: 'diagnostic', tests: [
+    { name: 'Complete Blood Count (CBC)', category: 'blood', price: null },
+    { name: 'Unlisted specialist test', category: 'blood', price: null },
+  ] };
+  const result = withDiagnosticTestPrices(original);
+  assert.equal(result.tests[0].price, 400);
+  assert.equal(result.tests[0].price_kind, 'demo');
+  assert.equal(result.tests[0].source_url, undefined);
+  assert.equal(result.tests[1].price, null);
+  assert.equal(original.tests[0].price, null);
+});
+
+test('published and admin-entered prices take priority over demos', async () => {
+  const { withDiagnosticTestPrices } = await import('./publishedTestPrices.js');
+  const result = withDiagnosticTestPrices({ ...centre, tests: [
+    { name: 'Complete Blood Count (CBC)', category: 'blood', price: null },
+    { name: 'HbA1c', category: 'blood', price: 1250 },
+    { name: 'Thyroid (TSH)', category: 'blood', price: null },
+  ] });
+  assert.equal(result.tests.find(t => t.name === 'Complete Blood Count (CBC)').price_kind, undefined);
+  assert.equal(result.tests.find(t => t.name === 'HbA1c').price, 1250);
+  assert.equal(result.tests.find(t => t.name === 'HbA1c').price_kind, undefined);
+  assert.equal(result.tests.find(t => t.name === 'Thyroid (TSH)').price_kind, 'demo');
+  assert.deepEqual(withDiagnosticTestPrices(result), result);
+});

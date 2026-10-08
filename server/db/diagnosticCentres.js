@@ -1,7 +1,7 @@
 // Real diagnostic centres (src/data/diagnosticCentres.json): details taken
 // from each centre's own website, with the page and date recorded. The API
-// fills missing prices from server/data/publishedTestPrices.json; existing
-// admin-entered prices are kept.
+// fills missing prices from server/data/publishedTestPrices.json and labels
+// demo prices for other common tests; existing admin-entered prices are kept.
 
 // Common tests listed for every centre; unpublished prices stay null.
 export const COMMON_TESTS = [

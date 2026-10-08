@@ -1,9 +1,12 @@
 import { useTranslation } from 'react-i18next';
 import { Ambulance, ArrowUpRight, Clock, MapPin, Phone } from 'lucide-react';
+import demoFares from '../data/ambulanceDemoFares.json';
 
-export default function AmbulanceVendorCard({ vendor, areaName, lang }) {
+export default function AmbulanceVendorCard({ vendor, areaName, lang, selectedCategory = '' }) {
   const { t } = useTranslation();
   const name = lang === 'bn' ? vendor.name_bn : vendor.name;
+  const fareCategories = vendor.categories.filter(category => !selectedCategory || category === selectedCategory);
+  const money = amount => amount.toLocaleString(lang === 'bn' ? 'bn-BD' : 'en-BD');
   return (
     <li className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 flex flex-col gap-4">
       <div className="flex items-start gap-3">
@@ -21,6 +24,19 @@ export default function AmbulanceVendorCard({ vendor, areaName, lang }) {
         {vendor.areaDistance != null && <p className="text-primary font-medium">{t('ambulance_area_distance', { km: vendor.areaDistance.toLocaleString(lang === 'bn' ? 'bn-BD' : 'en', { maximumFractionDigits: 1 }) })}</p>}
         {vendor.features.includes('24_hours') && <p className="flex items-center gap-1.5"><Clock size={14} />{t('ambulance_feature_24_hours')}</p>}
         {vendor.features.filter(f => f !== '24_hours').map(feature => <p key={feature}>{t(`ambulance_feature_${feature}`)}</p>)}
+      </div>
+      <div className="rounded-xl border border-amber-100 bg-amber-50 p-3">
+        <h3 className="text-xs font-semibold text-amber-900 mb-2">{t('ambulance_demo_fares')}</h3>
+        <dl className="space-y-1.5 text-xs">
+          {fareCategories.map(category => {
+            const range = demoFares.categories[category];
+            return range && <div key={category} className="flex justify-between gap-3 text-gray-800">
+              <dt>{t(`ambulance_category_${category}`)}</dt>
+              <dd className="font-semibold whitespace-nowrap tabular-nums">{t('ambulance_demo_fare_range', { min: money(range.min), max: money(range.max) })}</dd>
+            </div>;
+          })}
+        </dl>
+        <p className="text-[11px] leading-relaxed text-amber-900/80 mt-2">{t('ambulance_demo_fares_note')}</p>
       </div>
       <div className="mt-auto space-y-2">
         {vendor.phones.map((phone, i) => (

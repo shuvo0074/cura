@@ -144,7 +144,7 @@ export default function HospitalExtrasFields({ form, setForm }) {
         </div>
       </Section>
 
-      <Section title="Test prices" hint={'Prices in taka. An entered price takes priority over a published reference rate. Empty prices use a published rate when available; otherwise patients see "Price not published". Rows without a name are ignored.'}>
+      <Section title="Test prices" hint={'Prices in taka. An entered price takes priority over published rates. Empty prices use a published rate when available, then a labeled demo price for common diagnostic tests. Other tests show "Price not published". Rows without a name are ignored.'}>
         <datalist id="common-tests">
           {COMMON_TESTS.map(n => <option key={n} value={n} />)}
         </datalist>

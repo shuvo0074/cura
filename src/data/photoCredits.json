@@ -664,5 +664,14 @@
     "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
     "source": "https://commons.wikimedia.org/wiki/File:Labaid_Specialized_Hospital.jpg",
     "changes": "Resized and compressed"
+  },
+  {
+    "file": "/landing/ambulance-dhaka.jpg",
+    "caption": "Shaheed Suhrawardy Medical College ambulance, Dhaka",
+    "author": "Yahya (Muhammad Yahya)",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "source": "https://commons.wikimedia.org/wiki/File:Ambulance_of_ShSMC.jpg",
+    "changes": "Resized and compressed; displayed with a responsive crop"
   }
 ]

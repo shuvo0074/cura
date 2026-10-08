@@ -326,7 +326,7 @@
   "checked_on": "{{date}}-এ যাচাই করা",
   "diagnostic_centres": "ডায়াগনস্টিক সেন্টার",
   "nav_diagnostics": "ডায়াগনস্টিক সেন্টার",
-  "diagnostic_centres_sub": "ডায়াগনস্টিক সেন্টার খুঁজুন, পরীক্ষা সার্চ করুন এবং তাদের ওয়েবসাইটের প্রকাশিত মূল্য দেখুন।",
+  "diagnostic_centres_sub": "ডায়াগনস্টিক সেন্টার ও পরীক্ষার মূল্য দেখুন। প্রকাশিত মূল্যে উৎসের লিংক আছে; নমুনা মূল্য ডেমো হিসেবে চিহ্নিত।",
   "search_diagnostic": "সেন্টার বা এলাকা দিয়ে খুঁজুন",
   "n_centres_one": "{{count, number}}টি সেন্টার",
   "n_centres_other": "{{count, number}}টি সেন্টার",
@@ -390,5 +390,14 @@
   "test_prices_all_unpublished": "বাছাই করা পরীক্ষাগুলোর প্রকাশিত মূল্য নেই",
   "test_price_subtotal": "তালিকাভুক্ত মূল্যের যোগফল",
   "centre_published_prices": "প্রকাশিত পরীক্ষার মূল্য",
-  "centre_price_preview": "{{test}} · ৳{{price}}"
+  "centre_price_preview": "{{test}} · ৳{{price}}",
+  "ambulance_photo_alt": "ঢাকায় শহীদ সোহরাওয়ার্দী মেডিকেল কলেজের অ্যাম্বুলেন্স",
+  "ambulance_photo_caption": "শহীদ সোহরাওয়ার্দী মেডিকেল কলেজ, ঢাকা",
+  "demo_price": "ডেমো মূল্য",
+  "test_prices_demo_note": "ডেমো মূল্য ক্যালকুলেটর ব্যবহারের নমুনা, এই সেন্টারের প্রকৃত চার্জ নয়। প্রকাশিত মূল্যে উৎসের লিংক আছে।",
+  "test_price_demo_subtotal": "নমুনা যোগফল · ডেমো মূল্যসহ",
+  "centre_demo_prices": "নমুনা পরীক্ষার মূল্য · ডেমো",
+  "ambulance_demo_fares": "ডেমো ভাড়া · ঢাকা শহর, একমুখী যাত্রা",
+  "ambulance_demo_fares_note": "বাংলাদেশি টাকায় নমুনা ভাড়া, এই ভেন্ডরের নির্ধারিত ভাড়া নয়। ভেন্ডরের সঙ্গে মোট ভাড়া মিলিয়ে নিন; দূরত্ব, অপেক্ষার সময় ও মেডিকেল সাপোর্ট অনুযায়ী ভাড়া বদলায়।",
+  "ambulance_demo_fare_range": "৳{{min}}–{{max}}"
 }

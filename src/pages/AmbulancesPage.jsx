@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Ambulance, LocateFixed, SlidersHorizontal } from 'lucide-react';
+import { LocateFixed, SlidersHorizontal } from 'lucide-react';
 import { api } from '../api/client';
 import PageHeader from '../components/ui/PageHeader';
 import SearchInput from '../components/ui/SearchInput';
@@ -83,9 +83,18 @@ export default function AmbulancesPage() {
   return (
     <div>
       <PageHeader title={t('find_ambulance')} />
-      <div className="bg-primary rounded-2xl p-5 sm:p-7 text-white mb-5 flex items-start gap-4">
-        <Ambulance size={36} className="shrink-0 hidden sm:block" />
-        <div><h2 className="font-bold text-lg">{t('ambulance_intro_title')}</h2><p className="text-sm text-white/80 mt-1 max-w-2xl">{t('ambulance_intro')}</p></div>
+      <div className="bg-primary rounded-2xl overflow-hidden text-white mb-5 grid md:grid-cols-[3fr_2fr]">
+        <div className="p-5 sm:p-7 flex flex-col justify-center">
+          <h2 className="font-bold text-lg sm:text-xl">{t('ambulance_intro_title')}</h2>
+          <p className="text-sm text-white/80 mt-2 max-w-2xl">{t('ambulance_intro')}</p>
+        </div>
+        <figure className="relative m-0">
+          <img src="/landing/ambulance-dhaka.jpg" alt={t('ambulance_photo_alt')} width="1200" height="900"
+            className="w-full h-56 sm:h-64 object-cover object-center" fetchPriority="high" />
+          <figcaption className="absolute bottom-0 inset-x-0 px-4 pt-8 pb-3 bg-gradient-to-t from-black/70 to-transparent text-xs text-white">
+            {t('ambulance_photo_caption')} · <Link to="/credits" className="underline hover:text-white/80">{t('credits_title')}</Link>
+          </figcaption>
+        </figure>
       </div>
       <div className="grid lg:grid-cols-[280px_minmax(0,1fr)] gap-5">
         <aside className="bg-white rounded-2xl border border-gray-100 p-4 h-fit lg:sticky lg:top-[calc(var(--header-h,80px)+16px)] space-y-4">
@@ -105,7 +114,7 @@ export default function AmbulancesPage() {
             <EmptyState title={t('ambulance_load_error')} message={t('ambulance_retry_note')} actions={[{ label: t('retry'), onClick: () => { setLoading(true); setError(false); setReload(n => n + 1); } }]} />
           ) : <>
             <p role="status" className="text-sm text-gray-500 mb-3">{t('ambulance_results_count', { count: visible.length })}</p>
-            {visible.length === 0 ? <EmptyState title={t('ambulance_empty')} message={t('ambulance_empty_note')} actions={[{ label: t('clear_search_filters'), onClick: reset }]} /> : <ul className="grid md:grid-cols-2 gap-4">{visible.map(vendor => <AmbulanceVendorCard key={vendor.id} vendor={vendor} areaName={areaName} lang={lang} />)}</ul>}
+            {visible.length === 0 ? <EmptyState title={t('ambulance_empty')} message={t('ambulance_empty_note')} actions={[{ label: t('clear_search_filters'), onClick: reset }]} /> : <ul className="grid md:grid-cols-2 gap-4">{visible.map(vendor => <AmbulanceVendorCard key={vendor.id} vendor={vendor} areaName={areaName} lang={lang} selectedCategory={category} />)}</ul>}
           </>}
         </section>
       </div>

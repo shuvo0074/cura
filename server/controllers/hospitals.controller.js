@@ -1,5 +1,5 @@
 import { query } from '../db.js';
-import { withPublishedTestPrices } from '../publishedTestPrices.js';
+import { withDiagnosticTestPrices } from '../publishedTestPrices.js';
 
 export async function listHospitals(_req, res, next) {
   try {
@@ -10,7 +10,7 @@ export async function listHospitals(_req, res, next) {
         CASE WHEN type = 'diagnostic' THEN tests END AS tests
        FROM hospitals ORDER BY id`
     );
-    res.json(rows.map(withPublishedTestPrices));
+    res.json(rows.map(withDiagnosticTestPrices));
   } catch (err) {
     next(err);
   }
@@ -20,7 +20,7 @@ export async function getHospital(req, res, next) {
   try {
     const { rows } = await query(`SELECT * FROM hospitals WHERE id = $1`, [req.params.id]);
     if (!rows[0]) return res.status(404).json({ error: 'Hospital not found' });
-    res.json(withPublishedTestPrices(rows[0]));
+    res.json(withDiagnosticTestPrices(rows[0]));
   } catch (err) {
     next(err);
   }
