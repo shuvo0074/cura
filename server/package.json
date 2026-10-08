@@ -7,7 +7,8 @@
     "dev": "node --watch index.js",
     "start": "node index.js",
     "db:migrate": "psql \"$DATABASE_URL\" -f db/schema.sql",
-    "db:seed": "node db/seed.js"
+    "db:seed": "node db/seed.js",
+    "db:backfill-hospital-extras": "node db/backfill-hospital-extras.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

@@ -55,6 +55,21 @@ ALTER TABLE doctors ADD COLUMN IF NOT EXISTS treatments TEXT[];
 ALTER TABLE doctors ADD COLUMN IF NOT EXISTS weekly_schedule JSONB;
 ALTER TABLE hospitals ADD COLUMN IF NOT EXISTS description TEXT;
 ALTER TABLE hospitals ADD COLUMN IF NOT EXISTS division TEXT;
+-- What a hospital offers beyond doctors' chambers.
+--   type             'hospital' | 'diagnostic' | 'clinic' | 'online'
+--   services         [{ key, hours }]   key from the app's service catalogue
+--   beds             { general, cabin, icu } (counts; null for outpatient-only)
+--   tests            [{ name, category, price }]   indicative prices in BDT
+--   facilities       [key]   e.g. 'parking', 'wheelchair', 'prayer_room'
+--   payment_methods  [key]   e.g. 'cash', 'bkash', 'card'
+ALTER TABLE hospitals ADD COLUMN IF NOT EXISTS type TEXT;
+ALTER TABLE hospitals ADD COLUMN IF NOT EXISTS services JSONB;
+ALTER TABLE hospitals ADD COLUMN IF NOT EXISTS beds JSONB;
+ALTER TABLE hospitals ADD COLUMN IF NOT EXISTS tests JSONB;
+ALTER TABLE hospitals ADD COLUMN IF NOT EXISTS facilities JSONB;
+ALTER TABLE hospitals ADD COLUMN IF NOT EXISTS payment_methods JSONB;
+ALTER TABLE hospitals ADD COLUMN IF NOT EXISTS opening_hours TEXT;
+ALTER TABLE hospitals ADD COLUMN IF NOT EXISTS visiting_hours TEXT;
 ALTER TABLE doctors ADD COLUMN IF NOT EXISTS division TEXT;
 
 CREATE TABLE IF NOT EXISTS patients (
