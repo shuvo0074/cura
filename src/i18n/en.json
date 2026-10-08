@@ -225,5 +225,8 @@
   "directions": "Directions",
   "chambers_on": "Chambers on {{date}}",
   "fee_per_visit": "৳{{fee}} per visit",
-  "rating": "Rating"
+  "rating": "Rating",
+  "chambers_hours": "Chambers & hours",
+  "chambers_days": "Saturday to Thursday · closed on Fridays",
+  "open_now": "Open now"
 }

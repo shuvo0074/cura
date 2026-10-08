@@ -8,6 +8,8 @@ import SharePopover from '../components/doctor/SharePopover';
 import CallPopover from '../components/doctor/CallPopover';
 import DateStrip from '../components/booking/DateStrip';
 import ChamberList from '../components/booking/ChamberList';
+import ChamberOverview from '../components/booking/ChamberOverview';
+import { useHospitalIdByName } from '../components/booking/chambers';
 import { fromYmd } from '../utils/dates';
 import Photo from '../components/ui/Photo';
 
@@ -50,6 +52,7 @@ export default function DoctorProfilePage() {
   const [selectedDate, setSelectedDate] = useState(defaultBookingDate);
   const [searchParams] = useSearchParams();
   const dateParam = searchParams.get('date');
+  const hospitalIds = useHospitalIdByName();
 
   useEffect(() => {
     setLoading(true);
@@ -105,10 +108,10 @@ export default function DoctorProfilePage() {
         <ArrowLeft size={16} /> {t('back')}
       </button>
 
-      {/* One column on phones (header → booking → about); from lg, booking
-          spans both rows on the right. The 1fr second row soaks up the
-          booking card's extra height so header and about stay together. */}
-      <div className="grid grid-cols-1 gap-5 lg:gap-6 lg:grid-cols-[minmax(0,1fr)_460px] lg:grid-rows-[auto_1fr] items-start">
+      {/* One column on phones (header → booking → chambers → about); from
+          lg, booking spans all rows on the right. The 1fr last row soaks up
+          the booking card's extra height so the left cards stay together. */}
+      <div className="grid grid-cols-1 gap-5 lg:gap-6 lg:grid-cols-[minmax(0,1fr)_460px] lg:grid-rows-[auto_auto_1fr] items-start">
 
         {/* ── Who, and what a visit costs ── */}
         <section className={`${CARD} p-5 sm:p-6 lg:col-start-1`}>
@@ -160,14 +163,19 @@ export default function DoctorProfilePage() {
 
         {/* ── Book a serial ── */}
         <section id="book-serial"
-          className={`${CARD} p-5 sm:p-6 scroll-mt-[calc(var(--header-h)+1rem)] lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:sticky lg:top-[calc(var(--header-h)+1rem)] lg:max-h-[calc(100dvh-var(--header-h)-2rem)] lg:overflow-y-auto`}>
+          className={`${CARD} p-5 sm:p-6 scroll-mt-[calc(var(--header-h)+1rem)] lg:col-start-2 lg:row-start-1 lg:row-span-3 lg:sticky lg:top-[calc(var(--header-h)+1rem)] lg:max-h-[calc(100dvh-var(--header-h)-2rem)] lg:overflow-y-auto`}>
           <SectionHeading icon={CalendarDays}>{t('book_serial')}</SectionHeading>
           <p className="text-xs text-gray-500 mt-1 mb-3">{t('choose_day')}</p>
           <DateStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} />
           <div className="mt-4">
-            <ChamberList doctor={doctor} selectedDate={selectedDate} />
+            <ChamberList doctor={doctor} selectedDate={selectedDate} hospitalIds={hospitalIds} />
           </div>
         </section>
+
+        {/* ── Where and when ── */}
+        <div className="lg:col-start-1">
+          <ChamberOverview doctor={doctor} hospitalIds={hospitalIds} />
+        </div>
 
         {/* ── Background ── */}
         <section className={`${CARD} p-5 sm:p-6 lg:col-start-1 flex flex-col gap-5`}>
