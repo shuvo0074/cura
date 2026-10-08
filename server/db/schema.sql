@@ -70,6 +70,9 @@ ALTER TABLE hospitals ADD COLUMN IF NOT EXISTS facilities JSONB;
 ALTER TABLE hospitals ADD COLUMN IF NOT EXISTS payment_methods JSONB;
 ALTER TABLE hospitals ADD COLUMN IF NOT EXISTS opening_hours TEXT;
 ALTER TABLE hospitals ADD COLUMN IF NOT EXISTS visiting_hours TEXT;
+-- Where a real centre's details come from, and when they were last checked.
+ALTER TABLE hospitals ADD COLUMN IF NOT EXISTS source_url TEXT;
+ALTER TABLE hospitals ADD COLUMN IF NOT EXISTS verified_on DATE;
 ALTER TABLE doctors ADD COLUMN IF NOT EXISTS division TEXT;
 
 CREATE TABLE IF NOT EXISTS patients (

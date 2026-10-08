@@ -33,7 +33,8 @@ export default function HospitalsPage() {
   }, []);
 
   const filtered = useMemo(() => {
-    return hospitals.filter(h => {
+    // Diagnostic centres have their own section (/diagnostic-centres).
+    return hospitals.filter(h => h.type !== 'diagnostic').filter(h => {
       const q = query.toLowerCase();
       const matchQ = !q || h.name.toLowerCase().includes(q) || h.location.toLowerCase().includes(q) || (h.division || '').toLowerCase().includes(q);
       const matchCity = selectedCity.id === 'all' || h.division === selectedCity.name;

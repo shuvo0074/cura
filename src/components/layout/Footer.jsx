@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 const EXPLORE = [
   { to: '/doctors', key: 'find_a_doctor' },
   { to: '/hospitals', key: 'browse_hospitals' },
+  { to: '/diagnostic-centres', key: 'diagnostic_centres' },
   { to: '/specialties', key: 'browse_specialities' },
   { to: '/symptoms', key: 'home_problems_title' },
   { to: '/appointments', key: 'my_appointments' },
