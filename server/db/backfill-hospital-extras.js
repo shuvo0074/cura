@@ -4,6 +4,12 @@
 // touches rows whose services are still empty, so it never overwrites edits.
 //
 //   npm run db:backfill-hospital-extras
+//
+// The API image only contains server/, so in Docker point HOSPITALS_JSON at
+// the repo's data file mounted into the container:
+//
+//   docker compose run --rm -v "$PWD/src/data:/data" -e HOSPITALS_JSON=/data/hospitals.json \
+//     api node db/backfill-hospital-extras.js
 
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
@@ -13,7 +19,8 @@ import 'dotenv/config';
 import { HOSPITAL_EXTRA_COLUMNS, hospitalExtras } from './hospitalExtras.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const hospitals = JSON.parse(readFileSync(join(__dirname, '..', '..', 'src', 'data', 'hospitals.json'), 'utf-8'));
+const file = process.env.HOSPITALS_JSON || join(__dirname, '..', '..', 'src', 'data', 'hospitals.json');
+const hospitals = JSON.parse(readFileSync(file, 'utf-8'));
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 
 const sets = HOSPITAL_EXTRA_COLUMNS.map((c, i) => `${c} = $${i + 1}`).join(', ');
