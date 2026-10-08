@@ -1,0 +1,111 @@
+[
+  {
+    "id": "dhaka-ambulance",
+    "name": "Dhaka Ambulance",
+    "name_bn": "ঢাকা অ্যাম্বুলেন্স",
+    "base_area": "moghbazar",
+    "address": "122 Shahid Tajuddin Ahmed Sarani, Moghbazar, Dhaka 1217",
+    "address_bn": "১২২ শহীদ তাজউদ্দীন আহমদ সরণি, মগবাজার, ঢাকা ১২১৭",
+    "phones": [
+      "01714325325",
+      "01993800900"
+    ],
+    "categories": [
+      "ac",
+      "non_ac",
+      "freezer",
+      "icu"
+    ],
+    "dhaka_wide": false,
+    "service_areas": [
+      "moghbazar"
+    ],
+    "features": [
+      "oxygen",
+      "medical_team"
+    ],
+    "source_url": "https://www.dhakaambulance.com.bd/",
+    "source_checked_on": "2026-10-09"
+  },
+  {
+    "id": "shihab-ambulance",
+    "name": "Shihab Ambulance",
+    "name_bn": "শিহাব অ্যাম্বুলেন্স",
+    "base_area": "uttara-10",
+    "address": "Uttara Adhunik Medical College & Hospital, Uttara, Dhaka",
+    "address_bn": "উত্তরা আধুনিক মেডিকেল কলেজ ও হাসপাতাল, উত্তরা, ঢাকা",
+    "phones": [
+      "01725727979",
+      "01975727979"
+    ],
+    "categories": [
+      "ac",
+      "non_ac",
+      "freezer",
+      "icu"
+    ],
+    "dhaka_wide": true,
+    "service_areas": [],
+    "features": [
+      "24_hours",
+      "medical_team",
+      "interdistrict"
+    ],
+    "source_url": "https://ambulanceservicesdhaka.com/",
+    "source_checked_on": "2026-10-09"
+  },
+  {
+    "id": "national-mirpur",
+    "name": "National Ambulance Service (Mirpur)",
+    "name_bn": "ন্যাশনাল অ্যাম্বুলেন্স সার্ভিস (মিরপুর)",
+    "base_area": "mirpur-10",
+    "address": "Mirpur 10 Roundabout, Dhaka 1216",
+    "address_bn": "মিরপুর ১০ গোলচত্বর, ঢাকা ১২১৬",
+    "phones": [
+      "01791229290",
+      "01815119933"
+    ],
+    "categories": [
+      "ac",
+      "freezer",
+      "icu"
+    ],
+    "dhaka_wide": true,
+    "service_areas": [],
+    "features": [
+      "24_hours",
+      "oxygen",
+      "medical_team",
+      "interdistrict"
+    ],
+    "source_url": "https://www.mirpurambulance.com/index.html",
+    "source_checked_on": "2026-10-09"
+  },
+  {
+    "id": "bd-ambulance",
+    "name": "BD Ambulance",
+    "name_bn": "বিডি অ্যাম্বুলেন্স",
+    "base_area": null,
+    "address": "Dhaka; call for dispatch location",
+    "address_bn": "ঢাকা; গাড়ির অবস্থান জানতে ফোন করুন",
+    "phones": [
+      "01937111155",
+      "01926111155"
+    ],
+    "categories": [
+      "ac",
+      "non_ac",
+      "freezer",
+      "icu"
+    ],
+    "dhaka_wide": true,
+    "service_areas": [],
+    "features": [
+      "24_hours",
+      "oxygen",
+      "interdistrict"
+    ],
+    "source_url": "https://www.bdambulance.com/",
+    "source_checked_on": "2026-10-09"
+  }
+]

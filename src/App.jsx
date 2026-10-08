@@ -25,6 +25,7 @@ import DoctorAdminLoginPage from './pages/DoctorAdminLoginPage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import DoctorDashboardPage from './pages/DoctorDashboardPage';
 import CreditsPage from './pages/CreditsPage';
+import AmbulancesPage from './pages/AmbulancesPage';
 
 function PlaceholderPage({ titleKey }) {
   const { t } = useTranslation();
@@ -79,7 +80,7 @@ export default function App() {
               <Route path="/doctor-dashboard" element={<ProtectedRoute role="doctor"><DoctorDashboardPage /></ProtectedRoute>} />
               <Route path="/health-blogs" element={<PlaceholderPage titleKey="health_blogs" />} />
               <Route path="/credits" element={<CreditsPage />} />
-              <Route path="/ambulances" element={<PlaceholderPage titleKey="ambulances" />} />
+              <Route path="/ambulances" element={<AmbulancesPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
