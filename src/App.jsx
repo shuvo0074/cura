@@ -4,6 +4,7 @@ import { Construction } from 'lucide-react';
 import { FilterProvider } from './context/FilterContext';
 import { AuthProvider } from './context/AuthContext';
 import GlobalHeader from './components/layout/GlobalHeader';
+import Footer from './components/layout/Footer';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import PageHeader from './components/ui/PageHeader';
 import EmptyState from './components/ui/EmptyState';
@@ -22,6 +23,7 @@ import PatientLoginPage from './pages/PatientLoginPage';
 import DoctorAdminLoginPage from './pages/DoctorAdminLoginPage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import DoctorDashboardPage from './pages/DoctorDashboardPage';
+import CreditsPage from './pages/CreditsPage';
 
 function PlaceholderPage({ titleKey }) {
   const { t } = useTranslation();
@@ -73,10 +75,12 @@ export default function App() {
               <Route path="/admin/appointments" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
               <Route path="/doctor-dashboard" element={<ProtectedRoute role="doctor"><DoctorDashboardPage /></ProtectedRoute>} />
               <Route path="/health-blogs" element={<PlaceholderPage titleKey="health_blogs" />} />
+              <Route path="/credits" element={<CreditsPage />} />
               <Route path="/ambulances" element={<PlaceholderPage titleKey="ambulances" />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
+          <Footer />
         </FilterProvider>
       </AuthProvider>
     </BrowserRouter>

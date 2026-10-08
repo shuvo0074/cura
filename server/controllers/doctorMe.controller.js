@@ -1,5 +1,6 @@
 import { query } from '../db.js';
 import { logger } from '../logger.js';
+import { withEstimatedArrival } from '../schedule.js';
 
 export async function myAppointments(req, res, next) {
   try {
@@ -8,10 +9,11 @@ export async function myAppointments(req, res, next) {
        FROM appointments a
        JOIN patients p ON p.id = a.patient_id
        WHERE a.doctor_id = $1
-       ORDER BY a.appointment_date DESC, a.appointment_time DESC`,
+       ORDER BY a.appointment_date DESC, a.appointment_time, a.venue, a.serial_no`,
       [req.user.sub]
     );
-    res.json(rows);
+    // Within a day: by session, then serial — the order patients will be seen.
+    res.json(rows.map(withEstimatedArrival));
   } catch (err) {
     next(err);
   }

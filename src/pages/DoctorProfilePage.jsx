@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import {
@@ -13,6 +13,7 @@ import SharePopover from '../components/doctor/SharePopover';
 import CallPopover from '../components/doctor/CallPopover';
 import ScheduleBox from '../components/booking/ScheduleBox';
 import ChamberList from '../components/booking/ChamberList';
+import { fromYmd } from '../utils/dates';
 import { withDivision } from '../utils/place';
 import Photo from '../components/ui/Photo';
 
@@ -47,15 +48,19 @@ export default function DoctorProfilePage() {
   const [shareAnchor, setShareAnchor] = useState(null);
   const [callAnchor, setCallAnchor] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null); // drives ScheduleBox selection + Chamber List's per-day view + Call popover
+  const [searchParams] = useSearchParams();
+  const dateParam = searchParams.get('date');
 
   useEffect(() => {
     setLoading(true);
-    setSelectedDate(getDhakaNow().date); // default to Bangladesh's current date
+    // ?date=YYYY-MM-DD preselects a day (e.g. returning from login to book a
+    // serial); otherwise default to Bangladesh's current date.
+    setSelectedDate(dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? fromYmd(dateParam) : getDhakaNow().date);
     api.get(`/doctors/${id}`)
       .then(setDoctor)
       .catch(() => setDoctor(null))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, dateParam]);
 
   if (loading) {
     return <div className="flex items-center justify-center h-64 text-gray-400">Loading...</div>;
@@ -224,7 +229,7 @@ export default function DoctorProfilePage() {
 
         <div className="w-full lg:w-[534px] flex-shrink-0 lg:sticky lg:top-24 flex flex-col gap-5">
           <ScheduleBox selectedDate={selectedDate} onSelectDate={setSelectedDate} />
-          <ChamberList doctorId={doctor.id} schedule={doctor.weekly_schedule} selectedDow={selectedDow} />
+          <ChamberList doctor={doctor} selectedDate={selectedDate} />
         </div>
       </div>
 

@@ -46,6 +46,7 @@ export default function DoctorDashboardPage() {
             <div key={a.id} className="bg-white rounded-xl shadow-sm p-4">
               <div className="flex justify-between items-start">
                 <div>
+                  {a.serial_no && <p className="text-xs font-bold text-primary">Serial #{a.serial_no}</p>}
                   <h3 className="font-semibold text-gray-800 text-sm">{a.patient_name || a.patient_phone}</h3>
                   <p className="text-gray-500 text-xs flex items-center gap-1 mt-0.5">
                     <Phone size={11} /> {a.patient_phone}
@@ -58,8 +59,9 @@ export default function DoctorDashboardPage() {
               </div>
               <p className="text-gray-500 text-xs flex items-center gap-1 mt-2">
                 <Calendar size={11} /> {a.appointment_date.slice(0, 10)}
-                <Clock size={11} className="ml-2" /> {a.appointment_time.slice(0, 5)}
+                <Clock size={11} className="ml-2" /> {a.session_time || a.appointment_time.slice(0, 5)}
               </p>
+              {a.venue && <p className="text-gray-500 text-xs mt-0.5">{a.venue}{a.estimated_arrival && ` · ~${a.estimated_arrival}`}</p>}
               {a.notes && <p className="text-gray-500 text-xs mt-1">Note: {a.notes}</p>}
               {a.status === 'confirmed' && (
                 <button onClick={() => handleComplete(a.id)}

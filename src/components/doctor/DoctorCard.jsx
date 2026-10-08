@@ -62,9 +62,11 @@ export default function DoctorCard({ doctor }) {
 
           <div className="flex items-center justify-between mt-2">
             <span className="text-primary text-sm font-bold">৳{doctor.fees}</span>
-            <span className="flex items-center gap-0.5 text-xs text-amber-500 font-medium">
-              <Star size={11} fill="currentColor" /> 4.8
-            </span>
+            {doctor.rating && (
+              <span className="flex items-center gap-0.5 text-xs text-amber-500 font-medium">
+                <Star size={11} fill="currentColor" /> {Number(doctor.rating).toFixed(1)}
+              </span>
+            )}
           </div>
         </div>
       </div>

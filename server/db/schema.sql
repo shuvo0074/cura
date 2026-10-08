@@ -100,8 +100,7 @@ CREATE TABLE IF NOT EXISTS appointments (
   appointment_time  TIME NOT NULL,
   status            TEXT NOT NULL DEFAULT 'confirmed',
   notes             TEXT,
-  created_at        TIMESTAMPTZ DEFAULT now(),
-  UNIQUE (doctor_id, appointment_date, appointment_time)
+  created_at        TIMESTAMPTZ DEFAULT now()
 );
 
 -- Fire-and-forget log of "tapped to call this chamber" intent from the Call
@@ -115,3 +114,20 @@ CREATE TABLE IF NOT EXISTS call_logs (
   phone         TEXT,
   created_at    TIMESTAMPTZ DEFAULT now()
 );
+
+-- Chamber-serial booking: an appointment is a serial number in one chamber
+-- session (a weekly_schedule entry: venue + time range) on a given date.
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS venue TEXT;
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS session_time TEXT;
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS serial_no INTEGER;
+-- The old one-patient-per-time-slot rule doesn't fit serials (every serial
+-- in a session shares the session's start time).
+ALTER TABLE appointments DROP CONSTRAINT IF EXISTS appointments_doctor_id_appointment_date_appointment_time_key;
+-- Serials are never reused within a session, even after a cancellation.
+CREATE UNIQUE INDEX IF NOT EXISTS appointments_session_serial
+  ON appointments (doctor_id, appointment_date, venue, session_time, serial_no)
+  WHERE serial_no IS NOT NULL;
+-- One active serial per patient per session.
+CREATE UNIQUE INDEX IF NOT EXISTS appointments_one_active_per_patient_session
+  ON appointments (patient_id, doctor_id, appointment_date, venue, session_time)
+  WHERE status <> 'cancelled' AND serial_no IS NOT NULL;
