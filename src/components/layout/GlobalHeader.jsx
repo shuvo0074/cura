@@ -78,7 +78,7 @@ export default function GlobalHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-primary text-white" ref={menuRef}>
+      <header className="sticky top-0 z-50 glass-nav text-white border-b border-white/10" ref={menuRef}>
         <div className="app-container flex items-center justify-between gap-4 py-3">
           {/* Logo */}
           <button onClick={() => navigate('/')} className="text-white font-bold text-2xl tracking-tight flex-shrink-0">
@@ -135,7 +135,7 @@ export default function GlobalHeader() {
 
         {/* Mobile slide-down menu */}
         {menuOpen && (
-          <div className="md:hidden bg-primary border-t border-white/10 animate-[slideDown_0.2s_ease-out]">
+          <div className="md:hidden border-t border-white/10 animate-[slideDown_0.2s_ease-out]">
             <nav className="flex flex-col">
               {NAV_LINKS.map(item => (
                 <NavLink
@@ -191,7 +191,7 @@ export default function GlobalHeader() {
       {/* Backdrop overlay */}
       {menuOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/40 md:hidden"
+          className="fixed inset-0 z-40 glass-scrim md:hidden"
           onClick={() => setMenuOpen(false)}
         />
       )}

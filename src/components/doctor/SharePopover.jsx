@@ -128,7 +128,7 @@ export default function SharePopover({ doctor, anchorEl, onClose }) {
     <>
       <div
         onClick={onClose}
-        className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
+        className="fixed inset-0 z-40 glass-scrim"
         aria-hidden="true"
       />
       <div
@@ -141,7 +141,7 @@ export default function SharePopover({ doctor, anchorEl, onClose }) {
           width: POPOVER_WIDTH,
           maxWidth: 'calc(100vw - 32px)',
         }}
-        className="z-50 bg-white rounded-2xl shadow-xl border border-gray-100 p-6"
+        className="z-50 glass-panel rounded-3xl p-6"
       >
         <p className="text-base font-semibold text-gray-800 mb-5">Share to</p>
         <div className="grid grid-cols-4 gap-5">

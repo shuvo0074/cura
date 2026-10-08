@@ -275,9 +275,9 @@ export default function AdminHospitalsTab() {
 
       {/* Edit modal */}
       {editForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+        <div className="fixed inset-0 z-50 flex items-center justify-center glass-scrim"
           onClick={e => { if (e.target === e.currentTarget) setEditForm(null); }}>
-          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-lg mx-4">
+          <div className="glass-panel rounded-2xl p-6 w-full max-w-lg mx-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-gray-800 text-base">Edit Hospital</h3>
               <button onClick={() => setEditForm(null)} className="text-gray-400 hover:text-gray-600">

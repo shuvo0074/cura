@@ -130,14 +130,14 @@ function SheetBody({ onClose, title, value, onApply, getSections, toggle, countF
 
   return (
     <div className="fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-labelledby="filter-sheet-title">
-      <div className="absolute inset-0 bg-black/40 animate-[fadeIn_150ms_ease-out]" onClick={onClose} />
+      <div className="absolute inset-0 glass-scrim animate-[fadeIn_150ms_ease-out]" onClick={onClose} />
       <div className="absolute inset-x-0 bottom-0 max-h-[90dvh] rounded-t-2xl md:inset-y-0 md:left-auto md:right-0 md:w-[400px] md:max-h-none md:rounded-none
-        bg-white shadow-xl flex flex-col animate-[sheetUp_200ms_ease-out] md:animate-[panelIn_200ms_ease-out]">
+        glass-panel flex flex-col animate-[sheetUp_200ms_ease-out] md:animate-[panelIn_200ms_ease-out]">
         <div className="flex justify-center pt-2.5 pb-1 md:hidden" aria-hidden="true">
-          <div className="w-10 h-1 rounded-full bg-gray-300" />
+          <div className="w-10 h-1 rounded-full bg-black/15" />
         </div>
 
-        <div className="flex items-center justify-between gap-3 px-5 py-3 border-b border-gray-100">
+        <div className="flex items-center justify-between gap-3 px-5 py-3 border-b border-black/5">
           <button ref={closeRef} type="button" onClick={onClose} aria-label={t('close')} className="text-gray-500 p-2 -ml-2 rounded-full hover:bg-gray-100">
             <X size={20} />
           </button>
@@ -162,7 +162,7 @@ function SheetBody({ onClose, title, value, onApply, getSections, toggle, countF
           ))}
         </div>
 
-        <div className="px-5 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-gray-100">
+        <div className="px-5 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-black/5">
           <button
             type="button"
             disabled={count === 0}

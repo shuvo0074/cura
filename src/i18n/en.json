@@ -211,5 +211,19 @@
   "home_map_outside": "You seem to be outside Bangladesh — showing the nearest hospitals anyway.",
   "home_map_attribution": "District boundaries: Bangladesh Bureau of Statistics & OCHA via geoBoundaries (CC BY 3.0 IGO).",
   "credits_map_title": "Map data",
-  "credits_map_body": "District boundaries on the home page map come from the Bangladesh Bureau of Statistics (BBS) and OCHA ROAP, via"
+  "credits_map_body": "District boundaries on the home page map come from the Bangladesh Bureau of Statistics (BBS) and OCHA ROAP, via",
+  "back": "Back",
+  "doctor_not_found": "Doctor not found",
+  "bmdc_verified": "BMDC verified · {{no}}",
+  "choose_day": "Choose a day",
+  "today": "Today",
+  "tomorrow": "Tomorrow",
+  "day_off": "Off",
+  "doctor_off_on": "The doctor doesn't see patients on {{day}}s.",
+  "no_sessions_day": "No chamber sessions on this day.",
+  "phone_consultation": "Phone consultation",
+  "directions": "Directions",
+  "chambers_on": "Chambers on {{date}}",
+  "fee_per_visit": "৳{{fee}} per visit",
+  "rating": "Rating"
 }
