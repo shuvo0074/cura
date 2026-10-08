@@ -62,7 +62,7 @@ export default function FilterBar({ search, leading, onOpen, chips = [], onRemov
   const hideOnDesktop = mobileOnly || (!leading && !onOpen);
 
   return (
-    <div className={`sticky top-[var(--header-h)] z-30 -mx-6 px-6 py-2 mb-3 sm:mb-4 bg-secondary/95 backdrop-blur border-b border-gray-200/70 ${hideOnDesktop ? 'md:hidden' : ''}`}>
+    <div className={`sticky top-[var(--header-h)] z-30 -mx-6 px-6 py-2 mb-3 sm:mb-4 glass-bar border-b border-black/5 ${hideOnDesktop ? 'md:hidden' : ''}`}>
       <div className="flex items-center gap-2">
         {leading && <div className="hidden md:flex items-center gap-2 flex-shrink-0">{leading}</div>}
         {leading && onOpen && <span className="hidden md:block w-px h-6 bg-gray-300 mx-1 flex-shrink-0" aria-hidden="true" />}

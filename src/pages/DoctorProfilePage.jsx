@@ -1,43 +1,43 @@
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
-import {
-  Phone, Globe, Navigation, Share2, ArrowLeft, MapPin, ChevronDown, ChevronUp,
-  Star, ShieldCheck, GraduationCap, Languages as LanguagesIcon, Clock, Stethoscope,
-  ClipboardList,
-} from 'lucide-react';
+import { Phone, Share2, ArrowLeft, Star, ShieldCheck, Ticket, CalendarDays, Stethoscope, Briefcase, Wallet } from 'lucide-react';
 import { api } from '../api/client';
-import { buildShareUrl } from '../utils/share';
 import { getDhakaNow } from '../utils/dhakaTime';
 import SharePopover from '../components/doctor/SharePopover';
 import CallPopover from '../components/doctor/CallPopover';
-import ScheduleBox from '../components/booking/ScheduleBox';
+import DateStrip from '../components/booking/DateStrip';
 import ChamberList from '../components/booking/ChamberList';
 import { fromYmd } from '../utils/dates';
-import { withDivision } from '../utils/place';
 import Photo from '../components/ui/Photo';
 
-function LinkedInIcon({ size = 16 }) {
-  return (
-    <span
-      style={{ width: size, height: size, fontSize: size * 0.55 }}
-      className="inline-flex items-center justify-center rounded-[3px] bg-[#0A66C2] text-white font-bold leading-none"
-    >
-      in
-    </span>
-  );
-}
-
 const CARD = 'bg-white rounded-xl border border-gray-100 shadow-sm';
+const ABOUT_PREVIEW = 300;
+const FRIDAY = 5;
 
 function SectionHeading({ icon: Icon, children }) {
   return (
-    <p className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-      <Icon size={13} className="text-primary" /> {children}
-    </p>
+    <h2 className="flex items-center gap-2 text-base font-semibold text-gray-900">
+      <Icon size={18} className="text-primary" /> {children}
+    </h2>
   );
 }
 
+function SubHeading({ children }) {
+  return <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{children}</h3>;
+}
+
+// Default day for booking: today in Dhaka, or tomorrow when today is a Friday
+// (chambers are closed), so the page never opens on an empty day.
+function defaultBookingDate() {
+  const d = getDhakaNow().date;
+  if (d.getDay() === FRIDAY) d.setDate(d.getDate() + 1);
+  return d;
+}
+
+// Doctor profile, ordered by what a patient needs: who the doctor is and what
+// a visit costs, then booking a serial, then the background. On phones that's
+// one column in that order; from lg the booking card sits sticky on the right.
 export default function DoctorProfilePage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -47,15 +47,14 @@ export default function DoctorProfilePage() {
   const [loading, setLoading] = useState(true);
   const [shareAnchor, setShareAnchor] = useState(null);
   const [callAnchor, setCallAnchor] = useState(null);
-  const [selectedDate, setSelectedDate] = useState(null); // drives ScheduleBox selection + Chamber List's per-day view + Call popover
+  const [selectedDate, setSelectedDate] = useState(defaultBookingDate);
   const [searchParams] = useSearchParams();
   const dateParam = searchParams.get('date');
 
   useEffect(() => {
     setLoading(true);
-    // ?date=YYYY-MM-DD preselects a day (e.g. returning from login to book a
-    // serial); otherwise default to Bangladesh's current date.
-    setSelectedDate(dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? fromYmd(dateParam) : getDhakaNow().date);
+    // ?date=YYYY-MM-DD preselects a day (e.g. returning from login to book a serial).
+    setSelectedDate(dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? fromYmd(dateParam) : defaultBookingDate());
     api.get(`/doctors/${id}`)
       .then(setDoctor)
       .catch(() => setDoctor(null))
@@ -63,12 +62,19 @@ export default function DoctorProfilePage() {
   }, [id, dateParam]);
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64 text-gray-400">Loading...</div>;
+    return <div className="flex items-center justify-center h-64 text-gray-400">{t('loading')}</div>;
   }
 
   if (!doctor) return (
-    <div className="flex items-center justify-center h-64 text-gray-400">Doctor not found</div>
+    <div className="flex items-center justify-center h-64 text-gray-400">{t('doctor_not_found')}</div>
   );
+
+  // Back within the app; someone who landed from a shared link goes to the
+  // doctor list rather than off the site.
+  function goBack() {
+    if (window.history.state?.idx > 0) navigate(-1);
+    else navigate('/doctors');
+  }
 
   function toggleShare(e) {
     // Capture currentTarget now — it's nulled by the browser once the event
@@ -84,138 +90,117 @@ export default function DoctorProfilePage() {
     setCallAnchor(prev => (prev ? null : target));
   }
 
-  function openLinkedIn() {
-    const url = buildShareUrl(doctor);
-    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank', 'noopener,noreferrer');
-  }
-
-  function openMaps() {
-    window.open(`https://www.google.com/maps/dir/?api=1&destination=${doctor.lat},${doctor.lng}`, '_blank');
+  function scrollToBooking() {
+    document.getElementById('book-serial')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   const aboutText = doctor.about || '';
-  const truncated = aboutText.length > 150 && !aboutExpanded;
-  const selectedDow = selectedDate != null ? selectedDate.getDay() : null;
+  const truncated = aboutText.length > ABOUT_PREVIEW && !aboutExpanded;
+  const hasBackground = doctor.education || doctor.languages;
 
   return (
     <div>
-      <button onClick={() => navigate(-1)}
+      <button onClick={goBack}
         className="text-gray-500 hover:text-primary hover:bg-primary/5 flex items-center gap-1.5 text-sm mb-4 px-3 py-1.5 -ml-3 rounded-lg transition-colors">
-        <ArrowLeft size={16} /> Back
+        <ArrowLeft size={16} /> {t('back')}
       </button>
 
-      <div className="flex flex-col lg:flex-row gap-6 items-start">
-        <div className="flex-1 w-full flex flex-col gap-5">
-          <div className={`${CARD} overflow-hidden`}>
-            <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-b border-primary/10 px-6 py-6 relative">
-              <div className="flex flex-col items-center text-center gap-4 sm:flex-row sm:items-start sm:text-left sm:gap-5">
-                <Photo src={doctor.photo} alt={doctor.name} iconSize={44}
-                  className="w-28 h-28 rounded-full ring-4 ring-white shadow-md flex-shrink-0" />
-                <div className="flex-1 min-w-0 w-full">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      {doctor.bmdc_no && (
-                        <p className="flex items-center justify-center sm:justify-start gap-1 text-xs text-gray-500 mb-1">
-                          <ShieldCheck size={13} className="text-primary" /> {t('reg_no')}: BMDC-{doctor.bmdc_no}
-                        </p>
-                      )}
-                      <h1 className="font-bold text-gray-900 text-2xl leading-tight">{doctor.name}</h1>
-                      <p className="text-primary font-medium text-sm mt-0.5">{doctor.specialty} — {doctor.department}</p>
-                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-2">
-                        <span className="bg-primary/10 text-primary text-xs font-medium px-3 py-1 rounded-full">
-                          {doctor.experience} {t('experience')}
-                        </span>
-                        {doctor.rating && (
-                          <span className="flex items-center gap-1 bg-amber-50 text-amber-600 text-xs font-medium px-3 py-1 rounded-full">
-                            <Star size={12} className="fill-amber-500 text-amber-500" /> {doctor.rating}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <button onClick={toggleShare} aria-label="Share doctor"
-                      className="absolute top-3 right-3 sm:static text-gray-400 hover:text-primary hover:bg-white rounded-full p-2 transition-colors flex-shrink-0">
-                      <Share2 size={18} />
-                    </button>
-                  </div>
+      {/* One column on phones (header → booking → about); from lg, booking
+          spans both rows on the right. The 1fr second row soaks up the
+          booking card's extra height so header and about stay together. */}
+      <div className="grid grid-cols-1 gap-5 lg:gap-6 lg:grid-cols-[minmax(0,1fr)_460px] lg:grid-rows-[auto_1fr] items-start">
 
-                  <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 mt-4 text-xs">
-                    {doctor.education && (
-                      <div className="flex items-start justify-center sm:justify-start gap-1.5">
-                        <GraduationCap size={14} className="text-gray-400 flex-shrink-0 mt-0.5" />
-                        <span className="text-gray-700">{doctor.education}</span>
-                      </div>
-                    )}
-                    {doctor.languages && (
-                      <div className="flex items-start justify-center sm:justify-start gap-1.5">
-                        <LanguagesIcon size={14} className="text-gray-400 flex-shrink-0 mt-0.5" />
-                        <span className="text-gray-700">{doctor.languages}</span>
-                      </div>
-                    )}
-                    {doctor.consulting_hours && (
-                      <div className="flex items-start justify-center sm:justify-start gap-1.5 sm:col-span-2">
-                        <Clock size={14} className="text-gray-400 flex-shrink-0 mt-0.5" />
-                        <span className="text-gray-700">{doctor.consulting_hours}</span>
-                      </div>
-                    )}
-                  </dl>
-                </div>
-              </div>
+        {/* ── Who, and what a visit costs ── */}
+        <section className={`${CARD} p-5 sm:p-6 lg:col-start-1`}>
+          <div className="flex items-start gap-4 sm:gap-5">
+            <Photo src={doctor.photo} alt={doctor.name} iconSize={40}
+              className="w-20 h-20 sm:w-28 sm:h-28 rounded-full ring-4 ring-primary/5 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <h1 className="font-bold text-gray-900 text-xl sm:text-2xl leading-tight">{doctor.name}</h1>
+              <p className="text-primary font-medium text-sm mt-1">{doctor.specialty}</p>
+              {doctor.department && <p className="text-gray-500 text-sm">{doctor.department}</p>}
+              {doctor.bmdc_no && (
+                <p className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 rounded-full px-2.5 py-1 mt-2">
+                  <ShieldCheck size={13} /> {t('bmdc_verified', { no: doctor.bmdc_no })}
+                </p>
+              )}
             </div>
+          </div>
 
-            <div className="flex gap-2 px-6 py-5">
-              {[
-                { icon: Phone, label: t('call'), action: toggleCall },
-                { icon: Globe, label: t('website'), action: () => window.open(doctor.website, '_blank') },
-                { icon: LinkedInIcon, label: t('linkedin'), action: openLinkedIn },
-                { icon: Navigation, label: t('direction'), action: openMaps },
-              ].map(({ icon: Icon, label, action }) => (
-                <button key={label} onClick={action}
-                  className="flex-1 flex flex-col items-center gap-1.5 border border-gray-200 rounded-xl py-3 text-xs text-gray-600 hover:border-primary hover:text-primary hover:shadow-sm hover:-translate-y-0.5 transition-all">
-                  <Icon size={16} />
-                  {label}
+          <dl className="grid grid-cols-3 mt-5 border border-gray-100 rounded-xl divide-x divide-gray-100 text-center">
+            <div className="py-3 px-2">
+              <dt className="flex items-center justify-center gap-1 text-xs text-gray-500"><Briefcase size={12} /> {t('experience')}</dt>
+              <dd className="text-sm font-semibold text-gray-900 mt-0.5">{doctor.experience}</dd>
+            </div>
+            <div className="py-3 px-2">
+              <dt className="flex items-center justify-center gap-1 text-xs text-gray-500"><Star size={12} /> {t('rating')}</dt>
+              <dd className="text-sm font-semibold text-gray-900 mt-0.5">{doctor.rating || '—'}</dd>
+            </div>
+            <div className="py-3 px-2">
+              <dt className="flex items-center justify-center gap-1 text-xs text-gray-500"><Wallet size={12} /> {t('fees')}</dt>
+              <dd className="text-sm font-semibold text-gray-900 mt-0.5">{doctor.fees != null ? `৳${doctor.fees}` : '—'}</dd>
+            </div>
+          </dl>
+
+          <div className="flex gap-2 mt-4">
+            <button onClick={scrollToBooking}
+              className="flex-1 flex items-center justify-center gap-2 h-11 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors lg:hidden">
+              <Ticket size={16} /> {t('book_serial')}
+            </button>
+            <button onClick={toggleCall}
+              className="flex-1 lg:flex-none lg:px-5 flex items-center justify-center gap-2 h-11 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:border-primary hover:text-primary transition-colors">
+              <Phone size={16} /> {t('call')}
+            </button>
+            <button onClick={toggleShare} aria-label={t('share')}
+              className="flex-shrink-0 lg:px-5 w-11 lg:w-auto flex items-center justify-center gap-2 h-11 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:border-primary hover:text-primary transition-colors">
+              <Share2 size={16} /> <span className="hidden lg:inline">{t('share')}</span>
+            </button>
+          </div>
+        </section>
+
+        {/* ── Book a serial ── */}
+        <section id="book-serial"
+          className={`${CARD} p-5 sm:p-6 scroll-mt-[calc(var(--header-h)+1rem)] lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:sticky lg:top-[calc(var(--header-h)+1rem)] lg:max-h-[calc(100dvh-var(--header-h)-2rem)] lg:overflow-y-auto`}>
+          <SectionHeading icon={CalendarDays}>{t('book_serial')}</SectionHeading>
+          <p className="text-xs text-gray-500 mt-1 mb-3">{t('choose_day')}</p>
+          <DateStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} />
+          <div className="mt-4">
+            <ChamberList doctor={doctor} selectedDate={selectedDate} />
+          </div>
+        </section>
+
+        {/* ── Background ── */}
+        <section className={`${CARD} p-5 sm:p-6 lg:col-start-1 flex flex-col gap-5`}>
+          <SectionHeading icon={Stethoscope}>{t('about')}</SectionHeading>
+
+          {aboutText && (
+            <div className="-mt-2">
+              <p className="text-sm text-gray-700 leading-relaxed">
+                {truncated ? `${aboutText.slice(0, ABOUT_PREVIEW)}…` : aboutText}
+              </p>
+              {aboutText.length > ABOUT_PREVIEW && (
+                <button onClick={() => setAboutExpanded(v => !v)} className="mt-1 text-primary text-sm font-medium hover:underline">
+                  {aboutExpanded ? t('show_less') : t('view_more_text')}
                 </button>
-              ))}
+              )}
             </div>
-          </div>
-
-          <div className={`${CARD} p-6`}>
-            <SectionHeading icon={MapPin}>{t('location')}</SectionHeading>
-            <p className="text-sm font-medium text-gray-800">{withDivision(doctor.chamber, doctor.city, doctor.division)}</p>
-            {doctor.address && <p className="text-xs text-gray-500 mt-1">{doctor.address}</p>}
-            {doctor.phone && <p className="text-xs text-gray-500 mt-1">{doctor.phone}</p>}
-            <p className="text-xs text-gray-400 mt-2 pt-2 border-t border-gray-100">{t('fees')}: <span className="text-gray-600 font-medium">৳{doctor.fees}</span></p>
-          </div>
-
-          <div className={`${CARD} p-6`}>
-            <SectionHeading icon={Stethoscope}>{t('about')}</SectionHeading>
-            <p className="text-sm text-gray-700 leading-relaxed">
-              {truncated ? aboutText.slice(0, 150) + '...' : aboutText}
-            </p>
-            {aboutText.length > 150 && (
-              <button onClick={() => setAboutExpanded(!aboutExpanded)}
-                className="mt-2 flex items-center gap-1 text-primary text-xs font-medium hover:underline">
-                {aboutExpanded ? <><ChevronUp size={12} /> Show Less</> : <><ChevronDown size={12} /> {t('view_more_text')}</>}
-              </button>
-            )}
-          </div>
+          )}
 
           {doctor.clinical_expertise?.length > 0 && (
-            <div className={`${CARD} p-6`}>
-              <SectionHeading icon={ClipboardList}>{t('clinical_expertise')}</SectionHeading>
+            <div>
+              <SubHeading>{t('clinical_expertise')}</SubHeading>
               <div className="flex flex-wrap gap-2">
                 {doctor.clinical_expertise.map(tag => (
-                  <span key={tag} className="bg-primary/10 text-primary text-xs font-medium px-3 py-1.5 rounded-full">
-                    {tag}
-                  </span>
+                  <span key={tag} className="bg-primary/10 text-primary text-xs font-medium px-3 py-1.5 rounded-full">{tag}</span>
                 ))}
               </div>
             </div>
           )}
 
           {doctor.treatments?.length > 0 && (
-            <div className={`${CARD} p-6`}>
-              <SectionHeading icon={ClipboardList}>{t('treatments_offered')}</SectionHeading>
-              <ul className="text-sm text-gray-700 space-y-2">
+            <div>
+              <SubHeading>{t('treatments_offered')}</SubHeading>
+              <ul className="text-sm text-gray-700 space-y-1.5">
                 {doctor.treatments.map(item => (
                   <li key={item} className="flex items-start gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0" />
@@ -225,12 +210,24 @@ export default function DoctorProfilePage() {
               </ul>
             </div>
           )}
-        </div>
 
-        <div className="w-full lg:w-[534px] flex-shrink-0 lg:sticky lg:top-24 flex flex-col gap-5">
-          <ScheduleBox selectedDate={selectedDate} onSelectDate={setSelectedDate} />
-          <ChamberList doctor={doctor} selectedDate={selectedDate} />
-        </div>
+          {hasBackground && (
+            <dl className="grid sm:grid-cols-2 gap-4 pt-4 border-t border-gray-100">
+              {doctor.education && (
+                <div>
+                  <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{t('education')}</dt>
+                  <dd className="text-sm text-gray-700">{doctor.education}</dd>
+                </div>
+              )}
+              {doctor.languages && (
+                <div>
+                  <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{t('languages')}</dt>
+                  <dd className="text-sm text-gray-700">{doctor.languages}</dd>
+                </div>
+              )}
+            </dl>
+          )}
+        </section>
       </div>
 
       {shareAnchor && (
@@ -238,7 +235,7 @@ export default function DoctorProfilePage() {
       )}
 
       {callAnchor && (
-        <CallPopover doctor={doctor} schedule={doctor.weekly_schedule} dow={selectedDow} anchorEl={callAnchor} onClose={() => setCallAnchor(null)} />
+        <CallPopover doctor={doctor} schedule={doctor.weekly_schedule} dow={selectedDate.getDay()} anchorEl={callAnchor} onClose={() => setCallAnchor(null)} />
       )}
     </div>
   );

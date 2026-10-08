@@ -55,6 +55,62 @@ body {
   }
 }
 
+/* Apple-style translucent materials for chrome that floats over content
+   (bars, sheets, popovers) — not for content cards, which stay solid.
+   Saturation keeps colours behind the blur vivid rather than greyed out. */
+@layer components {
+  /* Light bar pinned over the page, e.g. the sticky filter bar. */
+  .glass-bar {
+    background-color: rgb(244 246 248 / 0.72);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+  }
+  /* Navy bar, e.g. the global header. */
+  .glass-nav {
+    background-color: rgb(0 53 128 / 0.8);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+  }
+  /* Sheets, dialogs and popovers. */
+  .glass-panel {
+    background-color: rgb(255 255 255 / 0.8);
+    -webkit-backdrop-filter: saturate(180%) blur(32px);
+    backdrop-filter: saturate(180%) blur(32px);
+    border: 1px solid rgb(255 255 255 / 0.6);
+    box-shadow: 0 24px 48px -12px rgb(0 0 0 / 0.25), inset 0 1px 0 rgb(255 255 255 / 0.7);
+  }
+  /* Frosted tile on a dark (navy) background, e.g. hero chips and stats. */
+  .glass-on-dark {
+    background-color: rgb(255 255 255 / 0.1);
+    -webkit-backdrop-filter: saturate(160%) blur(16px);
+    backdrop-filter: saturate(160%) blur(16px);
+    border: 1px solid rgb(255 255 255 / 0.2);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.15);
+  }
+  /* Dimmed, softly blurred backdrop behind a modal. */
+  .glass-scrim {
+    background-color: rgb(0 0 0 / 0.3);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+  }
+}
+
+/* Without backdrop-filter, or when the user asks for less transparency,
+   fall back to solid surfaces so text never sits on busy content. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-bar { background-color: #F4F6F8; }
+  .glass-nav { background-color: #003580; }
+  .glass-panel { background-color: #fff; }
+  .glass-scrim { background-color: rgb(0 0 0 / 0.4); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass-bar { background-color: #F4F6F8; backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .glass-nav { background-color: #003580; backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .glass-panel { background-color: #fff; backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .glass-on-dark { background-color: rgb(255 255 255 / 0.14); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .glass-scrim { background-color: rgb(0 0 0 / 0.4); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+
 /* Filter sheet: slide up on phones, slide in from the right on wider screens. */
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }

@@ -63,7 +63,7 @@ export default function CallPopover({ doctor, schedule, dow, anchorEl, onClose }
 
   return createPortal(
     <>
-      <div onClick={onClose} className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm" aria-hidden="true" />
+      <div onClick={onClose} className="fixed inset-0 z-40 glass-scrim" aria-hidden="true" />
       <div
         ref={popRef}
         style={{
@@ -74,7 +74,7 @@ export default function CallPopover({ doctor, schedule, dow, anchorEl, onClose }
           width: POPOVER_WIDTH,
           maxWidth: 'calc(100vw - 32px)',
         }}
-        className="z-50 bg-white rounded-2xl shadow-xl border border-gray-100 p-6"
+        className="z-50 glass-panel rounded-3xl p-6"
       >
         <p className="text-base font-semibold text-gray-800 mb-1">Call Chamber</p>
         <p className="text-xs text-gray-400 mb-4">{dow != null ? DAY_NAMES[dow] : ''}</p>
