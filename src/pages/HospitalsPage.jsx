@@ -9,11 +9,14 @@ import PillCarousel from '../components/ui/PillCarousel';
 import Pagination from '../components/ui/Pagination';
 import { usePagination } from '../hooks/usePagination';
 import { api } from '../api/client';
-import divisions from '../data/divisions.json';
+
+// Divisions in the order patients look for them (Dhaka first, roughly by
+// size), not alphabetically.
+const DIVISION_ORDER = ['Dhaka', 'Chattogram', 'Mymensingh', 'Khulna', 'Sylhet', 'Barishal', 'Rangpur', 'Rajshahi'];
 
 const CITIES = [
   { id: 'all', name: 'All' },
-  ...divisions.map(d => ({ id: d.toLowerCase(), name: d })),
+  ...DIVISION_ORDER.map(d => ({ id: d.toLowerCase(), name: d })),
 ];
 
 const PAGE_SIZE = 12;
