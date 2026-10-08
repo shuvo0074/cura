@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BedDouble, House, Info, ReceiptText, Stethoscope } from 'lucide-react';
+import { BedDouble, Calculator, House, Info, ReceiptText, Stethoscope } from 'lucide-react';
 import { FACILITY_ICONS, SERVICE_GROUPS, SERVICE_ICONS, TEST_CATEGORIES, is24x7 } from './hospitalCatalogue';
 
 const CARD = 'bg-white rounded-xl border border-gray-100 shadow-sm';
@@ -85,10 +86,13 @@ export function ServicesSection({ hospital, id }) {
   );
 }
 
-// Indicative prices for common tests and scans, grouped by kind. Patients in
-// Bangladesh compare these between places before choosing where to go.
+// Indicative prices for common tests and scans, grouped by kind, doubling as
+// a calculator: patients tick the tests on their prescription and see the
+// estimated total before they go. Patients in Bangladesh compare these
+// between places before choosing where to have tests done.
 export function TestPricesSection({ hospital, id }) {
   const { t, i18n } = useTranslation();
+  const [picked, setPicked] = useState(() => new Set());
   const tests = hospital.tests || [];
   if (!tests.length) return null;
 
@@ -97,12 +101,23 @@ export function TestPricesSection({ hospital, id }) {
   const groups = TEST_CATEGORIES
     .map(cat => ({ cat, items: tests.filter(x => x.category === cat) }))
     .filter(g => g.items.length);
+  const chosen = tests.filter(x => picked.has(x.name));
+  const total = chosen.reduce((sum, x) => sum + x.price, 0);
+
+  function toggle(name) {
+    setPicked(prev => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name); else next.add(name);
+      return next;
+    });
+  }
 
   return (
     <section id={id} className={`${CARD} p-5 sm:p-6 scroll-mt-[calc(var(--header-h)+1rem)]`}>
       <h2 className="flex items-center gap-2 text-base font-semibold text-gray-900">
         <ReceiptText size={18} className="text-primary" /> {t('test_prices')}
       </h2>
+      <p className="text-sm text-gray-600 mt-1">{t('test_calc_hint')}</p>
       <p className="flex items-center gap-1.5 text-xs text-gray-500 mt-1">
         <Info size={12} className="flex-shrink-0" /> {t('test_prices_note')}
       </p>
@@ -116,15 +131,42 @@ export function TestPricesSection({ hospital, id }) {
         <div key={g.cat} className="mt-4">
           <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{t(`test_cat_${g.cat}`)}</h3>
           <ul className="divide-y divide-gray-100">
-            {g.items.map(x => (
-              <li key={x.name} className="flex items-baseline justify-between gap-4 py-2.5 text-sm">
-                <span className="text-gray-800">{x.name}</span>
-                <span className="flex-shrink-0 font-semibold text-gray-900 tabular-nums">৳{money.format(x.price)}</span>
-              </li>
-            ))}
+            {g.items.map(x => {
+              const on = picked.has(x.name);
+              return (
+                <li key={x.name}>
+                  <label className={`flex items-center gap-3 py-2.5 -mx-2 px-2 rounded-lg text-sm cursor-pointer select-none transition-colors ${on ? 'bg-primary/5' : 'hover:bg-gray-50'}`}>
+                    <input type="checkbox" checked={on} onChange={() => toggle(x.name)} className="accent-primary w-4 h-4 flex-shrink-0" />
+                    <span className={`flex-1 ${on ? 'text-gray-900 font-medium' : 'text-gray-800'}`}>{x.name}</span>
+                    <span className="flex-shrink-0 font-semibold text-gray-900 tabular-nums">৳{money.format(x.price)}</span>
+                  </label>
+                </li>
+              );
+            })}
           </ul>
         </div>
       ))}
+
+      {/* Running total, pinned to the bottom of the screen while the list scrolls. */}
+      <div aria-live="polite"
+        className={`sticky bottom-3 mt-4 flex items-center gap-3 rounded-xl px-4 py-3 shadow-lg transition-colors
+          ${chosen.length ? 'bg-primary text-white' : 'bg-gray-50 text-gray-500 shadow-none'}`}>
+        <Calculator size={18} className="flex-shrink-0" />
+        {chosen.length ? (
+          <>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-white/80">{t('tests_selected', { count: chosen.length })}</p>
+              <p className="text-lg font-bold leading-tight tabular-nums">৳{money.format(total)}</p>
+            </div>
+            <button type="button" onClick={() => setPicked(new Set())}
+              className="flex-shrink-0 text-sm font-medium rounded-lg px-3 py-1.5 bg-white/15 hover:bg-white/25">
+              {t('clear')}
+            </button>
+          </>
+        ) : (
+          <p className="text-sm">{t('test_calc_empty')}</p>
+        )}
+      </div>
     </section>
   );
 }

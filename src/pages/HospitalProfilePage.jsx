@@ -350,7 +350,7 @@ export default function HospitalProfilePage() {
           </section>
 
           <ServicesSection hospital={hospital} id="services" />
-          <TestPricesSection hospital={hospital} id="test-prices" />
+          <TestPricesSection key={hospital.id} hospital={hospital} id="test-prices" />
         </div>
 
         {/* ── Visit: map, address, hours, contact, payment, about ── */}

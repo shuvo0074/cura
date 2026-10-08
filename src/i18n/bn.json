@@ -307,5 +307,9 @@
   "map": "ম্যাপ",
   "map_of": "{{name}}-এর ম্যাপ",
   "get_directions": "দিকনির্দেশনা নিন",
-  "on_this_page": "এই পাতায়"
+  "on_this_page": "এই পাতায়",
+  "test_calc_hint": "প্রেসক্রিপশনের পরীক্ষাগুলো বেছে নিন, মোট খরচ দেখুন।",
+  "test_calc_empty": "মোট খরচ জানতে পরীক্ষা বেছে নিন",
+  "tests_selected_one": "{{count, number}}টি পরীক্ষা বাছাই করা হয়েছে",
+  "tests_selected_other": "{{count, number}}টি পরীক্ষা বাছাই করা হয়েছে"
 }

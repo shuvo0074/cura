@@ -307,5 +307,9 @@
   "map": "Map",
   "map_of": "Map of {{name}}",
   "get_directions": "Get directions",
-  "on_this_page": "On this page"
+  "on_this_page": "On this page",
+  "test_calc_hint": "Tick the tests on your prescription to see the total.",
+  "test_calc_empty": "Select tests to estimate the total",
+  "tests_selected_one": "{{count}} test selected",
+  "tests_selected_other": "{{count}} tests selected"
 }
