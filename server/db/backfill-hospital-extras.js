@@ -1,7 +1,8 @@
-// Fills services, beds, test prices etc. into hospitals that were seeded
-// before those columns existed (seed.js skips databases that already have
-// hospitals). Matches rows to src/data/hospitals.json by name and only
-// touches rows whose services are still empty, so it never overwrites edits.
+// Brings hospitals seeded from an older src/data/hospitals.json up to date
+// (seed.js skips databases that already have hospitals), matching rows by
+// name and never overwriting edits:
+//   - services, beds, test prices etc., where services are still empty;
+//   - the photo, where it's still one of the original stock images.
 //
 //   npm run db:backfill-hospital-extras
 //
@@ -32,5 +33,16 @@ for (const h of hospitals) {
   );
   updated += rowCount;
 }
-console.log(`Backfilled ${updated} hospitals.`);
+console.log(`Backfilled services etc. for ${updated} hospitals.`);
+
+let photos = 0;
+for (const h of hospitals) {
+  if (!h.photo || /^https?:/.test(h.photo)) continue;
+  const { rowCount } = await pool.query(
+    `UPDATE hospitals SET photo = $1 WHERE name = $2 AND (photo IS NULL OR photo LIKE 'https://images.unsplash.com/%')`,
+    [h.photo, h.name]
+  );
+  photos += rowCount;
+}
+console.log(`Replaced stock photos for ${photos} hospitals.`);
 await pool.end();
