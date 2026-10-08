@@ -228,5 +228,18 @@
   "rating": "রেটিং",
   "chambers_hours": "চেম্বার ও সময়",
   "chambers_days": "শনিবার থেকে বৃহস্পতিবার · শুক্রবার বন্ধ",
-  "open_now": "এখন খোলা"
+  "open_now": "এখন খোলা",
+  "hospital_not_found": "হাসপাতাল পাওয়া যায়নি",
+  "doctors_here": "এখানের ডাক্তার",
+  "doctors_here_hint": "বিশেষজ্ঞতা বেছে নিন, বা এখন কে আছেন দেখুন।",
+  "all": "সব",
+  "stat_doctors": "ডাক্তার",
+  "stat_specialities": "বিশেষজ্ঞতা",
+  "stat_on_duty": "এখন ডিউটিতে",
+  "call_hotline": "হটলাইনে কল করুন",
+  "search_doctors_here": "ডাক্তার বা বিশেষজ্ঞতা খুঁজুন",
+  "no_doctors_match": "এখানে এমন কোনো ডাক্তার নেই।",
+  "show_n_more": "আরও {{count}} জন দেখুন",
+  "visit": "যাতায়াত",
+  "hours_here": "এখানে সময়"
 }

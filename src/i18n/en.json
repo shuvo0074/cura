@@ -228,5 +228,18 @@
   "rating": "Rating",
   "chambers_hours": "Chambers & hours",
   "chambers_days": "Saturday to Thursday · closed on Fridays",
-  "open_now": "Open now"
+  "open_now": "Open now",
+  "hospital_not_found": "Hospital not found",
+  "doctors_here": "Doctors here",
+  "doctors_here_hint": "Pick a speciality, or see who's in right now.",
+  "all": "All",
+  "stat_doctors": "Doctors",
+  "stat_specialities": "Specialities",
+  "stat_on_duty": "On duty now",
+  "call_hotline": "Call hotline",
+  "search_doctors_here": "Search doctor or speciality",
+  "no_doctors_match": "No doctor here matches that.",
+  "show_n_more": "Show {{count}} more",
+  "visit": "Visit",
+  "hours_here": "Hours here"
 }
