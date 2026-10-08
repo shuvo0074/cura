@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BedDouble, Calculator, House, Info, ReceiptText, Stethoscope } from 'lucide-react';
+import { BedDouble, Calculator, House, Info, Phone, ReceiptText, Search, Stethoscope, X } from 'lucide-react';
 import { FACILITY_ICONS, SERVICE_GROUPS, SERVICE_ICONS, TEST_CATEGORIES, is24x7 } from './hospitalCatalogue';
 
 const CARD = 'bg-white rounded-xl border border-gray-100 shadow-sm';
@@ -93,16 +93,24 @@ export function ServicesSection({ hospital, id }) {
 export function TestPricesSection({ hospital, id }) {
   const { t, i18n } = useTranslation();
   const [picked, setPicked] = useState(() => new Set());
+  const [query, setQuery] = useState('');
   const tests = hospital.tests || [];
   if (!tests.length) return null;
 
   const money = new Intl.NumberFormat(i18n.language === 'bn' ? 'bn-BD' : 'en-IN');
   const homeSample = (hospital.services || []).some(s => s.key === 'home_sample');
+  // Search narrows the list; ticked tests still count towards the total.
+  const q = query.trim().toLowerCase();
   const groups = TEST_CATEGORIES
-    .map(cat => ({ cat, items: tests.filter(x => x.category === cat) }))
+    .map(cat => ({ cat, items: tests.filter(x => x.category === cat && (!q || x.name.toLowerCase().includes(q))) }))
     .filter(g => g.items.length);
   const chosen = tests.filter(x => picked.has(x.name));
-  const total = chosen.reduce((sum, x) => sum + x.price, 0);
+  // Centres that don't publish rates have tests without a price: those
+  // count as "call for price" rather than as zero.
+  const priced = chosen.filter(x => x.price != null);
+  const unpriced = chosen.length - priced.length;
+  const total = priced.reduce((sum, x) => sum + x.price, 0);
+  const anyPrices = tests.some(x => x.price != null);
 
   function toggle(name) {
     setPicked(prev => {
@@ -117,15 +125,25 @@ export function TestPricesSection({ hospital, id }) {
       <h2 className="flex items-center gap-2 text-base font-semibold text-gray-900">
         <ReceiptText size={18} className="text-primary" /> {t('test_prices')}
       </h2>
-      <p className="text-sm text-gray-600 mt-1">{t('test_calc_hint')}</p>
+      <p className="text-sm text-gray-600 mt-1">{t(anyPrices ? 'test_calc_hint' : 'test_calc_hint_no_prices')}</p>
       <p className="flex items-center gap-1.5 text-xs text-gray-500 mt-1">
-        <Info size={12} className="flex-shrink-0" /> {t('test_prices_note')}
+        <Info size={12} className="flex-shrink-0" /> {t(anyPrices ? 'test_prices_note' : 'test_prices_unpublished')}
       </p>
       {homeSample && (
         <p className="inline-flex items-center gap-1.5 text-xs font-medium text-primary bg-primary/5 rounded-full px-3 py-1.5 mt-3">
           <House size={13} /> {t('home_sample_available')}
         </p>
       )}
+
+      <label className="field mt-4 flex items-center gap-2 border border-gray-200 rounded-xl px-3 h-11 cursor-text">
+        <Search size={16} className="text-gray-400 flex-shrink-0" />
+        <input value={query} onChange={e => setQuery(e.target.value)} placeholder={t('search_tests')} aria-label={t('search_tests')}
+          className="flex-1 min-w-0 text-sm outline-none bg-transparent" />
+        {query && (
+          <button type="button" onClick={() => setQuery('')} aria-label={t('clear_search')} className="text-gray-400 p-1 -m-1"><X size={16} /></button>
+        )}
+      </label>
+      {groups.length === 0 && <p className="text-sm text-gray-500 text-center py-6">{t('no_tests_match')}</p>}
 
       {groups.map(g => (
         <div key={g.cat} className="mt-4">
@@ -138,7 +156,9 @@ export function TestPricesSection({ hospital, id }) {
                   <label className={`flex items-center gap-3 py-2.5 -mx-2 px-2 rounded-lg text-sm cursor-pointer select-none transition-colors ${on ? 'bg-primary/5' : 'hover:bg-gray-50'}`}>
                     <input type="checkbox" checked={on} onChange={() => toggle(x.name)} className="accent-primary w-4 h-4 flex-shrink-0" />
                     <span className={`flex-1 ${on ? 'text-gray-900 font-medium' : 'text-gray-800'}`}>{x.name}</span>
-                    <span className="flex-shrink-0 font-semibold text-gray-900 tabular-nums">৳{money.format(x.price)}</span>
+                    {x.price != null
+                      ? <span className="flex-shrink-0 font-semibold text-gray-900 tabular-nums">৳{money.format(x.price)}</span>
+                      : <span className="flex-shrink-0 text-xs font-medium text-gray-500">{t('call_for_price')}</span>}
                   </label>
                 </li>
               );
@@ -147,17 +167,28 @@ export function TestPricesSection({ hospital, id }) {
         </div>
       ))}
 
-      {/* Running total, pinned to the bottom of the screen while the list scrolls. */}
+      {/* Running total; once tests are ticked it stays pinned to the bottom of the screen. */}
       <div aria-live="polite"
-        className={`sticky bottom-3 mt-4 flex items-center gap-3 rounded-xl px-4 py-3 shadow-lg transition-colors
-          ${chosen.length ? 'bg-primary text-white' : 'bg-gray-50 text-gray-500 shadow-none'}`}>
+        className={`mt-4 flex items-center gap-3 rounded-xl px-4 py-3 transition-colors
+          ${chosen.length ? 'sticky bottom-3 shadow-lg bg-primary text-white' : 'bg-gray-50 text-gray-500'}`}>
         <Calculator size={18} className="flex-shrink-0" />
         {chosen.length ? (
           <>
             <div className="flex-1 min-w-0">
               <p className="text-xs text-white/80">{t('tests_selected', { count: chosen.length })}</p>
-              <p className="text-lg font-bold leading-tight tabular-nums">৳{money.format(total)}</p>
+              {priced.length > 0 && <p className="text-lg font-bold leading-tight tabular-nums">৳{money.format(total)}</p>}
+              {unpriced > 0 && (
+                <p className={priced.length ? 'text-xs text-white/80' : 'text-sm font-semibold'}>
+                  {priced.length ? t('n_need_call_for_price', { count: unpriced }) : t('call_for_prices')}
+                </p>
+              )}
             </div>
+            {unpriced > 0 && hospital.hotline && (
+              <a href={`tel:${hospital.hotline}`}
+                className="flex-shrink-0 flex items-center gap-1.5 text-sm font-semibold rounded-lg px-3 py-1.5 bg-white text-primary">
+                <Phone size={14} /> {t('call')}
+              </a>
+            )}
             <button type="button" onClick={() => setPicked(new Set())}
               className="flex-shrink-0 text-sm font-medium rounded-lg px-3 py-1.5 bg-white/15 hover:bg-white/25">
               {t('clear')}

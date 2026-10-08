@@ -90,15 +90,6 @@
     "changes": "Resized and compressed"
   },
   {
-    "file": "/hospital-photos/popular-diagnostic-centre.jpg",
-    "caption": "LAMB Hospital, Bangladesh",
-    "author": "LittleT889",
-    "license": "CC0",
-    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
-    "source": "https://commons.wikimedia.org/wiki/File:LAMB_Hospital,_Bangladesh.jpg",
-    "changes": "Resized and compressed"
-  },
-  {
     "file": "/hospital-photos/ibn-sina-hospital.jpg",
     "caption": "Ibn Sina Medical College",
     "author": "Tausheef Hassan Auntu",
@@ -663,6 +654,15 @@
     "license": "CC BY-SA 4.0",
     "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
     "source": "https://commons.wikimedia.org/wiki/File:National_Center_for_Control_of_Rheumatic_Fever_%26_Heart_Disease_(2).jpg",
+    "changes": "Resized and compressed"
+  },
+  {
+    "file": "/diagnostic-photos/labaid-diagnostics-dhanmondi.jpg",
+    "caption": "LABAID Specialized Hospital, Dhanmondi (houses LABAID Diagnostics, Dhanmondi)",
+    "author": "Yahya",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Labaid_Specialized_Hospital.jpg",
     "changes": "Resized and compressed"
   }
 ]

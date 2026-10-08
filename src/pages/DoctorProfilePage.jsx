@@ -1,7 +1,7 @@
 import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
-import { Phone, Share2, ArrowLeft, Star, ShieldCheck, Ticket, CalendarDays, Stethoscope, Briefcase, Wallet } from 'lucide-react';
+import { Phone, Share2, ArrowLeft, Star, ShieldCheck, CalendarDays, Stethoscope, Briefcase, Wallet } from 'lucide-react';
 import { api } from '../api/client';
 import { getDhakaNow } from '../utils/dhakaTime';
 import SharePopover from '../components/doctor/SharePopover';
@@ -102,10 +102,6 @@ export default function DoctorProfilePage() {
     setCallAnchor(prev => (prev ? null : target));
   }
 
-  function scrollToBooking() {
-    document.getElementById('book-serial')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-
   const aboutText = doctor.about || '';
   const truncated = aboutText.length > ABOUT_PREVIEW && !aboutExpanded;
   const hasBackground = doctor.education || doctor.languages;
@@ -155,13 +151,10 @@ export default function DoctorProfilePage() {
           </dl>
 
           <div className="flex gap-2 mt-4">
-            <button onClick={scrollToBooking}
-              className="flex-1 flex items-center justify-center gap-2 h-11 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors lg:hidden">
-              <Ticket size={16} /> {t('book_serial')}
-            </button>
+            {/* Serials are booked by phone: this lists the day's chambers to call. */}
             <button onClick={toggleCall}
-              className="flex-1 lg:flex-none lg:px-5 flex items-center justify-center gap-2 h-11 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:border-primary hover:text-primary transition-colors">
-              <Phone size={16} /> {t('call')}
+              className="flex-1 lg:flex-none lg:px-5 flex items-center justify-center gap-2 h-11 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors">
+              <Phone size={16} /> {t('call_for_booking')}
             </button>
             <button onClick={toggleShare} aria-label={t('share')}
               className="flex-shrink-0 lg:px-5 w-11 lg:w-auto flex items-center justify-center gap-2 h-11 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:border-primary hover:text-primary transition-colors">
@@ -170,11 +163,11 @@ export default function DoctorProfilePage() {
           </div>
         </section>
 
-        {/* ── Book a serial ── */}
+        {/* ── Call for booking: which chambers sit on a given day ── */}
         <section id="book-serial"
           className={`${CARD} p-5 sm:p-6 scroll-mt-[calc(var(--header-h)+1rem)] lg:col-start-2 lg:row-start-1 lg:row-span-3 lg:sticky lg:top-[calc(var(--header-h)+1rem)] lg:max-h-[calc(100dvh-var(--header-h)-2rem)] lg:overflow-y-auto`}>
-          <SectionHeading icon={CalendarDays}>{t('book_serial')}</SectionHeading>
-          <p className="text-xs text-gray-500 mt-1 mb-3">{t('choose_day')}</p>
+          <SectionHeading icon={CalendarDays}>{t('call_for_booking')}</SectionHeading>
+          <p className="text-xs text-gray-500 mt-1 mb-3">{t('call_for_booking_hint')}</p>
           <DateStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} />
           <div className="mt-4">
             <ChamberList doctor={doctor} selectedDate={selectedDate} hospitalIds={hospitalIds} />

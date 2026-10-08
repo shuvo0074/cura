@@ -1,11 +1,14 @@
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useMemo, useState } from 'react';
-import { Phone, Globe, Navigation, ArrowLeft, MapPin, Map as MapIcon, Star, Users, Search, Ticket, DoorOpen, Building2, X, Clock, Wallet, Siren, Video } from 'lucide-react';
+import { Phone, Globe, Navigation, ArrowLeft, MapPin, Map as MapIcon, Star, Users, Search, DoorOpen, Building2, X, Clock, Wallet, Siren, Video } from 'lucide-react';
 import { api } from '../api/client';
 import { getDhakaNow, parseTimeRangeToMinutes } from '../utils/dhakaTime';
 import { withDivision } from '../utils/place';
+import { formatYmd } from '../utils/dates';
 import Photo from '../components/ui/Photo';
+import CentreBanner from '../components/hospital/CentreBanner';
+import { callChamber } from '../components/booking/chambers';
 import { ServicesSection, TestPricesSection } from '../components/hospital/HospitalServices';
 import { is24x7 } from '../components/hospital/hospitalCatalogue';
 
@@ -61,6 +64,8 @@ function Chip({ active, onClick, children, tone = 'primary' }) {
 function DoctorRow({ doc, hospital }) {
   const { t } = useTranslation();
   const room = roomWithin(doc.venue_schedule?.[0]?.address, hospital.address);
+  // Serials are booked by phoning the doctor's chamber here, else the hospital.
+  const phone = doc.venue_schedule?.find(s => s.phone)?.phone || hospital.hotline;
   return (
     <li className={`border rounded-xl p-4 transition-colors ${doc.onDuty ? 'border-green-200 bg-green-50/40' : 'border-gray-100 hover:border-primary/40'}`}>
       <div className="flex items-start gap-3.5">
@@ -100,10 +105,12 @@ function DoctorRow({ doc, hospital }) {
       </div>
 
       <div className="flex gap-2 mt-3 sm:pl-[70px]">
-        <Link to={`/doctors/${doc.id}#book-serial`}
-          className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 h-9 px-4 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary/90">
-          <Ticket size={14} /> {t('book_serial')}
-        </Link>
+        {phone && (
+          <button type="button" onClick={() => callChamber(doc.id, phone, hospital.name)}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 h-9 px-4 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary/90">
+            <Phone size={14} /> {t('call_for_booking')}
+          </button>
+        )}
         <Link to={`/doctors/${doc.id}`}
           className="flex-1 sm:flex-none flex items-center justify-center h-9 px-4 rounded-lg border border-gray-200 text-xs font-medium text-gray-700 hover:border-primary hover:text-primary">
           {t('view_details')}
@@ -131,8 +138,13 @@ function Badge({ tone = 'gray', icon: Icon, children }) {
 // turn-by-turn navigation. Lazy-loaded, since it sits below the fold on phones.
 function HospitalMap({ hospital }) {
   const { t } = useTranslation();
-  const src = `https://maps.google.com/maps?q=${hospital.lat},${hospital.lng}&z=16&output=embed`;
-  const directions = `https://www.google.com/maps/dir/?api=1&destination=${hospital.lat},${hospital.lng}`;
+  // Coordinates when we have them; otherwise the name and address, so a
+  // centre without verified coordinates is never pinned at a made-up spot.
+  const place = hospital.lat != null && hospital.lng != null
+    ? `${hospital.lat},${hospital.lng}`
+    : encodeURIComponent([hospital.name, hospital.address].filter(Boolean).join(', '));
+  const src = `https://maps.google.com/maps?q=${place}&z=16&output=embed`;
+  const directions = `https://www.google.com/maps/dir/?api=1&destination=${place}`;
   return (
     <div className="flex flex-col gap-2">
       <div className="relative overflow-hidden rounded-xl border border-gray-100 bg-gray-100 aspect-[4/3]">
@@ -159,7 +171,7 @@ function HospitalMap({ hospital }) {
 export default function HospitalProfilePage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [hospital, setHospital] = useState(null);
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -216,7 +228,7 @@ export default function HospitalProfilePage() {
 
   function goBack() {
     if (window.history.state?.idx > 0) navigate(-1);
-    else navigate('/hospitals');
+    else navigate(hospital.type === 'diagnostic' ? '/diagnostic-centres' : '/hospitals');
   }
 
   function scrollTo(sectionId) {
@@ -224,12 +236,16 @@ export default function HospitalProfilePage() {
   }
 
   const online = hospital.type === 'online';
-  const hasMap = !online && hospital.lat != null && hospital.lng != null;
+  const hasMap = !online && ((hospital.lat != null && hospital.lng != null) || !!hospital.address);
+  // Diagnostic centres lead with tests, and only list doctors when they have any.
+  const diagnostic = hospital.type === 'diagnostic';
+  const showDoctors = !diagnostic || doctors.length > 0;
   const emergency = (hospital.services || []).find(x => x.key === 'emergency');
   const jumps = [
-    ['doctors-here', 'jump_doctors', true],
-    ['services', 'jump_services', (hospital.services || []).length > 0],
-    ['test-prices', 'jump_tests', (hospital.tests || []).length > 0],
+    ...(diagnostic ? [['test-prices', 'jump_tests', (hospital.tests || []).length > 0]] : []),
+    ['doctors-here', 'jump_doctors', showDoctors],
+    ['services', 'jump_services', !diagnostic && (hospital.services || []).length > 0],
+    ...(diagnostic ? [] : [['test-prices', 'jump_tests', (hospital.tests || []).length > 0]]),
     ['visit', 'jump_visit', true],
   ].filter(([, , show]) => show);
 
@@ -249,7 +265,9 @@ export default function HospitalProfilePage() {
 
           {/* ── What this place is, and how to reach it ── */}
           <section className={`${CARD} overflow-hidden`}>
-            <Photo src={hospital.photo} alt={hospital.name} kind="building" iconSize={48} className="w-full h-36 sm:h-48" />
+            {diagnostic
+              ? <CentreBanner centre={hospital} className="w-full h-36 sm:h-48" />
+              : <Photo src={hospital.photo} alt={hospital.name} kind="building" iconSize={48} className="w-full h-36 sm:h-48" />}
             <div className="p-5 sm:p-6">
               <div className="flex flex-wrap gap-1.5 mb-2">
                 {hospital.type && <Badge icon={online ? Video : Building2}>{t(`htype_${hospital.type}`)}</Badge>}
@@ -261,11 +279,11 @@ export default function HospitalProfilePage() {
                 <MapPin size={14} className="text-primary flex-shrink-0" /> {place}
               </p>
 
-              <dl className="grid grid-cols-3 mt-4 border border-gray-100 rounded-xl divide-x divide-gray-100 text-center">
+              {showDoctors && <dl className="grid grid-cols-3 mt-4 border border-gray-100 rounded-xl divide-x divide-gray-100 text-center">
                 <Stat label={t('stat_doctors')} value={doctors.length} />
                 <Stat label={t('stat_specialities')} value={specialties.length} />
                 <Stat label={t('stat_on_duty')} value={onDutyCount} highlight={onDutyCount > 0} />
-              </dl>
+              </dl>}
 
               <div className="flex gap-2 mt-4">
                 {hospital.hotline && (
@@ -294,8 +312,10 @@ export default function HospitalProfilePage() {
             </div>
           </section>
 
+          {diagnostic && <TestPricesSection key={hospital.id} hospital={hospital} id="test-prices" />}
+
           {/* ── Which doctor, and when ── */}
-          <section id="doctors-here" className={`${CARD} p-5 sm:p-6 scroll-mt-[calc(var(--header-h)+1rem)]`}>
+          {showDoctors && <section id="doctors-here" className={`${CARD} p-5 sm:p-6 scroll-mt-[calc(var(--header-h)+1rem)]`}>
             <h2 className="flex items-center gap-2 text-base font-semibold text-gray-900">
               <Users size={18} className="text-primary" /> {t('doctors_here')}
             </h2>
@@ -347,10 +367,11 @@ export default function HospitalProfilePage() {
                 {t('show_n_more', { count: Math.min(PAGE, visible.length - shown) })}
               </button>
             )}
-          </section>
+          </section>}
 
-          <ServicesSection hospital={hospital} id="services" />
-          <TestPricesSection key={hospital.id} hospital={hospital} id="test-prices" />
+          {/* A centre's only "service" so far is home collection, already shown with its tests. */}
+          {!diagnostic && <ServicesSection hospital={hospital} id="services" />}
+          {!diagnostic && <TestPricesSection key={hospital.id} hospital={hospital} id="test-prices" />}
         </div>
 
         {/* ── Visit: map, address, hours, contact, payment, about ── */}
@@ -418,6 +439,13 @@ export default function HospitalProfilePage() {
               <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{t('about')}</h3>
               <p className="text-sm text-gray-700 leading-relaxed">{hospital.description}</p>
             </div>
+          )}
+          {hospital.source_url && (
+            <p className="text-xs text-gray-500">
+              {t('details_from')}{' '}
+              <a href={hospital.source_url} target="_blank" rel="noreferrer" className="text-primary hover:underline">{new URL(hospital.source_url).hostname.replace(/^www\./, '')}</a>
+              {hospital.verified_on && <>, {t('checked_on', { date: formatYmd(hospital.verified_on, i18n.language, { month: 'long', year: 'numeric' }) })}</>}
+            </p>
           )}
         </aside>
       </div>

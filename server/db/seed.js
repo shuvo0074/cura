@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs';
 import pg from 'pg';
 import 'dotenv/config';
 import { hospitalExtras } from './hospitalExtras.js';
+import { insertMissingCentres } from './diagnosticCentres.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const dataDir = join(__dirname, '..', '..', 'src', 'data');
@@ -41,6 +42,7 @@ async function main() {
     hospitalIdMap[h.id] = rows[0].id;
   }
   console.log(`Seeded ${hospitals.length} hospitals.`);
+  console.log(`Seeded ${await insertMissingCentres(pool, readJson('diagnosticCentres.json'))} diagnostic centres.`);
 
   const doctorIdMap = {};
   for (const d of doctors) {

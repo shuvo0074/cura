@@ -1,53 +1,30 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Ticket } from 'lucide-react';
+import { Phone, Ticket } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api/client';
-import { chamberTones, groupByVenue, hospitalIdFor } from './chambers';
+import { callChamber, chamberTones, groupByVenue, hospitalIdFor } from './chambers';
 import ChamberHeading from './ChamberHeading';
 import { useAuth } from '../../context/AuthContext';
 import { toYmd } from '../../utils/dates';
-import BookSerialSheet from './BookSerialSheet';
 
 const FRIDAY = 5;
 
-// Booking control for one session on the selected date.
-function SessionAction({ session, onBook }) {
-  const { t } = useTranslation();
-  if (session.mine) {
-    return (
-      <Link to="/appointments"
-        className="flex-shrink-0 flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-50 border border-green-200 rounded-full px-3 py-1.5">
-        <Ticket size={13} /> {t('your_serial_short', { serial: session.mine.serialNo })}
-      </Link>
-    );
-  }
-  if (!session.bookable) return null;
-  return (
-    <button type="button" onClick={() => onBook(session)}
-      className="flex-shrink-0 flex items-center gap-1 text-xs font-semibold text-white bg-primary rounded-full px-3.5 py-2 hover:bg-primary/90">
-      <Ticket size={13} /> {t('book_serial')}
-    </button>
-  );
-}
-
-// The selected day's sessions grouped by chamber, each session with its
-// serial-booking state (next serial, estimated arrival) and a Book action.
-// Calling and directions live in ChamberOverview, so this stays about booking.
+// The selected day's sessions grouped by chamber, with one "Call for
+// booking" per chamber: serials are booked by phoning the chamber. A serial
+// the patient already booked online still shows, linking to their list.
 export default function ChamberList({ doctor, selectedDate, hospitalIds }) {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const [sessions, setSessions] = useState(null);
-  const [booking, setBooking] = useState(null);
   const date = toYmd(selectedDate);
 
-  // Serial state depends on the date and on who's viewing (their own serials).
-  const loadSessions = useCallback(() => {
+  // Which sessions are on, ended or closed that day (and the viewer's own serials).
+  useEffect(() => {
     api.get(`/doctors/${doctor.id}/sessions?date=${date}`)
       .then(res => setSessions({ date, list: res.sessions }))
       .catch(() => setSessions({ date, list: [] }));
-  }, [doctor.id, date]);
-  useEffect(loadSessions, [loadSessions, user?.sub]);
+  }, [doctor.id, date, user?.sub]);
 
   const isFriday = selectedDate.getDay() === FRIDAY;
   const daySessions = sessions?.date === date ? sessions.list : null;
@@ -81,29 +58,28 @@ export default function ChamberList({ doctor, selectedDate, hospitalIds }) {
                   <div className={`min-w-0 ${!s.bookable && !s.mine ? 'opacity-60' : ''}`}>
                     <p className="text-sm font-medium text-gray-800 whitespace-nowrap">{s.time}</p>
                     <p className="text-xs text-gray-500 truncate">{s.note}</p>
-                    {s.bookable && !s.mine && (
-                      <p className="text-xs text-primary font-medium mt-0.5">{t('next_serial_short', { serial: s.nextSerial, time: s.estimatedArrival })}</p>
-                    )}
                     {!s.bookable && !s.mine && <p className="text-xs text-gray-500 mt-0.5">{s.reason}</p>}
                   </div>
-                  <SessionAction session={s} onBook={setBooking} />
+                  {s.mine && (
+                    <Link to="/appointments"
+                      className="flex-shrink-0 flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-50 border border-green-200 rounded-full px-3 py-1.5">
+                      <Ticket size={13} /> {t('your_serial_short', { serial: s.mine.serialNo })}
+                    </Link>
+                  )}
                 </div>
               ))}
             </div>
 
+            {v.phone && v.sessions.some(s => s.bookable) && (
+              <button type="button" onClick={() => callChamber(doctor.id, v.phone, v.venue)}
+                className="mt-2 w-full flex items-center justify-center gap-2 h-10 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90">
+                <Phone size={15} /> {t('call_for_booking')}
+              </button>
+            )}
+
           </div>
         );
       })}
-
-      {booking && (
-        <BookSerialSheet
-          doctor={doctor}
-          date={date}
-          session={booking}
-          onClose={() => setBooking(null)}
-          onBooked={loadSessions}
-        />
-      )}
     </div>
   );
 }

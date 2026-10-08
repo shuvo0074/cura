@@ -144,7 +144,7 @@ export default function HospitalExtrasFields({ form, setForm }) {
         </div>
       </Section>
 
-      <Section title="Test prices" hint="Indicative prices in taka. Rows without a name are ignored.">
+      <Section title="Test prices" hint={'Indicative prices in taka. Leave the price empty to show "Call for price". Rows without a name are ignored.'}>
         <datalist id="common-tests">
           {COMMON_TESTS.map(n => <option key={n} value={n} />)}
         </datalist>

@@ -44,10 +44,11 @@ export function adminHospitalExtras(body) {
   if ('tests' in body) {
     if (!Array.isArray(body.tests)) throw new Error('tests must be a list');
     const tests = body.tests.filter(x => text(x?.name)).map(x => {
-      const price = Number(x.price);
-      if (!Number.isFinite(price) || price < 0) throw new Error(`price for "${x.name}" must be a number`);
+      // No price means "call for price" (centres that don't publish rates).
+      const price = x.price === '' || x.price == null ? null : Number(x.price);
+      if (price !== null && (!Number.isFinite(price) || price < 0)) throw new Error(`price for "${x.name}" must be a number`);
       if (!TEST_CATEGORIES.includes(x.category)) throw new Error(`category for "${x.name}" must be one of ${TEST_CATEGORIES.join(', ')}`);
-      return { name: text(x.name, 120), category: x.category, price: Math.round(price) };
+      return { name: text(x.name, 120), category: x.category, price: price === null ? null : Math.round(price) };
     });
     out.tests = JSON.stringify(tests);
   }

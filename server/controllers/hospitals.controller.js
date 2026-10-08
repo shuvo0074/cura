@@ -5,7 +5,7 @@ export async function listHospitals(_req, res, next) {
     // Everything but the test price list, which only the profile page shows.
     const { rows } = await query(
       `SELECT id, name, location, division, address, hotline, photo, lat, lng, website, doctor_count, description,
-        type, services, beds, facilities, payment_methods, opening_hours, visiting_hours
+        type, services, beds, facilities, payment_methods, opening_hours, visiting_hours, source_url, verified_on
        FROM hospitals ORDER BY id`
     );
     res.json(rows);

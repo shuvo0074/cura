@@ -118,16 +118,16 @@
   "keep_it": "Keep it",
   "serial_n": "Serial #{{serial}}",
   "serial": "Serial",
-  "home_hero_title": "Find a trusted doctor. Get your serial from home.",
-  "home_hero_sub": "Book a chamber serial with specialists across Bangladesh — no more waiting in line since dawn.",
+  "home_hero_title": "Find a trusted doctor. Call for your serial.",
+  "home_hero_sub": "See every chamber, day and session of specialists across Bangladesh, then call the chamber to get your serial.",
   "home_popular": "Popular:",
   "home_stat_doctors": "doctors",
   "home_stat_hospitals": "hospitals",
   "home_stat_specialties": "specialities",
   "home_stat_divisions": "divisions",
   "home_services_title": "What do you need today?",
-  "home_svc_serial_title": "Book a chamber serial",
-  "home_svc_serial_desc": "Choose a doctor, chamber and date. Know your serial and when to arrive.",
+  "home_svc_serial_title": "Call for a chamber serial",
+  "home_svc_serial_desc": "Choose a doctor and see when each chamber sits. One tap calls the chamber for your serial.",
   "home_svc_hospital_title": "Find a hospital",
   "home_svc_hospital_desc": "See which doctors sit at each hospital and when they're on duty.",
   "home_emergency_title": "Emergency?",
@@ -135,13 +135,13 @@
   "home_call_999": "Call 999",
   "home_call_16263": "Health advice: 16263",
   "home_emergency_note": "Both are free, 24/7.",
-  "home_how_title": "How serial booking works",
+  "home_how_title": "How to get a serial",
   "home_how_1_title": "Find your doctor",
   "home_how_1_desc": "Search by speciality, problem, area or hospital.",
-  "home_how_2_title": "Pick chamber & date",
-  "home_how_2_desc": "See every chamber and session the doctor holds.",
-  "home_how_3_title": "Get your serial",
-  "home_how_3_desc": "Your serial number and estimated arrival time — pay at the chamber.",
+  "home_how_2_title": "See chambers & days",
+  "home_how_2_desc": "Every chamber and session the doctor holds, and which are open today.",
+  "home_how_3_title": "Call for your serial",
+  "home_how_3_desc": "Tap Call for booking to phone the chamber. Pay the fee at the chamber.",
   "home_specialties_title": "Popular specialities",
   "home_all_specialties": "All specialities",
   "home_problems_title": "Common health problems",
@@ -155,16 +155,16 @@
   "faq_title": "Frequently asked questions",
   "faq_items": [
     {
-      "q": "How does serial booking work?",
-      "a": "Open a doctor's profile, pick a date and a chamber session, and confirm. You get a serial number and an estimated arrival time (about 10 minutes per patient), so you only need to arrive around your turn."
+      "q": "How do I get a serial?",
+      "a": "Open a doctor's profile, choose a day to see which chambers are open, and tap Call for booking. The chamber gives you your serial number and when to arrive."
     },
     {
       "q": "Do I pay online?",
-      "a": "No. Booking a serial is free — you pay the doctor's consultation fee at the chamber, as usual."
+      "a": "No. Cura doesn't take payments. You pay the doctor's consultation fee at the chamber, as usual."
     },
     {
       "q": "Can I cancel my serial?",
-      "a": "Yes. Go to My appointments and tap Cancel serial. Please cancel if you can't make it, so the chamber knows."
+      "a": "Call the chamber to cancel, so they can give the serial to someone else. Serials booked online earlier can still be cancelled from My appointments."
     },
     {
       "q": "How do I know a doctor is genuine?",
@@ -179,7 +179,7 @@
       "a": "Not yet — this is a demo build. Doctors and hospitals are sample data and no real appointment is created, so please don't enter real medical details."
     }
   ],
-  "footer_tagline": "Find trusted doctors and book chamber serials across Bangladesh.",
+  "footer_tagline": "Find trusted doctors and call their chambers for a serial, across Bangladesh.",
   "footer_explore": "Explore",
   "footer_help": "Help",
   "footer_emergency": "Emergency: 999",
@@ -311,5 +311,25 @@
   "test_calc_hint": "Tick the tests on your prescription to see the total.",
   "test_calc_empty": "Select tests to estimate the total",
   "tests_selected_one": "{{count}} test selected",
-  "tests_selected_other": "{{count}} tests selected"
+  "tests_selected_other": "{{count}} tests selected",
+  "call_for_booking": "Call for booking",
+  "call_for_booking_hint": "Choose a day to see which chambers are open, then call to get your serial.",
+  "search_tests": "Search tests, e.g. CBC, X-ray, thyroid",
+  "no_tests_match": "No test matches that. Call to ask about other tests.",
+  "call_for_price": "Call for price",
+  "call_for_prices": "Call for prices",
+  "n_need_call_for_price_one": "+ {{count}} test: call for price",
+  "n_need_call_for_price_other": "+ {{count}} tests: call for price",
+  "test_calc_hint_no_prices": "Tick the tests on your prescription, then call the centre for prices.",
+  "test_prices_unpublished": "This centre doesn't publish its prices online. Call to confirm which tests it offers and what they cost.",
+  "details_from": "Details from",
+  "checked_on": "checked {{date}}",
+  "diagnostic_centres": "Diagnostic Centres",
+  "nav_diagnostics": "Diagnostic Centres",
+  "diagnostic_centres_sub": "Real diagnostic centres, with details from their own websites. Call to confirm tests and prices.",
+  "search_diagnostic": "Search by centre or area",
+  "n_centres_one": "{{count}} centre",
+  "n_centres_other": "{{count}} centres",
+  "no_centres_match": "No diagnostic centre matches that.",
+  "home_sample_short": "Home sample collection"
 }

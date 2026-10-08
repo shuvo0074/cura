@@ -2,7 +2,9 @@
 // (seed.js skips databases that already have hospitals), matching rows by
 // name and never overwriting edits:
 //   - services, beds, test prices etc., where services are still empty;
-//   - the photo, where it's still one of the original stock images.
+//   - the photo, where it's still one of the original stock images;
+//   - the real diagnostic centres (src/data/diagnosticCentres.json), added
+//     once, replacing the old demo "Popular Diagnostic Centre".
 //
 //   npm run db:backfill-hospital-extras
 //
@@ -18,10 +20,12 @@ import { dirname, join } from 'path';
 import pg from 'pg';
 import 'dotenv/config';
 import { HOSPITAL_EXTRA_COLUMNS, hospitalExtras } from './hospitalExtras.js';
+import { fillMissingCentrePhotos, insertMissingCentres, removeDemoPopular } from './diagnosticCentres.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const file = process.env.HOSPITALS_JSON || join(__dirname, '..', '..', 'src', 'data', 'hospitals.json');
 const hospitals = JSON.parse(readFileSync(file, 'utf-8'));
+const centres = JSON.parse(readFileSync(join(dirname(file), 'diagnosticCentres.json'), 'utf-8'));
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 
 const sets = HOSPITAL_EXTRA_COLUMNS.map((c, i) => `${c} = $${i + 1}`).join(', ');
@@ -45,4 +49,8 @@ for (const h of hospitals) {
   photos += rowCount;
 }
 console.log(`Replaced stock photos for ${photos} hospitals.`);
+
+console.log(`Removed ${await removeDemoPopular(pool)} demo Popular Diagnostic Centre entry.`);
+console.log(`Added ${await insertMissingCentres(pool, centres)} real diagnostic centres.`);
+console.log(`Added photos to ${await fillMissingCentrePhotos(pool, centres)} diagnostic centres.`);
 await pool.end();

@@ -18,6 +18,7 @@ import SymptomsPage from './pages/SymptomsPage';
 import SymptomFilterPage from './pages/SymptomFilterPage';
 import HospitalsPage from './pages/HospitalsPage';
 import HospitalProfilePage from './pages/HospitalProfilePage';
+import DiagnosticCentresPage from './pages/DiagnosticCentresPage';
 import AppointmentsPage from './pages/AppointmentsPage';
 import PatientLoginPage from './pages/PatientLoginPage';
 import DoctorAdminLoginPage from './pages/DoctorAdminLoginPage';
@@ -66,6 +67,8 @@ export default function App() {
               <Route path="/symptoms/:slug" element={<SymptomFilterPage />} />
               <Route path="/hospitals" element={<HospitalsPage />} />
               <Route path="/hospitals/:id" element={<HospitalProfilePage />} />
+              <Route path="/diagnostic-centres" element={<DiagnosticCentresPage />} />
+              <Route path="/diagnostic-centres/:id" element={<HospitalProfilePage />} />
               <Route path="/appointments" element={<AppointmentsPage />} />
               <Route path="/login" element={<PatientLoginPage />} />
               <Route path="/staff-login" element={<DoctorAdminLoginPage />} />

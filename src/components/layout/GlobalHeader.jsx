@@ -8,6 +8,7 @@ const NAV_LINKS = [
   { label: 'Home', path: '/' },
   { label: 'Find Doctor', path: '/doctors' },
   { label: 'Find Hospital', path: '/hospitals' },
+  { label: 'Diagnostic Centres', path: '/diagnostic-centres' },
   { label: 'Read about Health', path: '/health-blogs' },
   { label: 'Find Ambulance', path: '/ambulances' },
 ];
