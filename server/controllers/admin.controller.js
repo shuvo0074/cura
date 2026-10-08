@@ -2,6 +2,7 @@ import path from 'path';
 import { query } from '../db.js';
 import { logger } from '../logger.js';
 import { uploadBuffer, deleteObject, objectNameFromUrl } from '../storage.js';
+import { adminHospitalExtras } from '../db/hospitalExtras.js';
 
 function toNum(value) {
   if (value === '' || value === undefined || value === null) return null;
@@ -110,13 +111,23 @@ export async function deleteDoctorPhoto(req, res, next) {
   }
 }
 
+// "SET col = $n, …" for the hospital extras present in an admin request,
+// numbered after `offset` existing parameters.
+function extrasSql(extras, offset) {
+  const cols = Object.keys(extras);
+  return { cols, values: Object.values(extras), placeholders: cols.map((_, i) => `$${offset + i + 1}`) };
+}
+
 export async function createHospital(req, res, next) {
   try {
     const h = req.body;
+    let extras;
+    try { extras = adminHospitalExtras(h); } catch (err) { return res.status(400).json({ error: err.message }); }
+    const x = extrasSql(extras, 10);
     const { rows } = await query(
-      `INSERT INTO hospitals (name, location, address, hotline, photo, lat, lng, website, doctor_count, division, description)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,0,$9,$10) RETURNING *`,
-      [h.name, h.location, h.address, h.hotline, h.photo, toNum(h.lat), toNum(h.lng), h.website, h.division || null, h.description || null]
+      `INSERT INTO hospitals (name, location, address, hotline, photo, lat, lng, website, doctor_count, division, description${x.cols.map(c => `, ${c}`).join('')})
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,0,$9,$10${x.placeholders.map(p => `,${p}`).join('')}) RETURNING *`,
+      [h.name, h.location, h.address, h.hotline, h.photo, toNum(h.lat), toNum(h.lng), h.website, h.division || null, h.description || null, ...x.values]
     );
     logger.info(
       { event: 'admin_hospital_created', adminId: req.user?.sub, hospitalId: rows[0].id, name: rows[0].name },
@@ -131,10 +142,14 @@ export async function createHospital(req, res, next) {
 export async function updateHospital(req, res, next) {
   try {
     const h = req.body;
+    let extras;
+    try { extras = adminHospitalExtras(h); } catch (err) { return res.status(400).json({ error: err.message }); }
+    // Extras are only written when sent, so an older client can't wipe them.
+    const x = extrasSql(extras, 11);
     const { rows } = await query(
-      `UPDATE hospitals SET name=$1, location=$2, address=$3, hotline=$4, photo=$5, lat=$6, lng=$7, website=$8, division=$9, description=$10
+      `UPDATE hospitals SET name=$1, location=$2, address=$3, hotline=$4, photo=$5, lat=$6, lng=$7, website=$8, division=$9, description=$10${x.cols.map((c, i) => `, ${c}=${x.placeholders[i]}`).join('')}
        WHERE id = $11 RETURNING *`,
-      [h.name, h.location, h.address, h.hotline, h.photo, toNum(h.lat), toNum(h.lng), h.website, h.division || null, h.description || null, req.params.id]
+      [h.name, h.location, h.address, h.hotline, h.photo, toNum(h.lat), toNum(h.lng), h.website, h.division || null, h.description || null, req.params.id, ...x.values]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Hospital not found' });
     logger.info(
