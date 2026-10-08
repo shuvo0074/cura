@@ -1,8 +1,8 @@
-import { Link } from 'react-router-dom';
-import { Building2, Navigation, Phone, Video } from 'lucide-react';
+import { Building2, Navigation, Phone } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getDhakaNow, parseTimeRangeToMinutes } from '../../utils/dhakaTime';
-import { callChamber, groupByVenue, hospitalIdFor, isRemote, openDirections } from './chambers';
+import { callChamber, chamberTones, groupByVenue, hospitalIdFor, isRemote, openDirections } from './chambers';
+import ChamberHeading from './ChamberHeading';
 
 const FRIDAY = 5;
 
@@ -26,6 +26,7 @@ export default function ChamberOverview({ doctor, hospitalIds }) {
 
   const now = getDhakaNow();
   const venues = groupByVenue(schedule);
+  const tones = chamberTones(schedule);
 
   return (
     <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 sm:p-6">
@@ -41,26 +42,14 @@ export default function ChamberOverview({ doctor, hospitalIds }) {
           const open = v.sessions.some(s => isLive(s.time, now));
           return (
             <li key={v.venue} className="py-4 first:pt-0 last:pb-0">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  {hospitalId ? (
-                    <Link to={`/hospitals/${hospitalId}`} className="text-sm font-semibold text-gray-900 hover:text-primary">{v.venue}</Link>
-                  ) : (
-                    <p className="flex items-center gap-1.5 text-sm font-semibold text-gray-900">
-                      {remote && <Video size={14} className="text-primary" />}
-                      {remote ? t('phone_consultation') : v.venue}
-                    </p>
-                  )}
-                  {!remote && v.address && <p className="text-xs text-gray-500 mt-0.5">{v.address}</p>}
-                </div>
-                {open && (
+              <ChamberHeading chamber={v} tone={tones.get(v.venue)} hospitalId={hospitalId}
+                trailing={open && (
                   <span className="flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold text-green-700 bg-green-50 rounded-full px-2.5 py-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-green-500" aria-hidden="true" /> {t('open_now')}
                   </span>
-                )}
-              </div>
+                )} />
 
-              <div className="flex flex-wrap gap-1.5 mt-2.5">
+              <div className="flex flex-wrap gap-1.5 mt-3 sm:pl-[52px]">
                 {v.sessions.map(s => (
                   <span key={s.time} title={s.note}
                     className={`text-xs rounded-md px-2 py-1 whitespace-nowrap ${isLive(s.time, now) ? 'bg-green-50 text-green-800 font-medium' : 'bg-gray-50 text-gray-700'}`}>
@@ -70,7 +59,7 @@ export default function ChamberOverview({ doctor, hospitalIds }) {
               </div>
 
               {(v.phone || !remote) && (
-                <div className="flex gap-2 mt-3">
+                <div className="flex gap-2 mt-3 sm:pl-[52px]">
                   {v.phone && (
                     <button type="button" onClick={() => callChamber(doctor.id, v.phone, v.venue)} className={ACTION}>
                       <Phone size={14} className="text-primary" /> {t('call')}

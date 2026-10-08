@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Ticket, Video } from 'lucide-react';
+import { Ticket } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api/client';
-import { groupByVenue, hospitalIdFor, isRemote } from './chambers';
+import { chamberTones, groupByVenue, hospitalIdFor } from './chambers';
+import ChamberHeading from './ChamberHeading';
 import { useAuth } from '../../context/AuthContext';
 import { toYmd } from '../../utils/dates';
 import BookSerialSheet from './BookSerialSheet';
@@ -51,6 +52,8 @@ export default function ChamberList({ doctor, selectedDate, hospitalIds }) {
   const isFriday = selectedDate.getDay() === FRIDAY;
   const daySessions = sessions?.date === date ? sessions.list : null;
   const venues = !isFriday && daySessions ? groupByVenue(daySessions) : [];
+  // Tones come from the weekly schedule so each chamber keeps the colour it has in the overview.
+  const tones = chamberTones(doctor.weekly_schedule);
   const dayName = new Intl.DateTimeFormat(i18n.language === 'bn' ? 'bn-BD' : 'en-GB', { weekday: 'long' }).format(selectedDate);
 
   return (
@@ -67,20 +70,12 @@ export default function ChamberList({ doctor, selectedDate, hospitalIds }) {
 
       {venues.map(v => {
         const hospitalId = hospitalIdFor(hospitalIds, v.venue);
-        const remote = isRemote(v);
         return (
-          <div key={v.venue} className="border border-gray-200 rounded-xl p-4">
-            {hospitalId && !remote ? (
-              <Link to={`/hospitals/${hospitalId}`} className="text-sm font-semibold text-gray-900 hover:text-primary">{v.venue}</Link>
-            ) : (
-              <p className="flex items-center gap-1.5 text-sm font-semibold text-gray-900">
-                {remote && <Video size={14} className="text-primary" />}
-                {remote ? t('phone_consultation') : v.venue}
-              </p>
-            )}
-            {!remote && v.address && <p className="text-xs text-gray-500 mt-0.5">{v.address}</p>}
+          <div key={v.venue} className="relative overflow-hidden border border-gray-200 rounded-xl p-4 pl-5">
+            <span className={`absolute inset-y-0 left-0 w-1 ${tones.get(v.venue)?.bar}`} aria-hidden="true" />
+            <ChamberHeading chamber={v} tone={tones.get(v.venue)} hospitalId={hospitalId} />
 
-            <div className="flex flex-col divide-y divide-gray-100 mt-2">
+            <div className="flex flex-col divide-y divide-gray-100 mt-3 pt-1 border-t border-gray-100">
               {v.sessions.map(s => (
                 <div key={s.time} className="flex items-center justify-between gap-3 py-2.5">
                   <div className={`min-w-0 ${!s.bookable && !s.mine ? 'opacity-60' : ''}`}>
