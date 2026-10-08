@@ -225,5 +225,8 @@
   "directions": "দিকনির্দেশনা",
   "chambers_on": "{{date}} তারিখের চেম্বার",
   "fee_per_visit": "প্রতি ভিজিট ৳{{fee}}",
-  "rating": "রেটিং"
+  "rating": "রেটিং",
+  "chambers_hours": "চেম্বার ও সময়",
+  "chambers_days": "শনিবার থেকে বৃহস্পতিবার · শুক্রবার বন্ধ",
+  "open_now": "এখন খোলা"
 }
