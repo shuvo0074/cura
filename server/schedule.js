@@ -67,12 +67,22 @@ export function estimatedArrival(sessionStart, serialNo) {
 }
 
 // Why a session can't be booked on `date`, or null if it can.
+// Why a session can't be booked, as a stable code (for apps to translate)
+// and an English message; null when it can be booked.
+export const BLOCKER_MESSAGES = {
+  CLOSED_FRIDAY: 'Chambers are closed on Fridays.',
+  DATE_PASSED: 'That date has already passed.',
+  TOO_FAR_AHEAD: `Bookings open ${BOOKING_WINDOW_DAYS} days in advance.`,
+  SESSION_ENDED: 'This session has already ended today.',
+};
+
 export function bookingBlocker(date, session, now = dhakaNow()) {
-  if (dayOfWeek(date) === OFF_DAY) return 'Chambers are closed on Fridays.';
-  if (date < now.date) return 'That date has already passed.';
-  if (date > addDays(now.date, BOOKING_WINDOW_DAYS)) return `Bookings open ${BOOKING_WINDOW_DAYS} days in advance.`;
-  if (date === now.date && now.minutes >= session.end) return 'This session has already ended today.';
-  return null;
+  let code = null;
+  if (dayOfWeek(date) === OFF_DAY) code = 'CLOSED_FRIDAY';
+  else if (date < now.date) code = 'DATE_PASSED';
+  else if (date > addDays(now.date, BOOKING_WINDOW_DAYS)) code = 'TOO_FAR_AHEAD';
+  else if (date === now.date && now.minutes >= session.end) code = 'SESSION_ENDED';
+  return code && { code, message: BLOCKER_MESSAGES[code] };
 }
 
 // Adds `estimated_arrival` to an appointment row booked as a chamber serial.

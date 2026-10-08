@@ -9,7 +9,18 @@ const PUBLIC_DOCTOR_COLUMNS = `d.id, d.name, d.specialty, d.department, d.experi
   d.share_count, d.bmdc_no, d.education, d.languages, d.consulting_hours, d.address,
   d.clinical_expertise, d.treatments, d.weekly_schedule`;
 
-export async function listDoctors(_req, res, next) {
+// What a list row needs (cards and search results), not the full profile.
+const LIST_DOCTOR_COLUMNS = `d.id, d.name, d.specialty, d.department, d.experience, d.chamber, d.fees,
+  d.city, d.division, d.photo, d.rating, d.bmdc_no`;
+const MAX_PAGE_SIZE = 50;
+const list = v => (v ? String(v).split(',').map(s => s.trim()).filter(Boolean) : []);
+
+// With ?page (the mobile app): one filtered page of slim rows plus the total.
+//   q            name or speciality contains (case-insensitive)
+//   specialty, division, city   comma-separated exact values
+// Without it (the web app): every doctor, full rows, as before.
+export async function listDoctors(req, res, next) {
+  if (req.query.page !== undefined) return searchDoctors(req, res, next);
   try {
     const { rows } = await query(
       `SELECT ${PUBLIC_DOCTOR_COLUMNS}, h.name AS hospital_name FROM doctors d
@@ -17,6 +28,35 @@ export async function listDoctors(_req, res, next) {
        ORDER BY d.id`
     );
     res.json(rows);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function searchDoctors(req, res, next) {
+  try {
+    const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(MAX_PAGE_SIZE, Math.max(1, Number.parseInt(req.query.limit, 10) || 20));
+    const where = [];
+    const params = [];
+    const q = String(req.query.q || '').trim();
+    if (q) {
+      params.push(`%${q}%`);
+      where.push(`(d.name ILIKE $${params.length} OR d.specialty ILIKE $${params.length})`);
+    }
+    for (const col of ['specialty', 'division', 'city']) {
+      const values = list(req.query[col]);
+      if (values.length) {
+        params.push(values);
+        where.push(`d.${col} = ANY($${params.length})`);
+      }
+    }
+    const filter = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    const [{ rows: [{ total }] }, { rows: items }] = await Promise.all([
+      query(`SELECT COUNT(*)::int AS total FROM doctors d ${filter}`, params),
+      query(`SELECT ${LIST_DOCTOR_COLUMNS} FROM doctors d ${filter} ORDER BY d.name, d.id LIMIT ${limit} OFFSET ${(page - 1) * limit}`, params),
+    ]);
+    res.json({ items, total, page, limit });
   } catch (err) {
     next(err);
   }
@@ -155,14 +195,15 @@ export async function getDoctorSessions(req, res, next) {
       const c = counts.find(r => r.venue === entry.venue && r.session_time === entry.time);
       const nextSerial = (c?.last_serial ?? 0) + 1;
       const own = mine.find(r => r.venue === entry.venue && r.session_time === entry.time);
-      const blocker = time ? bookingBlocker(date, time, now) : 'This session has no valid time.';
+      const blocker = time ? bookingBlocker(date, time, now) : { code: 'INVALID_SESSION', message: 'This session has no valid time.' };
       return {
         ...entry,
         booked: Number(c?.booked ?? 0),
         nextSerial,
         estimatedArrival: time ? estimatedArrival(time.start, nextSerial) : null,
         bookable: !blocker,
-        reason: blocker,
+        reason: blocker?.message ?? null,
+        reasonCode: blocker?.code ?? null,
         mine: own ? { id: own.id, serialNo: own.serial_no, estimatedArrival: estimatedArrival(time.start, own.serial_no) } : null,
       };
     });

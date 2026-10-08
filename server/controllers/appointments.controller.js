@@ -10,21 +10,21 @@ import { logger } from '../logger.js';
 export async function createAppointment(req, res, next) {
   const { doctorId, date, venue, session, notes } = req.body;
   if (!doctorId || !date || !venue || !session) {
-    return res.status(400).json({ error: 'doctorId, date, venue and session are required' });
+    return res.status(400).json({ error: 'doctorId, date, venue and session are required', code: 'VALIDATION' });
   }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    return res.status(400).json({ error: 'date must be YYYY-MM-DD' });
+    return res.status(400).json({ error: 'date must be YYYY-MM-DD', code: 'VALIDATION' });
   }
 
   const client = await pool.connect();
   try {
     const { rows: doctorRows } = await client.query(`SELECT weekly_schedule FROM doctors WHERE id = $1`, [doctorId]);
-    if (!doctorRows[0]) return res.status(404).json({ error: 'Doctor not found' });
+    if (!doctorRows[0]) return res.status(404).json({ error: 'Doctor not found', code: 'NOT_FOUND' });
     const entry = (doctorRows[0].weekly_schedule || []).find(e => e.venue === venue && e.time === session);
     const time = entry && parseSessionTime(entry.time);
-    if (!time) return res.status(400).json({ error: 'This doctor has no such chamber session.' });
+    if (!time) return res.status(400).json({ error: 'This doctor has no such chamber session.', code: 'NO_SUCH_SESSION' });
     const blocker = bookingBlocker(date, time);
-    if (blocker) return res.status(400).json({ error: blocker });
+    if (blocker) return res.status(400).json({ error: blocker.message, code: blocker.code });
 
     await client.query('BEGIN');
     await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [`serial:${doctorId}:${date}:${venue}:${session}`]);
@@ -37,7 +37,7 @@ export async function createAppointment(req, res, next) {
     );
     if (existing[0]) {
       await client.query('ROLLBACK');
-      return res.status(409).json({ error: `You already have serial #${existing[0].serial_no} in this session.` });
+      return res.status(409).json({ error: `You already have serial #${existing[0].serial_no} in this session.`, code: 'ALREADY_BOOKED', serial: existing[0].serial_no });
     }
 
     const { rows: [{ next_serial }] } = await client.query(
@@ -93,7 +93,7 @@ export async function cancelAppointment(req, res, next) {
        RETURNING a.*, d.name AS doctor_name, d.specialty, d.photo AS doctor_photo, d.chamber, h.name AS hospital_name`,
       [req.params.id, req.user.sub]
     );
-    if (!rows[0]) return res.status(404).json({ error: 'Appointment not found' });
+    if (!rows[0]) return res.status(404).json({ error: 'Appointment not found', code: 'NOT_FOUND' });
     logger.info(
       { event: 'appointment_cancelled', appointmentId: rows[0].id, patientId: req.user.sub, doctorId: rows[0].doctor_id },
       'Appointment cancelled'

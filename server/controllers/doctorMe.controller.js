@@ -28,7 +28,7 @@ export async function completeAppointment(req, res, next) {
        RETURNING a.*, p.phone AS patient_phone, p.name AS patient_name`,
       [req.params.id, req.user.sub]
     );
-    if (!rows[0]) return res.status(404).json({ error: 'Appointment not found or not completable' });
+    if (!rows[0]) return res.status(404).json({ error: 'Appointment not found or not completable', code: 'NOT_FOUND' });
     logger.info(
       { event: 'appointment_completed', appointmentId: rows[0].id, doctorId: req.user.sub },
       'Appointment marked completed'
