@@ -112,7 +112,6 @@ export function TestPricesSection({ hospital, id }) {
   const anyPrices = tests.some(x => x.price != null);
   const hasPublished = tests.some(x => x.source_url && x.price != null);
   const hasDemo = tests.some(x => x.price_kind === 'demo');
-  const chosenDemo = chosen.some(x => x.price_kind === 'demo');
 
   function toggle(name) {
     setPicked(prev => {
@@ -131,7 +130,7 @@ export function TestPricesSection({ hospital, id }) {
       {(!hasDemo || hasPublished) && <p className="flex items-center gap-1.5 text-xs text-gray-500 mt-1">
         <Info size={12} className="flex-shrink-0" /> {t(hasPublished ? 'test_prices_published_note' : anyPrices ? 'test_prices_note' : 'test_prices_unpublished')}
       </p>}
-      {hasDemo && <p className="text-xs text-amber-900 bg-amber-50 border border-amber-100 rounded-lg p-3 mt-3">{t('test_prices_demo_note')}</p>}
+      {hasDemo && <p className="text-xs text-gray-500 mt-3">{t('test_prices_demo_note')}</p>}
       {homeSample && (
         <p className="inline-flex items-center gap-1.5 text-xs font-medium text-primary bg-primary/5 rounded-full px-3 py-1.5 mt-3">
           <House size={13} /> {t('home_sample_available')}
@@ -165,9 +164,7 @@ export function TestPricesSection({ hospital, id }) {
                       </a>}
                     </span>
                     {x.price != null
-                      ? <span className="flex-shrink-0 font-semibold text-gray-900 tabular-nums text-right">৳{money.format(x.price)}
-                        {x.price_kind === 'demo' && <span className="block text-[11px] font-medium text-amber-700">{t('demo_price')}</span>}
-                      </span>
+                      ? <span className="flex-shrink-0 font-semibold text-gray-900 tabular-nums text-right">৳{money.format(x.price)}</span>
                       : <span className="flex-shrink-0 text-xs font-medium text-gray-500">{t('price_not_published')}</span>}
                   </label>
                 </li>
@@ -186,7 +183,7 @@ export function TestPricesSection({ hospital, id }) {
           <>
             <div className="flex-1 min-w-0">
               <p className="text-xs text-white/80">{t('tests_selected', { count: chosen.length })}</p>
-              {priced.length > 0 && <><p className="text-xs text-white/80">{t(chosenDemo ? 'test_price_demo_subtotal' : 'test_price_subtotal')}</p><p className="text-lg font-bold leading-tight tabular-nums">৳{money.format(total)}</p></>}
+              {priced.length > 0 && <><p className="text-xs text-white/80">{t('test_price_subtotal')}</p><p className="text-lg font-bold leading-tight tabular-nums">৳{money.format(total)}</p></>}
               {unpriced > 0 && (
                 <p className={priced.length ? 'text-xs text-white/80' : 'text-sm font-semibold'}>
                   {priced.length ? t('n_prices_unpublished', { count: unpriced }) : t('test_prices_all_unpublished')}

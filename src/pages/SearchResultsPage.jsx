@@ -191,6 +191,8 @@ export default function SearchResultsPage() {
           </Link>
         </div>
       )}
+      {activeTab === 'diagnostic_center' && results.some(c => c.tests?.some(test => test.price_kind === 'demo')) && <p className="text-xs text-gray-500 mb-4">{t('test_prices_demo_note')}</p>}
+      {activeTab === 'ambulances' && !ambulanceLoading && !ambulanceError && results.length > 0 && <p className="text-xs text-gray-500 mb-4">{t('ambulance_pricing_preview_note')}</p>}
       {activeTab === 'diagnostic_center' && (results.length ? (
         <ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">{pageItems.map(centre => <CentreCard key={centre.id} centre={centre} />)}</ul>
       ) : noResults)}

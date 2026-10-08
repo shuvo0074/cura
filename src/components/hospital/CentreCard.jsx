@@ -39,8 +39,8 @@ export default function CentreCard({ centre }) {
           <p className="font-semibold mb-1">{t('centre_published_prices')}</p>
           {published.map(test => <p key={test.name}>{t('centre_price_preview', { test: test.name, price: test.price.toLocaleString(i18n.language === 'bn' ? 'bn-BD' : 'en') })}</p>)}
         </div>}
-        {demo.length > 0 && <div className="rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-900">
-          <p className="font-semibold mb-1">{t('centre_demo_prices')}</p>
+        {demo.length > 0 && <div className="rounded-xl bg-primary/5 px-3 py-2 text-xs text-primary">
+          <p className="font-semibold mb-1">{t('test_prices')}</p>
           {demo.map(test => <p key={test.name}>{t('centre_price_preview', { test: test.name, price: test.price.toLocaleString(i18n.language === 'bn' ? 'bn-BD' : 'en') })}</p>)}
         </div>}
         <div className="flex gap-2 mt-auto">

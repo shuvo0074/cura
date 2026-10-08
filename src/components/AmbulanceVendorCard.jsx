@@ -25,8 +25,8 @@ export default function AmbulanceVendorCard({ vendor, areaName, lang, selectedCa
         {vendor.features.includes('24_hours') && <p className="flex items-center gap-1.5"><Clock size={14} />{t('ambulance_feature_24_hours')}</p>}
         {vendor.features.filter(f => f !== '24_hours').map(feature => <p key={feature}>{t(`ambulance_feature_${feature}`)}</p>)}
       </div>
-      <div className="rounded-xl border border-amber-100 bg-amber-50 p-3">
-        <h3 className="text-xs font-semibold text-amber-900 mb-2">{t('ambulance_demo_fares')}</h3>
+      <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+        <h3 className="text-xs font-semibold text-gray-700 mb-2">{t('ambulance_fares_title')}</h3>
         <dl className="space-y-1.5 text-xs">
           {fareCategories.map(category => {
             const range = demoFares.categories[category];
@@ -36,7 +36,6 @@ export default function AmbulanceVendorCard({ vendor, areaName, lang, selectedCa
             </div>;
           })}
         </dl>
-        <p className="text-[11px] leading-relaxed text-amber-900/80 mt-2">{t('ambulance_demo_fares_note')}</p>
       </div>
       <div className="mt-auto space-y-2">
         {vendor.phones.map((phone, i) => (

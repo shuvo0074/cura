@@ -54,6 +54,7 @@ export default function DiagnosticCentresPage() {
         {search}
       </PageHeader>
       <p className="text-sm text-gray-600 -mt-2 mb-4 max-w-2xl">{t('diagnostic_centres_sub')}</p>
+      {visible.some(c => c.tests?.some(test => test.price_kind === 'demo')) && <p className="text-xs text-gray-500 mb-4">{t('test_prices_demo_note')}</p>}
       <FilterBar search={<SearchInput value={query} onChange={setQuery} placeholder={t('search_diagnostic')} className="h-11 py-0" />} />
 
       <div className="mb-4 sm:mb-6">

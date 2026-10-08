@@ -108,6 +108,7 @@ export default function AmbulancesPage() {
         </aside>
         <section aria-label={t('ambulance_results')} className="min-w-0">
           <div className="bg-primary/5 rounded-xl px-4 py-3 mb-4 text-sm text-primary"><p className="font-semibold">{t('ambulance_booking_title')}</p><p className="mt-1">{t('ambulance_booking_note')}</p></div>
+          <p className="text-xs text-gray-500 mb-4">{t('ambulance_pricing_preview_note')}</p>
           {category === 'freezer' && <p className="bg-amber-50 border border-amber-100 text-amber-900 rounded-xl p-3 text-sm mb-4">{t('ambulance_freezer_note')}</p>}
           {area && <p className="text-xs text-gray-500 mb-4">{t('ambulance_distance_note', { area: areaName(area) })}</p>}
           {loading ? <p role="status" className="py-16 text-center text-gray-500">{t('loading')}</p> : error ? (
