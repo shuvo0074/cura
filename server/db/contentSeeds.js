@@ -48,6 +48,33 @@ export async function seedContent(pool) {
           [JSON.stringify(withPublishedTestPrices(centre).tests), centre.id]);
       }
     });
+    // Specialties and symptoms with their card details. Specialties doctors
+    // already use but the list lacked are added hidden, so the doctor form's
+    // dropdown has them until an admin fills them in and shows them.
+    const unsplash = id => (id ? `https://images.unsplash.com/photo-${id}?w=400&h=220&fit=crop` : null);
+    await once(client, 'import:specialties', async () => {
+      const details = readJson('specialtyDetails.json');
+      for (const s of readJson('specialties.json')) {
+        const d = details[s.name] || {};
+        await client.query(
+          `INSERT INTO specialties (slug, name, icon, description, tags, image) VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT DO NOTHING`,
+          [s.slug, s.name, s.icon, d.description || null, JSON.stringify(d.tags || []), unsplash(d.image)]);
+      }
+      await client.query(
+        `INSERT INTO specialties (slug, name, hidden)
+         SELECT trim(both '-' from regexp_replace(lower(specialty), '[^a-z0-9]+', '-', 'g')), specialty, TRUE
+         FROM (SELECT DISTINCT specialty FROM doctors WHERE specialty <> '') used
+         ON CONFLICT DO NOTHING`);
+    });
+    await once(client, 'import:symptoms', async () => {
+      const details = readJson('symptomDetails.json');
+      for (const s of readJson('symptoms.json')) {
+        const d = details[s.name] || {};
+        await client.query(
+          `INSERT INTO symptoms (slug, name, description, tags, image) VALUES ($1,$2,$3,$4,$5) ON CONFLICT DO NOTHING`,
+          [s.slug, s.name, d.description || null, JSON.stringify(d.tags || []), unsplash(d.image)]);
+      }
+    });
     await client.query('COMMIT');
   } catch (err) {
     await client.query('ROLLBACK');

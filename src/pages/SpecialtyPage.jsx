@@ -10,7 +10,7 @@ import DoctorMobileFilters from '../components/doctor/DoctorMobileFilters';
 import { matchesDoctorFilters, EMPTY_FILTERS } from '../utils/doctorFilters';
 import { useFilter } from '../context/FilterContext';
 import { api } from '../api/client';
-import specialties from '../data/specialties.json';
+import { useCatalog } from '../hooks/useCatalog';
 
 export default function SpecialtyPage() {
   const { slug } = useParams();
@@ -21,7 +21,8 @@ export default function SpecialtyPage() {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const specialty = specialties.find(s => s.slug === slug);
+  const specialties = useCatalog('specialties');
+  const specialty = specialties?.find(s => s.slug === slug);
 
   useEffect(() => {
     api.get('/doctors').then(setDoctors).finally(() => setLoading(false));
@@ -29,7 +30,7 @@ export default function SpecialtyPage() {
 
   useEffect(() => {
     if (specialty) setFilterParams(p => ({ ...p, specialty: [specialty.name] }));
-  }, [slug]);
+  }, [slug, specialty?.name]);
 
   const specialtyNames = useMemo(
     () => [...new Set(doctors.map(d => d.specialty))].sort(),

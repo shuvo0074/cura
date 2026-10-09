@@ -112,3 +112,33 @@ export function sampleTestPrices(list) {
     return { name, category: x.category, price: wholeTaka(x.price, `Price for "${name}"`) };
   });
 }
+
+// An image is an uploaded file (a /cura-media/… path) or a web address.
+export function imageRef(value) {
+  if (blank(value)) return null;
+  const s = String(value).trim();
+  return s.startsWith('/') && !s.startsWith('//') ? s : sourceUrl(s);
+}
+
+// A specialty or symptom as admins enter it; throws a message for a 400.
+export function catalogEntry(body, { icon = false, specialties = false } = {}) {
+  const name = text(body.name, 80);
+  if (!name) throw new Error('Name is required');
+  if (!Array.isArray(body.tags ?? [])) throw new Error('Tags must be a list');
+  const tags = [...new Set((body.tags ?? []).map(t => text(String(t), 40)).filter(Boolean))].slice(0, 6);
+  const entry = {
+    name, name_bn: text(body.name_bn, 80), description: text(body.description, 500), tags,
+    image: (() => { try { return imageRef(body.image); } catch { throw new Error('Image must be an uploaded file or a full web address (https://…)'); } })(),
+  };
+  if (icon) entry.icon = text(body.icon, 8);
+  if (specialties) {
+    if (!Array.isArray(body.specialties ?? [])) throw new Error('Specialties must be a list');
+    entry.specialties = [...new Set((body.specialties ?? []).map(s => text(String(s), 80)).filter(Boolean))];
+  }
+  return entry;
+}
+
+// URL-safe page address from a name: "ENT & Head" → "ent-head".
+export function slugify(name) {
+  return String(name).toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}

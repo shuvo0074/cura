@@ -10,16 +10,19 @@ import DoctorMobileFilters from '../components/doctor/DoctorMobileFilters';
 import { EMPTY_FILTERS } from '../utils/doctorFilters';
 import { useFilter } from '../context/FilterContext';
 import { api } from '../api/client';
-import symptoms from '../data/symptoms.json';
+import { useCatalog } from '../hooks/useCatalog';
 
 // Lowercases and folds curly apostrophes to straight ones, since doctor
 // profile data (clinical_expertise/treatments) uses curly quotes (e.g.
-// "Parkinson’s Disease") while symptoms.json uses straight ones.
+// "Parkinson’s Disease") while symptom names use straight ones.
 function normalize(str) {
   return (str || '').toLowerCase().replace(/[‘’]/g, "'");
 }
 
-function matchesSymptom(d, sym) {
+// A doctor matches a symptom when their specialty is one an admin linked to
+// it, or their profile mentions it.
+function matchesSymptom(d, sym, linked) {
+  if (linked?.includes(d.specialty)) return true;
   const s = normalize(sym);
   if (normalize(d.specialty).includes(s) || normalize(d.name).includes(s) || normalize(d.about).includes(s)) {
     return true;
@@ -37,10 +40,10 @@ function matchesSymptom(d, sym) {
 
 // Symptom/division/city filters; shared by the list and the filter sheet's
 // result-count preview.
-function matchesFilters(d, p) {
+function matchesFilters(d, p, linkedBySymptom) {
   return (!p.city.length || p.city.includes(d.city))
     && (!p.division.length || p.division.includes(d.division))
-    && (!p.symptom.length || p.symptom.some(sym => matchesSymptom(d, sym)));
+    && (!p.symptom.length || p.symptom.some(sym => matchesSymptom(d, sym, linkedBySymptom[sym])));
 }
 
 export default function SymptomFilterPage() {
@@ -51,7 +54,9 @@ export default function SymptomFilterPage() {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const symptom = symptoms.find(s => s.slug === slug);
+  const symptoms = useCatalog('symptoms');
+  const symptom = symptoms?.find(s => s.slug === slug);
+  const linkedBySymptom = useMemo(() => Object.fromEntries((symptoms ?? []).map(s => [s.name, s.specialties])), [symptoms]);
 
   useEffect(() => {
     api.get('/doctors').then(setDoctors).finally(() => setLoading(false));
@@ -59,18 +64,18 @@ export default function SymptomFilterPage() {
 
   useEffect(() => {
     if (symptom) setFilterParams(p => ({ ...p, symptom: [symptom.name] }));
-  }, [slug]);
+  }, [slug, symptom?.name]);
 
-  const symptomNames = useMemo(() => symptoms.map(s => s.name), []);
+  const symptomNames = useMemo(() => (symptoms ?? []).map(s => s.name), [symptoms]);
 
   const q = query.toLowerCase();
   const matchesQuery = d => !q || d.name.toLowerCase().includes(q);
-  const countFor = params => doctors.filter(d => matchesQuery(d) && matchesFilters(d, params)).length;
+  const countFor = params => doctors.filter(d => matchesQuery(d) && matchesFilters(d, params, linkedBySymptom)).length;
 
   const filtered = useMemo(
-    () => doctors.filter(d => matchesQuery(d) && matchesFilters(d, filterParams)),
+    () => doctors.filter(d => matchesQuery(d) && matchesFilters(d, filterParams, linkedBySymptom)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [doctors, q, filterParams]
+    [doctors, q, filterParams, linkedBySymptom]
   );
 
   return (

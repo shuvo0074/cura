@@ -5,6 +5,7 @@ import AdminDoctorsTab from './AdminDoctorsTab';
 import AdminHospitalsTab from './AdminHospitalsTab';
 import AdminAmbulancesTab from './AdminAmbulancesTab';
 import AdminSamplePricesTab from './AdminSamplePricesTab';
+import AdminCatalogTab from './AdminCatalogTab';
 
 export default function AdminDashboardPage() {
   const { pathname } = useLocation();
@@ -13,6 +14,8 @@ export default function AdminDashboardPage() {
     if (pathname === '/admin/appointments') return <AdminAppointmentsTab />;
     if (pathname === '/admin/doctors')      return <AdminDoctorsTab />;
     if (pathname === '/admin/hospitals')    return <AdminHospitalsTab />;
+    if (pathname === '/admin/specialties')  return <AdminCatalogTab kind="specialties" />;
+    if (pathname === '/admin/symptoms')     return <AdminCatalogTab kind="symptoms" />;
     if (pathname === '/admin/ambulances')   return <AdminAmbulancesTab />;
     if (pathname === '/admin/sample-prices') return <AdminSamplePricesTab />;
     return (

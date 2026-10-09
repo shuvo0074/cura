@@ -1,29 +1,29 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
-import specialtyDetails from '../../data/specialtyDetails.json';
+import { useTranslation } from 'react-i18next';
+import { ArrowRight, Stethoscope } from 'lucide-react';
+import { localName } from '../../hooks/useCatalog';
 
 export default function SpecialtyCard({ specialty, highlighted, onSelect }) {
   const navigate = useNavigate();
-  const detail = specialtyDetails[specialty.name] || {};
+  const { i18n } = useTranslation();
+  const name = localName(specialty, i18n.language);
 
   return (
     <div
       onClick={onSelect}
       className={`bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col cursor-pointer transition-shadow
         ${highlighted ? 'ring-2 ring-primary' : ''}`}>
-      <img
-        src={`https://images.unsplash.com/photo-${detail.image}?w=400&h=220&fit=crop`}
-        alt={specialty.name}
-        className="w-full h-28 object-cover"
-      />
+      {specialty.image
+        ? <img src={specialty.image} alt={name} className="w-full h-28 object-cover" />
+        : <div className="w-full h-28 bg-primary/5 text-primary/40 flex items-center justify-center"><Stethoscope size={32} /></div>}
       <div className="p-4 flex flex-col flex-1">
-        <h3 className="text-primary font-bold text-sm mb-1">{specialty.name}</h3>
+        <h3 className="text-primary font-bold text-sm mb-1">{name}</h3>
         <p className="text-xs text-gray-600 leading-relaxed line-clamp-3 flex-1">
-          {detail.description}
+          {specialty.description}
         </p>
 
         <div className="flex flex-wrap gap-1 mt-3">
-          {(detail.tags || []).map(tag => (
+          {(specialty.tags || []).map(tag => (
             <span key={tag} className="text-xs font-medium text-gray-600 border border-gray-200 rounded-full px-2.5 py-0.5">
               {tag}
             </span>

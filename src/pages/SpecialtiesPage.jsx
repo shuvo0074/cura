@@ -3,17 +3,18 @@ import { useTranslation } from 'react-i18next';
 import PageHeader from '../components/ui/PageHeader';
 import SearchInput from '../components/ui/SearchInput';
 import EmptyState from '../components/ui/EmptyState';
-import specialties from '../data/specialties.json';
+import { useCatalog } from '../hooks/useCatalog';
 import SpecialtyCard from '../components/home/SpecialtyCard';
 
 export default function SpecialtiesPage() {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
+  const specialties = useCatalog('specialties');
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
-    return specialties.filter(s => !q || s.name.toLowerCase().includes(q));
-  }, [query]);
+    return (specialties ?? []).filter(s => !q || [s.name, s.name_bn].some(n => n?.toLowerCase().includes(q)));
+  }, [query, specialties]);
 
   return (
     <div>
@@ -21,7 +22,9 @@ export default function SpecialtiesPage() {
         <SearchInput value={query} onChange={setQuery} placeholder={t('search_specialities')} />
       </PageHeader>
 
-      {filtered.length === 0 ? (
+      {!specialties ? (
+        <p className="text-center text-gray-400 py-16">Loading...</p>
+      ) : filtered.length === 0 ? (
         <EmptyState
           title={t('no_results')}
           message={t('empty_try_again')}
