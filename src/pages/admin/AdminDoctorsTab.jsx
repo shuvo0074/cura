@@ -7,7 +7,7 @@ import { citiesForDivisions, toggleDivision } from '../../utils/geo';
 import DoctorChambersFields from './DoctorChambersFields';
 
 const BLANK = {
-  name: '', specialty: '', department: '', experience: '', chamber: '', fees: '', workplace: '', followupFees: '300',
+  name: '', gender: '', specialty: '', department: '', experience: '', chamber: '', fees: '', workplace: '', followupFees: '300',
   city: '', division: '', hospitalId: '', phone: '', photo: '', rating: '', about: '', website: '',
   bmdcNo: '', education: '', languages: '', consultingHours: '', address: '',
   clinicalExpertise: '', treatments: '', weeklySchedule: [],
@@ -155,6 +155,11 @@ function DoctorForm({ form, setForm, hospitals, onSave, onCancel, editingId }) {
       </div>
 
       <DoctorChambersFields entries={form.weeklySchedule ?? []} hospitals={hospitals} onChange={weeklySchedule => setForm(f => ({ ...f, weeklySchedule }))} />
+      <label className="flex flex-col gap-1"><span className="text-xs font-medium text-gray-500">Gender</span>
+        <select value={form.gender ?? ''} onChange={event => setForm(f => ({ ...f, gender: event.target.value }))} className="border border-gray-200 rounded-lg px-3 py-2 text-sm">
+          <option value="">Not specified</option><option value="female">Female</option><option value="male">Male</option>
+        </select>
+      </label>
       {DOCTOR_FIELDS.map(({ key, label }) => (
         <label key={key} className="flex flex-col gap-1">
           <span className="text-xs font-medium text-gray-500">{label}</span>

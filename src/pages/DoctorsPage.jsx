@@ -68,7 +68,7 @@ export default function DoctorsPage() {
             title={t('no_results')}
             message={t('empty_try_again')}
             actions={[
-              { label: t('clear_search_filters'), onClick: () => { setQuery(''); setFilterParams(p => ({ ...p, specialty: [], city: [], division: [] })); } },
+              { label: t('clear_search_filters'), onClick: () => { setQuery(''); setFilterParams(p => ({ ...p, specialty: [], city: [], division: [], gender: [] })); } },
               { label: t('browse_specialities'), to: '/specialties' },
             ]}
           />

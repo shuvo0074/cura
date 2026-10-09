@@ -159,3 +159,5 @@ ALTER TABLE doctors ADD COLUMN IF NOT EXISTS verified_on DATE;
 -- Default preview follow-up fee; preserve previously entered amounts.
 ALTER TABLE doctors ALTER COLUMN followup_fees SET DEFAULT 300;
 UPDATE doctors SET followup_fees = 300 WHERE followup_fees IS NULL;
+
+ALTER TABLE doctors ADD COLUMN IF NOT EXISTS gender TEXT CHECK (gender IN ('male', 'female'));

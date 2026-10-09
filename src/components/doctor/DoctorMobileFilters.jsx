@@ -30,11 +30,12 @@ export default function DoctorMobileFilters({ mode = 'specialty', specialtyNames
   const chips = [
     ...filterParams[listKey].map(value => ({ key: listKey, value })),
     ...filterParams.division.map(value => ({ key: 'division', value, label: t('division_label', { name: value }) })),
+    ...(filterParams.gender || []).map(value => ({ key: 'gender', value, label: t(`doctor_gender_${value}`) })),
     ...filterParams.city.map(value => ({ key: 'city', value })),
-  ].filter(({ key, value }) => !scope[key].includes(value));
+  ].filter(({ key, value }) => !(scope[key] || []).includes(value));
 
   const toggle = (params, key, option) =>
-    key === 'division' ? toggleDivision(params, option) : { ...params, [key]: toggleIn(params[key], option) };
+    key === 'division' ? toggleDivision(params, option) : { ...params, [key]: toggleIn(params[key] || [], option) };
 
   return (
     <>
@@ -61,6 +62,7 @@ export default function DoctorMobileFilters({ mode = 'specialty', specialtyNames
           mode === 'symptom'
             ? { key: 'symptom', title: t('symptoms'), options: symptomNames, searchable: true, searchPlaceholder: t('search_symptoms') }
             : { key: 'specialty', title: t('specialities'), options: specialtyNames, searchable: true, searchPlaceholder: t('search_specialities') },
+          { key: 'gender', title: t('doctor_gender'), options: ['female', 'male'], getOptionLabel: value => t(`doctor_gender_${value}`) },
           { key: 'division', title: t('division'), options: divisions },
           {
             key: 'city',

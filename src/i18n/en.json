@@ -1,4 +1,8 @@
 {
+  "doctor_gender": "Doctor gender",
+  "doctor_gender_male": "Male",
+  "doctor_gender_female": "Female",
+
   "home_calc_district": "District",
   "home_calc_all_districts": "All districts",
   "home_calc_near_me": "Near me",

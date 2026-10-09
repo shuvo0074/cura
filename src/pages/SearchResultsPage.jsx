@@ -98,7 +98,7 @@ export default function SearchResultsPage() {
   // the same filtered results and page the user left.
   useEffect(() => {
     if (navigationType === 'POP' || query === typedQuery.current) return;
-    setFilterParams(p => ({ ...p, specialty: [], city: [], division: [] }));
+    setFilterParams(p => ({ ...p, specialty: [], city: [], division: [], gender: [] }));
   }, [query]);
 
   const q = query.trim().toLowerCase();
@@ -129,7 +129,7 @@ export default function SearchResultsPage() {
     JSON.stringify([activeTab, query, filterParams])
   );
 
-  const clearAll = () => { setQuery(''); setFilterParams(p => ({ ...p, specialty: [], city: [], division: [] })); };
+  const clearAll = () => { setQuery(''); setFilterParams(p => ({ ...p, specialty: [], city: [], division: [], gender: [] })); };
   const noResults = (
     <EmptyState
       title={t('no_results')}
