@@ -81,7 +81,6 @@ export default function TestCalculatorCta() {
           {matches.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
       </label>
-      {centre && <p className="mt-2 text-xs text-primary">{centre.name}</p>}
       <SearchInput value={query} onChange={setQuery} placeholder={t('search_tests')} className="mt-3" />
       <div className="mt-3 space-y-2 max-h-72 overflow-y-auto">
         {tests.map(test => <button type="button" key={test.name} aria-pressed={picked.has(test.name)} onClick={() => toggle(test.name)} className={`w-full flex items-center gap-3 rounded-xl border p-3 text-left transition-colors ${picked.has(test.name) ? 'bg-primary/5 border-primary/30' : 'border-gray-100 hover:border-primary/30'}`}>
