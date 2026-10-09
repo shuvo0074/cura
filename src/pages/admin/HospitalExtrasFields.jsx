@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Plus, Trash2 } from 'lucide-react';
+import { Link2, Plus, Trash2 } from 'lucide-react';
 import { FACILITY_ICONS, SERVICE_GROUPS, TEST_CATEGORIES, is24x7 } from '../../components/hospital/hospitalCatalogue';
 
 const TYPES = ['hospital', 'diagnostic', 'clinic', 'online'];
@@ -144,7 +144,7 @@ export default function HospitalExtrasFields({ form, setForm }) {
         </div>
       </Section>
 
-      <Section title="Test prices" hint={'Prices in taka. An entered price takes priority over published rates. Empty prices use a published rate when available, then a labeled demo price for common diagnostic tests. Other tests show "Price not published". Rows without a name are ignored.'}>
+      <Section title="Test prices" hint={'Prices in taka. Add a source link for prices the centre publishes; the site links to it. Empty prices on common diagnostic tests show the sample price from the Sample prices tab, labelled as sample. Other empty prices show "Price not published". Rows without a name are ignored.'}>
         <datalist id="common-tests">
           {COMMON_TESTS.map(n => <option key={n} value={n} />)}
         </datalist>
@@ -155,7 +155,8 @@ export default function HospitalExtrasFields({ form, setForm }) {
             </div>
           )}
           {tests.map((x, i) => (
-            <div key={i} className="grid grid-cols-[1fr_1fr_36px] sm:grid-cols-[1fr_140px_110px_36px] gap-2 items-center">
+            <div key={i} className="flex flex-col gap-1.5">
+            <div className="grid grid-cols-[1fr_1fr_36px] sm:grid-cols-[1fr_140px_110px_36px] gap-2 items-center">
               <input list="common-tests" value={x.name} onChange={e => setTest(i, { name: e.target.value })} placeholder="Test name"
                 aria-label="Test name" className={`${INPUT} min-w-0 col-span-2 sm:col-span-1`} />
               <button type="button" onClick={() => set({ tests: tests.filter((_, j) => j !== i) })} aria-label={`Remove ${x.name || 'test'}`}
@@ -168,6 +169,22 @@ export default function HospitalExtrasFields({ form, setForm }) {
               <input type="number" min="0" step="1" inputMode="numeric" value={x.price ?? ''}
                 onChange={e => setTest(i, { price: e.target.value === '' ? '' : Number(e.target.value) })}
                 placeholder="0" aria-label="Price in taka" className={INPUT} />
+            </div>
+              {x.source_url != null ? (
+                <div className="grid grid-cols-[1fr_150px_auto] gap-2 items-center pl-3 border-l-2 border-primary/30">
+                  <input type="url" value={x.source_url} onChange={e => setTest(i, { source_url: e.target.value })} placeholder="Published at https://…"
+                    aria-label={`Source link for ${x.name || 'test'}`} className={`${INPUT} min-w-0 text-xs`} />
+                  <input type="date" value={x.source_checked_on ?? ''} onChange={e => setTest(i, { source_checked_on: e.target.value })}
+                    aria-label={`Source checked on for ${x.name || 'test'}`} className={`${INPUT} text-xs`} />
+                  <button type="button" onClick={() => setTest(i, { source_url: undefined, source_checked_on: undefined, source_test_name: undefined })}
+                    className="text-xs text-gray-500 hover:text-red-600 px-1">Remove source</button>
+                </div>
+              ) : (
+                <button type="button" onClick={() => setTest(i, { source_url: '' })}
+                  className="self-start flex items-center gap-1 text-xs text-primary font-medium">
+                  <Link2 size={12} /> Add source link
+                </button>
+              )}
             </div>
           ))}
           <button type="button" onClick={() => set({ tests: [...tests, { name: '', category: 'blood', price: '' }] })}

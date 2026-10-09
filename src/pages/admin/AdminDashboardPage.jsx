@@ -3,6 +3,8 @@ import AdminSidebar from '../../components/layout/AdminSidebar';
 import AdminAppointmentsTab from './AdminAppointmentsTab';
 import AdminDoctorsTab from './AdminDoctorsTab';
 import AdminHospitalsTab from './AdminHospitalsTab';
+import AdminAmbulancesTab from './AdminAmbulancesTab';
+import AdminSamplePricesTab from './AdminSamplePricesTab';
 
 export default function AdminDashboardPage() {
   const { pathname } = useLocation();
@@ -11,6 +13,8 @@ export default function AdminDashboardPage() {
     if (pathname === '/admin/appointments') return <AdminAppointmentsTab />;
     if (pathname === '/admin/doctors')      return <AdminDoctorsTab />;
     if (pathname === '/admin/hospitals')    return <AdminHospitalsTab />;
+    if (pathname === '/admin/ambulances')   return <AdminAmbulancesTab />;
+    if (pathname === '/admin/sample-prices') return <AdminSamplePricesTab />;
     return (
       <div className="flex flex-col items-center justify-center h-64 text-gray-400 text-sm gap-2">
         <p className="text-base font-medium text-gray-600">Welcome to the Admin Dashboard</p>

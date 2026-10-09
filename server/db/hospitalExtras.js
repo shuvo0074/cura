@@ -8,6 +8,8 @@ export function hospitalExtras(h) {
     h.openingHours || null, h.visitingHours || null];
 }
 
+import { sourceUrl, checkedOn } from '../adminFields.js';
+
 const TYPES = ['hospital', 'diagnostic', 'clinic', 'online'];
 const TEST_CATEGORIES = ['blood', 'imaging', 'cardiac'];
 const KEY = /^[a-z][a-z0-9_]{0,40}$/;
@@ -49,7 +51,11 @@ export function adminHospitalExtras(body) {
       const price = x.price === '' || x.price == null ? null : Number(x.price);
       if (price !== null && (!Number.isFinite(price) || price < 0)) throw new Error(`price for "${x.name}" must be a number`);
       if (!TEST_CATEGORIES.includes(x.category)) throw new Error(`category for "${x.name}" must be one of ${TEST_CATEGORIES.join(', ')}`);
-      return { name: text(x.name, 120), category: x.category, price: price === null ? null : Math.round(price) };
+      const test = { name: text(x.name, 120), category: x.category, price: price === null ? null : Math.round(price) };
+      // Where a published price came from, so the site can link to it.
+      const source = sourceUrl(x.source_url);
+      if (source) Object.assign(test, { source_url: source, source_checked_on: checkedOn(x.source_checked_on), source_test_name: text(x.source_test_name, 120) });
+      return test;
     });
     out.tests = JSON.stringify(tests);
   }

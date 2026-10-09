@@ -1,7 +1,9 @@
 // Real diagnostic centres (src/data/diagnosticCentres.json): details taken
-// from each centre's own website, with the page and date recorded. The API
-// fills missing prices from server/data/publishedTestPrices.json and labels
-// demo prices for other common tests; existing admin-entered prices are kept.
+// from each centre's own website, with the page and date recorded. New centres
+// get their published prices from server/data/publishedTestPrices.json; the API
+// labels sample prices (edited in the admin panel) for other common tests.
+
+import { withPublishedTestPrices } from '../publishedTestPrices.js';
 
 // Common tests listed for every centre; unpublished prices stay null.
 export const COMMON_TESTS = [
@@ -20,7 +22,8 @@ const COLUMNS = ['name', 'location', 'division', 'address', 'hotline', 'website'
 
 function row(c) {
   return [c.name, c.location, c.division, c.address, c.hotline, c.website, c.description, 'diagnostic',
-    JSON.stringify(c.homeSample ? [{ key: 'home_sample', hours: null }] : []), JSON.stringify(COMMON_TESTS),
+    JSON.stringify(c.homeSample ? [{ key: 'home_sample', hours: null }] : []),
+    JSON.stringify(withPublishedTestPrices({ name: c.name, type: 'diagnostic', tests: COMMON_TESTS }).tests),
     c.openingHours || null, c.sourceUrl, VERIFIED_ON, 0, c.photo || null];
 }
 

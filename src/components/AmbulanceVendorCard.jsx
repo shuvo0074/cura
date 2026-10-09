@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next';
 import { Ambulance, ArrowUpRight, Clock, MapPin, Phone } from 'lucide-react';
-import demoFares from '../data/ambulanceDemoFares.json';
 
 export default function AmbulanceVendorCard({ vendor, areaName, lang, selectedCategory = '' }) {
   const { t } = useTranslation();
@@ -29,10 +28,14 @@ export default function AmbulanceVendorCard({ vendor, areaName, lang, selectedCa
         <h3 className="text-xs font-semibold text-gray-700 mb-2">{t('ambulance_fares_title')}</h3>
         <dl className="space-y-1.5 text-xs">
           {fareCategories.map(category => {
-            const range = demoFares.categories[category];
+            // The vendor's own quote, or the shared sample range (labelled).
+            const range = vendor.fares?.[category];
             return range && <div key={category} className="flex justify-between gap-3 text-gray-800">
               <dt>{t(`ambulance_category_${category}`)}</dt>
-              <dd className="font-semibold whitespace-nowrap tabular-nums">{t('ambulance_demo_fare_range', { min: money(range.min), max: money(range.max) })}</dd>
+              <dd className="font-semibold whitespace-nowrap tabular-nums">
+                {t('ambulance_demo_fare_range', { min: money(range.min), max: money(range.max) })}
+                {range.kind === 'sample' && <span className="ml-1.5 text-[11px] font-medium text-gray-500">{t('ambulance_fare_sample')}</span>}
+              </dd>
             </div>;
           })}
         </dl>

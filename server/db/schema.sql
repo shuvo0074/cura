@@ -168,3 +168,35 @@ ALTER TABLE doctors ADD COLUMN IF NOT EXISTS gender_is_demo BOOLEAN NOT NULL DEF
 -- its bookings and history, and can be shown again.
 ALTER TABLE doctors ADD COLUMN IF NOT EXISTS hidden BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE hospitals ADD COLUMN IF NOT EXISTS hidden BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- Ambulance vendors, edited in the admin panel. Seeded once from
+-- server/data/ambulanceVendors.json (see db/contentSeeds.js). `fares` holds
+-- a vendor's own quoted ranges per category ({"ac": {"min": 2000, "max": 3500}});
+-- categories without one show the shared sample range instead.
+CREATE TABLE IF NOT EXISTS ambulance_vendors (
+  id                SERIAL PRIMARY KEY,
+  slug              TEXT UNIQUE NOT NULL,
+  name              TEXT NOT NULL,
+  name_bn           TEXT,
+  base_area         TEXT,
+  address           TEXT,
+  address_bn        TEXT,
+  phones            JSONB NOT NULL DEFAULT '[]',
+  categories        JSONB NOT NULL DEFAULT '[]',
+  features          JSONB NOT NULL DEFAULT '[]',
+  dhaka_wide        BOOLEAN NOT NULL DEFAULT FALSE,
+  service_areas     JSONB NOT NULL DEFAULT '[]',
+  fares             JSONB NOT NULL DEFAULT '{}',
+  source_url        TEXT,
+  source_checked_on DATE,
+  hidden            BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+-- Site-wide content admins edit as one value: the shared sample ambulance
+-- fares, the sample test price list and whether sample prices are shown.
+-- Also records one-time imports, so they never run again.
+CREATE TABLE IF NOT EXISTS site_settings (
+  key        TEXT PRIMARY KEY,
+  value      JSONB NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
