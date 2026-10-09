@@ -116,7 +116,8 @@ function DoctorForm({ form, setForm, hospitals, onSave, onCancel, editingId }) {
   }
 
   return (
-    <form onSubmit={onSave} className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+    <form onSubmit={onSave} className={editingId ? "flex flex-col flex-1 min-h-0" : ""}>
+      <div className={`grid grid-cols-2 sm:grid-cols-3 gap-3 ${editingId ? 'min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-6' : ''}`}>
       {/* Photo row — upload UI in edit mode, URL text field in add mode */}
       <div className="col-span-2 sm:col-span-3 flex items-center gap-4 pb-3 border-b border-gray-100">
         {editingId ? (
@@ -192,9 +193,10 @@ function DoctorForm({ form, setForm, hospitals, onSave, onCancel, editingId }) {
           {districtOptions.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
       </label>
-      <div className="flex gap-2 mt-1 col-span-2 sm:col-span-3">
-        <button type="submit" className="flex-1 bg-primary text-white py-2 rounded-lg text-sm font-medium">Save</button>
-        <button type="button" onClick={onCancel} className="flex-1 border border-gray-300 py-2 rounded-lg text-sm bg-white">Cancel</button>
+      </div>
+      <div className={editingId ? "flex gap-2 flex-shrink-0 border-t border-gray-200 bg-white px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]" : "flex gap-2 mt-3"}>
+        <button type="submit" className="flex-1 bg-primary text-white min-h-11 py-2 rounded-lg text-sm font-medium">Save</button>
+        <button type="button" onClick={onCancel} className="flex-1 border border-gray-300 min-h-11 py-2 rounded-lg text-sm bg-white">Cancel</button>
       </div>
     </form>
   );
@@ -329,8 +331,8 @@ export default function AdminDoctorsTab() {
       {editForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center glass-scrim"
           onClick={e => { if (e.target === e.currentTarget) setEditForm(null); }}>
-          <div className="glass-panel rounded-2xl p-6 w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
+          <div className="glass-panel rounded-2xl w-full max-w-3xl mx-4 h-[90dvh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between flex-shrink-0 px-6 pt-6 pb-4">
               <h3 className="font-semibold text-gray-800 text-base">Edit Doctor</h3>
               <button onClick={() => setEditForm(null)} className="text-gray-400 hover:text-gray-600">
                 <X size={18} />
