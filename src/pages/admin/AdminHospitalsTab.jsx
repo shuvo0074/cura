@@ -1,12 +1,15 @@
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Plus, Pencil, SlidersHorizontal, Search, X, Building2 } from 'lucide-react';
 import { api } from '../../api/client';
 import divisions from '../../data/divisions.json';
 import { citiesForDivisions } from '../../utils/geo';
 import HospitalExtrasFields from './HospitalExtrasFields';
+import AdminPhotoField from './AdminPhotoField';
+import AdminRecordActions from './AdminRecordActions';
 
 const BLANK = {
   name: '', location: '', division: '', address: '', hotline: '', photo: '', website: '', description: '',
+  lat: '', lng: '', source_url: '', verified_on: '',
   type: 'hospital', opening_hours: '', visiting_hours: '', beds: null, services: [], facilities: [], payment_methods: ['cash'], tests: [],
 };
 
@@ -38,83 +41,36 @@ function FilterSection({ title, placeholder, items, selected, onToggle }) {
   );
 }
 
-function HospitalForm({ form, setForm, onSave, onCancel, editingId, error, saving }) {
-  const fileRef = useRef(null);
-  const [photoLoading, setPhotoLoading] = useState(false);
+const INPUT = 'border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none';
 
-  async function handleUpload(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    setPhotoLoading(true);
-    try {
-      const fd = new FormData();
-      fd.append('photo', file);
-      const res = await api.upload(`/admin/hospitals/${editingId}/photo`, fd);
-      setForm(f => ({ ...f, photo: res.photo }));
-    } finally {
-      setPhotoLoading(false);
-      e.target.value = '';
-    }
-  }
+// Location and verification fields, as typed inputs on the API's column names.
+const MORE_FIELDS = [
+  { key: 'lat', label: 'Latitude', type: 'number', step: 'any', min: -90, max: 90, placeholder: 'e.g. 23.7465' },
+  { key: 'lng', label: 'Longitude', type: 'number', step: 'any', min: -180, max: 180, placeholder: 'e.g. 90.3760' },
+  { key: 'source_url', label: 'Source link', type: 'url', placeholder: 'https://…' },
+  { key: 'verified_on', label: 'Checked on', type: 'date' },
+];
 
-  async function handleRemove() {
-    setPhotoLoading(true);
-    try {
-      await api.del(`/admin/hospitals/${editingId}/photo`);
-      setForm(f => ({ ...f, photo: null }));
-    } finally {
-      setPhotoLoading(false);
-    }
-  }
-
+function HospitalForm({ form, setForm, onSave, onCancel, editingId, error, saving, pendingPhoto, setPendingPhoto, actions }) {
   return (
     <form onSubmit={onSave} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      {/* Photo row — upload UI in edit mode, URL text field in add mode */}
-      <div className="sm:col-span-2 flex items-center gap-4 pb-3 border-b border-gray-100">
-        {editingId ? (
-          <>
-            {form.photo
-              ? <img src={form.photo} alt="" className="w-16 h-16 rounded-lg object-cover border border-gray-200 flex-shrink-0" />
-              : <div className="w-16 h-16 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center flex-shrink-0">
-                  <Building2 size={26} className="text-gray-300" />
-                </div>
-            }
-            <div className="flex flex-col gap-1.5">
-              <span className="text-xs font-medium text-gray-500">Photo</span>
-              <div className="flex gap-2">
-                <button type="button" onClick={() => fileRef.current?.click()} disabled={photoLoading}
-                  className="text-xs px-3 py-1.5 border border-primary text-primary rounded-lg font-medium hover:bg-primary/5 disabled:opacity-50 transition-colors">
-                  {photoLoading ? 'Uploading…' : 'Upload Photo'}
-                </button>
-                {form.photo && (
-                  <button type="button" onClick={handleRemove} disabled={photoLoading}
-                    className="text-xs px-3 py-1.5 border border-red-200 text-red-500 rounded-lg font-medium hover:bg-red-50 disabled:opacity-50 transition-colors">
-                    Remove
-                  </button>
-                )}
-              </div>
-              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
-            </div>
-          </>
-        ) : (
-          <label className="flex flex-col gap-1 w-full">
-            <span className="text-xs font-medium text-gray-500">Photo URL</span>
-            <input placeholder="Photo URL" value={form.photo ?? ''}
-              onChange={e => setForm(f => ({ ...f, photo: e.target.value }))}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none" />
-          </label>
-        )}
+      {actions}
+      <div className="sm:col-span-2 pb-3 border-b border-gray-100">
+        <AdminPhotoField photo={form.photo} uploadPath={editingId ? `/admin/hospitals/${editingId}/photo` : null}
+          pendingFile={pendingPhoto} onPendingFile={setPendingPhoto} rounded="rounded-lg"
+          onPhoto={photo => setForm(f => ({ ...f, photo }))}
+          placeholder={<Building2 size={26} className="text-gray-300" />} />
       </div>
 
       <label className="flex flex-col gap-1 sm:col-span-2">
         <span className="text-xs font-medium text-gray-500">Hospital Name</span>
-        <input placeholder="Hospital Name" value={form.name ?? ''}
+        <input required placeholder="Hospital Name" value={form.name ?? ''}
           onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
           className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none" />
       </label>
       <label className="flex flex-col gap-1">
         <span className="text-xs font-medium text-gray-500">City / Location</span>
-        <input placeholder="City / Location" value={form.location ?? ''}
+        <input required placeholder="City / Location" value={form.location ?? ''}
           onChange={e => setForm(f => ({ ...f, location: e.target.value }))}
           className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none" />
       </label>
@@ -151,6 +107,15 @@ function HospitalForm({ form, setForm, onSave, onCancel, editingId, error, savin
           rows={3}
           className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none resize-none" />
       </label>
+      {MORE_FIELDS.map(({ key, label, ...input }) => (
+        <label key={key} className="flex flex-col gap-1">
+          <span className="text-xs font-medium text-gray-500">{label}</span>
+          <input {...input} value={form[key] ?? ''} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} className={INPUT} />
+        </label>
+      ))}
+      <p className="sm:col-span-2 -mt-1 text-xs text-gray-500">
+        Without latitude and longitude, the place isn't shown on the home page map. In Google Maps, right-click the building and click the numbers to copy them.
+      </p>
       <HospitalExtrasFields form={form} setForm={setForm} />
       {error && <p role="alert" className="sm:col-span-2 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
       <div className="flex gap-2 sm:col-span-2 mt-1">
@@ -161,7 +126,7 @@ function HospitalForm({ form, setForm, onSave, onCancel, editingId, error, savin
   );
 }
 
-const EMPTY_FILTERS = { division: [], district: [] };
+const EMPTY_FILTERS = { division: [], district: [], visibility: [] };
 
 export default function AdminHospitalsTab() {
   const [hospitals, setHospitals] = useState([]);
@@ -171,8 +136,9 @@ export default function AdminHospitalsTab() {
   const [search, setSearch] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [pendingPhoto, setPendingPhoto] = useState(null);
 
-  function reload() { api.get('/hospitals').then(setHospitals); }
+  function reload() { api.get('/admin/hospitals').then(setHospitals); }
   useEffect(reload, []);
 
   const districtOptions = useMemo(() => citiesForDivisions(filters.division), [filters.division]);
@@ -181,10 +147,11 @@ export default function AdminHospitalsTab() {
     if (search && !h.name.toLowerCase().includes(search.toLowerCase())) return false;
     if (filters.division.length && !filters.division.includes(h.division)) return false;
     if (filters.district.length && !filters.district.includes(h.location)) return false;
+    if (filters.visibility.length && !filters.visibility.includes(h.hidden ? 'Hidden' : 'Visible')) return false;
     return true;
   }), [hospitals, search, filters]);
 
-  const hasActiveFilters = filters.division.length || filters.district.length || search;
+  const hasActiveFilters = filters.division.length || filters.district.length || filters.visibility.length || search;
 
   async function handleSave(form, closeForm) {
     setSaving(true);
@@ -193,8 +160,22 @@ export default function AdminHospitalsTab() {
       if (form.id) {
         await api.patch(`/admin/hospitals/${form.id}`, form);
       } else {
-        await api.post('/admin/hospitals', form);
+        const created = await api.post('/admin/hospitals', form);
+        if (pendingPhoto) {
+          const fd = new FormData();
+          fd.append('photo', pendingPhoto);
+          try {
+            await api.upload(`/admin/hospitals/${created.id}/photo`, fd);
+          } catch (err) {
+            // The hospital is saved; reopen it so the photo can be retried.
+            reload();
+            await openEdit(created.id);
+            setError(`Hospital saved, but the photo didn't upload: ${err.message}`);
+            return;
+          }
+        }
       }
+      setPendingPhoto(null);
       closeForm();
       reload();
     } catch (err) {
@@ -209,7 +190,8 @@ export default function AdminHospitalsTab() {
   async function openEdit(id) {
     setAddForm(null);
     setError('');
-    setEditForm(await api.get(`/hospitals/${id}`));
+    setPendingPhoto(null);
+    setEditForm(await api.get(`/admin/hospitals/${id}`));
   }
 
   function handleDivisionToggle(div) {
@@ -236,6 +218,8 @@ export default function AdminHospitalsTab() {
               </button>
             )}
           </div>
+          <FilterSection title="Visibility" placeholder="Search" items={['Visible', 'Hidden']}
+            selected={filters.visibility} onToggle={v => setFilters(f => ({ ...f, visibility: toggleInArray(f.visibility, v) }))} />
           <FilterSection title="By Division" placeholder="Search Division" items={divisions}
             selected={filters.division} onToggle={handleDivisionToggle} />
           <FilterSection title="By District" placeholder="Search District" items={districtOptions}
@@ -256,7 +240,7 @@ export default function AdminHospitalsTab() {
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search for Hospitals"
                 className="flex-1 text-sm outline-none bg-transparent" />
             </div>
-            <button onClick={() => { setAddForm(BLANK); setEditForm(null); setError(''); }}
+            <button onClick={() => { setAddForm(BLANK); setEditForm(null); setError(''); setPendingPhoto(null); }}
               className="flex items-center gap-1 text-sm font-medium text-primary border border-primary rounded-lg px-3 py-2 bg-white whitespace-nowrap">
               <Plus size={14} /> Add Hospital
             </button>
@@ -267,6 +251,7 @@ export default function AdminHospitalsTab() {
         {addForm && (
           <div className="bg-white rounded-xl shadow-sm p-4 mb-4">
             <HospitalForm form={addForm} setForm={setAddForm} error={error} saving={saving}
+              pendingPhoto={pendingPhoto} setPendingPhoto={setPendingPhoto}
               onSave={e => { e.preventDefault(); handleSave(addForm, () => setAddForm(null)); }}
               onCancel={() => setAddForm(null)} />
           </div>
@@ -274,7 +259,7 @@ export default function AdminHospitalsTab() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
           {filtered.map(h => (
-            <div key={h.id} onClick={() => openEdit(h.id)} className="bg-white rounded-xl shadow-sm p-3 flex justify-between items-center text-sm cursor-pointer hover:shadow-md hover:bg-gray-50 transition-shadow">
+            <div key={h.id} onClick={() => openEdit(h.id)} className={`${h.hidden ? 'opacity-60' : ''} bg-white rounded-xl shadow-sm p-3 flex justify-between items-center text-sm cursor-pointer hover:shadow-md hover:bg-gray-50 transition-shadow`}>
               <div className="flex items-center gap-2.5 min-w-0">
                 {h.photo
                   ? <img src={h.photo} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0 border border-gray-100" />
@@ -283,7 +268,7 @@ export default function AdminHospitalsTab() {
                     </div>
                 }
                 <div className="min-w-0">
-                  <p className="font-medium text-gray-800 truncate">{h.name}</p>
+                  <p className="font-medium text-gray-800 truncate">{h.name}{h.hidden && <span className="ml-1.5 text-[11px] font-semibold text-amber-700 bg-amber-50 rounded px-1.5 py-0.5">Hidden</span>}</p>
                   <p className="text-xs text-gray-500 truncate">{h.location}</p>
                 </div>
               </div>
@@ -309,6 +294,9 @@ export default function AdminHospitalsTab() {
               </button>
             </div>
             <HospitalForm form={editForm} setForm={setEditForm} error={error} saving={saving}
+              actions={<AdminRecordActions path={`/admin/hospitals/${editForm.id}`} hidden={editForm.hidden} label="place"
+                onHiddenChange={hidden => { setEditForm(f => ({ ...f, hidden })); reload(); }}
+                onDeleted={() => { setEditForm(null); reload(); }} />}
               editingId={editForm.id}
               onSave={e => { e.preventDefault(); handleSave(editForm, () => setEditForm(null)); }}
               onCancel={() => setEditForm(null)} />

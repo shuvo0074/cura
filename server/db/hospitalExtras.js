@@ -15,15 +15,16 @@ const text = (v, max = 200) => (typeof v === 'string' && v.trim() ? v.trim().sli
 const count = v => (v === '' || v == null ? null : Number.isInteger(Number(v)) && Number(v) >= 0 ? Number(v) : NaN);
 
 // Validates and tidies the extras an admin sends. Only fields present in the
-// body are returned, so a partial update never wipes the others. Throws a
-// message suitable for a 400 on bad input.
+// body are returned, so a partial update never wipes the others; a list sent
+// as null (a record that never had one) is left as it is. Throws a message
+// suitable for a 400 on bad input.
 export function adminHospitalExtras(body) {
   const out = {};
   if ('type' in body) {
     if (body.type && !TYPES.includes(body.type)) throw new Error(`type must be one of ${TYPES.join(', ')}`);
     out.type = body.type || null;
   }
-  if ('services' in body) {
+  if (body.services != null) {
     if (!Array.isArray(body.services)) throw new Error('services must be a list');
     const seen = new Set();
     out.services = JSON.stringify(body.services.filter(s => {
@@ -41,7 +42,7 @@ export function adminHospitalExtras(body) {
       out.beds = Object.values(beds).every(v => v == null) ? null : JSON.stringify(beds);
     }
   }
-  if ('tests' in body) {
+  if (body.tests != null) {
     if (!Array.isArray(body.tests)) throw new Error('tests must be a list');
     const tests = body.tests.filter(x => text(x?.name)).map(x => {
       // No price means "call for price" (centres that don't publish rates).
@@ -53,7 +54,7 @@ export function adminHospitalExtras(body) {
     out.tests = JSON.stringify(tests);
   }
   for (const field of ['facilities', 'payment_methods']) {
-    if (field in body) {
+    if (body[field] != null) {
       if (!Array.isArray(body[field])) throw new Error(`${field} must be a list`);
       out[field] = JSON.stringify([...new Set(body[field].filter(k => KEY.test(k)))]);
     }

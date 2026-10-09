@@ -12,7 +12,11 @@ export default function HospitalCard({ hospital }) {
 
   function openMaps(e) {
     e.stopPropagation();
-    window.open(`https://www.google.com/maps/dir/?api=1&destination=${hospital.lat},${hospital.lng}`, '_blank');
+    // Without coordinates, route to the name and address instead of "undefined,undefined".
+    const destination = hospital.lat != null && hospital.lng != null
+      ? `${hospital.lat},${hospital.lng}`
+      : encodeURIComponent([hospital.name, hospital.address].filter(Boolean).join(', '));
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${destination}`, '_blank');
   }
 
   return (
