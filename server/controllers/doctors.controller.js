@@ -4,7 +4,7 @@ import { bookingBlocker, dhakaNow, estimatedArrival, parseSessionTime } from '..
 
 // Columns safe to expose publicly. Never select d.* in a public endpoint:
 // the doctors table also holds login credentials (email, password_hash).
-const PUBLIC_DOCTOR_COLUMNS = `d.id, d.name, d.gender, d.gender_is_demo, d.specialty, d.department, d.experience, d.chamber, d.fees, d.followup_fees, d.workplace,
+export const PUBLIC_DOCTOR_COLUMNS = `d.id, d.name, d.gender, d.gender_is_demo, d.specialty, d.department, d.experience, d.chamber, d.fees, d.followup_fees, d.workplace,
   d.city, d.division, d.hospital_id, d.phone, d.photo, d.rating, d.about, d.lat, d.lng, d.website,
   d.source_url, d.verified_on, d.share_count, d.bmdc_no, d.education, d.languages, d.consulting_hours, d.address,
   d.clinical_expertise, d.treatments, d.weekly_schedule`;
@@ -14,6 +14,7 @@ export async function listDoctors(_req, res, next) {
     const { rows } = await query(
       `SELECT ${PUBLIC_DOCTOR_COLUMNS}, h.name AS hospital_name FROM doctors d
        LEFT JOIN hospitals h ON h.id = d.hospital_id
+       WHERE NOT d.hidden
        ORDER BY d.id`
     );
     res.json(rows);
@@ -27,7 +28,7 @@ export async function getDoctor(req, res, next) {
     const { rows } = await query(
       `SELECT ${PUBLIC_DOCTOR_COLUMNS}, h.name AS hospital_name FROM doctors d
        LEFT JOIN hospitals h ON h.id = d.hospital_id
-       WHERE d.id = $1`,
+       WHERE d.id = $1 AND NOT d.hidden`,
       [req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Doctor not found' });
@@ -40,7 +41,7 @@ export async function getDoctor(req, res, next) {
 export async function shareDoctor(req, res, next) {
   try {
     const { rows } = await query(
-      `UPDATE doctors SET share_count = share_count + 1 WHERE id = $1 RETURNING id, share_count`,
+      `UPDATE doctors SET share_count = share_count + 1 WHERE id = $1 AND NOT hidden RETURNING id, share_count`,
       [req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Doctor not found' });
@@ -58,9 +59,11 @@ export async function logCall(req, res, next) {
   try {
     const { venue, phone } = req.body || {};
     const { rows } = await query(
-      `INSERT INTO call_logs (doctor_id, venue, phone) VALUES ($1, $2, $3) RETURNING id, created_at`,
+      `INSERT INTO call_logs (doctor_id, venue, phone)
+       SELECT id, $2, $3 FROM doctors WHERE id = $1 AND NOT hidden RETURNING id, created_at`,
       [req.params.id, venue || null, phone || null]
     );
+    if (!rows[0]) return res.status(404).json({ error: 'Doctor not found' });
     logger.info(
       { event: 'call_tap', doctorId: req.params.id, venue, phone, callLogId: rows[0].id },
       'Call tapped'
@@ -129,7 +132,7 @@ export async function getDoctorSessions(req, res, next) {
     if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       return res.status(400).json({ error: 'date query param (YYYY-MM-DD) is required' });
     }
-    const { rows: doctorRows } = await query(`SELECT weekly_schedule FROM doctors WHERE id = $1`, [req.params.id]);
+    const { rows: doctorRows } = await query(`SELECT weekly_schedule FROM doctors WHERE id = $1 AND NOT hidden`, [req.params.id]);
     if (!doctorRows[0]) return res.status(404).json({ error: 'Doctor not found' });
 
     const { rows: counts } = await query(
@@ -180,6 +183,7 @@ export async function featuredDoctors(req, res, next) {
     const { rows } = await query(
       `SELECT ${PUBLIC_DOCTOR_COLUMNS}, h.name AS hospital_name FROM doctors d
        LEFT JOIN hospitals h ON h.id = d.hospital_id
+       WHERE NOT d.hidden
        ORDER BY d.rating DESC NULLS LAST, d.share_count DESC, d.id
        LIMIT $1`,
       [limit]
@@ -195,14 +199,14 @@ export async function featuredDoctors(req, res, next) {
 export async function directoryStats(_req, res, next) {
   try {
     const [{ rows: [totals] }, { rows: bySpecialty }, { rows: byDivision }, { rows: byCity }] = await Promise.all([
-      query(`SELECT (SELECT COUNT(*) FROM doctors)::int AS doctors,
-                    (SELECT COUNT(*) FROM hospitals)::int AS hospitals,
-                    (SELECT COUNT(DISTINCT specialty) FROM doctors)::int AS specialties,
-                    (SELECT COUNT(DISTINCT division) FROM doctors WHERE division IS NOT NULL)::int AS divisions,
-                    (SELECT COUNT(*) FROM doctors WHERE bmdc_no IS NOT NULL)::int AS with_bmdc`),
-      query(`SELECT specialty, COUNT(*)::int AS doctors FROM doctors GROUP BY specialty`),
-      query(`SELECT division, COUNT(*)::int AS doctors FROM doctors WHERE division IS NOT NULL GROUP BY division`),
-      query(`SELECT city, COUNT(*)::int AS doctors FROM doctors WHERE city IS NOT NULL GROUP BY city`),
+      query(`SELECT (SELECT COUNT(*) FROM doctors WHERE NOT hidden)::int AS doctors,
+                    (SELECT COUNT(*) FROM hospitals WHERE NOT hidden)::int AS hospitals,
+                    (SELECT COUNT(DISTINCT specialty) FROM doctors WHERE NOT hidden)::int AS specialties,
+                    (SELECT COUNT(DISTINCT division) FROM doctors WHERE division IS NOT NULL AND NOT hidden)::int AS divisions,
+                    (SELECT COUNT(*) FROM doctors WHERE bmdc_no IS NOT NULL AND NOT hidden)::int AS with_bmdc`),
+      query(`SELECT specialty, COUNT(*)::int AS doctors FROM doctors WHERE NOT hidden GROUP BY specialty`),
+      query(`SELECT division, COUNT(*)::int AS doctors FROM doctors WHERE division IS NOT NULL AND NOT hidden GROUP BY division`),
+      query(`SELECT city, COUNT(*)::int AS doctors FROM doctors WHERE city IS NOT NULL AND NOT hidden GROUP BY city`),
     ]);
     res.json({
       ...totals,

@@ -163,3 +163,8 @@ UPDATE doctors SET followup_fees = 300 WHERE followup_fees IS NULL;
 ALTER TABLE doctors ADD COLUMN IF NOT EXISTS gender TEXT CHECK (gender IN ('male', 'female'));
 
 ALTER TABLE doctors ADD COLUMN IF NOT EXISTS gender_is_demo BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- Admins can hide a doctor or hospital: it leaves the public site but keeps
+-- its bookings and history, and can be shown again.
+ALTER TABLE doctors ADD COLUMN IF NOT EXISTS hidden BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE hospitals ADD COLUMN IF NOT EXISTS hidden BOOLEAN NOT NULL DEFAULT FALSE;

@@ -18,7 +18,7 @@ export async function createAppointment(req, res, next) {
 
   const client = await pool.connect();
   try {
-    const { rows: doctorRows } = await client.query(`SELECT weekly_schedule FROM doctors WHERE id = $1`, [doctorId]);
+    const { rows: doctorRows } = await client.query(`SELECT weekly_schedule FROM doctors WHERE id = $1 AND NOT hidden`, [doctorId]);
     if (!doctorRows[0]) return res.status(404).json({ error: 'Doctor not found' });
     const entry = (doctorRows[0].weekly_schedule || []).find(e => e.venue === venue && e.time === session);
     const time = entry && parseSessionTime(entry.time);
