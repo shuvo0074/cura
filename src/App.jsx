@@ -77,6 +77,8 @@ export default function App() {
               <Route path="/admin/doctors" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
               <Route path="/admin/hospitals" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
               <Route path="/admin/appointments" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
+              <Route path="/admin/specialties" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
+              <Route path="/admin/symptoms" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
               <Route path="/admin/ambulances" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
               <Route path="/admin/sample-prices" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
               <Route path="/doctor-dashboard" element={<ProtectedRoute role="doctor"><DoctorDashboardPage /></ProtectedRoute>} />

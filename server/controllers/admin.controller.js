@@ -5,6 +5,7 @@ import { uploadBuffer, deleteObject, objectNameFromUrl } from '../storage.js';
 import { adminHospitalExtras } from '../db/hospitalExtras.js';
 import { rating, latitude, longitude, sourceUrl, checkedOn } from '../adminFields.js';
 import { PUBLIC_DOCTOR_COLUMNS } from './doctors.controller.js';
+import { ensureSpecialty } from './catalog.controller.js';
 
 function toNum(value) {
   if (value === '' || value === undefined || value === null) return null;
@@ -75,6 +76,7 @@ export async function createDoctor(req, res, next) {
         d.bmdcNo, d.education, d.languages, d.consultingHours, d.address, toArray(d.clinicalExpertise), toArray(d.treatments), d.division || null, d.workplace || null, toNum(d.followupFees) ?? 300, JSON.stringify(d.weeklySchedule ?? []), doctorGender(d.gender),
         c.sourceUrl, c.checkedOn]
     );
+    await ensureSpecialty(rows[0].specialty);
     logger.info(
       { event: 'admin_doctor_created', adminId: req.user?.sub, doctorId: rows[0].id, name: rows[0].name },
       'Admin created doctor'
@@ -102,6 +104,7 @@ export async function updateDoctor(req, res, next) {
         c.sourceUrl, c.checkedOn, req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Doctor not found' });
+    await ensureSpecialty(rows[0].specialty);
     logger.info(
       { event: 'admin_doctor_updated', adminId: req.user?.sub, doctorId: rows[0].id, name: rows[0].name },
       'Admin updated doctor'

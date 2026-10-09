@@ -7,7 +7,8 @@ import {
 import {
   listAdminAmbulances, createAmbulance, updateAmbulance, setAmbulanceHidden, deleteAmbulance, getSamplePrices, updateSamplePrices,
 } from '../controllers/adminContent.controller.js';
-import { doctorPhotoUpload, hospitalPhotoUpload } from '../upload.js';
+import { doctorPhotoUpload, hospitalPhotoUpload, catalogImageUpload } from '../upload.js';
+import * as catalog from '../controllers/catalog.controller.js';
 import { verifyToken, requireRole } from '../middleware/auth.js';
 
 const router = Router();
@@ -36,5 +37,14 @@ router.patch('/ambulances/:id/hidden', setAmbulanceHidden);
 router.delete('/ambulances/:id', deleteAmbulance);
 router.get('/sample-prices', getSamplePrices);
 router.patch('/sample-prices', updateSamplePrices);
+for (const kind of ['specialties', 'symptoms']) {
+  router.get(`/${kind}`, catalog.listAdmin(kind));
+  router.post(`/${kind}`, catalog.create(kind));
+  router.patch(`/${kind}/:id`, catalog.update(kind));
+  router.patch(`/${kind}/:id/hidden`, catalog.setHidden(kind));
+  router.delete(`/${kind}/:id`, catalog.remove(kind));
+  router.post(`/${kind}/:id/photo`, catalogImageUpload.single('photo'), catalog.uploadImage(kind));
+  router.delete(`/${kind}/:id/photo`, catalog.deleteImage(kind));
+}
 
 export default router;

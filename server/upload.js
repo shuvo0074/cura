@@ -6,3 +6,4 @@ const memStorage = multer.memoryStorage();
 
 export const doctorPhotoUpload = multer({ storage: memStorage, fileFilter: imageFilter, limits });
 export const hospitalPhotoUpload = multer({ storage: memStorage, fileFilter: imageFilter, limits });
+export const catalogImageUpload = multer({ storage: memStorage, fileFilter: imageFilter, limits });

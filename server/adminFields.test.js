@@ -60,3 +60,14 @@ test('shared sample fares need every type; sample test prices need unique names 
   assert.throws(() => sampleTestPrices([{ name: 'ECG', category: 'cardiac', price: 1 }, { name: 'ecg', category: 'cardiac', price: 2 }]), /twice/);
   assert.throws(() => sampleTestPrices([{ name: 'ECG', category: 'cardiac', price: '' }]), /whole number/);
 });
+
+test('specialty/symptom entries: tags tidied, image an upload path or web address', async () => {
+  const { catalogEntry, slugify } = await import('./adminFields.js');
+  const e = catalogEntry({ name: ' Cardiology ', icon: '❤️', tags: ['Heart', 'Heart', ' ECG ', ''], image: '/cura-media/catalog/specialty-1.jpg' }, { icon: true });
+  assert.deepEqual([e.name, e.icon, e.tags, e.image], ['Cardiology', '❤️', ['Heart', 'ECG'], '/cura-media/catalog/specialty-1.jpg']);
+  assert.equal(catalogEntry({ name: 'Fever', image: 'https://images.unsplash.com/photo-1' }).image, 'https://images.unsplash.com/photo-1');
+  assert.throws(() => catalogEntry({ name: 'Fever', image: '//evil.example/x.jpg' }), /Image/);
+  assert.throws(() => catalogEntry({ name: '' }), /Name/);
+  assert.deepEqual(catalogEntry({ name: 'Fever', specialties: ['Medicine', 'Medicine', ''] }, { specialties: true }).specialties, ['Medicine']);
+  assert.equal(slugify('ENT & Head Surgery'), 'ent-head-surgery');
+});

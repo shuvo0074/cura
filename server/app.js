@@ -11,6 +11,7 @@ import doctorMeRoutes from './routes/doctorMe.routes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { httpLogger } from './logger.js';
 import { listAmbulances } from './controllers/ambulances.controller.js';
+import { listPublic } from './controllers/catalog.controller.js';
 
 export const app = express();
 
@@ -22,6 +23,8 @@ app.use(httpLogger);
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 // Ambulance vendors (edited in the admin panel), each with its source and checked-on date.
 app.get('/api/ambulances', listAmbulances);
+app.get('/api/specialties', listPublic('specialties'));
+app.get('/api/symptoms', listPublic('symptoms'));
 app.use('/api/doctors/me', doctorMeRoutes);
 app.use('/api/doctors', doctorsRoutes);
 app.use('/api/hospitals', hospitalsRoutes);

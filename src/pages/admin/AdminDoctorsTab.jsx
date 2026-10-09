@@ -2,7 +2,6 @@ import { Fragment, useEffect, useState, useMemo } from 'react';
 import { Plus, Pencil, SlidersHorizontal, Search, X, UserRound } from 'lucide-react';
 import { api } from '../../api/client';
 import divisions from '../../data/divisions.json';
-import specialties from '../../data/specialties.json';
 import { citiesForDivisions, toggleDivision } from '../../utils/geo';
 
 import DoctorChambersFields from './DoctorChambersFields';
@@ -197,19 +196,22 @@ export default function AdminDoctorsTab() {
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [pendingPhoto, setPendingPhoto] = useState(null);
+  const [specialties, setSpecialties] = useState([]);
 
   function reload() { api.get('/admin/doctors').then(setDoctors); }
 
   useEffect(() => {
     reload();
     api.get('/admin/hospitals').then(setHospitals);
+    api.get('/admin/specialties').then(setSpecialties);
   }, []);
 
   const specialtyNames = useMemo(() =>
     [...new Set(doctors.map(d => d.specialty).filter(Boolean))].sort(), [doctors]);
 
+  // The Specialties tab's list, plus any value a doctor still has that isn't on it.
   const specialtyOptions = useMemo(() =>
-    [...new Set([...specialties.map(s => s.name), ...specialtyNames])].sort(), [specialtyNames]);
+    [...new Set([...specialties.map(s => s.name), ...specialtyNames])].sort(), [specialties, specialtyNames]);
 
   const cities = useMemo(() => citiesForDivisions(filters.division), [filters.division]);
 

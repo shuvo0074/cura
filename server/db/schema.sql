@@ -200,3 +200,33 @@ CREATE TABLE IF NOT EXISTS site_settings (
   value      JSONB NOT NULL,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Specialties and symptoms, edited in the admin panel; seeded once from
+-- server/data (see db/contentSeeds.js). A specialty's `name` is what
+-- doctors.specialty holds, so renaming one renames it on its doctors too.
+-- `slug` is the page address and stays fixed.
+CREATE TABLE IF NOT EXISTS specialties (
+  id          SERIAL PRIMARY KEY,
+  slug        TEXT UNIQUE NOT NULL,
+  name        TEXT UNIQUE NOT NULL,
+  name_bn     TEXT,
+  icon        TEXT,
+  description TEXT,
+  tags        JSONB NOT NULL DEFAULT '[]',
+  image       TEXT,
+  hidden      BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+-- `specialties` lists the specialty names whose doctors treat the symptom;
+-- the symptom page also matches doctors whose profile mentions it.
+CREATE TABLE IF NOT EXISTS symptoms (
+  id          SERIAL PRIMARY KEY,
+  slug        TEXT UNIQUE NOT NULL,
+  name        TEXT UNIQUE NOT NULL,
+  name_bn     TEXT,
+  description TEXT,
+  tags        JSONB NOT NULL DEFAULT '[]',
+  image       TEXT,
+  specialties JSONB NOT NULL DEFAULT '[]',
+  hidden      BOOLEAN NOT NULL DEFAULT FALSE
+);

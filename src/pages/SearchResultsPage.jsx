@@ -15,20 +15,22 @@ import { useFilter } from '../context/FilterContext';
 import { api } from '../api/client';
 import PageHeader from '../components/ui/PageHeader';
 import EmptyState from '../components/ui/EmptyState';
-import specialtyDetails from '../data/specialtyDetails.json';
+import { useCatalog } from '../hooks/useCatalog';
 import Pagination from '../components/ui/Pagination';
 import { usePagination } from '../hooks/usePagination';
 
 // Lets plain-language searches reach the right specialists: "heart" finds
-// Cardiology via its description, "dialysis" finds Nephrology via its tags.
-const SPECIALTY_KEYWORDS = Object.fromEntries(
-  Object.entries(specialtyDetails).map(([name, d]) => [name, `${d.description} ${d.tags.join(' ')}`.toLowerCase()])
-);
+// Cardiology via its description, "dialysis" finds Nephrology via its tags,
+// and a Bangla specialty name finds its doctors.
+function specialtyKeywords(specialties) {
+  return Object.fromEntries((specialties ?? []).map(s =>
+    [s.name, `${s.description ?? ''} ${s.tags.join(' ')} ${s.name_bn ?? ''}`.toLowerCase()]));
+}
 
-function doctorMatches(d, q) {
+function doctorMatches(d, q, keywords) {
   return [
     d.name, d.specialty, d.department, d.city, d.division,
-    SPECIALTY_KEYWORDS[d.specialty],
+    keywords[d.specialty],
     ...(d.clinical_expertise || []), ...(d.treatments || []),
   ].some(field => (field || '').toLowerCase().includes(q));
 }
@@ -102,12 +104,14 @@ export default function SearchResultsPage() {
   }, [query]);
 
   const q = query.trim().toLowerCase();
-  const countFor = params => doctors.filter(d => (!q || doctorMatches(d, q)) && matchesDoctorFilters(d, params)).length;
+  const specialties = useCatalog('specialties');
+  const keywords = useMemo(() => specialtyKeywords(specialties), [specialties]);
+  const countFor = params => doctors.filter(d => (!q || doctorMatches(d, q, keywords)) && matchesDoctorFilters(d, params)).length;
   const specialtyNames = useMemo(() => [...new Set(doctors.map(d => d.specialty))].sort(), [doctors]);
 
   const filteredDoctors = useMemo(
-    () => doctors.filter(d => (!q || doctorMatches(d, q)) && matchesDoctorFilters(d, filterParams)),
-    [doctors, q, filterParams]
+    () => doctors.filter(d => (!q || doctorMatches(d, q, keywords)) && matchesDoctorFilters(d, filterParams)),
+    [doctors, q, filterParams, keywords]
   );
 
   const filteredHospitals = useMemo(() => {
