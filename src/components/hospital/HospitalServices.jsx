@@ -96,7 +96,7 @@ export function TestPricesSection({ hospital, id }) {
   const [params] = useSearchParams();
   const [picked, setPicked] = useState(() => new Set(params.getAll('test')));
   const [query, setQuery] = useState('');
-  const tests = hospital.tests || [];
+  const tests = [...(hospital.tests || [])].sort((a, b) => a.name.localeCompare(b.name, i18n.language, { sensitivity: 'base', numeric: true }));
   if (!tests.length) return null;
 
   const money = new Intl.NumberFormat(i18n.language === 'bn' ? 'bn-BD' : 'en-IN');
