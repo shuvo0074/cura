@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { BedDouble, Calculator, House, Info, ReceiptText, Search, Stethoscope, X } from 'lucide-react';
 import { FACILITY_ICONS, SERVICE_GROUPS, SERVICE_ICONS, TEST_CATEGORIES, is24x7 } from './hospitalCatalogue';
@@ -92,7 +93,8 @@ export function ServicesSection({ hospital, id }) {
 // between places before choosing where to have tests done.
 export function TestPricesSection({ hospital, id }) {
   const { t, i18n } = useTranslation();
-  const [picked, setPicked] = useState(() => new Set());
+  const [params] = useSearchParams();
+  const [picked, setPicked] = useState(() => new Set(params.getAll('test')));
   const [query, setQuery] = useState('');
   const tests = hospital.tests || [];
   if (!tests.length) return null;

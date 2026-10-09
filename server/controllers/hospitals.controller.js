@@ -38,14 +38,14 @@ export async function getHospitalDoctors(req, res, next) {
     if (!hospital) return res.status(404).json({ error: 'Hospital not found' });
 
     const { rows } = await query(
-      `SELECT d.id, d.name, d.specialty, d.department, d.experience, d.photo, d.rating, d.fees,
-        (SELECT jsonb_agg(elem) FROM jsonb_array_elements(d.weekly_schedule) elem WHERE elem->>'venue' = $1) AS venue_schedule
+      `SELECT d.id, d.name, d.specialty, d.department, d.experience, d.photo, d.rating, d.fees, d.followup_fees, d.workplace, d.chamber, d.source_url, d.verified_on,
+        (SELECT jsonb_agg(elem) FROM jsonb_array_elements(d.weekly_schedule) elem WHERE elem->>'venue' = $1 OR elem->>'hospital_id' = $2::text) AS venue_schedule
        FROM doctors d
-       WHERE EXISTS (
-         SELECT 1 FROM jsonb_array_elements(d.weekly_schedule) elem WHERE elem->>'venue' = $1
+       WHERE d.hospital_id = $2::integer OR EXISTS (
+         SELECT 1 FROM jsonb_array_elements(d.weekly_schedule) elem WHERE elem->>'venue' = $1 OR elem->>'hospital_id' = $2::text
        )
        ORDER BY d.name`,
-      [hospital.name]
+      [hospital.name, hospital.id]
     );
     res.json(rows);
   } catch (err) {

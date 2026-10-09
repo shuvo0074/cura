@@ -1,4 +1,19 @@
 {
+  "home_calc_badge": "Test cost calculator",
+  "home_calc_title": "Your tests. Your budget. Know before you go.",
+  "home_calc_desc": "Pick the tests on your prescription and watch the total update. Choose a diagnostic centre and plan your visit with confidence.",
+  "home_calc_cta": "Calculate my test costs",
+  "home_calc_try": "Try it now — select your tests",
+  "home_calc_selected": "{{count}} selected",
+  "home_calc_fallback": "Open the calculator to browse diagnostic centres and their tests.",
+
+  "doctor_source": "Official profile",
+  "workplace": "Workplace",
+  "followup_fees": "Follow-up fee",
+  "not_listed": "Not listed",
+  "link_copied": "Link copied",
+
+  "ambulance_emergency_999": "Emergency · Call 999",
   "search_placeholder": "Search doctors, specialities, locations",
   "search_doctors": "Search for doctors",
   "find_doctor": "Find Doctor",

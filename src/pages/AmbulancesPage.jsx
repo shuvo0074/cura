@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LocateFixed, SlidersHorizontal } from 'lucide-react';
 import { api } from '../api/client';
+import EmergencySection from '../components/home/EmergencySection';
 import PageHeader from '../components/ui/PageHeader';
 import SearchInput from '../components/ui/SearchInput';
 import EmptyState from '../components/ui/EmptyState';
@@ -83,7 +84,8 @@ export default function AmbulancesPage() {
   return (
     <div>
       <PageHeader title={t('find_ambulance')} />
-      <div className="bg-primary rounded-2xl overflow-hidden text-white mb-5 grid md:grid-cols-[3fr_2fr]">
+      <div className="mb-5 grid lg:grid-cols-[minmax(0,7fr)_minmax(0,3fr)] gap-4 items-stretch">
+      <div className="bg-primary rounded-2xl overflow-hidden text-white grid md:grid-cols-[3fr_2fr]">
         <div className="p-5 sm:p-7 flex flex-col justify-center">
           <h2 className="font-bold text-lg sm:text-xl">{t('ambulance_intro_title')}</h2>
           <p className="text-sm text-white/80 mt-2 max-w-2xl">{t('ambulance_intro')}</p>
@@ -95,6 +97,8 @@ export default function AmbulancesPage() {
             {t('ambulance_photo_caption')} · <Link to="/credits" className="underline hover:text-white/80">{t('credits_title')}</Link>
           </figcaption>
         </figure>
+      </div>
+      <EmergencySection />
       </div>
       <div className="grid lg:grid-cols-[280px_minmax(0,1fr)] gap-5">
         <aside className="bg-white rounded-2xl border border-gray-100 p-4 h-fit lg:sticky lg:top-[calc(var(--header-h,80px)+16px)] space-y-4">

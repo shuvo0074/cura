@@ -126,6 +126,7 @@ export default function DoctorProfilePage() {
             <div className="flex-1 min-w-0">
               <h1 className="font-bold text-gray-900 text-xl sm:text-2xl leading-tight">{doctor.name}</h1>
               <p className="text-primary font-medium text-sm mt-1">{doctor.specialty}</p>
+              <p className="text-sm text-gray-600 mt-1">{t('workplace')}: {doctor.workplace || doctor.hospital_name || doctor.chamber || '—'}</p>
               {doctor.department && <p className="text-gray-500 text-sm">{doctor.department}</p>}
               {doctor.bmdc_no && (
                 <p className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 rounded-full px-2.5 py-1 mt-2">
@@ -135,7 +136,7 @@ export default function DoctorProfilePage() {
             </div>
           </div>
 
-          <dl className="grid grid-cols-3 mt-5 border border-gray-100 rounded-xl divide-x divide-gray-100 text-center">
+          <dl className="grid grid-cols-2 sm:grid-cols-4 mt-5 border border-gray-100 rounded-xl divide-x divide-gray-100 text-center">
             <div className="py-3 px-2">
               <dt className="flex items-center justify-center gap-1 text-xs text-gray-500"><Briefcase size={12} /> {t('experience')}</dt>
               <dd className="text-sm font-semibold text-gray-900 mt-0.5">{doctor.experience}</dd>
@@ -148,6 +149,7 @@ export default function DoctorProfilePage() {
               <dt className="flex items-center justify-center gap-1 text-xs text-gray-500"><Wallet size={12} /> {t('fees')}</dt>
               <dd className="text-sm font-semibold text-gray-900 mt-0.5">{doctor.fees != null ? `৳${doctor.fees}` : '—'}</dd>
             </div>
+          <div className="py-3 px-2"><dt className="text-xs text-gray-500">{t('followup_fees')}</dt><dd className="text-sm font-semibold mt-0.5">{doctor.followup_fees != null ? `৳${doctor.followup_fees}` : t('not_listed')}</dd></div>
           </dl>
 
           <div className="flex gap-2 mt-4">

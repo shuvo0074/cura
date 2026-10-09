@@ -50,7 +50,8 @@ export default function DoctorCardWide({ doctor }) {
             </button>
           </div>
 
-          <p className="text-gray-500 text-sm mt-1">{doctor.experience} · <span className="text-primary font-semibold">৳{doctor.fees}</span></p>
+          <p className="text-gray-600 text-sm mt-1">{t('workplace')}: {doctor.workplace || doctor.hospital_name || doctor.chamber || '—'}</p>
+          <p className="text-gray-500 text-sm mt-1">{doctor.experience} · <span className="text-primary font-semibold">৳{doctor.fees}</span><span className="ml-2 text-xs text-gray-500">{t('followup_fees')}: {doctor.followup_fees != null ? `৳${doctor.followup_fees}` : t('not_listed')}</span></p>
 
           <div className="flex items-center gap-1 mt-1.5">
             <MapPin size={12} className="text-primary flex-shrink-0" />
