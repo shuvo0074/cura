@@ -7,7 +7,7 @@ import { citiesForDivisions, toggleDivision } from '../../utils/geo';
 import DoctorChambersFields from './DoctorChambersFields';
 
 const BLANK = {
-  name: '', specialty: '', department: '', experience: '', chamber: '', fees: '', workplace: '', followupFees: '',
+  name: '', specialty: '', department: '', experience: '', chamber: '', fees: '', workplace: '', followupFees: '300',
   city: '', division: '', hospitalId: '', phone: '', photo: '', rating: '', about: '', website: '',
   bmdcNo: '', education: '', languages: '', consultingHours: '', address: '',
   clinicalExpertise: '', treatments: '', weeklySchedule: [],
