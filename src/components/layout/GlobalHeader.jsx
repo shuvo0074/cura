@@ -3,6 +3,8 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { Search, Phone, Menu, X, ChevronRight, User, LogOut } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
+import { useSiteContent } from '../../context/SiteContentContext';
+import { phoneDigits } from '../../utils/phone';
 
 const NAV_LINKS = [
   { label: 'Home', path: '/' },
@@ -16,7 +18,9 @@ const NAV_LINKS = [
 export default function GlobalHeader() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { contacts } = useSiteContent();
+  const hotline = phoneDigits(contacts.hotline, i18n.language);
   const { user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -108,8 +112,8 @@ export default function GlobalHeader() {
             <button onClick={() => navigate('/search-results')} className="text-white hover:bg-white/10 rounded-full p-2" title="Search">
               <Search size={18} />
             </button>
-            <a href="tel:16966" className="hidden lg:flex items-center gap-1.5 text-xs font-semibold text-white border border-white rounded px-3 py-1.5 hover:bg-white/10">
-              <Phone size={13} /> 16966
+            <a href={`tel:${contacts.hotline}`} className="hidden lg:flex items-center gap-1.5 text-xs font-semibold text-white border border-white rounded px-3 py-1.5 hover:bg-white/10">
+              <Phone size={13} /> {hotline}
             </a>
             <button onClick={toggleLang} className="text-xs font-semibold text-white border border-white rounded px-2 py-1.5 hover:bg-white/10">
               {i18n.language === 'en' ? 'বাং' : 'EN'}
@@ -166,11 +170,11 @@ export default function GlobalHeader() {
 
               {/* Phone */}
               <a
-                href="tel:16966"
+                href={`tel:${contacts.hotline}`}
                 className="flex items-center justify-between px-5 py-4 text-sm font-medium border-b border-white/10 text-white/90 hover:bg-white/10 transition-colors">
                 <span className="flex items-center gap-2.5">
                   <Phone size={16} className="opacity-70" />
-                  Hotline: 16966
+                  {t('header_hotline', { number: hotline })}
                 </span>
                 <ChevronRight size={16} className="opacity-50" />
               </a>

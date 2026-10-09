@@ -2,7 +2,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
-import { POPULAR_SPECIALTIES, formatNumber, labelFor } from './landingData';
+import { formatNumber, labelFor } from './landingData';
+import { useSiteContent } from '../../context/SiteContentContext';
 
 // True below Tailwind's `sm` breakpoint; used to pick a placeholder that fits.
 function useIsNarrow() {
@@ -23,6 +24,7 @@ function useIsNarrow() {
 export default function HomeHero({ stats }) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const { home } = useSiteContent();
   const [query, setQuery] = useState('');
   const isNarrow = useIsNarrow();
   const lang = i18n.language;
@@ -73,7 +75,7 @@ export default function HomeHero({ stats }) {
 
       <div className="mt-4 flex items-center gap-2 overflow-x-auto no-scrollbar -mx-6 px-6 sm:mx-0 sm:px-0 sm:flex-wrap">
         <span className="text-white/70 text-sm flex-shrink-0">{t('home_popular')}</span>
-        {POPULAR_SPECIALTIES.slice(0, 6).map(s => (
+        {(home?.popular_specialties ?? []).slice(0, 6).map(s => (
           <Link key={s.slug} to={`/specialties/${s.slug}`}
             className="flex-shrink-0 h-9 px-3.5 flex items-center rounded-full text-sm glass-on-dark hover:bg-white/20 transition-colors">
             {labelFor(s, lang)}

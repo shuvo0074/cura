@@ -1,27 +1,27 @@
 import { useTranslation } from 'react-i18next';
 import PageHeader from '../components/ui/PageHeader';
-import credits from '../data/photoCredits.json';
+import { useSiteContent } from '../context/SiteContentContext';
 
 // Attribution for the photos of Bangladesh used on the site (required by
 // their CC BY / CC BY-SA licences; given for CC0 photos too).
 export default function CreditsPage() {
   const { t } = useTranslation();
+  const { credits } = useSiteContent();
   return (
     <div>
       <PageHeader title={t('credits_title')} />
       <p className="text-sm text-gray-600 max-w-2xl -mt-1 mb-6">{t('credits_intro')}</p>
       <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {credits.map(c => (
+        {(credits ?? []).map(c => (
           <li key={c.file} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 flex gap-3">
             <img src={c.file} alt={c.caption} loading="lazy" className="w-24 h-20 rounded-lg object-cover flex-shrink-0" />
             <div className="min-w-0 text-sm">
               <p className="font-semibold text-gray-900">{c.caption}</p>
-              <p className="text-gray-600">{t('credits_by')} {c.author}</p>
+              {c.author && <p className="text-gray-600">{t('credits_by')} {c.author}</p>}
               <p className="text-gray-600">
                 {c.licenseUrl ? <a href={c.licenseUrl} target="_blank" rel="noreferrer" className="text-primary hover:underline">{c.license}</a> : c.license}
-                {' · '}
-                <a href={c.source} target="_blank" rel="noreferrer" className="text-primary hover:underline">{t('credits_source')}</a>
-                {' · '}{c.changes}
+                {c.source && <>{' · '}<a href={c.source} target="_blank" rel="noreferrer" className="text-primary hover:underline">{t('credits_source')}</a></>}
+                {c.changes && <>{' · '}{c.changes}</>}
               </p>
             </div>
           </li>

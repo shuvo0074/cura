@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { PhoneCall } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useSiteContent } from '../../context/SiteContentContext';
+import { phoneDigits } from '../../utils/phone';
 
 const EXPLORE = [
   { to: '/doctors', key: 'find_a_doctor' },
@@ -15,7 +17,9 @@ const EXPLORE = [
 // health line 16263 alongside Cura's own hotline), photo credits, and the
 // demo notice.
 export default function Footer() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { contacts } = useSiteContent();
+  const number = n => phoneDigits(n, i18n.language);
   return (
     <footer className="mt-12 bg-primary text-white">
       <div className="app-container py-8 grid grid-cols-1 sm:grid-cols-3 gap-8">
@@ -32,9 +36,9 @@ export default function Footer() {
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-white/60 mb-3">{t('footer_help')}</p>
           <ul className="flex flex-col gap-2 text-sm">
-            <li><a href="tel:999" className="inline-flex items-center gap-2 font-semibold hover:underline"><PhoneCall size={14} /> {t('footer_emergency')}</a></li>
-            <li><a href="tel:16263" className="inline-flex items-center gap-2 hover:underline"><PhoneCall size={14} /> {t('footer_health_line')}</a></li>
-            <li><a href="tel:16966" className="inline-flex items-center gap-2 hover:underline"><PhoneCall size={14} /> {t('footer_hotline')}</a></li>
+            <li><a href={`tel:${contacts.emergency}`} className="inline-flex items-center gap-2 font-semibold hover:underline"><PhoneCall size={14} /> {t('footer_emergency', { number: number(contacts.emergency) })}</a></li>
+            <li><a href={`tel:${contacts.health_line}`} className="inline-flex items-center gap-2 hover:underline"><PhoneCall size={14} /> {t('footer_health_line', { number: number(contacts.health_line) })}</a></li>
+            <li><a href={`tel:${contacts.hotline}`} className="inline-flex items-center gap-2 hover:underline"><PhoneCall size={14} /> {t('footer_hotline', { number: number(contacts.hotline) })}</a></li>
             <li><Link to="/credits" className="hover:underline">{t('footer_credits')}</Link></li>
           </ul>
         </div>

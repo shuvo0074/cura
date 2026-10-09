@@ -7,7 +7,8 @@ import { useFilter } from '../../context/FilterContext';
 import { EMPTY_FILTERS } from '../../utils/doctorFilters';
 import { distanceKm } from '../../utils/distance';
 import HomeSection from './HomeSection';
-import { DIVISIONS, formatNumber } from './landingData';
+import { formatNumber } from './landingData';
+import { useSiteContent } from '../../context/SiteContentContext';
 
 // Brand-navy scale for doctor density; districts with no doctors stay pale.
 const SHADES = ['#d6e0f0', '#adc2e2', '#7f9ccc', '#4a71b0', '#1c4a92'];
@@ -55,7 +56,8 @@ export default function BangladeshMap({ counts }) {
   const lang = i18n.language;
   const nameOf = d => (lang === 'bn' ? d.bn : d.name);
   const num = n => formatNumber(n, lang);
-  const divisionName = name => (lang === 'bn' ? DIVISIONS.find(d => d.name === name)?.bn ?? name : name);
+  const { home } = useSiteContent();
+  const divisionName = name => (lang === 'bn' ? home?.divisions.find(d => d.name === name)?.bn ?? name : name);
 
   useEffect(() => {
     const el = sectionRef.current;

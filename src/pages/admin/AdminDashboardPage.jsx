@@ -6,6 +6,9 @@ import AdminHospitalsTab from './AdminHospitalsTab';
 import AdminAmbulancesTab from './AdminAmbulancesTab';
 import AdminSamplePricesTab from './AdminSamplePricesTab';
 import AdminCatalogTab from './AdminCatalogTab';
+import AdminHomePageTab from './AdminHomePageTab';
+import AdminSiteTextTab from './AdminSiteTextTab';
+import AdminPhotoCreditsTab from './AdminPhotoCreditsTab';
 
 export default function AdminDashboardPage() {
   const { pathname } = useLocation();
@@ -17,6 +20,9 @@ export default function AdminDashboardPage() {
     if (pathname === '/admin/specialties')  return <AdminCatalogTab kind="specialties" />;
     if (pathname === '/admin/symptoms')     return <AdminCatalogTab kind="symptoms" />;
     if (pathname === '/admin/ambulances')   return <AdminAmbulancesTab />;
+    if (pathname === '/admin/home-page')    return <AdminHomePageTab />;
+    if (pathname === '/admin/site-text')    return <AdminSiteTextTab />;
+    if (pathname === '/admin/photo-credits') return <AdminPhotoCreditsTab />;
     if (pathname === '/admin/sample-prices') return <AdminSamplePricesTab />;
     return (
       <div className="flex flex-col items-center justify-center h-64 text-gray-400 text-sm gap-2">

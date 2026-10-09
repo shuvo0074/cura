@@ -25,6 +25,14 @@ export async function seedContent(pool) {
        ON CONFLICT (key) DO NOTHING`,
       [JSON.stringify(fares.categories), JSON.stringify(SEED_SAMPLE_TEST_PRICES)]
     );
+    // Home page picks, phone numbers, photo credits and site text edits.
+    await client.query(
+      `INSERT INTO site_settings (key, value) VALUES
+         ('home_content', $1), ('photo_credits', $2), ('contact_numbers', $3), ('site_text', '{"en": {}, "bn": {}}')
+       ON CONFLICT (key) DO NOTHING`,
+      [JSON.stringify(readJson('homeContent.json')), JSON.stringify(readJson('photoCredits.json')),
+        JSON.stringify({ emergency: '999', health_line: '16263', hotline: '16966' })]
+    );
 
     await once(client, 'import:ambulance_vendors', async () => {
       for (const v of readJson('ambulanceVendors.json')) {
