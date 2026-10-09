@@ -149,3 +149,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS appointments_session_serial
 CREATE UNIQUE INDEX IF NOT EXISTS appointments_one_active_per_patient_session
   ON appointments (patient_id, doctor_id, appointment_date, venue, session_time)
   WHERE status <> 'cancelled' AND serial_no IS NOT NULL;
+
+ALTER TABLE doctors ADD COLUMN IF NOT EXISTS workplace TEXT;
+ALTER TABLE doctors ADD COLUMN IF NOT EXISTS followup_fees INTEGER CHECK (followup_fees >= 0);
+
+ALTER TABLE doctors ADD COLUMN IF NOT EXISTS source_url TEXT;
+ALTER TABLE doctors ADD COLUMN IF NOT EXISTS verified_on DATE;

@@ -4,6 +4,8 @@ import { Clock, House, MapPin, Phone, ReceiptText } from 'lucide-react';
 import CentreBanner from './CentreBanner';
 import { is24x7 } from './hospitalCatalogue';
 
+import PlaceShareButton from './PlaceShareButton';
+
 export default function CentreCard({ centre }) {
   const { t, i18n } = useTranslation();
   const homeSample = (centre.services || []).some(s => s.key === 'home_sample');
@@ -11,9 +13,12 @@ export default function CentreCard({ centre }) {
   const demo = published.length ? [] : (centre.tests || []).filter(x => x.price_kind === 'demo').slice(0, 3);
   return (
     <li className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+      <div className="relative">
+      <PlaceShareButton place={centre} overlay />
       <Link to={`/diagnostic-centres/${centre.id}`} tabIndex={-1} aria-hidden="true">
         <CentreBanner centre={centre} className="w-full h-32" />
       </Link>
+      </div>
       <div className="p-5 flex flex-col gap-3 flex-1">
         <div className="flex items-start gap-3">
           <div className="min-w-0">
@@ -44,6 +49,7 @@ export default function CentreCard({ centre }) {
           {demo.map(test => <p key={test.name}>{t('centre_price_preview', { test: test.name, price: test.price.toLocaleString(i18n.language === 'bn' ? 'bn-BD' : 'en') })}</p>)}
         </div>}
         <div className="flex gap-2 mt-auto">
+
           {centre.hotline && (
             <a href={`tel:${centre.hotline}`}
               className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90">

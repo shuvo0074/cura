@@ -8,7 +8,8 @@
     "start": "node index.js",
     "db:migrate": "node db/migrate.js",
     "db:seed": "node db/seed.js",
-    "db:backfill-hospital-extras": "node db/backfill-hospital-extras.js"
+    "db:backfill-hospital-extras": "node db/backfill-hospital-extras.js",
+    "db:seed-diagnostic-doctors": "node db/seedDiagnosticDoctors.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

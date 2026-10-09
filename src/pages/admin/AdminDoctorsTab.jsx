@@ -4,16 +4,20 @@ import { api } from '../../api/client';
 import divisions from '../../data/divisions.json';
 import { citiesForDivisions, toggleDivision } from '../../utils/geo';
 
+import DoctorChambersFields from './DoctorChambersFields';
+
 const BLANK = {
-  name: '', specialty: '', department: '', experience: '', chamber: '', fees: '',
+  name: '', specialty: '', department: '', experience: '', chamber: '', fees: '', workplace: '', followupFees: '',
   city: '', division: '', hospitalId: '', phone: '', photo: '', rating: '', about: '', website: '',
   bmdcNo: '', education: '', languages: '', consultingHours: '', address: '',
-  clinicalExpertise: '', treatments: '',
+  clinicalExpertise: '', treatments: '', weeklySchedule: [],
 };
 
 function toEditableForm(d) {
   return {
     ...d,
+    weeklySchedule: d.weekly_schedule ?? [],
+    followupFees: d.followup_fees ?? '',
     clinicalExpertise: Array.isArray(d.clinical_expertise) ? d.clinical_expertise.join(', ') : (d.clinicalExpertise ?? ''),
     treatments: Array.isArray(d.treatments) ? d.treatments.join(', ') : (d.treatments ?? ''),
   };
@@ -56,6 +60,8 @@ const DOCTOR_FIELDS = [
   { key: 'experience',      label: 'Experience' },
   { key: 'chamber',         label: 'Chamber' },
   { key: 'fees',            label: 'Consultation Fees' },
+  { key: 'followupFees', label: 'Follow-up Fees' },
+  { key: 'workplace', label: 'Workplace' },
   { key: 'phone',           label: 'Phone' },
   { key: 'rating',          label: 'Rating' },
   { key: 'about',           label: 'About' },
@@ -148,6 +154,7 @@ function DoctorForm({ form, setForm, hospitals, onSave, onCancel, editingId }) {
         )}
       </div>
 
+      <DoctorChambersFields entries={form.weeklySchedule ?? []} hospitals={hospitals} onChange={weeklySchedule => setForm(f => ({ ...f, weeklySchedule }))} />
       {DOCTOR_FIELDS.map(({ key, label }) => (
         <label key={key} className="flex flex-col gap-1">
           <span className="text-xs font-medium text-gray-500">{label}</span>
@@ -157,10 +164,10 @@ function DoctorForm({ form, setForm, hospitals, onSave, onCancel, editingId }) {
         </label>
       ))}
       <label className="flex flex-col gap-1">
-        <span className="text-xs font-medium text-gray-500">Hospital</span>
+        <span className="text-xs font-medium text-gray-500">Primary hospital or diagnostic centre</span>
         <select value={form.hospitalId ?? ''} onChange={e => setForm(f => ({ ...f, hospitalId: e.target.value }))}
           className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none">
-          <option value="">No hospital</option>
+          <option value="">No primary affiliation</option>
           {hospitals.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
         </select>
       </label>
