@@ -71,3 +71,33 @@ test('specialty/symptom entries: tags tidied, image an upload path or web addres
   assert.deepEqual(catalogEntry({ name: 'Fever', specialties: ['Medicine', 'Medicine', ''] }, { specialties: true }).specialties, ['Medicine']);
   assert.equal(slugify('ENT & Head Surgery'), 'ent-head-surgery');
 });
+
+test('site text edits: known languages, text keys, no empty text, FAQ as q/a pairs', async () => {
+  const { siteTextPatch } = await import('./adminFields.js');
+  assert.deepEqual(siteTextPatch({ en: { home_hero_title: 'Find a doctor', footer_demo: null } }), { en: { home_hero_title: 'Find a doctor', footer_demo: null } });
+  assert.deepEqual(siteTextPatch({ bn: { faq_items: [{ q: ' প্রশ্ন ', a: 'উত্তর' }] } }).bn.faq_items, [{ q: 'প্রশ্ন', a: 'উত্তর' }]);
+  assert.throws(() => siteTextPatch({ fr: {} }), /Unknown language/);
+  assert.throws(() => siteTextPatch({ en: { 'bad key': 'x' } }), /not a text key/);
+  assert.throws(() => siteTextPatch({ en: { home_hero_title: '  ' } }), /can't be empty/);
+  assert.throws(() => siteTextPatch({ en: { faq_items: [{ q: 'Q?', a: '' }] } }), /FAQ answer 1/);
+});
+
+test('home content needs every division once and labelled shortcuts', async () => {
+  const { homeContent, DIVISIONS } = await import('./adminFields.js');
+  const divisions = DIVISIONS.map(name => ({ name, bn: name, photo: `/landing/division-${name.toLowerCase()}.jpg`, alt: '' }));
+  const ok = homeContent({ popular_specialties: [{ slug: 'cardiology', en: 'Heart', bn: 'হৃদরোগ' }], common_problems: [], divisions });
+  assert.equal(ok.divisions.length, 8);
+  assert.equal(ok.divisions[0].alt, null);
+  assert.throws(() => homeContent({ popular_specialties: [], common_problems: [], divisions: divisions.slice(1) }), /8 divisions/);
+  assert.throws(() => homeContent({ popular_specialties: [{ slug: 'cardiology', en: 'Heart', bn: '' }], common_problems: [], divisions }), /Bangla label/);
+});
+
+test('contact numbers and photo credits', async () => {
+  const { contactNumbers, photoCredits } = await import('./adminFields.js');
+  assert.deepEqual(contactNumbers({ emergency: '999', health_line: '16263', hotline: '169 66' }), { emergency: '999', health_line: '16263', hotline: '16966' });
+  assert.throws(() => contactNumbers({ emergency: '', health_line: '16263', hotline: '16966' }), /Emergency number/);
+  const [c] = photoCredits([{ file: '/landing/a.jpg', caption: 'Lake', author: 'A', license: 'CC0', licenseUrl: '', source: 'https://commons.wikimedia.org/x' }]);
+  assert.equal(c.licenseUrl, null);
+  assert.equal(photoCredits([{ file: '/x.jpg', caption: 'Eye hospital', author: '', license: 'Public domain' }])[0].author, null);
+  assert.throws(() => photoCredits([{ file: '', caption: 'x', author: 'y', license: 'CC0' }]), /photo is required/);
+});

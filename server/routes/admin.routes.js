@@ -9,6 +9,7 @@ import {
 } from '../controllers/adminContent.controller.js';
 import { doctorPhotoUpload, hospitalPhotoUpload, catalogImageUpload } from '../upload.js';
 import * as catalog from '../controllers/catalog.controller.js';
+import { getSiteContent, updateSiteText, updateHomeContent, updateContacts, updatePhotoCredits, uploadSiteImage } from '../controllers/siteContent.controller.js';
 import { verifyToken, requireRole } from '../middleware/auth.js';
 
 const router = Router();
@@ -46,5 +47,11 @@ for (const kind of ['specialties', 'symptoms']) {
   router.post(`/${kind}/:id/photo`, catalogImageUpload.single('photo'), catalog.uploadImage(kind));
   router.delete(`/${kind}/:id/photo`, catalog.deleteImage(kind));
 }
+router.get('/site-content', getSiteContent);
+router.patch('/site-text', updateSiteText);
+router.put('/home-content', updateHomeContent);
+router.put('/contacts', updateContacts);
+router.put('/photo-credits', updatePhotoCredits);
+router.post('/site-images', catalogImageUpload.single('photo'), uploadSiteImage);
 
 export default router;

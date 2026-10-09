@@ -142,3 +142,99 @@ export function catalogEntry(body, { icon = false, specialties = false } = {}) {
 export function slugify(name) {
   return String(name).toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
+
+// ---- Site content (home page, site text, phone numbers, photo credits) ----
+
+export const DIVISIONS = ['Dhaka', 'Chattogram', 'Rajshahi', 'Khulna', 'Sylhet', 'Barishal', 'Rangpur', 'Mymensingh'];
+const TEXT_KEY = /^[a-z0-9_]{1,80}$/;
+const phone = (value, label) => {
+  const p = String(value ?? '').replace(/[\s-]/g, '');
+  if (!/^\+?\d{3,15}$/.test(p)) throw new Error(`${label} must be a phone number`);
+  return p;
+};
+const required = (value, label, max) => {
+  const v = text(value, max);
+  if (!v) throw new Error(`${label} is required`);
+  return v;
+};
+
+// Site text edits: { en: { key: "text" | null }, bn: { … } }, null meaning
+// "back to the built-in wording". The FAQ is a list of { q, a }.
+export function siteTextPatch(patch) {
+  const out = {};
+  for (const [lang, entries] of Object.entries(patch ?? {})) {
+    if (!['en', 'bn'].includes(lang)) throw new Error(`Unknown language "${lang}"`);
+    if (!entries || typeof entries !== 'object' || Array.isArray(entries)) throw new Error('Text edits must be grouped by key');
+    out[lang] = {};
+    for (const [key, value] of Object.entries(entries)) {
+      if (!TEXT_KEY.test(key)) throw new Error(`"${key}" is not a text key`);
+      if (value === null) out[lang][key] = null;
+      else if (key === 'faq_items') {
+        if (!Array.isArray(value) || value.length > 30) throw new Error('FAQ must be a list of up to 30 questions');
+        out[lang][key] = value.map((item, i) => ({ q: required(item?.q, `FAQ question ${i + 1}`, 300), a: required(item?.a, `FAQ answer ${i + 1}`, 2000) }));
+      } else {
+        if (typeof value !== 'string' || !value.trim()) throw new Error(`Text for "${key}" can't be empty; reset it instead`);
+        out[lang][key] = value.slice(0, 2000);
+      }
+    }
+  }
+  return out;
+}
+
+const shortcut = (item, label) => ({
+  slug: (() => { if (!SLUG.test(item?.slug ?? '')) throw new Error(`${label}: choose a page`); return item.slug; })(),
+  en: required(item.en, `${label} English label`, 40), bn: required(item.bn, `${label} Bangla label`, 40),
+});
+
+// The home page's picks: popular specialties, common problems, and a photo
+// for each division.
+export function homeContent(body) {
+  const list = (value, max, label) => {
+    if (!Array.isArray(value)) throw new Error(`${label} must be a list`);
+    if (value.length > max) throw new Error(`${label} can have at most ${max}`);
+    return value.map((item, i) => shortcut(item, `${label} ${i + 1}`));
+  };
+  if (!Array.isArray(body?.divisions) || body.divisions.length !== DIVISIONS.length
+    || DIVISIONS.some(name => !body.divisions.some(d => d?.name === name))) {
+    throw new Error('Divisions must list each of the 8 divisions once');
+  }
+  return {
+    popular_specialties: list(body.popular_specialties, 12, 'Popular specialty'),
+    common_problems: list(body.common_problems, 16, 'Common problem'),
+    divisions: DIVISIONS.map(name => {
+      const d = body.divisions.find(x => x.name === name);
+      return {
+        name, bn: required(d.bn, `${name} Bangla name`, 40),
+        photo: (() => { try { return imageRef(d.photo); } catch { throw new Error(`${name} photo must be an upload or a web address`); } })(),
+        alt: text(d.alt, 160),
+      };
+    }),
+  };
+}
+
+export function contactNumbers(body) {
+  return {
+    emergency: phone(body?.emergency, 'Emergency number'),
+    health_line: phone(body?.health_line, 'Health advice number'),
+    hotline: phone(body?.hotline, 'Cura hotline'),
+  };
+}
+
+const link = (value, label) => { try { return sourceUrl(value); } catch { throw new Error(`${label} must be a full web address (https://…)`); } };
+
+// Attribution for photos used on the site (CC licences require it).
+export function photoCredits(list) {
+  if (!Array.isArray(list) || list.length > 300) throw new Error('Photo credits must be a list');
+  return list.map((c, i) => {
+    const label = `Credit ${i + 1}`;
+    let file;
+    try { file = imageRef(c?.file); } catch { throw new Error(`${label}: photo must be an upload or a web address`); }
+    if (!file) throw new Error(`${label}: photo is required`);
+    return {
+      // Public-domain photos may have no known author.
+      file, caption: required(c.caption, `${label} caption`, 160), author: text(c.author, 120),
+      license: required(c.license, `${label} licence`, 60), licenseUrl: link(c.licenseUrl, `${label} licence link`),
+      source: link(c.source, `${label} source`), changes: text(c.changes, 120),
+    };
+  });
+}

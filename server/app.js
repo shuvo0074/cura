@@ -12,6 +12,7 @@ import { errorHandler } from './middleware/errorHandler.js';
 import { httpLogger } from './logger.js';
 import { listAmbulances } from './controllers/ambulances.controller.js';
 import { listPublic } from './controllers/catalog.controller.js';
+import { getSiteContent } from './controllers/siteContent.controller.js';
 
 export const app = express();
 
@@ -25,6 +26,7 @@ app.get('/api/health', (_req, res) => res.json({ ok: true }));
 app.get('/api/ambulances', listAmbulances);
 app.get('/api/specialties', listPublic('specialties'));
 app.get('/api/symptoms', listPublic('symptoms'));
+app.get('/api/site-content', getSiteContent);
 app.use('/api/doctors/me', doctorMeRoutes);
 app.use('/api/doctors', doctorsRoutes);
 app.use('/api/hospitals', hospitalsRoutes);

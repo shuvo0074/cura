@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Construction } from 'lucide-react';
 import { FilterProvider } from './context/FilterContext';
+import { SiteContentProvider } from './context/SiteContentContext';
 import { AuthProvider } from './context/AuthContext';
 import GlobalHeader from './components/layout/GlobalHeader';
 import Footer from './components/layout/Footer';
@@ -53,6 +54,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <SiteContentProvider>
         <FilterProvider>
           <GlobalHeader />
           <main className="app-container pt-4 pb-6 sm:pt-6">
@@ -79,6 +81,9 @@ export default function App() {
               <Route path="/admin/appointments" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
               <Route path="/admin/specialties" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
               <Route path="/admin/symptoms" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
+              <Route path="/admin/home-page" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
+              <Route path="/admin/site-text" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
+              <Route path="/admin/photo-credits" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
               <Route path="/admin/ambulances" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
               <Route path="/admin/sample-prices" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
               <Route path="/doctor-dashboard" element={<ProtectedRoute role="doctor"><DoctorDashboardPage /></ProtectedRoute>} />
@@ -90,6 +95,7 @@ export default function App() {
           </main>
           <Footer />
         </FilterProvider>
+        </SiteContentProvider>
       </AuthProvider>
     </BrowserRouter>
   );

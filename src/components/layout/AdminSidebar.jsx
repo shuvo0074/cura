@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Building2, UserRound, CalendarCheck, Ambulance, Tags, Stethoscope, Thermometer } from 'lucide-react';
+import { LayoutDashboard, Building2, UserRound, CalendarCheck, Ambulance, Tags, Stethoscope, Thermometer, House, Languages, Images } from 'lucide-react';
 
 const NAV_ITEMS = [
   { path: '/admin/hospitals',    label: 'Hospitals',     icon: Building2 },
@@ -8,6 +8,9 @@ const NAV_ITEMS = [
   { path: '/admin/symptoms',     label: 'Symptoms',      icon: Thermometer },
   { path: '/admin/ambulances',   label: 'Ambulances',    icon: Ambulance },
   { path: '/admin/sample-prices', label: 'Sample prices', icon: Tags },
+  { path: '/admin/home-page',    label: 'Home page',     icon: House },
+  { path: '/admin/site-text',    label: 'Site text',     icon: Languages },
+  { path: '/admin/photo-credits', label: 'Photo credits', icon: Images },
   { path: '/admin/appointments', label: 'Appointments',  icon: CalendarCheck },
 ];
 
