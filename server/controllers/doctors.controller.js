@@ -4,7 +4,7 @@ import { bookingBlocker, dhakaNow, estimatedArrival, parseSessionTime } from '..
 
 // Columns safe to expose publicly. Never select d.* in a public endpoint:
 // the doctors table also holds login credentials (email, password_hash).
-const PUBLIC_DOCTOR_COLUMNS = `d.id, d.name, d.gender, d.specialty, d.department, d.experience, d.chamber, d.fees, d.followup_fees, d.workplace,
+const PUBLIC_DOCTOR_COLUMNS = `d.id, d.name, d.gender, d.gender_is_demo, d.specialty, d.department, d.experience, d.chamber, d.fees, d.followup_fees, d.workplace,
   d.city, d.division, d.hospital_id, d.phone, d.photo, d.rating, d.about, d.lat, d.lng, d.website,
   d.source_url, d.verified_on, d.share_count, d.bmdc_no, d.education, d.languages, d.consulting_hours, d.address,
   d.clinical_expertise, d.treatments, d.weekly_schedule`;

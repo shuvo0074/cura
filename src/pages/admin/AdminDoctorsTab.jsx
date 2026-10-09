@@ -154,8 +154,7 @@ function DoctorForm({ form, setForm, hospitals, onSave, onCancel, editingId }) {
         )}
       </div>
 
-      <DoctorChambersFields entries={form.weeklySchedule ?? []} hospitals={hospitals} onChange={weeklySchedule => setForm(f => ({ ...f, weeklySchedule }))} />
-      <label className="flex flex-col gap-1"><span className="text-xs font-medium text-gray-500">Gender</span>
+      <label className="col-span-full flex flex-col gap-1 rounded-xl border border-primary/20 bg-primary/5 p-3"><span className="text-sm font-semibold text-primary">Doctor gender</span>
         <select value={form.gender ?? ''} onChange={event => setForm(f => ({ ...f, gender: event.target.value }))} className="border border-gray-200 rounded-lg px-3 py-2 text-sm">
           <option value="">Not specified</option><option value="female">Female</option><option value="male">Male</option>
         </select>
@@ -168,6 +167,7 @@ function DoctorForm({ form, setForm, hospitals, onSave, onCancel, editingId }) {
             className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none" />
         </label>
       ))}
+      <DoctorChambersFields entries={form.weeklySchedule ?? []} hospitals={hospitals} onChange={weeklySchedule => setForm(f => ({ ...f, weeklySchedule }))} />
       <label className="flex flex-col gap-1">
         <span className="text-xs font-medium text-gray-500">Primary hospital or diagnostic centre</span>
         <select value={form.hospitalId ?? ''} onChange={e => setForm(f => ({ ...f, hospitalId: e.target.value }))}
@@ -312,6 +312,7 @@ export default function AdminDoctorsTab() {
                 <div className="min-w-0">
                   <p className="font-medium text-gray-800 truncate">{d.name}</p>
                   <p className="text-xs text-gray-500 truncate">{d.specialty} · {d.hospital_name || 'No hospital'}</p>
+                  <p className="text-xs text-primary">Gender: {d.gender === 'female' ? 'Female' : d.gender === 'male' ? 'Male' : 'Not specified'}{d.gender_is_demo ? ' · Sample data' : ''}</p>
                 </div>
               </div>
               <Pencil size={16} className="text-gray-400 flex-shrink-0 ml-2" />

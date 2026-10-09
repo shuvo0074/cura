@@ -1,0 +1,2002 @@
+[
+  {
+    "name": "Dr. Arif Khan",
+    "specialty": "ENT"
+  },
+  {
+    "name": "Dr. Fatema Begum",
+    "specialty": "Cardiology"
+  },
+  {
+    "name": "Dr. Rahim Uddin",
+    "specialty": "Pediatrics"
+  },
+  {
+    "name": "Dr. Nusrat Jahan",
+    "specialty": "Gynecology"
+  },
+  {
+    "name": "Dr. Kamal Hossain",
+    "specialty": "General Physician"
+  },
+  {
+    "name": "Dr. Sumaiya Islam",
+    "specialty": "Dermatology"
+  },
+  {
+    "name": "Dr. Mahmuda Kabir",
+    "specialty": "Pediatrics"
+  },
+  {
+    "name": "Dr. Anwar Akhtar",
+    "specialty": "Urology"
+  },
+  {
+    "name": "Dr. Anwar Hossain",
+    "specialty": "Pulmonology"
+  },
+  {
+    "name": "Dr. Farhana Sheikh",
+    "specialty": "Gastroenterology"
+  },
+  {
+    "name": "Dr. Masud Bhuiyan",
+    "specialty": "Pediatrics"
+  },
+  {
+    "name": "Dr. Mahmudul Ahmed",
+    "specialty": "Ophthalmology"
+  },
+  {
+    "name": "Dr. Jesmin Karim",
+    "specialty": "Emergency Medicine"
+  },
+  {
+    "name": "Dr. Nurul Chowdhury",
+    "specialty": "Plastic Surgery"
+  },
+  {
+    "name": "Dr. Rezwan Alam",
+    "specialty": "Cardiology"
+  },
+  {
+    "name": "Dr. Rehana Begum",
+    "specialty": "Infectious Diseases"
+  },
+  {
+    "name": "Dr. Nazrul Begum",
+    "specialty": "Bariatric Surgery"
+  },
+  {
+    "name": "Dr. Milton Biswas",
+    "specialty": "Infectious Diseases"
+  },
+  {
+    "name": "Dr. Nazma Majumder",
+    "specialty": "Neurology"
+  },
+  {
+    "name": "Dr. Nazma Kabir",
+    "specialty": "Hematology"
+  },
+  {
+    "name": "Dr. Imran Haque",
+    "specialty": "Urology"
+  },
+  {
+    "name": "Dr. Mahbub Sikder",
+    "specialty": "Hematology"
+  },
+  {
+    "name": "Dr. Mahmudul Bhuiyan",
+    "specialty": "Nephrology"
+  },
+  {
+    "name": "Dr. Kamruzzaman Anwar",
+    "specialty": "Pulmonology"
+  },
+  {
+    "name": "Dr. Selim Khan",
+    "specialty": "Infectious Diseases"
+  },
+  {
+    "name": "Dr. Selina Mollah",
+    "specialty": "Cardiology"
+  },
+  {
+    "name": "Dr. Monirul Kabir",
+    "specialty": "Nutrition & Dietetics"
+  },
+  {
+    "name": "Dr. Rashed Karim",
+    "specialty": "Cardiology"
+  },
+  {
+    "name": "Dr. Yusuf Mollah",
+    "specialty": "Pediatrics"
+  },
+  {
+    "name": "Dr. Farhana Anwar",
+    "specialty": "Radiology"
+  },
+  {
+    "name": "Dr. Shahidul Biswas",
+    "specialty": "Bariatric Surgery"
+  },
+  {
+    "name": "Dr. Jahangir Ali",
+    "specialty": "Hematology"
+  },
+  {
+    "name": "Dr. Jamil Anwar",
+    "specialty": "Pulmonology"
+  },
+  {
+    "name": "Dr. Golam Majumder",
+    "specialty": "Endocrinology"
+  },
+  {
+    "name": "Dr. Musa Begum",
+    "specialty": "Pulmonology"
+  },
+  {
+    "name": "Dr. Faruk Majumder",
+    "specialty": "Dentistry"
+  },
+  {
+    "name": "Dr. Shafiqul Islam",
+    "specialty": "Ophthalmology"
+  },
+  {
+    "name": "Dr. Kamal Talukder",
+    "specialty": "General Physician"
+  },
+  {
+    "name": "Dr. Dilruba Anwar",
+    "specialty": "Cardiology"
+  },
+  {
+    "name": "Dr. Masud Akhtar",
+    "specialty": "Ophthalmology"
+  },
+  {
+    "name": "Dr. Kamal Anwar",
+    "specialty": "Bariatric Surgery"
+  },
+  {
+    "name": "Dr. Selim Aziz",
+    "specialty": "General Physician"
+  },
+  {
+    "name": "Dr. Marufa Rahman",
+    "specialty": "Cardiology"
+  },
+  {
+    "name": "Dr. Monirul Bhuiyan",
+    "specialty": "Geriatric Medicine"
+  },
+  {
+    "name": "Dr. Zahid Talukder",
+    "specialty": "Plastic Surgery"
+  },
+  {
+    "name": "Dr. Rowshanara Ahmed",
+    "specialty": "Gynecology"
+  },
+  {
+    "name": "Dr. Rahim Hossain",
+    "specialty": "Neurology"
+  },
+  {
+    "name": "Dr. Masud Alam",
+    "specialty": "Radiology"
+  },
+  {
+    "name": "Dr. Zakir Anwar",
+    "specialty": "Ophthalmology"
+  },
+  {
+    "name": "Dr. Selim Anwar",
+    "specialty": "Ophthalmology"
+  },
+  {
+    "name": "Dr. Kamrun Hasan",
+    "specialty": "ENT"
+  },
+  {
+    "name": "Dr. Mahbub Biswas",
+    "specialty": "Geriatric Medicine"
+  },
+  {
+    "name": "Dr. Rubina Alam",
+    "specialty": "Ophthalmology"
+  },
+  {
+    "name": "Dr. Milton Begum",
+    "specialty": "Nutrition & Dietetics"
+  },
+  {
+    "name": "Dr. Delwar Khan",
+    "specialty": "Infectious Diseases"
+  },
+  {
+    "name": "Dr. Dilruba Ahmed",
+    "specialty": "ENT"
+  },
+  {
+    "name": "Dr. Aktar Hasan",
+    "specialty": "Critical Care"
+  },
+  {
+    "name": "Dr. Sohrab Majumder",
+    "specialty": "Ophthalmology"
+  },
+  {
+    "name": "Dr. Aminul Uddin",
+    "specialty": "Emergency Medicine"
+  },
+  {
+    "name": "Dr. Shathi Sheikh",
+    "specialty": "Rheumatology"
+  },
+  {
+    "name": "Dr. Rubina Anwar",
+    "specialty": "Nephrology"
+  },
+  {
+    "name": "Dr. Ripon Hossain",
+    "specialty": "Emergency Medicine"
+  },
+  {
+    "name": "Dr. Fatema Majumder",
+    "specialty": "Dentistry"
+  },
+  {
+    "name": "Dr. Jalal Mollah",
+    "specialty": "Physiotherapy"
+  },
+  {
+    "name": "Dr. Sultana Akhtar",
+    "specialty": "Dentistry"
+  },
+  {
+    "name": "Dr. Rowshanara Bhuiyan",
+    "specialty": "Pediatrics"
+  },
+  {
+    "name": "Dr. Monirul Islam",
+    "specialty": "Dentistry"
+  },
+  {
+    "name": "Dr. Harun Rahman",
+    "specialty": "Orthopaedics"
+  },
+  {
+    "name": "Dr. Poly Islam",
+    "specialty": "Orthopaedics"
+  },
+  {
+    "name": "Dr. Mostafa Anwar",
+    "specialty": "Bariatric Surgery"
+  },
+  {
+    "name": "Dr. Shafiqul Hasan",
+    "specialty": "Emergency Medicine"
+  },
+  {
+    "name": "Dr. Rafiqul Kabir",
+    "specialty": "Ophthalmology"
+  },
+  {
+    "name": "Dr. Ismat Pramanik",
+    "specialty": "Cardiology"
+  },
+  {
+    "name": "Dr. Faruk Uddin",
+    "specialty": "Geriatric Medicine"
+  },
+  {
+    "name": "Dr. Farida Haque",
+    "specialty": "Plastic Surgery"
+  },
+  {
+    "name": "Dr. Faruk Sarkar",
+    "specialty": "Emergency Medicine"
+  },
+  {
+    "name": "Dr. Rokeya Karim",
+    "specialty": "ENT"
+  },
+  {
+    "name": "Dr. Rowshanara Sikder",
+    "specialty": "Pathology"
+  },
+  {
+    "name": "Dr. Faruk Bhuiyan",
+    "specialty": "Radiology"
+  },
+  {
+    "name": "Dr. Fatema Biswas",
+    "specialty": "Psychiatry"
+  },
+  {
+    "name": "Dr. Iqbal Biswas",
+    "specialty": "Bariatric Surgery"
+  },
+  {
+    "name": "Dr. Ashiqur Sheikh",
+    "specialty": "Dentistry"
+  },
+  {
+    "name": "Dr. Sultana Sarkar",
+    "specialty": "Critical Care"
+  },
+  {
+    "name": "Dr. Golam Sikder",
+    "specialty": "Neurology"
+  },
+  {
+    "name": "Dr. Rehana Pramanik",
+    "specialty": "Rheumatology"
+  },
+  {
+    "name": "Dr. Fatema Uddin",
+    "specialty": "Cardiology"
+  },
+  {
+    "name": "Dr. Masud Mollah",
+    "specialty": "Endocrinology"
+  },
+  {
+    "name": "Dr. Momtaz Ahmed",
+    "specialty": "Nutrition & Dietetics"
+  },
+  {
+    "name": "Dr. Rezaul Biswas",
+    "specialty": "ENT"
+  },
+  {
+    "name": "Dr. Monirul Sikder",
+    "specialty": "Radiology"
+  },
+  {
+    "name": "Dr. Golam Biswas",
+    "specialty": "Dentistry"
+  },
+  {
+    "name": "Dr. Moinul Mollah",
+    "specialty": "Rheumatology"
+  },
+  {
+    "name": "Dr. Sumaiya Hossain",
+    "specialty": "Emergency Medicine"
+  },
+  {
+    "name": "Dr. Kabir Haque",
+    "specialty": "Emergency Medicine"
+  },
+  {
+    "name": "Dr. Kamrun Biswas",
+    "specialty": "Urology"
+  },
+  {
+    "name": "Dr. Mostafa Pramanik",
+    "specialty": "Pediatrics"
+  },
+  {
+    "name": "Dr. Tanzim Anwar",
+    "specialty": "Rheumatology"
+  },
+  {
+    "name": "Dr. Jamil Uddin",
+    "specialty": "Neurology"
+  },
+  {
+    "name": "Dr. Anwar Aziz",
+    "specialty": "Orthopaedics"
+  },
+  {
+    "name": "Dr. Jalal Kabir",
+    "specialty": "Psychiatry"
+  },
+  {
+    "name": "Dr. Shabnam Haque",
+    "specialty": "Gynecology"
+  },
+  {
+    "name": "Dr. Badrul Islam",
+    "specialty": "Pediatrics"
+  },
+  {
+    "name": "Dr. Rehana Mollah",
+    "specialty": "Hematology"
+  },
+  {
+    "name": "Dr. Rezaul Majumder",
+    "specialty": "Pulmonology"
+  },
+  {
+    "name": "Dr. Israt Sheikh",
+    "specialty": "Radiology"
+  },
+  {
+    "name": "Dr. Kamruzzaman Biswas",
+    "specialty": "Physiotherapy"
+  },
+  {
+    "name": "Dr. Mostafa Hossain",
+    "specialty": "ENT"
+  },
+  {
+    "name": "Dr. Zakir Khan",
+    "specialty": "Emergency Medicine"
+  },
+  {
+    "name": "Dr. Tania Begum",
+    "specialty": "Psychiatry"
+  },
+  {
+    "name": "Dr. Rashed Islam",
+    "specialty": "Dermatology"
+  },
+  {
+    "name": "Dr. Sumaiya Alam",
+    "specialty": "General Physician"
+  },
+  {
+    "name": "Dr. Iqbal Mollah",
+    "specialty": "Pulmonology"
+  },
+  {
+    "name": "Dr. Laila Islam",
+    "specialty": "Dermatology"
+  },
+  {
+    "name": "Dr. Moinul Aziz",
+    "specialty": "Geriatric Medicine"
+  },
+  {
+    "name": "Dr. Saiful Majumder",
+    "specialty": "Dermatology"
+  },
+  {
+    "name": "Dr. Bilkis Sarkar",
+    "specialty": "Pulmonology"
+  },
+  {
+    "name": "Dr. Rubina Kabir",
+    "specialty": "Emergency Medicine"
+  },
+  {
+    "name": "Dr. Ruksana Karim",
+    "specialty": "Gastroenterology"
+  },
+  {
+    "name": "Dr. Iqbal Sheikh",
+    "specialty": "ENT"
+  },
+  {
+    "name": "Dr. Saiful Akhtar",
+    "specialty": "General Surgery"
+  },
+  {
+    "name": "Dr. Shabnam Alam",
+    "specialty": "Critical Care"
+  },
+  {
+    "name": "Dr. Afsana Karim",
+    "specialty": "Psychiatry"
+  },
+  {
+    "name": "Dr. Mahbub Aziz",
+    "specialty": "Neurology"
+  },
+  {
+    "name": "Dr. Alamgir Talukder",
+    "specialty": "Neurology"
+  },
+  {
+    "name": "Dr. Farida Ahmed",
+    "specialty": "Neurology"
+  },
+  {
+    "name": "Dr. Selina Bhuiyan",
+    "specialty": "Pediatrics"
+  },
+  {
+    "name": "Dr. Anwar Islam",
+    "specialty": "Gynecology"
+  },
+  {
+    "name": "Dr. Enamul Majumder",
+    "specialty": "Nephrology"
+  },
+  {
+    "name": "Dr. Tariqul Alam",
+    "specialty": "Physiotherapy"
+  },
+  {
+    "name": "Dr. Mostafa Karim",
+    "specialty": "Bariatric Surgery"
+  },
+  {
+    "name": "Dr. Shathi Rahman",
+    "specialty": "Pathology"
+  },
+  {
+    "name": "Dr. Jahangir Ahmed",
+    "specialty": "Nephrology"
+  },
+  {
+    "name": "Dr. Kamruzzaman Chowdhury",
+    "specialty": "Endocrinology"
+  },
+  {
+    "name": "Dr. Nusrat Hossain",
+    "specialty": "Oncology"
+  },
+  {
+    "name": "Dr. Selim Sarkar",
+    "specialty": "Emergency Medicine"
+  },
+  {
+    "name": "Dr. Ashraf Chowdhury",
+    "specialty": "General Physician"
+  },
+  {
+    "name": "Dr. Sultana Miah",
+    "specialty": "Rheumatology"
+  },
+  {
+    "name": "Dr. Shathi Anwar",
+    "specialty": "Urology"
+  },
+  {
+    "name": "Dr. Shakil Haque",
+    "specialty": "Infectious Diseases"
+  },
+  {
+    "name": "Dr. Firoz Hasan",
+    "specialty": "Radiology"
+  },
+  {
+    "name": "Dr. Sohrab Uddin",
+    "specialty": "Nutrition & Dietetics"
+  },
+  {
+    "name": "Dr. Shahana Begum",
+    "specialty": "Orthopaedics"
+  },
+  {
+    "name": "Dr. Kabir Kabir",
+    "specialty": "Dentistry"
+  },
+  {
+    "name": "Dr. Sohrab Akhtar",
+    "specialty": "Gastroenterology"
+  },
+  {
+    "name": "Dr. Monirul Pramanik",
+    "specialty": "General Physician"
+  },
+  {
+    "name": "Dr. Shahana Rahman",
+    "specialty": "Infectious Diseases"
+  },
+  {
+    "name": "Dr. Ismat Hasan",
+    "specialty": "Bariatric Surgery"
+  },
+  {
+    "name": "Dr. Kohinoor Hossain",
+    "specialty": "Emergency Medicine"
+  },
+  {
+    "name": "Dr. Golam Rahman",
+    "specialty": "Pathology"
+  },
+  {
+    "name": "Dr. Sumaiya Anwar",
+    "specialty": "Critical Care"
+  },
+  {
+    "name": "Dr. Ferdousi Aziz",
+    "specialty": "Pulmonology"
+  },
+  {
+    "name": "Dr. Jahangir Sarkar",
+    "specialty": "Infectious Diseases"
+  },
+  {
+    "name": "Dr. Badrul Miah",
+    "specialty": "Urology"
+  },
+  {
+    "name": "Dr. Shamsul Aziz",
+    "specialty": "Urology"
+  },
+  {
+    "name": "Dr. Rina Talukder",
+    "specialty": "Psychiatry"
+  },
+  {
+    "name": "Dr. Yusuf Anwar",
+    "specialty": "Emergency Medicine"
+  },
+  {
+    "name": "Dr. Mostafa Sarkar",
+    "specialty": "Critical Care"
+  },
+  {
+    "name": "Dr. Shahidul Rahman",
+    "specialty": "Rheumatology"
+  },
+  {
+    "name": "Dr. Rezaul Pramanik",
+    "specialty": "Urology"
+  },
+  {
+    "name": "Dr. Marufa Hasan",
+    "specialty": "Urology"
+  },
+  {
+    "name": "Dr. Moinul Talukder",
+    "specialty": "Infectious Diseases"
+  },
+  {
+    "name": "Dr. Yusuf Hossain",
+    "specialty": "Pathology"
+  },
+  {
+    "name": "Dr. Yasmin Alam",
+    "specialty": "Psychiatry"
+  },
+  {
+    "name": "Dr. Nusrat Ahmed",
+    "specialty": "Gynecology"
+  },
+  {
+    "name": "Dr. Firoz Biswas",
+    "specialty": "Physiotherapy"
+  },
+  {
+    "name": "Dr. Fatema Anwar",
+    "specialty": "Critical Care"
+  },
+  {
+    "name": "Dr. Ferdousi Anwar",
+    "specialty": "Urology"
+  },
+  {
+    "name": "Dr. Tariqul Majumder",
+    "specialty": "Neurology"
+  },
+  {
+    "name": "Dr. Yasmin Bhuiyan",
+    "specialty": "Ophthalmology"
+  },
+  {
+    "name": "Dr. Nasrin Hossain",
+    "specialty": "Pulmonology"
+  },
+  {
+    "name": "Dr. Selina Talukder",
+    "specialty": "Urology"
+  },
+  {
+    "name": "Dr. Monirul Chowdhury",
+    "specialty": "Nephrology"
+  },
+  {
+    "name": "Dr. Aktar Mollah",
+    "specialty": "Psychiatry"
+  },
+  {
+    "name": "Dr. Sohel Haque",
+    "specialty": "Plastic Surgery"
+  },
+  {
+    "name": "Dr. Jamil Sarkar",
+    "specialty": "Psychiatry"
+  },
+  {
+    "name": "Dr. Sohrab Khan",
+    "specialty": "Hematology"
+  },
+  {
+    "name": "Dr. Selina Akhtar",
+    "specialty": "Endocrinology"
+  },
+  {
+    "name": "Dr. Milton Sikder",
+    "specialty": "Pulmonology"
+  },
+  {
+    "name": "Dr. Aktar Alam",
+    "specialty": "Radiology"
+  },
+  {
+    "name": "Dr. Laila Majumder",
+    "specialty": "Cardiology"
+  },
+  {
+    "name": "Dr. Tanzim Akhtar",
+    "specialty": "Bariatric Surgery"
+  },
+  {
+    "name": "Dr. Rina Uddin",
+    "specialty": "Plastic Surgery"
+  },
+  {
+    "name": "Dr. Aminul Haque",
+    "specialty": "Neurology"
+  },
+  {
+    "name": "Dr. Aminul Sarkar",
+    "specialty": "Nutrition & Dietetics"
+  },
+  {
+    "name": "Dr. Mamun Anwar",
+    "specialty": "Gynecology"
+  },
+  {
+    "name": "Dr. Faruk Aziz",
+    "specialty": "Ophthalmology"
+  },
+  {
+    "name": "Dr. Kamruzzaman Miah",
+    "specialty": "Infectious Diseases"
+  },
+  {
+    "name": "Dr. Rubel Aziz",
+    "specialty": "Rheumatology"
+  },
+  {
+    "name": "Dr. Runa Alam",
+    "specialty": "Radiology"
+  },
+  {
+    "name": "Dr. Jamil Hasan",
+    "specialty": "Plastic Surgery"
+  },
+  {
+    "name": "Dr. Runa Begum",
+    "specialty": "Psychiatry"
+  },
+  {
+    "name": "Dr. Nasir Hossain",
+    "specialty": "General Physician"
+  },
+  {
+    "name": "Dr. Ashiqur Chowdhury",
+    "specialty": "Geriatric Medicine"
+  },
+  {
+    "name": "Dr. Tariqul Miah",
+    "specialty": "Infectious Diseases"
+  },
+  {
+    "name": "Dr. Nazrul Aziz",
+    "specialty": "Neurology"
+  },
+  {
+    "name": "Dr. Rokeya Haque",
+    "specialty": "Neurology"
+  },
+  {
+    "name": "Dr. Mostafa Islam",
+    "specialty": "ENT"
+  },
+  {
+    "name": "Dr. Parvin Biswas",
+    "specialty": "ENT"
+  },
+  {
+    "name": "Dr. Ashraf Sikder",
+    "specialty": "Hematology"
+  },
+  {
+    "name": "Dr. Rehana Hossain",
+    "specialty": "Cardiology"
+  },
+  {
+    "name": "Dr. Mahbub Sarkar",
+    "specialty": "Urology"
+  },
+  {
+    "name": "Dr. Shabnam Sikder",
+    "specialty": "Critical Care"
+  },
+  {
+    "name": "Dr. Milton Hasan",
+    "specialty": "Pathology"
+  },
+  {
+    "name": "Dr. Shahana Sikder",
+    "specialty": "Bariatric Surgery"
+  },
+  {
+    "name": "Dr. Nazrul Chowdhury",
+    "specialty": "Geriatric Medicine"
+  },
+  {
+    "name": "Dr. Munni Rahman",
+    "specialty": "Neurology"
+  },
+  {
+    "name": "Dr. Halima Hossain",
+    "specialty": "Nutrition & Dietetics"
+  },
+  {
+    "name": "Dr. Anwar Khan",
+    "specialty": "General Physician"
+  },
+  {
+    "name": "Dr. Afsana Hossain",
+    "specialty": "Oncology"
+  },
+  {
+    "name": "Dr. Jamil Sikder",
+    "specialty": "Cardiology"
+  },
+  {
+    "name": "Dr. Farida Hasan",
+    "specialty": "Nutrition & Dietetics"
+  },
+  {
+    "name": "Dr. Jalal Pramanik",
+    "specialty": "Nutrition & Dietetics"
+  },
+  {
+    "name": "Dr. Shahidul Alam",
+    "specialty": "Rheumatology"
+  },
+  {
+    "name": "Dr. Momtaz Begum",
+    "specialty": "Plastic Surgery"
+  },
+  {
+    "name": "Dr. Anwar Ahmed",
+    "specialty": "Nutrition & Dietetics"
+  },
+  {
+    "name": "Dr. Momtaz Haque",
+    "specialty": "Dermatology"
+  },
+  {
+    "name": "Dr. Rina Sarkar",
+    "specialty": "Bariatric Surgery"
+  },
+  {
+    "name": "Dr. Marufa Hossain",
+    "specialty": "Gynecology"
+  },
+  {
+    "name": "Dr. Alamgir Pramanik",
+    "specialty": "Orthopaedics"
+  },
+  {
+    "name": "Dr. Nurul Alam",
+    "specialty": "Gynecology"
+  },
+  {
+    "name": "Dr. Yasmin Ali",
+    "specialty": "Neurology"
+  },
+  {
+    "name": "Dr. Jahangir Chowdhury",
+    "specialty": "ENT"
+  },
+  {
+    "name": "Dr. Mizanur Ali",
+    "specialty": "Geriatric Medicine"
+  },
+  {
+    "name": "Dr. Tariqul Akhtar",
+    "specialty": "Critical Care"
+  },
+  {
+    "name": "Dr. Shakil Aziz",
+    "specialty": "Dentistry"
+  },
+  {
+    "name": "Dr. Iqbal Miah",
+    "specialty": "Radiology"
+  },
+  {
+    "name": "Dr. Shahidul Miah",
+    "specialty": "Dermatology"
+  },
+  {
+    "name": "Dr. Rashed Sikder",
+    "specialty": "Hematology"
+  },
+  {
+    "name": "Dr. Mamun Sikder",
+    "specialty": "Urology"
+  },
+  {
+    "name": "Dr. Shirina Anwar",
+    "specialty": "Dentistry"
+  },
+  {
+    "name": "Dr. Poly Uddin",
+    "specialty": "Psychiatry"
+  },
+  {
+    "name": "Dr. Anwar Sarkar",
+    "specialty": "Hematology"
+  },
+  {
+    "name": "Dr. Sabbir Biswas",
+    "specialty": "Pathology"
+  },
+  {
+    "name": "Dr. Nurul Pramanik",
+    "specialty": "General Physician"
+  },
+  {
+    "name": "Dr. Shathi Talukder",
+    "specialty": "Pulmonology"
+  },
+  {
+    "name": "Dr. Tanvir Kabir",
+    "specialty": "Plastic Surgery"
+  },
+  {
+    "name": "Dr. Rubel Khan",
+    "specialty": "Psychiatry"
+  },
+  {
+    "name": "Dr. Jamil Kabir",
+    "specialty": "Rheumatology"
+  },
+  {
+    "name": "Dr. Wahid Ahmed",
+    "specialty": "Rheumatology"
+  },
+  {
+    "name": "Dr. Momtaz Hasan",
+    "specialty": "Pulmonology"
+  },
+  {
+    "name": "Dr. Shamsul Sikder",
+    "specialty": "Physiotherapy"
+  },
+  {
+    "name": "Dr. Rowshan Hasan",
+    "specialty": "Rheumatology"
+  },
+  {
+    "name": "Dr. Kamal Sheikh",
+    "specialty": "Nephrology"
+  },
+  {
+    "name": "Dr. Mahbub Kabir",
+    "specialty": "Pediatrics"
+  },
+  {
+    "name": "Dr. Golam Alam",
+    "specialty": "Hematology"
+  },
+  {
+    "name": "Dr. Moinul Miah",
+    "specialty": "Rheumatology"
+  },
+  {
+    "name": "Dr. Nusrat Mollah",
+    "specialty": "Radiology"
+  },
+  {
+    "name": "Dr. Halima Anwar",
+    "specialty": "Nephrology"
+  },
+  {
+    "name": "Dr. Rezwan Khan",
+    "specialty": "Rheumatology"
+  },
+  {
+    "name": "Dr. Wahid Chowdhury",
+    "specialty": "Urology"
+  },
+  {
+    "name": "Dr. Bilkis Alam",
+    "specialty": "Pulmonology"
+  },
+  {
+    "name": "Dr. Musa Hasan",
+    "specialty": "Emergency Medicine"
+  },
+  {
+    "name": "Dr. Sabina Sikder",
+    "specialty": "Pathology"
+  },
+  {
+    "name": "Dr. Monirul Miah",
+    "specialty": "Ophthalmology"
+  },
+  {
+    "name": "Dr. Farida Khan",
+    "specialty": "Dentistry"
+  },
+  {
+    "name": "Dr. Sabina Chowdhury",
+    "specialty": "Cardiology"
+  },
+  {
+    "name": "Dr. Arif Islam",
+    "specialty": "Hematology"
+  },
+  {
+    "name": "Dr. Delwar Ali",
+    "specialty": "Emergency Medicine"
+  },
+  {
+    "name": "Dr. Fatema Rahman",
+    "specialty": "Pediatrics"
+  },
+  {
+    "name": "Dr. Nasir Miah",
+    "specialty": "Oncology"
+  },
+  {
+    "name": "Dr. Yusuf Hasan",
+    "specialty": "Urology"
+  },
+  {
+    "name": "Dr. Rezaul Karim",
+    "specialty": "Hematology"
+  },
+  {
+    "name": "Dr. Kamruzzaman Sarkar",
+    "specialty": "Pediatrics"
+  },
+  {
+    "name": "Dr. Fatema Bhuiyan",
+    "specialty": "Nephrology"
+  },
+  {
+    "name": "Dr. Arif Mollah",
+    "specialty": "Dermatology"
+  },
+  {
+    "name": "Dr. Tariqul Khan",
+    "specialty": "Radiology"
+  },
+  {
+    "name": "Dr. Saiful Mollah",
+    "specialty": "Plastic Surgery"
+  },
+  {
+    "name": "Dr. Ashiqur Rahman",
+    "specialty": "Gynecology"
+  },
+  {
+    "name": "Dr. Shakil Khan",
+    "specialty": "Critical Care"
+  },
+  {
+    "name": "Dr. Delwar Mollah",
+    "specialty": "Oncology"
+  },
+  {
+    "name": "Dr. Harun Pramanik",
+    "specialty": "ENT"
+  },
+  {
+    "name": "Dr. Momtaz Alam",
+    "specialty": "Bariatric Surgery"
+  },
+  {
+    "name": "Dr. Tahmina Bhuiyan",
+    "specialty": "Neurology"
+  },
+  {
+    "name": "Dr. Nurul Begum",
+    "specialty": "Dentistry"
+  },
+  {
+    "name": "Dr. Mahmuda Sikder",
+    "specialty": "Hematology"
+  },
+  {
+    "name": "Dr. Masud Ahmed",
+    "specialty": "Gastroenterology"
+  },
+  {
+    "name": "Dr. Shabnam Karim",
+    "specialty": "Bariatric Surgery"
+  },
+  {
+    "name": "Dr. Shahana Kabir",
+    "specialty": "ENT"
+  },
+  {
+    "name": "Dr. Sabbir Begum",
+    "specialty": "Geriatric Medicine"
+  },
+  {
+    "name": "Dr. Ismat Khan",
+    "specialty": "Urology"
+  },
+  {
+    "name": "Dr. Aktar Khan",
+    "specialty": "Ophthalmology"
+  },
+  {
+    "name": "Dr. Mizanur Alam",
+    "specialty": "Nephrology"
+  },
+  {
+    "name": "Dr. Rezwan Rahman",
+    "specialty": "Critical Care"
+  },
+  {
+    "name": "Dr. Jalal Rahman",
+    "specialty": "Bariatric Surgery"
+  },
+  {
+    "name": "Dr. Shakil Anwar",
+    "specialty": "Cardiology"
+  },
+  {
+    "name": "Dr. Tanvir Alam",
+    "specialty": "Pulmonology"
+  },
+  {
+    "name": "Dr. Iqbal Akhtar",
+    "specialty": "Critical Care"
+  },
+  {
+    "name": "Dr. Selina Uddin",
+    "specialty": "Dentistry"
+  },
+  {
+    "name": "Dr. Rubina Chowdhury",
+    "specialty": "Nephrology"
+  },
+  {
+    "name": "Dr. Mamun Talukder",
+    "specialty": "Infectious Diseases"
+  },
+  {
+    "name": "Dr. Selina Anwar",
+    "specialty": "Cardiology"
+  },
+  {
+    "name": "Dr. Ashiqur Ali",
+    "specialty": "Emergency Medicine"
+  },
+  {
+    "name": "Dr. Sabbir Bhuiyan",
+    "specialty": "Cardiology"
+  },
+  {
+    "name": "Dr. Ashiqur Anwar",
+    "specialty": "ENT"
+  },
+  {
+    "name": "Dr. Moinul Karim",
+    "specialty": "Rheumatology"
+  },
+  {
+    "name": "Dr. Zahid Islam",
+    "specialty": "Oncology"
+  },
+  {
+    "name": "Dr. Nipa Biswas",
+    "specialty": "Oncology"
+  },
+  {
+    "name": "Dr. Arif Rahman",
+    "specialty": "Geriatric Medicine"
+  },
+  {
+    "name": "Dr. Sumaiya Aziz",
+    "specialty": "Rheumatology"
+  },
+  {
+    "name": "Dr. Mizanur Aziz",
+    "specialty": "Hematology"
+  },
+  {
+    "name": "Dr. Nasir Alam",
+    "specialty": "Neurology"
+  },
+  {
+    "name": "Dr. Kamrun Bhuiyan",
+    "specialty": "Radiology"
+  },
+  {
+    "name": "Dr. Momtaz Pramanik",
+    "specialty": "Critical Care"
+  },
+  {
+    "name": "Dr. Zahid Karim",
+    "specialty": "Dermatology"
+  },
+  {
+    "name": "Dr. Dilruba Ali",
+    "specialty": "Dentistry"
+  },
+  {
+    "name": "Dr. Mamun Mollah",
+    "specialty": "Orthopaedics"
+  },
+  {
+    "name": "Dr. Tania Ahmed",
+    "specialty": "Gynecology"
+  },
+  {
+    "name": "Dr. Jalal Talukder",
+    "specialty": "Radiology"
+  },
+  {
+    "name": "Dr. Jamil Biswas",
+    "specialty": "Radiology"
+  },
+  {
+    "name": "Dr. Masud Khan",
+    "specialty": "Urology"
+  },
+  {
+    "name": "Dr. Ashiqur Aziz",
+    "specialty": "Critical Care"
+  },
+  {
+    "name": "Dr. Masud Begum",
+    "specialty": "Dermatology"
+  },
+  {
+    "name": "Dr. Monirul Karim",
+    "specialty": "Rheumatology"
+  },
+  {
+    "name": "Dr. Momtaz Rahman",
+    "specialty": "Geriatric Medicine"
+  },
+  {
+    "name": "Dr. Nusrat Pramanik",
+    "specialty": "General Physician"
+  },
+  {
+    "name": "Dr. Ruksana Sikder",
+    "specialty": "Dentistry"
+  },
+  {
+    "name": "Dr. Bilkis Hossain",
+    "specialty": "Critical Care"
+  },
+  {
+    "name": "Dr. Nazrul Khan",
+    "specialty": "Geriatric Medicine"
+  },
+  {
+    "name": "Dr. Enamul Hossain",
+    "specialty": "General Physician"
+  },
+  {
+    "name": "Dr. Afsana Akhtar",
+    "specialty": "Psychiatry"
+  },
+  {
+    "name": "Dr. Rezaul Talukder",
+    "specialty": "Rheumatology"
+  },
+  {
+    "name": "Dr. Afsana Bhuiyan",
+    "specialty": "Dentistry"
+  },
+  {
+    "name": "Dr. Mostafa Rahman",
+    "specialty": "Pulmonology"
+  },
+  {
+    "name": "Dr. Fatema Islam",
+    "specialty": "Geriatric Medicine"
+  },
+  {
+    "name": "Dr. Jesmin Uddin",
+    "specialty": "Bariatric Surgery"
+  },
+  {
+    "name": "Dr. Jahangir Anwar",
+    "specialty": "General Physician"
+  },
+  {
+    "name": "Dr. Saiful Khan",
+    "specialty": "Urology"
+  },
+  {
+    "name": "Dr. Golam Hossain",
+    "specialty": "Pediatrics"
+  },
+  {
+    "name": "Dr. Selim Alam",
+    "specialty": "Neurology"
+  },
+  {
+    "name": "Dr. Ziaul Karim",
+    "specialty": "Orthopaedics"
+  },
+  {
+    "name": "Dr. Firoz Alam",
+    "specialty": "Pathology"
+  },
+  {
+    "name": "Dr. Wahid Mollah",
+    "specialty": "Dermatology"
+  },
+  {
+    "name": "Dr. Runa Haque",
+    "specialty": "Dentistry"
+  },
+  {
+    "name": "Dr. Harun Chowdhury",
+    "specialty": "Urology"
+  },
+  {
+    "name": "Dr. Fatema Ali",
+    "specialty": "Urology"
+  },
+  {
+    "name": "Dr. Anowara Ali",
+    "specialty": "General Physician"
+  },
+  {
+    "name": "Dr. Mamun Haque",
+    "specialty": "Geriatric Medicine"
+  },
+  {
+    "name": "Dr. Ziaul Islam",
+    "specialty": "Neurology"
+  },
+  {
+    "name": "Dr. Rashed Sarkar",
+    "specialty": "Emergency Medicine"
+  },
+  {
+    "name": "Dr. Jalal Sikder",
+    "specialty": "Pulmonology"
+  },
+  {
+    "name": "Dr. Tanvir Haque",
+    "specialty": "Infectious Diseases"
+  },
+  {
+    "name": "Dr. Alamgir Biswas",
+    "specialty": "Pediatrics"
+  },
+  {
+    "name": "Dr. Selina Sheikh",
+    "specialty": "Pathology"
+  },
+  {
+    "name": "Dr. Shathi Majumder",
+    "specialty": "Hematology"
+  },
+  {
+    "name": "Dr. Shirin Uddin",
+    "specialty": "Rheumatology"
+  },
+  {
+    "name": "Dr. Imran Ali",
+    "specialty": "Nutrition & Dietetics"
+  },
+  {
+    "name": "Dr. Rafiqul Begum",
+    "specialty": "Emergency Medicine"
+  },
+  {
+    "name": "Dr. Nasir Rahman",
+    "specialty": "Neurology"
+  },
+  {
+    "name": "Dr. Masud Karim",
+    "specialty": "ENT"
+  },
+  {
+    "name": "Dr. Nurul Aziz",
+    "specialty": "Radiology"
+  },
+  {
+    "name": "Dr. Arif Haque",
+    "specialty": "Critical Care"
+  },
+  {
+    "name": "Dr. Nazma Hasan",
+    "specialty": "Nephrology"
+  },
+  {
+    "name": "Dr. Delwar Pramanik",
+    "specialty": "Nephrology"
+  },
+  {
+    "name": "Dr. Sohel Sheikh",
+    "specialty": "Physiotherapy"
+  },
+  {
+    "name": "Dr. Tania Anwar",
+    "specialty": "Neurology"
+  },
+  {
+    "name": "Dr. Mamun Ahmed",
+    "specialty": "Urology"
+  },
+  {
+    "name": "Dr. Mahmudul Chowdhury",
+    "specialty": "Critical Care"
+  },
+  {
+    "name": "Dr. Rehana Anwar",
+    "specialty": "Nutrition & Dietetics"
+  },
+  {
+    "name": "Dr. Rokeya Sarkar",
+    "specialty": "Neurology"
+  },
+  {
+    "name": "Dr. Tahmina Haque",
+    "specialty": "Gastroenterology"
+  },
+  {
+    "name": "Dr. Sabina Sheikh",
+    "specialty": "Critical Care"
+  },
+  {
+    "name": "Dr. Nipa Bhuiyan",
+    "specialty": "Rheumatology"
+  },
+  {
+    "name": "Dr. Sohel Islam",
+    "specialty": "Gastroenterology"
+  },
+  {
+    "name": "Dr. Yusuf Aziz",
+    "specialty": "Bariatric Surgery"
+  },
+  {
+    "name": "Dr. Mukta Rahman",
+    "specialty": "Bariatric Surgery"
+  },
+  {
+    "name": "Dr. Laila Haque",
+    "specialty": "Neurology"
+  },
+  {
+    "name": "Dr. Rowshan Alam",
+    "specialty": "Rheumatology"
+  },
+  {
+    "name": "Dr. Rubel Islam",
+    "specialty": "General Surgery"
+  },
+  {
+    "name": "Dr. Rahim Bhuiyan",
+    "specialty": "Emergency Medicine"
+  },
+  {
+    "name": "Dr. Jamil Hossain",
+    "specialty": "Gastroenterology"
+  },
+  {
+    "name": "Dr. Kamal Khan",
+    "specialty": "Geriatric Medicine"
+  },
+  {
+    "name": "Dr. Salma Haque",
+    "specialty": "Pediatrics"
+  },
+  {
+    "name": "Dr. Rubina Pramanik",
+    "specialty": "Orthopaedics"
+  },
+  {
+    "name": "Dr. Jalal Biswas",
+    "specialty": "Dentistry"
+  },
+  {
+    "name": "Dr. Firoz Islam",
+    "specialty": "Pulmonology"
+  },
+  {
+    "name": "Dr. Rafiqul Anwar",
+    "specialty": "Pathology"
+  },
+  {
+    "name": "Dr. Habibur Rahman",
+    "specialty": "Ophthalmology"
+  },
+  {
+    "name": "Dr. Israt Ali",
+    "specialty": "Oncology"
+  },
+  {
+    "name": "Dr. Anwar Ali",
+    "specialty": "ENT"
+  },
+  {
+    "name": "Dr. Nasrin Haque",
+    "specialty": "Nutrition & Dietetics"
+  },
+  {
+    "name": "Dr. Sohel Karim",
+    "specialty": "ENT"
+  },
+  {
+    "name": "Dr. Zakir Sarkar",
+    "specialty": "Emergency Medicine"
+  },
+  {
+    "name": "Dr. Jahangir Karim",
+    "specialty": "Physiotherapy"
+  },
+  {
+    "name": "Dr. Zakir Mollah",
+    "specialty": "Psychiatry"
+  },
+  {
+    "name": "Dr. Iqbal Kabir",
+    "specialty": "Dentistry"
+  },
+  {
+    "name": "Dr. Ziaul Begum",
+    "specialty": "Neurology"
+  },
+  {
+    "name": "Dr. Selim Kabir",
+    "specialty": "Plastic Surgery"
+  },
+  {
+    "name": "Dr. Laila Bhuiyan",
+    "specialty": "Gastroenterology"
+  },
+  {
+    "name": "Dr. Jalal Uddin",
+    "specialty": "Geriatric Medicine"
+  },
+  {
+    "name": "Dr. Shakil Karim",
+    "specialty": "Gynecology"
+  },
+  {
+    "name": "Dr. Kamruzzaman Khan",
+    "specialty": "Ophthalmology"
+  },
+  {
+    "name": "Dr. Munni Sheikh",
+    "specialty": "Neurology"
+  },
+  {
+    "name": "Dr. Yasmin Talukder",
+    "specialty": "Emergency Medicine"
+  },
+  {
+    "name": "Dr. Mamun Biswas",
+    "specialty": "Dentistry"
+  },
+  {
+    "name": "Dr. Tahmina Rahman",
+    "specialty": "Endocrinology"
+  },
+  {
+    "name": "Dr. Rowshanara Rahman",
+    "specialty": "Hematology"
+  },
+  {
+    "name": "Dr. Zahid Ali",
+    "specialty": "Radiology"
+  },
+  {
+    "name": "Dr. Badrul Uddin",
+    "specialty": "Gastroenterology"
+  },
+  {
+    "name": "Dr. Nazrul Miah",
+    "specialty": "Geriatric Medicine"
+  },
+  {
+    "name": "Dr. Tanzim Mollah",
+    "specialty": "Infectious Diseases"
+  },
+  {
+    "name": "Dr. Tariqul Hasan",
+    "specialty": "Nephrology"
+  },
+  {
+    "name": "Dr. Parvin Islam",
+    "specialty": "Gastroenterology"
+  },
+  {
+    "name": "Dr. Mahmudul Sarkar",
+    "specialty": "Nutrition & Dietetics"
+  },
+  {
+    "name": "Dr. Jalal Miah",
+    "specialty": "Bariatric Surgery"
+  },
+  {
+    "name": "Dr. Wahid Uddin",
+    "specialty": "Dermatology"
+  },
+  {
+    "name": "Dr. Kamal Kabir",
+    "specialty": "Infectious Diseases"
+  },
+  {
+    "name": "Dr. Ruksana Anwar",
+    "specialty": "Orthopaedics"
+  },
+  {
+    "name": "Dr. Nasir Hasan",
+    "specialty": "Pediatrics"
+  },
+  {
+    "name": "Dr. Sabbir Akhtar",
+    "specialty": "Endocrinology"
+  },
+  {
+    "name": "Dr. Mamun Pramanik",
+    "specialty": "Critical Care"
+  },
+  {
+    "name": "Dr. Selim Sheikh",
+    "specialty": "Orthopaedics"
+  },
+  {
+    "name": "Dr. Habibur Sheikh",
+    "specialty": "Cardiology"
+  },
+  {
+    "name": "Dr. Tania Kabir",
+    "specialty": "Nephrology"
+  },
+  {
+    "name": "Dr. Ashraf Islam",
+    "specialty": "Orthopaedics"
+  },
+  {
+    "name": "Dr. Aminul Kabir",
+    "specialty": "Pulmonology"
+  },
+  {
+    "name": "Dr. Ruksana Miah",
+    "specialty": "Dermatology"
+  },
+  {
+    "name": "Dr. Ripon Ali",
+    "specialty": "Infectious Diseases"
+  },
+  {
+    "name": "Dr. Shabnam Hossain",
+    "specialty": "ENT"
+  },
+  {
+    "name": "Dr. Aminul Begum",
+    "specialty": "Gastroenterology"
+  },
+  {
+    "name": "Dr. Mahmudul Kabir",
+    "specialty": "Emergency Medicine"
+  },
+  {
+    "name": "Dr. Habibur Miah",
+    "specialty": "Dermatology"
+  },
+  {
+    "name": "Dr. Zakir Ali",
+    "specialty": "Urology"
+  },
+  {
+    "name": "Dr. Sultana Begum",
+    "specialty": "Cardiology"
+  },
+  {
+    "name": "Dr. Nasir Uddin",
+    "specialty": "General Surgery"
+  },
+  {
+    "name": "Dr. Mahmudul Begum",
+    "specialty": "Pediatrics"
+  },
+  {
+    "name": "Dr. Sultana Karim",
+    "specialty": "General Surgery"
+  },
+  {
+    "name": "Dr. Sabbir Uddin",
+    "specialty": "Cardiology"
+  },
+  {
+    "name": "Dr. Mukta Islam",
+    "specialty": "General Surgery"
+  },
+  {
+    "name": "Dr. Munni Ahmed",
+    "specialty": "ENT"
+  },
+  {
+    "name": "Dr. Kabir Alam",
+    "specialty": "Physiotherapy"
+  },
+  {
+    "name": "Dr. Shafiqul Haque",
+    "specialty": "Nephrology"
+  },
+  {
+    "name": "Dr. Ashraf Hasan",
+    "specialty": "General Physician"
+  },
+  {
+    "name": "Dr. Rafiqul Ahmed",
+    "specialty": "Nutrition & Dietetics"
+  },
+  {
+    "name": "Dr. Shahidul Begum",
+    "specialty": "Endocrinology"
+  },
+  {
+    "name": "Dr. Shirin Akhtar",
+    "specialty": "Bariatric Surgery"
+  },
+  {
+    "name": "Dr. Mahbub Sheikh",
+    "specialty": "Physiotherapy"
+  },
+  {
+    "name": "Dr. Munni Akhtar",
+    "specialty": "Neurology"
+  },
+  {
+    "name": "Dr. Kohinoor Haque",
+    "specialty": "Bariatric Surgery"
+  },
+  {
+    "name": "Dr. Mizanur Talukder",
+    "specialty": "Nutrition & Dietetics"
+  },
+  {
+    "name": "Dr. Laila Ahmed",
+    "specialty": "Urology"
+  },
+  {
+    "name": "Dr. Nipa Talukder",
+    "specialty": "Psychiatry"
+  },
+  {
+    "name": "Dr. Alamgir Rahman",
+    "specialty": "Endocrinology"
+  },
+  {
+    "name": "Dr. Kamrun Rahman",
+    "specialty": "Geriatric Medicine"
+  },
+  {
+    "name": "Dr. Mamun Islam",
+    "specialty": "Critical Care"
+  },
+  {
+    "name": "Dr. Jesmin Islam",
+    "specialty": "Ophthalmology"
+  },
+  {
+    "name": "Dr. Tariqul Haque",
+    "specialty": "Dermatology"
+  },
+  {
+    "name": "Dr. Rehana Uddin",
+    "specialty": "Plastic Surgery"
+  },
+  {
+    "name": "Dr. Ruksana Aziz",
+    "specialty": "Pathology"
+  },
+  {
+    "name": "Dr. Mamun Khan",
+    "specialty": "Oncology"
+  },
+  {
+    "name": "Dr. Rezwan Begum",
+    "specialty": "Urology"
+  },
+  {
+    "name": "Dr. Afsana Sheikh",
+    "specialty": "Pulmonology"
+  },
+  {
+    "name": "Dr. Wahid Kabir",
+    "specialty": "Oncology"
+  },
+  {
+    "name": "Dr. Kohinoor Pramanik",
+    "specialty": "Dentistry"
+  },
+  {
+    "name": "Dr. Laila Pramanik",
+    "specialty": "Infectious Diseases"
+  },
+  {
+    "name": "Dr. Yusuf Sheikh",
+    "specialty": "Gastroenterology"
+  },
+  {
+    "name": "Dr. Nazrul Majumder",
+    "specialty": "Endocrinology"
+  },
+  {
+    "name": "Dr. Selim Mollah",
+    "specialty": "Dermatology"
+  },
+  {
+    "name": "Dr. Tanvir Chowdhury",
+    "specialty": "Dermatology"
+  },
+  {
+    "name": "Dr. Sohel Sikder",
+    "specialty": "Ophthalmology"
+  },
+  {
+    "name": "Dr. Rahim Islam",
+    "specialty": "Physiotherapy"
+  },
+  {
+    "name": "Dr. Shirina Miah",
+    "specialty": "Radiology"
+  },
+  {
+    "name": "Dr. Rubel Majumder",
+    "specialty": "Pulmonology"
+  },
+  {
+    "name": "Dr. Anwar Alam",
+    "specialty": "Dermatology"
+  },
+  {
+    "name": "Dr. Rahim Aziz",
+    "specialty": "Nephrology"
+  },
+  {
+    "name": "Dr. Shathi Mollah",
+    "specialty": "Emergency Medicine"
+  },
+  {
+    "name": "Dr. Parvin Ali",
+    "specialty": "Nephrology"
+  },
+  {
+    "name": "Dr. Jesmin Sarkar",
+    "specialty": "Ophthalmology"
+  },
+  {
+    "name": "Dr. Mukta Karim",
+    "specialty": "Orthopaedics"
+  },
+  {
+    "name": "Dr. Parvin Uddin",
+    "specialty": "Psychiatry"
+  },
+  {
+    "name": "Dr. Sabbir Sheikh",
+    "specialty": "Rheumatology"
+  },
+  {
+    "name": "Dr. Kamruzzaman Ahmed",
+    "specialty": "Neurology"
+  },
+  {
+    "name": "Dr. Tanvir Khan",
+    "specialty": "Ophthalmology"
+  },
+  {
+    "name": "Dr. Parvin Akhtar",
+    "specialty": "Pediatrics"
+  },
+  {
+    "name": "Dr. Sabbir Mollah",
+    "specialty": "Emergency Medicine"
+  },
+  {
+    "name": "Dr. Milton Khan",
+    "specialty": "Pathology"
+  },
+  {
+    "name": "Dr. Yasmin Hossain",
+    "specialty": "Pediatrics"
+  },
+  {
+    "name": "Dr. Firoz Talukder",
+    "specialty": "Physiotherapy"
+  },
+  {
+    "name": "Dr. Nasir Ali",
+    "specialty": "Urology"
+  },
+  {
+    "name": "Dr. Salma Rahman",
+    "specialty": "Rheumatology"
+  },
+  {
+    "name": "Dr. Sultana Aziz",
+    "specialty": "Hematology"
+  },
+  {
+    "name": "Dr. Ayesha Ahmed",
+    "specialty": "Pathology"
+  },
+  {
+    "name": "Dr. Shirina Bhuiyan",
+    "specialty": "Emergency Medicine"
+  },
+  {
+    "name": "Dr. Nazrul Anwar",
+    "specialty": "Dentistry"
+  },
+  {
+    "name": "Dr. Rezaul Kabir",
+    "specialty": "Hematology"
+  },
+  {
+    "name": "Dr. Mostafa Sikder",
+    "specialty": "Physiotherapy"
+  },
+  {
+    "name": "Dr. Sohel Sarkar",
+    "specialty": "Dentistry"
+  },
+  {
+    "name": "Dr. Saiful Rahman",
+    "specialty": "Gastroenterology"
+  },
+  {
+    "name": "Dr. Yusuf Kabir",
+    "specialty": "Nutrition & Dietetics"
+  },
+  {
+    "name": "Dr. Ziaul Chowdhury",
+    "specialty": "Dentistry"
+  },
+  {
+    "name": "Dr. Habibur Hossain",
+    "specialty": "Ophthalmology"
+  },
+  {
+    "name": "Dr. Yasmin Uddin",
+    "specialty": "Gynecology"
+  },
+  {
+    "name": "Dr. Harun Akhtar",
+    "specialty": "Pulmonology"
+  },
+  {
+    "name": "Dr. Shafiqul Biswas",
+    "specialty": "Orthopaedics"
+  },
+  {
+    "name": "Dr. Badrul Bhuiyan",
+    "specialty": "Oncology"
+  },
+  {
+    "name": "Dr. Nusrat Hasan",
+    "specialty": "Gynecology"
+  },
+  {
+    "name": "Dr. Iqbal Haque",
+    "specialty": "ENT"
+  },
+  {
+    "name": "Dr. Wahid Rahman",
+    "specialty": "Geriatric Medicine"
+  },
+  {
+    "name": "Dr. Ashiqur Uddin",
+    "specialty": "Nephrology"
+  },
+  {
+    "name": "Dr. Jahangir Talukder",
+    "specialty": "Dermatology"
+  },
+  {
+    "name": "Dr. Farhana Sikder",
+    "specialty": "Endocrinology"
+  }
+]
