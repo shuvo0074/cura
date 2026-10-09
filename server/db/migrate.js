@@ -1,6 +1,7 @@
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { seedContent } from './contentSeeds.js';
 
 const SCHEMA = join(dirname(fileURLToPath(import.meta.url)), 'schema.sql');
 
@@ -10,6 +11,7 @@ const SCHEMA = join(dirname(fileURLToPath(import.meta.url)), 'schema.sql');
 // this new columns never reach production.
 export async function runMigrations(pool) {
   await pool.query(readFileSync(SCHEMA, 'utf8'));
+  await seedContent(pool);
 }
 
 // `npm run db:migrate`: apply the schema without starting the API.

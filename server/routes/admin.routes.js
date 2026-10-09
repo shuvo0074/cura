@@ -4,6 +4,9 @@ import {
   createHospital, updateHospital, setHospitalPhoto, deleteHospitalPhoto,
   listAdminDoctors, listAdminHospitals, getAdminHospital, setDoctorHidden, setHospitalHidden, deleteDoctor, deleteHospital,
 } from '../controllers/admin.controller.js';
+import {
+  listAdminAmbulances, createAmbulance, updateAmbulance, setAmbulanceHidden, deleteAmbulance, getSamplePrices, updateSamplePrices,
+} from '../controllers/adminContent.controller.js';
 import { doctorPhotoUpload, hospitalPhotoUpload } from '../upload.js';
 import { verifyToken, requireRole } from '../middleware/auth.js';
 
@@ -26,5 +29,12 @@ router.patch('/hospitals/:id/hidden', setHospitalHidden);
 router.delete('/hospitals/:id', deleteHospital);
 router.post('/hospitals/:id/photo', hospitalPhotoUpload.single('photo'), setHospitalPhoto);
 router.delete('/hospitals/:id/photo', deleteHospitalPhoto);
+router.get('/ambulances', listAdminAmbulances);
+router.post('/ambulances', createAmbulance);
+router.patch('/ambulances/:id', updateAmbulance);
+router.patch('/ambulances/:id/hidden', setAmbulanceHidden);
+router.delete('/ambulances/:id', deleteAmbulance);
+router.get('/sample-prices', getSamplePrices);
+router.patch('/sample-prices', updateSamplePrices);
 
 export default router;

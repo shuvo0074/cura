@@ -72,3 +72,11 @@ test('published and admin-entered prices take priority over demos', async () => 
   assert.equal(result.tests.find(t => t.name === 'Thyroid (TSH)').price_kind, 'demo');
   assert.deepEqual(withDiagnosticTestPrices(result), result);
 });
+
+test('sample prices can be edited or switched off', async () => {
+  const { withSampleTestPrices } = await import('./publishedTestPrices.js');
+  const centreTests = { name: 'LABAID Diagnostics, Dhanmondi', type: 'diagnostic', tests: [{ name: 'ECG', category: 'cardiac', price: null }] };
+  assert.equal(withSampleTestPrices(centreTests, [{ name: 'ECG', category: 'cardiac', price: 350 }]).tests[0].price, 350);
+  assert.equal(withSampleTestPrices(centreTests, null), centreTests);
+  assert.equal(withSampleTestPrices({ ...centreTests, type: 'hospital' }, [{ name: 'ECG', price: 350 }]).tests[0].price, null);
+});

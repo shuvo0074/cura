@@ -1,9 +1,11 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Building2, UserRound, CalendarCheck } from 'lucide-react';
+import { LayoutDashboard, Building2, UserRound, CalendarCheck, Ambulance, Tags } from 'lucide-react';
 
 const NAV_ITEMS = [
   { path: '/admin/hospitals',    label: 'Hospitals',     icon: Building2 },
   { path: '/admin/doctors',      label: 'Doctors',       icon: UserRound },
+  { path: '/admin/ambulances',   label: 'Ambulances',    icon: Ambulance },
+  { path: '/admin/sample-prices', label: 'Sample prices', icon: Tags },
   { path: '/admin/appointments', label: 'Appointments',  icon: CalendarCheck },
 ];
 
