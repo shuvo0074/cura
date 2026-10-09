@@ -1,4 +1,12 @@
 {
+  "home_calc_district": "District",
+  "home_calc_all_districts": "All districts",
+  "home_calc_near_me": "Near me",
+  "home_calc_search_centres": "Search diagnostic centre name",
+  "home_calc_choose_centre": "Select a diagnostic centre",
+  "home_calc_no_centres": "No centres match",
+  "home_calc_location_selected": "Showing centres in {{district}}. Location selects your district; exact centre distances are unavailable.",
+
   "home_calc_badge": "Test cost calculator",
   "home_calc_title": "Your tests. Your budget. Know before you go.",
   "home_calc_desc": "Pick the tests on your prescription and watch the total update. Choose a diagnostic centre and plan your visit with confidence.",
