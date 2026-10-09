@@ -75,7 +75,7 @@ export default function GlobalHeader() {
   let accountLink = { label: 'Login', path: '/login' };
   if (user?.role === 'patient') accountLink = { label: 'My Appointments', path: '/appointments' };
   if (user?.role === 'doctor') accountLink = { label: 'Doctor Dashboard', path: '/doctor-dashboard' };
-  if (user?.role === 'admin') accountLink = { label: 'Admin Dashboard', path: '/admin' };
+  if (user?.role === 'admin') accountLink = null;
 
   return (
     <>
@@ -115,10 +115,10 @@ export default function GlobalHeader() {
               {i18n.language === 'en' ? 'বাং' : 'EN'}
             </button>
             {/* Desktop account link */}
-            <NavLink to={accountLink.path}
+            {accountLink && <NavLink to={accountLink.path}
               className="hidden md:inline-flex text-sm font-medium bg-white text-action rounded px-3 py-1.5 whitespace-nowrap hover:bg-gray-100">
               {accountLink.label}
-            </NavLink>
+            </NavLink>}
             {user && (
               <button onClick={handleLogout} className="hidden md:block text-sm font-medium text-white/80 hover:text-white">
                 Logout
@@ -154,7 +154,7 @@ export default function GlobalHeader() {
               ))}
 
               {/* Account row */}
-              <NavLink
+              {accountLink && <NavLink
                 to={accountLink.path}
                 className="flex items-center justify-between px-5 py-4 text-sm font-medium border-b border-white/10 text-white/90 hover:bg-white/10 transition-colors">
                 <span className="flex items-center gap-2.5">
@@ -162,7 +162,7 @@ export default function GlobalHeader() {
                   {accountLink.label}
                 </span>
                 <ChevronRight size={16} className="opacity-50" />
-              </NavLink>
+              </NavLink>}
 
               {/* Phone */}
               <a
