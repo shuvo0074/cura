@@ -161,3 +161,5 @@ ALTER TABLE doctors ALTER COLUMN followup_fees SET DEFAULT 300;
 UPDATE doctors SET followup_fees = 300 WHERE followup_fees IS NULL;
 
 ALTER TABLE doctors ADD COLUMN IF NOT EXISTS gender TEXT CHECK (gender IN ('male', 'female'));
+
+ALTER TABLE doctors ADD COLUMN IF NOT EXISTS gender_is_demo BOOLEAN NOT NULL DEFAULT FALSE;

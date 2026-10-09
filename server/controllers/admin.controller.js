@@ -70,7 +70,7 @@ export async function updateDoctor(req, res, next) {
     const { rows } = await query(
       `UPDATE doctors SET name=$1, specialty=$2, department=$3, experience=$4, chamber=$5, fees=$6,
         city=$7, hospital_id=$8, phone=$9, photo=$10, rating=$11, about=$12, lat=$13, lng=$14, website=$15,
-        bmdc_no=$16, education=$17, languages=$18, consulting_hours=$19, address=$20, clinical_expertise=$21, treatments=$22, division=$23, workplace=$24, followup_fees=$25, weekly_schedule=COALESCE($26::jsonb, weekly_schedule), gender=$27
+        bmdc_no=$16, education=$17, languages=$18, consulting_hours=$19, address=$20, clinical_expertise=$21, treatments=$22, division=$23, workplace=$24, followup_fees=$25, weekly_schedule=COALESCE($26::jsonb, weekly_schedule), gender=$27, gender_is_demo=CASE WHEN gender IS DISTINCT FROM $27 THEN FALSE ELSE gender_is_demo END
        WHERE id = $28 RETURNING *`,
       [d.name, d.specialty, d.department, d.experience, d.chamber, toNum(d.fees), d.city, d.hospitalId || null,
         d.phone, d.photo, toNum(d.rating), d.about, toNum(d.lat), toNum(d.lng), d.website,
