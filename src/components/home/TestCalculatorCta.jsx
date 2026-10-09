@@ -24,7 +24,10 @@ export default function TestCalculatorCta() {
     api.get('/hospitals').then(list => { if (active) setCentres(list.filter(c => c.type === 'diagnostic' && c.tests?.some(test => test.price != null))); }).catch(() => {});
     return () => { active = false; };
   }, []);
-  const available = centres.filter(c => !district || c.location === district);
+  const collator = new Intl.Collator(i18n.language, { sensitivity: 'base', numeric: true });
+  const byName = (a, b) => collator.compare(a.name, b.name);
+  const districts = citiesForDivisions([]).sort(collator.compare);
+  const available = centres.filter(c => !district || c.location === district).sort(byName);
   const matches = available.filter(c => c.name.toLowerCase().includes(centreSearch.trim().toLowerCase()));
   const centre = available.find(c => String(c.id) === centreId) || available[0];
   function chooseDistrict(value) { locationRequest.current += 1; setLocating(false); setNotice(''); setDistrict(value); setCentreId(''); setCentreSearch(''); setPicked(new Set()); }
@@ -45,7 +48,7 @@ export default function TestCalculatorCta() {
       } catch { if (request === locationRequest.current) { setLocating(false); setNotice(t('home_map_unavailable')); } }
     }, error => { if (request !== locationRequest.current) return; setLocating(false); setNotice(t(error.code === 1 ? 'home_map_denied' : 'home_map_unavailable')); }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 });
   }
-  const allTests = (centre?.tests || []).filter(test => test.price != null);
+  const allTests = (centre?.tests || []).filter(test => test.price != null).sort(byName);
   const q = query.trim().toLowerCase();
   const tests = q ? allTests.filter(test => test.name.toLowerCase().includes(q)) : allTests.slice(0, 4);
   const chosen = allTests.filter(test => picked.has(test.name));
@@ -68,7 +71,7 @@ export default function TestCalculatorCta() {
       <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] gap-2 items-end">
         <label className="text-xs font-medium text-gray-600">{t('home_calc_district')}
           <select value={district} onChange={event => chooseDistrict(event.target.value)} className="mt-1 block w-full rounded-xl border border-gray-200 p-3 text-sm">
-            <option value="">{t('home_calc_all_districts')}</option>{citiesForDivisions([]).map(name => <option key={name} value={name}>{name}</option>)}
+            <option value="">{t('home_calc_all_districts')}</option>{districts.map(name => <option key={name} value={name}>{name}</option>)}
           </select>
         </label>
         <button type="button" onClick={locate} disabled={locating} className="flex min-h-11 items-center gap-2 rounded-xl border border-primary/20 px-3 text-sm text-primary disabled:opacity-60"><LocateFixed size={16} />{t(locating ? 'home_map_locating' : 'home_calc_near_me')}</button>
