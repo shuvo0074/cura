@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight, Calculator, Check, FlaskConical } from 'lucide-react';
+import SearchInput from '../ui/SearchInput';
 import { api } from '../../api/client';
 
 export default function TestCalculatorCta() {
   const { t, i18n } = useTranslation();
   const [centres, setCentres] = useState([]);
   const [centreId, setCentreId] = useState('');
+  const [query, setQuery] = useState('');
   const [picked, setPicked] = useState(new Set());
   useEffect(() => {
     let active = true;
@@ -15,8 +17,10 @@ export default function TestCalculatorCta() {
     return () => { active = false; };
   }, []);
   const centre = centres.find(c => String(c.id) === centreId) || centres[0];
-  const tests = (centre?.tests || []).filter(test => test.price != null).slice(0, 4);
-  const chosen = tests.filter(test => picked.has(test.name));
+  const allTests = (centre?.tests || []).filter(test => test.price != null);
+  const q = query.trim().toLowerCase();
+  const tests = q ? allTests.filter(test => test.name.toLowerCase().includes(q)) : allTests.slice(0, 4);
+  const chosen = allTests.filter(test => picked.has(test.name));
   const money = value => `৳${value.toLocaleString(i18n.language === 'bn' ? 'bn-BD' : 'en-BD')}`;
   function toggle(name) {
     setPicked(current => { const next = new Set(current); if (next.has(name)) next.delete(name); else next.add(name); return next; });
@@ -37,12 +41,13 @@ export default function TestCalculatorCta() {
           {centres.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>}
       </label>
-      <div className="mt-3 space-y-2">
+      <SearchInput value={query} onChange={setQuery} placeholder={t('search_tests')} className="mt-3" />
+      <div className="mt-3 space-y-2 max-h-72 overflow-y-auto">
         {tests.map(test => <button type="button" key={test.name} aria-pressed={picked.has(test.name)} onClick={() => toggle(test.name)} className={`w-full flex items-center gap-3 rounded-xl border p-3 text-left transition-colors ${picked.has(test.name) ? 'bg-primary/5 border-primary/30' : 'border-gray-100 hover:border-primary/30'}`}>
           <span aria-hidden="true" className={`w-5 h-5 rounded flex-shrink-0 flex items-center justify-center border ${picked.has(test.name) ? 'bg-primary text-white border-primary' : 'border-gray-300'}`}>{picked.has(test.name) && <Check size={14} />}</span>
           <span className="flex-1 text-sm text-gray-700">{test.name}</span><span className="font-semibold text-sm text-primary">{money(test.price)}</span>
         </button>)}
-        {!tests.length && <p className="py-4 text-sm text-gray-500">{t('home_calc_fallback')}</p>}
+        {!tests.length && <p className="py-4 text-sm text-gray-500">{t(q && centre ? 'no_tests_match' : 'home_calc_fallback')}</p>}
       </div>
       <div className="mt-4 border-t border-gray-100 pt-4 flex items-center justify-between gap-3" aria-live="polite" aria-atomic="true"><span className="text-sm text-gray-600">{t('test_price_subtotal')} · {t('home_calc_selected', { count: chosen.length })}</span><span className="text-2xl font-bold text-primary tabular-nums">{money(chosen.reduce((sum, test) => sum + test.price, 0))}</span></div>
       <p className="mt-3 text-xs text-gray-500">{t('test_prices_note')}</p>
