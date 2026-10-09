@@ -278,7 +278,7 @@ export default function HospitalProfilePage() {
                 {is24x7(hospital.opening_hours) && <Badge tone="green" icon={Clock}>{t('open_24_hours')}</Badge>}
                 {emergency && is24x7(emergency.hours) && <Badge tone="red" icon={Siren}>{t('emergency_24_7')}</Badge>}
               </div>
-              <h1 className="font-bold text-gray-900 text-xl sm:text-2xl leading-tight">{hospital.name}</h1>
+              <div className="flex items-start justify-between gap-3"><h1 className="font-bold text-gray-900 text-xl sm:text-2xl leading-tight">{hospital.name}</h1><div className="sm:hidden flex-shrink-0"><PlaceShareButton place={hospital} /></div></div>
               <p className="flex items-center gap-1.5 text-sm text-gray-500 mt-1.5">
                 <MapPin size={14} className="text-primary flex-shrink-0" /> {place}
               </p>
@@ -290,7 +290,7 @@ export default function HospitalProfilePage() {
               </dl>}
 
               <div className="flex gap-2 mt-4">
-                <PlaceShareButton place={hospital} />
+                <div className="hidden sm:block"><PlaceShareButton place={hospital} /></div>
                 {hospital.hotline && (
                   <a href={`tel:${hospital.hotline}`}
                     className={`flex-1 flex items-center justify-center gap-2 h-11 rounded-xl text-white text-sm font-semibold transition-colors

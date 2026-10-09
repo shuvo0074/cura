@@ -50,7 +50,7 @@ export async function createDoctor(req, res, next) {
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26) RETURNING *`,
       [d.name, d.specialty, d.department, d.experience, d.chamber, toNum(d.fees), d.city, d.hospitalId || null,
         d.phone, d.photo, toNum(d.rating), d.about, toNum(d.lat), toNum(d.lng), d.website,
-        d.bmdcNo, d.education, d.languages, d.consultingHours, d.address, toArray(d.clinicalExpertise), toArray(d.treatments), d.division || null, d.workplace || null, toNum(d.followupFees), JSON.stringify(d.weeklySchedule ?? [])]
+        d.bmdcNo, d.education, d.languages, d.consultingHours, d.address, toArray(d.clinicalExpertise), toArray(d.treatments), d.division || null, d.workplace || null, toNum(d.followupFees) ?? 300, JSON.stringify(d.weeklySchedule ?? [])]
     );
     logger.info(
       { event: 'admin_doctor_created', adminId: req.user?.sub, doctorId: rows[0].id, name: rows[0].name },
