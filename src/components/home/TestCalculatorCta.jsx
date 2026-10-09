@@ -48,9 +48,9 @@ export default function TestCalculatorCta() {
       } catch { if (request === locationRequest.current) { setLocating(false); setNotice(t('home_map_unavailable')); } }
     }, error => { if (request !== locationRequest.current) return; setLocating(false); setNotice(t(error.code === 1 ? 'home_map_denied' : 'home_map_unavailable')); }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 });
   }
-  const allTests = (centre?.tests || []).filter(test => test.price != null).sort(byName);
+  const allTests = [...(centre?.tests || [])].sort(byName);
   const q = query.trim().toLowerCase();
-  const tests = q ? allTests.filter(test => test.name.toLowerCase().includes(q)) : allTests.slice(0, 4);
+  const tests = allTests.filter(test => !q || test.name.toLowerCase().includes(q));
   const chosen = allTests.filter(test => picked.has(test.name));
   const money = value => `৳${value.toLocaleString(i18n.language === 'bn' ? 'bn-BD' : 'en-BD')}`;
   function toggle(name) {
@@ -85,14 +85,15 @@ export default function TestCalculatorCta() {
         </select>
       </label>
       <SearchInput value={query} onChange={setQuery} placeholder={t('search_tests')} className="mt-3" />
-      <div className="mt-3 space-y-2 max-h-72 overflow-y-auto">
+      <div tabIndex={0} role="region" aria-label={t('test_prices')} className="mt-3 space-y-2 max-h-72 overflow-y-auto overscroll-contain rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
         {tests.map(test => <button type="button" key={test.name} aria-pressed={picked.has(test.name)} onClick={() => toggle(test.name)} className={`w-full flex items-center gap-3 rounded-xl border p-3 text-left transition-colors ${picked.has(test.name) ? 'bg-primary/5 border-primary/30' : 'border-gray-100 hover:border-primary/30'}`}>
           <span aria-hidden="true" className={`w-5 h-5 rounded flex-shrink-0 flex items-center justify-center border ${picked.has(test.name) ? 'bg-primary text-white border-primary' : 'border-gray-300'}`}>{picked.has(test.name) && <Check size={14} />}</span>
-          <span className="flex-1 text-sm text-gray-700">{test.name}</span><span className="font-semibold text-sm text-primary">{money(test.price)}</span>
+          <span className="flex-1 text-sm text-gray-700">{test.name}</span><span className="font-semibold text-sm text-primary">{test.price != null ? money(test.price) : t('not_listed')}</span>
         </button>)}
         {!tests.length && <p className="py-4 text-sm text-gray-500">{t(q && centre ? 'no_tests_match' : 'home_calc_fallback')}</p>}
       </div>
-      <div className="mt-4 border-t border-gray-100 pt-4 flex items-center justify-between gap-3" aria-live="polite" aria-atomic="true"><span className="text-sm text-gray-600">{t('test_price_subtotal')} · {t('home_calc_selected', { count: chosen.length })}</span><span className="text-2xl font-bold text-primary tabular-nums">{money(chosen.reduce((sum, test) => sum + test.price, 0))}</span></div>
+      <div className="mt-4 border-t border-gray-100 pt-4 flex items-center justify-between gap-3" aria-live="polite" aria-atomic="true"><span className="text-sm text-gray-600">{t('test_price_subtotal')} · {t('home_calc_selected', { count: chosen.length })}</span><span className="text-2xl font-bold text-primary tabular-nums">{money(chosen.reduce((sum, test) => sum + (test.price ?? 0), 0))}</span></div>
+      {chosen.some(test => test.price == null) && <p className="mt-2 text-xs text-gray-500">{t('n_prices_unpublished', { count: chosen.filter(test => test.price == null).length })}</p>}
       <p className="mt-3 text-xs text-gray-500">{t('test_prices_note')}</p>
     </div>
   </section>;
