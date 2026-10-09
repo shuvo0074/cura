@@ -1,4 +1,8 @@
 {
+  "doctor_gender": "ডাক্তারের লিঙ্গ",
+  "doctor_gender_male": "পুরুষ",
+  "doctor_gender_female": "নারী",
+
   "home_calc_district": "জেলা",
   "home_calc_all_districts": "সব জেলা",
   "home_calc_near_me": "আমার কাছে",

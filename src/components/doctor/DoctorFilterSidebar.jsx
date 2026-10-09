@@ -1,10 +1,12 @@
+import { useTranslation } from 'react-i18next';
+import { EMPTY_FILTERS } from '../../utils/doctorFilters';
 import { useState } from 'react';
 import { SlidersHorizontal, Search } from 'lucide-react';
 import { useFilter } from '../../context/FilterContext';
 import divisions from '../../data/divisions.json';
 import { citiesForDivisions, toggleDivision } from '../../utils/geo';
 
-function FilterSection({ title, searchValue = '', onSearchChange, items, selected, onToggle, searchable = true }) {
+function FilterSection({ title, searchValue = '', onSearchChange, items, selected, onToggle, searchable = true, getOptionLabel }) {
   const filtered = items.filter(i => i.toLowerCase().includes(searchValue.toLowerCase()));
   return (
     <div className="border-b border-gray-100 pb-4 mb-4 last:border-0 last:pb-0 last:mb-0">
@@ -30,7 +32,7 @@ function FilterSection({ title, searchValue = '', onSearchChange, items, selecte
               onChange={() => onToggle(item)}
               className="accent-primary w-4 h-4 flex-shrink-0"
             />
-            {item}
+            {getOptionLabel ? getOptionLabel(item) : item}
           </label>
         ))}
         {filtered.length === 0 && <p className="text-xs text-gray-400">No matches.</p>}
@@ -45,6 +47,7 @@ function toggleInArray(arr, item) {
 
 // Desktop filter sidebar (md and up). Phones use DoctorMobileFilters.
 export default function DoctorFilterSidebar({ specialtyNames = [], symptomNames = [], mode = 'specialty' }) {
+  const { t } = useTranslation();
   const { filterParams, setFilterParams } = useFilter();
   const [specSearch, setSpecSearch] = useState('');
   const [citySearch, setCitySearch] = useState('');
@@ -53,7 +56,7 @@ export default function DoctorFilterSidebar({ specialtyNames = [], symptomNames 
   const cities = citiesForDivisions(filterParams.division);
 
   function clearAll() {
-    setFilterParams({ specialty: [], city: [], division: [], symptom: [], hospital: [] });
+    setFilterParams(EMPTY_FILTERS);
   }
 
   const sections = (
@@ -78,6 +81,9 @@ export default function DoctorFilterSidebar({ specialtyNames = [], symptomNames 
         />
       )}
 
+      <FilterSection title={t('doctor_gender')} searchable={false} items={['female', 'male']}
+        selected={filterParams.gender || []} getOptionLabel={value => t(`doctor_gender_${value}`)}
+        onToggle={value => setFilterParams(p => ({ ...p, gender: toggleInArray(p.gender || [], value) }))} />
       <FilterSection
         title="Division"
         searchable={false}

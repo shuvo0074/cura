@@ -21,13 +21,15 @@
     "name": "Prof. Dr. M. Nazrul Islam",
     "specialty": "Cardiology",
     "centre": "Popular Diagnostic Centre, Dhanmondi",
-    "source_url": "https://www.populardiagnostic.com/doctordetail/2094"
+    "source_url": "https://www.populardiagnostic.com/doctordetail/2094",
+    "gender": "male"
   },
   {
     "name": "Prof. Dr. A. A. Shafi Majumder",
     "specialty": "Cardiology",
     "centre": "Popular Diagnostic Centre, Dhanmondi",
-    "source_url": "https://www.populardiagnostic.com/doctordetail/2095"
+    "source_url": "https://www.populardiagnostic.com/doctordetail/2095",
+    "gender": "male"
   },
   {
     "name": "Dr. Mokter Hossain",
