@@ -281,8 +281,13 @@ export class HttpClient {
   }
 
   private buildUrl(path: string, query?: RequestOptions['query']): string {
+    // A path-only base ("/api", API proxied on the page's own origin) needs the
+    // page origin to resolve; mobile always configures an absolute URL, and has
+    // no `location`, so the second argument is simply absent there.
+    const origin = (globalThis as { location?: { origin?: string } }).location?.origin;
     const url = new URL(
       `${this.config.env.apiBaseUrl.replace(/\/$/, '')}${path.startsWith('/') ? path : `/${path}`}`,
+      origin,
     );
     if (query) {
       for (const [key, value] of Object.entries(query)) {
