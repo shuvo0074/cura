@@ -217,27 +217,6 @@ async function main(): Promise<void> {
     });
   }
 
-  // A patient last seen ~6 months ago with nothing booked, so the preventive
-  // recall list in Communications has an entry. Keyed on mobile, and given an
-  // id from the live sequence, so it never collides with a real intake.
-  const recallMobile = '+8801866666666';
-  if (!(await prisma.patient.findFirst({ where: { practiceId: practice.id, mobile: recallMobile } }))) {
-    const [row] = await prisma.$queryRaw<Array<{ nextval: bigint }>>`SELECT nextval('cura_patient_seq') AS nextval`;
-    await prisma.patient.create({
-      data: {
-        curaId: `CURA-${String(row?.nextval ?? 19_999).padStart(5, '0')}`,
-        practiceId: practice.id,
-        fullName: 'Farhana Islam',
-        mobile: recallMobile,
-        gender: 'FEMALE',
-        searchName: 'farhana islam',
-        profileComplete: true,
-        dateOfBirth: new Date(1979, new Date().getMonth(), new Date().getDate() + 9),
-        lastVisitAt: new Date(Date.now() - 170 * 86_400_000),
-      },
-    });
-  }
-
   // -- Drug catalogue --------------------------------------------------------
   //
   // `skipDuplicates` plus a stable (practiceId, searchName) key makes re-seeding
@@ -283,6 +262,28 @@ async function main(): Promise<void> {
        true
      )`,
   );
+
+  // A patient last seen ~6 months ago with nothing booked, so the preventive
+  // recall list in Communications has an entry. Keyed on mobile, and given an
+  // id from the live sequence — which is why it runs after the setval above: on
+  // a fresh database the sequence would otherwise hand back CURA-10000.
+  const recallMobile = '+8801866666666';
+  if (!(await prisma.patient.findFirst({ where: { practiceId: practice.id, mobile: recallMobile } }))) {
+    const [row] = await prisma.$queryRaw<Array<{ nextval: bigint }>>`SELECT nextval('cura_patient_seq') AS nextval`;
+    await prisma.patient.create({
+      data: {
+        curaId: `CURA-${String(row?.nextval ?? 19_999).padStart(5, '0')}`,
+        practiceId: practice.id,
+        fullName: 'Farhana Islam',
+        mobile: recallMobile,
+        gender: 'FEMALE',
+        searchName: 'farhana islam',
+        profileComplete: true,
+        dateOfBirth: new Date(1979, new Date().getMonth(), new Date().getDate() + 9),
+        lastVisitAt: new Date(Date.now() - 170 * 86_400_000),
+      },
+    });
+  }
 
   console.log('\nSeed complete.');
   console.log(`  Practice : ${practice.name} (${practice.id})`);
