@@ -2,7 +2,7 @@
   "name": "@cura/backend",
   "version": "0.1.0",
   "private": true,
-  "description": "Cura API — NestJS, hexagonal architecture, security-first",
+  "description": "Cura API \u2014 NestJS, hexagonal architecture, security-first",
   "scripts": {
     "build": "nest build",
     "start": "node dist/main.js",
@@ -11,7 +11,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "test": "jest",
-    "seed": "ts-node --transpile-only -P tsconfig.json prisma/seed.ts"
+    "seed": "ts-node --transpile-only -P tsconfig.json prisma/seed.ts",
+    "load": "node load/load-test.mjs"
   },
   "dependencies": {
     "@cura/shared": "*",
@@ -48,6 +49,7 @@
     "@types/multer": "^2.2.0",
     "@types/node": "^22.9.0",
     "@types/pdfkit": "^0.17.6",
+    "autocannon": "^7.15.0",
     "prisma": "^5.22.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.3"

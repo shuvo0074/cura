@@ -182,6 +182,14 @@ Each run of it creates a real doctor account.
 Failures leave a screenshot and trace in `web/test-results/`;
 `npx playwright show-report` (in `web/`) opens the HTML report.
 
+## Load testing
+
+`backend/load/` holds a load test (autocannon) and a script that fills a
+throwaway database with two years of a busy practice (20k patients, 150k
+appointments). Steps are at the top of each file. On an 8-core laptop against
+that data, 100 concurrent users looping through a realistic mix with no pause
+between requests sustained ~600 req/s, p99 under 0.5 s, no errors.
+
 ## Common commands
 
 | Command | Where | Purpose |
