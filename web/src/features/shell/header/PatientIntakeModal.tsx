@@ -24,7 +24,8 @@ export function PatientIntakeModal({
   /** Walk-ins default to now; a slot click passes the slot's time. */
   defaultAt?: Date;
   onClose: () => void;
-  onCreated: (patientId: string) => void;
+  /** Carries the new appointment so the record opens ready to chart it. */
+  onCreated: (patientId: string, appointmentId: string) => void;
 }) {
   const { http } = useServices();
   const [form, setForm] = useState(() => {
@@ -140,7 +141,7 @@ export function PatientIntakeModal({
       setError(result.error.message);
       return;
     }
-    onCreated(result.value.patientId);
+    onCreated(result.value.patientId, result.value.id);
   };
 
   return (

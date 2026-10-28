@@ -1,5 +1,5 @@
 import { expect, test } from './fixtures';
-import { API, PRACTICE_ID, apiToken, openModule, testMobile, watchErrors } from './helpers';
+import { API, PRACTICE_ID, apiToken, freeSlotCandidates, openModule, testMobile, watchErrors } from './helpers';
 
 test.describe('Patient Management', () => {
   test('a booked patient moves Booked → Waiting → With doctor → Done', async ({ signIn }) => {
@@ -27,17 +27,22 @@ test.describe('Patient Management', () => {
     expect(today.length, 'seeded appointments for today — run `npm run seed`').toBeGreaterThan(0);
 
     const name = `E2E Queue ${Date.now().toString().slice(-6)}`;
-    const created = await request.post(`${API}/appointments`, {
-      headers,
-      data: {
-        practiceId: PRACTICE_ID,
-        doctorId: today[0]?.doctorId,
-        scheduledAt: new Date().toISOString(),
-        durationMinutes: 10,
-        visitType: 'NEW',
-        patient: { mobile: testMobile(), fullName: name, ageYears: 30, gender: 'FEMALE' },
-      },
-    });
+    let created = null;
+    for (const at of freeSlotCandidates()) {
+      created = await request.post(`${API}/appointments`, {
+        headers,
+        data: {
+          practiceId: PRACTICE_ID,
+          doctorId: today[0]?.doctorId,
+          scheduledAt: at.toISOString(),
+          durationMinutes: 10,
+          visitType: 'NEW',
+          patient: { mobile: testMobile(), fullName: name, ageYears: 30, gender: 'FEMALE' },
+        },
+      });
+      if (created.status() !== 409) break;
+    }
+    if (!created) throw new Error('No free slot left today for the queue fixture');
     expect(created.ok(), await created.text()).toBeTruthy();
 
     await openModule(page, 'Patient Management');

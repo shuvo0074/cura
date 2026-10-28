@@ -486,3 +486,5 @@
   background: var(--color-feedback-danger-bg, var(--color-surface-sunken));
   border-radius: var(--radius-pill);
 }
+
+.startVisit { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-sm); }

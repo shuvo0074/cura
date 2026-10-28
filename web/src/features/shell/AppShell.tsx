@@ -39,7 +39,7 @@ export function AppShell({
   practiceId: string | undefined;
   active: RouteKey;
   onNavigate: (key: RouteKey) => void;
-  onOpenPatient: (patientId: string) => void;
+  onOpenPatient: (patientId: string, appointmentId?: string) => void;
   /** Deep-links from the profile menu into a specific settings sub-module. */
   onOpenSettings: (section: 'staff' | 'security' | 'practice') => void;
   onSignOut: () => void;
@@ -134,9 +134,11 @@ export function AppShell({
           doctorId={user.id}
           {...(intakeAt ? { defaultAt: intakeAt } : {})}
           onClose={() => onIntakeOpenChange(false)}
-          onCreated={(patientId) => {
+          onCreated={(patientId, appointmentId) => {
             onIntakeOpenChange(false);
-            onOpenPatient(patientId);
+            // Spec (walk-in): land on the record with the visit open, so the
+            // prescription is one click away.
+            onOpenPatient(patientId, appointmentId);
           }}
         />
       )}

@@ -75,6 +75,6 @@ test('sidebar collapses to icons and expands again', async ({ signIn }) => {
 test('universal search finds a seeded patient and opens the record', async ({ signIn }) => {
   const page = await signIn();
   await page.getByPlaceholder(/Search by Phone Number, Name, or ID/).fill('Rahima');
-  await page.getByText('Rahima Begum').first().click();
+  await page.locator('#universal-search-results').getByText('Rahima Begum').first().click();
   await expect(page.getByRole('main').getByText('Rahima Begum').first()).toBeVisible();
 });

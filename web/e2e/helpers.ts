@@ -60,3 +60,30 @@ export async function apiToken(page: Page): Promise<string> {
 export function testMobile(prefix = '0199'): string {
   return `${prefix}${String(Date.now()).slice(-7)}`;
 }
+
+/**
+ * Candidate start times for a throwaway booking: the next 10-minute
+ * boundaries from now, today only. Earlier runs leave their bookings behind
+ * and the API rightly refuses an overlap, so callers walk this list until
+ * one is accepted.
+ */
+export function freeSlotCandidates(count = 30): Date[] {
+  const first = new Date();
+  first.setSeconds(0, 0);
+  first.setMinutes(Math.ceil(first.getMinutes() / 10) * 10);
+  const end = new Date();
+  end.setHours(23, 50, 0, 0);
+  const out: Date[] = [];
+  for (let i = 0; i < count; i += 1) {
+    const at = new Date(first.getTime() + i * 10 * 60_000);
+    if (at > end) break;
+    out.push(at);
+  }
+  return out;
+}
+
+/** The value a datetime-local input holds for a Date, in local time. */
+export function toLocalInput(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}

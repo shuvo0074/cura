@@ -10,6 +10,7 @@ import { ClinicalNotesEditor } from './ClinicalNotesEditor';
 import { PrescriptionEditor } from './PrescriptionEditor';
 import { TimelineEntry } from './TimelineEntry';
 import { EditPatientDialog } from './EditPatientDialog';
+import { StartVisit } from './StartVisit';
 import styles from './patient.module.css';
 
 type Tab = 'charting' | 'files' | 'billing';
@@ -32,12 +33,15 @@ export function PatientDashboardView({
   patientId,
   appointmentId,
   canWrite = true,
+  canReadHistory = true,
   onClose,
 }: {
   practiceId: string;
   patientId: string;
   appointmentId?: string | undefined;
   canWrite?: boolean;
+  /** Front-desk roles see the record but not its clinical history. */
+  canReadHistory?: boolean;
   onClose: () => void;
 }) {
   const { clinical, settings, http } = useServices();
@@ -59,10 +63,14 @@ export function PatientDashboardView({
   }, [loadPatient]);
 
   useEffect(() => {
-    void vm.loadTimeline();
-    void vm.loadComplaintSuggestions();
-    if (appointmentId) void vm.openEncounter(appointmentId);
-  }, [vm, appointmentId]);
+    // The history endpoint refuses roles without history access; asking anyway
+    // would render a refusal as "no visits recorded", which is untrue.
+    if (canReadHistory) void vm.loadTimeline();
+    if (canWrite) void vm.loadComplaintSuggestions();
+    // Opening a visit is a clinical write: staff without that right still see
+    // the record, but must not start (or be refused) an encounter.
+    if (appointmentId && canWrite) void vm.openEncounter(appointmentId);
+  }, [vm, appointmentId, canWrite, canReadHistory]);
 
   const signed = state.activeEncounter !== null && state.activeEncounter.signedAt !== null;
   const editable = canWrite && !signed;
@@ -107,8 +115,11 @@ export function PatientDashboardView({
             />
           )}
 
-          {state.loading && <p className={styles.muted}>Loading history…</p>}
-          {!state.loading && state.entries.length === 0 && (
+          {!canReadHistory && (
+            <p className={styles.muted}>Clinical history is visible to doctors and administrators.</p>
+          )}
+          {canReadHistory && state.loading && <p className={styles.muted}>Loading history…</p>}
+          {canReadHistory && !state.loading && state.entries.length === 0 && (
             <p className={styles.muted}>
               No visits recorded in the last {state.privacyWindowDays} days.
             </p>
@@ -122,9 +133,12 @@ export function PatientDashboardView({
         <section className={styles.editor} aria-label={TABS.find((t) => t.key === tab)?.label}>
           {tab === 'charting' &&
             (!state.activeEncounter ? (
-              <p className={styles.muted}>
-                Open an appointment from the calendar to record this visit.
-              </p>
+              <StartVisit
+                practiceId={practiceId}
+                patientId={patientId}
+                canWrite={canWrite}
+                onStart={(id) => void vm.openEncounter(id)}
+              />
             ) : (
               <>
                 {signed && <span className={styles.signedBadge}>Signed — read only</span>}

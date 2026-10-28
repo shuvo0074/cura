@@ -24,8 +24,10 @@
   background: var(--color-surface-raised);
   border-bottom: 1px solid var(--color-border-subtle);
   /* Above the content but below modals, so search results and the profile
-     popover overlay the page while a dialog still covers them. */
-  z-index: 2;
+     popover overlay the page while a dialog (40) still covers them. Content
+     screens use sticky bars up to z-index 6 (the calendar), and the header's
+     stacking context must sit above all of them or its dropdowns slide under. */
+  z-index: 20;
 }
 
 /** Primary header action: patient intake. */

@@ -138,6 +138,7 @@ export function App() {
           patientId={location.patient.id}
           appointmentId={location.patient.appointmentId}
           canWrite={session.user.permissions.includes(Permission.CLINICAL_WRITE)}
+          canReadHistory={session.user.permissions.includes(Permission.PATIENT_HISTORY_READ)}
           onClose={closePatient}
         />
       ) : (

@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import type { DocumentCategory } from '@cura/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import type { CursorQuery, Page } from '../../core/ports/repositories';
@@ -66,16 +67,33 @@ export class PrismaClinicalRepository implements ClinicalRepository {
       if (existing) return this.toDetail(existing);
     }
 
-    const created = await this.prisma.encounter.create({
-      data: {
-        patientId: input.patientId,
-        doctorId: input.doctorId,
-        appointmentId: input.appointmentId,
-        occurredAt: input.occurredAt,
-      },
-      include: PrismaClinicalRepository.INCLUDE as never,
-    });
-    return this.toDetail(created);
+    try {
+      const created = await this.prisma.encounter.create({
+        data: {
+          patientId: input.patientId,
+          doctorId: input.doctorId,
+          appointmentId: input.appointmentId,
+          occurredAt: input.occurredAt,
+        },
+        include: PrismaClinicalRepository.INCLUDE as never,
+      });
+      return this.toDetail(created);
+    } catch (err) {
+      // Two opens of the same visit can race past the lookup above (a double
+      // click, or React running the opening effect twice in development); the
+      // unique appointmentId lets one insert win, and the other returns it.
+      const raced =
+        input.appointmentId &&
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2002'
+          ? await this.prisma.encounter.findUnique({
+              where: { appointmentId: input.appointmentId },
+              include: PrismaClinicalRepository.INCLUDE as never,
+            })
+          : null;
+      if (raced) return this.toDetail(raced);
+      throw err;
+    }
   }
 
   async timeline(input: {
