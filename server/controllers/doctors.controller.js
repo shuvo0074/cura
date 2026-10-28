@@ -1,17 +1,25 @@
 import { query } from '../db.js';
 import { logger } from '../logger.js';
+import { bumpDailyStat } from './doctorInsights.controller.js';
 import { bookingBlocker, dhakaNow, estimatedArrival, parseSessionTime } from '../schedule.js';
+
+// The line of degrees shown after a doctor's name ("MBBS, FCPS (Medicine)"):
+// the doctor's own entries in the order they earned them, else the
+// listing's education text.
+export const DEGREES = `(SELECT COALESCE(string_agg(i.title, ', ' ORDER BY i.end_year NULLS LAST, i.id), d.education)
+     FROM doctor_profile_items i WHERE i.doctor_id = d.id AND i.kind = 'qualification') AS degrees`;
 
 // Columns safe to expose publicly. Never select d.* in a public endpoint:
 // the doctors table also holds login credentials (email, password_hash).
-const PUBLIC_DOCTOR_COLUMNS = `d.id, d.name, d.specialty, d.department, d.experience, d.chamber, d.fees,
+const PUBLIC_DOCTOR_COLUMNS = `d.id, d.name, d.gender, d.gender_is_demo, d.specialty, d.department, d.experience, d.chamber, d.fees, d.followup_fees, d.workplace,
   d.city, d.division, d.hospital_id, d.phone, d.photo, d.rating, d.about, d.lat, d.lng, d.website,
-  d.share_count, d.bmdc_no, d.education, d.languages, d.consulting_hours, d.address,
-  d.clinical_expertise, d.treatments, d.weekly_schedule`;
+  d.source_url, d.verified_on, d.share_count, d.bmdc_no, d.education, d.languages, d.consulting_hours, d.address,
+  d.clinical_expertise, d.treatments, d.weekly_schedule, d.bmdc_verified_at,
+  d.headline, d.slug, d.practicing_since, d.profile_updated_at, (d.user_id IS NOT NULL) AS is_managed, ${DEGREES}`;
 
 // What a list row needs (cards and search results), not the full profile.
-const LIST_DOCTOR_COLUMNS = `d.id, d.name, d.specialty, d.department, d.experience, d.chamber, d.fees,
-  d.city, d.division, d.photo, d.rating, d.bmdc_no`;
+const LIST_DOCTOR_COLUMNS = `d.id, d.name, d.gender, d.gender_is_demo, d.specialty, d.department, d.experience, d.chamber, d.fees, d.followup_fees, d.workplace,
+  d.city, d.division, d.photo, d.rating, d.bmdc_no, d.bmdc_verified_at, ${DEGREES}, (SELECT name FROM hospitals WHERE id = d.hospital_id) AS hospital_name`;
 const MAX_PAGE_SIZE = 50;
 const list = v => (v ? String(v).split(',').map(s => s.trim()).filter(Boolean) : []);
 
@@ -44,7 +52,7 @@ async function searchDoctors(req, res, next) {
       params.push(`%${q}%`);
       where.push(`(d.name ILIKE $${params.length} OR d.specialty ILIKE $${params.length})`);
     }
-    for (const col of ['specialty', 'division', 'city']) {
+    for (const col of ['specialty', 'division', 'city', 'gender']) {
       const values = list(req.query[col]);
       if (values.length) {
         params.push(values);
@@ -62,16 +70,36 @@ async function searchDoctors(req, res, next) {
   }
 }
 
+async function findDoctor(where, value) {
+  const { rows } = await query(
+    `SELECT ${PUBLIC_DOCTOR_COLUMNS}, h.name AS hospital_name,
+            (SELECT COUNT(*)::int FROM doctor_reviews r WHERE r.doctor_id = d.id AND r.hidden_at IS NULL) AS review_count,
+            (SELECT ROUND(AVG(rating), 1)::float FROM doctor_reviews r WHERE r.doctor_id = d.id AND r.hidden_at IS NULL) AS review_average
+     FROM doctors d
+     LEFT JOIN hospitals h ON h.id = d.hospital_id
+     WHERE ${where} = $1`,
+    [value]
+  );
+  return rows[0];
+}
+
 export async function getDoctor(req, res, next) {
   try {
-    const { rows } = await query(
-      `SELECT ${PUBLIC_DOCTOR_COLUMNS}, h.name AS hospital_name FROM doctors d
-       LEFT JOIN hospitals h ON h.id = d.hospital_id
-       WHERE d.id = $1`,
-      [req.params.id]
-    );
-    if (!rows[0]) return res.status(404).json({ error: 'Doctor not found' });
-    res.json(rows[0]);
+    if (!/^\d+$/.test(req.params.id)) return res.status(404).json({ error: 'Doctor not found' });
+    const doctor = await findDoctor('d.id', req.params.id);
+    if (!doctor) return res.status(404).json({ error: 'Doctor not found' });
+    res.json(doctor);
+  } catch (err) {
+    next(err);
+  }
+}
+
+// The /dr/<slug> public profile link.
+export async function getDoctorBySlug(req, res, next) {
+  try {
+    const doctor = await findDoctor('d.slug', String(req.params.slug).toLowerCase());
+    if (!doctor) return res.status(404).json({ error: 'Doctor not found' });
+    res.json(doctor);
   } catch (err) {
     next(err);
   }
@@ -84,6 +112,7 @@ export async function shareDoctor(req, res, next) {
       [req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Doctor not found' });
+    await bumpDailyStat(rows[0].id, 'shares');
     logger.info({ event: 'doctor_shared', doctorId: rows[0].id, shareCount: rows[0].share_count }, 'Doctor profile shared');
     res.json(rows[0]);
   } catch (err) {
@@ -180,7 +209,7 @@ export async function getDoctorSessions(req, res, next) {
        GROUP BY venue, session_time`,
       [req.params.id, date]
     );
-    const patientId = req.user?.role === 'patient' ? req.user.sub : null;
+    const patientId = req.user?.patientId ?? null;
     const { rows: mine } = patientId
       ? await query(
         `SELECT id, venue, session_time, serial_no FROM appointments

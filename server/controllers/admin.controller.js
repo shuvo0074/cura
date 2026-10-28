@@ -1,8 +1,9 @@
-import path from 'path';
 import { query } from '../db.js';
 import { logger } from '../logger.js';
 import { uploadBuffer, deleteObject, objectNameFromUrl } from '../storage.js';
 import { adminHospitalExtras } from '../db/hospitalExtras.js';
+import { saveDoctorPhoto, removeDoctorPhoto } from '../doctorPhotos.js';
+import { IMAGE_TYPES } from '../upload.js';
 
 function toNum(value) {
   if (value === '' || value === undefined || value === null) return null;
@@ -41,19 +42,21 @@ export async function listAllAppointments(req, res, next) {
   }
 }
 
+function doctorGender(value) { return ['male', 'female'].includes(value) ? value : null; }
+
 export async function createDoctor(req, res, next) {
   try {
     const d = req.body;
     const { rows } = await query(
       `INSERT INTO doctors (name, specialty, department, experience, chamber, fees, city, hospital_id, phone, photo, rating, about, lat, lng, website,
-        bmdc_no, education, languages, consulting_hours, address, clinical_expertise, treatments, division)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23) RETURNING *`,
+        bmdc_no, education, languages, consulting_hours, address, clinical_expertise, treatments, division, workplace, followup_fees, weekly_schedule, gender)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27) RETURNING *`,
       [d.name, d.specialty, d.department, d.experience, d.chamber, toNum(d.fees), d.city, d.hospitalId || null,
         d.phone, d.photo, toNum(d.rating), d.about, toNum(d.lat), toNum(d.lng), d.website,
-        d.bmdcNo, d.education, d.languages, d.consultingHours, d.address, toArray(d.clinicalExpertise), toArray(d.treatments), d.division || null]
+        d.bmdcNo, d.education, d.languages, d.consultingHours, d.address, toArray(d.clinicalExpertise), toArray(d.treatments), d.division || null, d.workplace || null, toNum(d.followupFees) ?? 300, JSON.stringify(d.weeklySchedule ?? []), doctorGender(d.gender)]
     );
     logger.info(
-      { event: 'admin_doctor_created', adminId: req.user?.sub, doctorId: rows[0].id, name: rows[0].name },
+      { event: 'admin_doctor_created', adminId: req.user?.id, doctorId: rows[0].id, name: rows[0].name },
       'Admin created doctor'
     );
     res.status(201).json(rows[0]);
@@ -68,15 +71,15 @@ export async function updateDoctor(req, res, next) {
     const { rows } = await query(
       `UPDATE doctors SET name=$1, specialty=$2, department=$3, experience=$4, chamber=$5, fees=$6,
         city=$7, hospital_id=$8, phone=$9, photo=$10, rating=$11, about=$12, lat=$13, lng=$14, website=$15,
-        bmdc_no=$16, education=$17, languages=$18, consulting_hours=$19, address=$20, clinical_expertise=$21, treatments=$22, division=$23
-       WHERE id = $24 RETURNING *`,
+        bmdc_no=$16, education=$17, languages=$18, consulting_hours=$19, address=$20, clinical_expertise=$21, treatments=$22, division=$23, workplace=$24, followup_fees=$25, weekly_schedule=COALESCE($26::jsonb, weekly_schedule), gender=$27, gender_is_demo=CASE WHEN gender IS DISTINCT FROM $27 THEN FALSE ELSE gender_is_demo END
+       WHERE id = $28 RETURNING *`,
       [d.name, d.specialty, d.department, d.experience, d.chamber, toNum(d.fees), d.city, d.hospitalId || null,
         d.phone, d.photo, toNum(d.rating), d.about, toNum(d.lat), toNum(d.lng), d.website,
-        d.bmdcNo, d.education, d.languages, d.consultingHours, d.address, toArray(d.clinicalExpertise), toArray(d.treatments), d.division || null, req.params.id]
+        d.bmdcNo, d.education, d.languages, d.consultingHours, d.address, toArray(d.clinicalExpertise), toArray(d.treatments), d.division || null, d.workplace || null, toNum(d.followupFees), d.weeklySchedule === undefined ? null : JSON.stringify(d.weeklySchedule), doctorGender(d.gender), req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Doctor not found' });
     logger.info(
-      { event: 'admin_doctor_updated', adminId: req.user?.sub, doctorId: rows[0].id, name: rows[0].name },
+      { event: 'admin_doctor_updated', adminId: req.user?.id, doctorId: rows[0].id, name: rows[0].name },
       'Admin updated doctor'
     );
     res.json(rows[0]);
@@ -87,12 +90,8 @@ export async function updateDoctor(req, res, next) {
 
 export async function setDoctorPhoto(req, res, next) {
   try {
-    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-    const ext = path.extname(req.file.originalname).toLowerCase() || '.jpg';
-    const objectName = `doctor-photos/doctor-upload-${req.params.id}${ext}`;
-    const photoPath = await uploadBuffer(objectName, req.file.buffer, req.file.mimetype);
-    await query('UPDATE doctors SET photo = $1 WHERE id = $2', [photoPath, req.params.id]);
-    res.json({ photo: photoPath });
+    if (!req.file) return res.status(400).json({ error: 'Upload a JPEG, PNG or WebP image' });
+    res.json({ photo: await saveDoctorPhoto(req.params.id, req.file) });
   } catch (err) {
     next(err);
   }
@@ -100,11 +99,7 @@ export async function setDoctorPhoto(req, res, next) {
 
 export async function deleteDoctorPhoto(req, res, next) {
   try {
-    const { rows } = await query('SELECT photo FROM doctors WHERE id = $1', [req.params.id]);
-    if (!rows[0]) return res.status(404).json({ error: 'Doctor not found' });
-    const objName = objectNameFromUrl(rows[0].photo);
-    await query('UPDATE doctors SET photo = NULL WHERE id = $1', [req.params.id]);
-    if (objName && objName.includes('doctor-upload-')) await deleteObject(objName);
+    if (!(await removeDoctorPhoto(req.params.id))) return res.status(404).json({ error: 'Doctor not found' });
     res.json({ photo: null });
   } catch (err) {
     next(err);
@@ -130,7 +125,7 @@ export async function createHospital(req, res, next) {
       [h.name, h.location, h.address, h.hotline, h.photo, toNum(h.lat), toNum(h.lng), h.website, h.division || null, h.description || null, ...x.values]
     );
     logger.info(
-      { event: 'admin_hospital_created', adminId: req.user?.sub, hospitalId: rows[0].id, name: rows[0].name },
+      { event: 'admin_hospital_created', adminId: req.user?.id, hospitalId: rows[0].id, name: rows[0].name },
       'Admin created hospital'
     );
     res.status(201).json(rows[0]);
@@ -153,7 +148,7 @@ export async function updateHospital(req, res, next) {
     );
     if (!rows[0]) return res.status(404).json({ error: 'Hospital not found' });
     logger.info(
-      { event: 'admin_hospital_updated', adminId: req.user?.sub, hospitalId: rows[0].id, name: rows[0].name },
+      { event: 'admin_hospital_updated', adminId: req.user?.id, hospitalId: rows[0].id, name: rows[0].name },
       'Admin updated hospital'
     );
     res.json(rows[0]);
@@ -165,7 +160,7 @@ export async function updateHospital(req, res, next) {
 export async function setHospitalPhoto(req, res, next) {
   try {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-    const ext = path.extname(req.file.originalname).toLowerCase() || '.jpg';
+    const ext = IMAGE_TYPES[req.file.mimetype] || '.jpg';
     const objectName = `hospital-photos/hospital-upload-${req.params.id}${ext}`;
     const photoPath = await uploadBuffer(objectName, req.file.buffer, req.file.mimetype);
     await query('UPDATE hospitals SET photo = $1 WHERE id = $2', [photoPath, req.params.id]);

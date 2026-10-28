@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarDays, Clock, MapPin, LogIn, Ticket, X } from 'lucide-react';
+import { CalendarDays, Clock, MapPin, LogIn, Ticket, X, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/client';
@@ -10,7 +10,67 @@ import EmptyState from '../components/ui/EmptyState';
 import { getDhakaNow } from '../utils/dhakaTime';
 import { formatYmd, toYmd } from '../utils/dates';
 
-function AppointmentCard({ a, onCancel }) {
+// Rating a completed visit. Only completed Cura visits can be reviewed, which
+// is what makes the reviews on doctor profiles trustworthy.
+function ReviewForm({ a, onReviewed }) {
+  const { t } = useTranslation();
+  const [rating, setRating] = useState(0);
+  const [hover, setHover] = useState(0);
+  const [comment, setComment] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  if (a.review_rating) {
+    return (
+      <p className="flex items-center gap-2 text-sm text-gray-600 border-t border-gray-100 pt-3">
+        <span className="inline-flex">{[1, 2, 3, 4, 5].map(n => (
+          <Star key={n} size={14} fill="currentColor" className={n <= a.review_rating ? 'text-amber-400' : 'text-gray-200'} />
+        ))}</span>
+        {t('rv_your_rating', { rating: a.review_rating })}
+      </p>
+    );
+  }
+
+  async function submit(e) {
+    e.preventDefault();
+    setBusy(true);
+    setError('');
+    try {
+      await api.post(`/appointments/${a.id}/review`, { rating, comment });
+      onReviewed(a.id, rating);
+    } catch (err) {
+      setError(err.message);
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form onSubmit={submit} className="border-t border-gray-100 pt-3 flex flex-col gap-2">
+      <p className="text-sm font-medium text-gray-900">{t('rv_rate_visit')}</p>
+      <div className="flex gap-1" role="radiogroup" aria-label={t('rv_rate_visit')} onMouseLeave={() => setHover(0)}>
+        {[1, 2, 3, 4, 5].map(n => (
+          <button key={n} type="button" role="radio" aria-checked={rating === n} aria-label={t('rv_star', { count: n })}
+            onClick={() => setRating(n)} onMouseEnter={() => setHover(n)} className="p-0.5">
+            <Star size={26} fill="currentColor" className={n <= (hover || rating) ? 'text-amber-400' : 'text-gray-200'} />
+          </button>
+        ))}
+      </div>
+      {rating > 0 && (
+        <>
+          <textarea value={comment} onChange={e => setComment(e.target.value)} rows={2} maxLength={1000}
+            placeholder={t('rv_comment_ph')}
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" />
+          {error && <p className="text-xs text-red-600">{error}</p>}
+          <button type="submit" disabled={busy} className="self-start px-4 py-2 rounded-lg text-sm font-semibold bg-primary text-white disabled:opacity-50">
+            {t('rv_submit')}
+          </button>
+        </>
+      )}
+    </form>
+  );
+}
+
+function AppointmentCard({ a, onCancel, onReviewed }) {
   const { t, i18n } = useTranslation();
   const [confirming, setConfirming] = useState(false);
   const cancelled = a.status === 'cancelled';
@@ -47,6 +107,7 @@ function AppointmentCard({ a, onCancel }) {
         )}
       </div>
       {a.notes && <p className="text-xs text-gray-500">{t('reason_for_visit')}: {a.notes}</p>}
+      {a.status === 'completed' && <ReviewForm a={a} onReviewed={onReviewed} />}
 
       {onCancel && (confirming ? (
         <div className="flex items-center justify-between gap-2 border-t border-gray-100 pt-3">
@@ -68,19 +129,24 @@ function AppointmentCard({ a, onCancel }) {
 
 export default function AppointmentsPage() {
   const { t } = useTranslation();
-  const { user, loading: authLoading } = useAuth();
+  const { loading: authLoading, hasRole } = useAuth();
+  const isPatient = hasRole('patient');
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) {
+    if (!isPatient) {
       setLoading(false);
       return;
     }
     api.get('/appointments/me')
       .then(setAppointments)
       .finally(() => setLoading(false));
-  }, [user]);
+  }, [isPatient]);
+
+  function handleReviewed(id, rating) {
+    setAppointments(prev => prev.map(a => (a.id === id ? { ...a, review_rating: rating } : a)));
+  }
 
   async function handleCancel(id) {
     const updated = await api.patch(`/appointments/${id}/cancel`);
@@ -91,7 +157,7 @@ export default function AppointmentsPage() {
     return <div className="flex items-center justify-center h-64 text-gray-400 text-sm">{t('loading')}</div>;
   }
 
-  if (!user || user.role !== 'patient') {
+  if (!isPatient) {
     return (
       <div>
         <PageHeader title={t('appointments')} />
@@ -130,7 +196,7 @@ export default function AppointmentsPage() {
             <section key={title}>
               <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">{title} <span className="font-normal">({list.length})</span></h2>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {list.map(a => <AppointmentCard key={a.id} a={a} onCancel={cancellable ? handleCancel : null} />)}
+                {list.map(a => <AppointmentCard key={a.id} a={a} onCancel={cancellable ? handleCancel : null} onReviewed={handleReviewed} />)}
               </div>
             </section>
           ))}

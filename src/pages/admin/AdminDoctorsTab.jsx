@@ -4,16 +4,20 @@ import { api } from '../../api/client';
 import divisions from '../../data/divisions.json';
 import { citiesForDivisions, toggleDivision } from '../../utils/geo';
 
+import DoctorChambersFields from './DoctorChambersFields';
+
 const BLANK = {
-  name: '', specialty: '', department: '', experience: '', chamber: '', fees: '',
+  name: '', gender: '', specialty: '', department: '', experience: '', chamber: '', fees: '', workplace: '', followupFees: '300',
   city: '', division: '', hospitalId: '', phone: '', photo: '', rating: '', about: '', website: '',
   bmdcNo: '', education: '', languages: '', consultingHours: '', address: '',
-  clinicalExpertise: '', treatments: '',
+  clinicalExpertise: '', treatments: '', weeklySchedule: [],
 };
 
 function toEditableForm(d) {
   return {
     ...d,
+    weeklySchedule: d.weekly_schedule ?? [],
+    followupFees: d.followup_fees ?? '',
     clinicalExpertise: Array.isArray(d.clinical_expertise) ? d.clinical_expertise.join(', ') : (d.clinicalExpertise ?? ''),
     treatments: Array.isArray(d.treatments) ? d.treatments.join(', ') : (d.treatments ?? ''),
   };
@@ -56,6 +60,8 @@ const DOCTOR_FIELDS = [
   { key: 'experience',      label: 'Experience' },
   { key: 'chamber',         label: 'Chamber' },
   { key: 'fees',            label: 'Consultation Fees' },
+  { key: 'followupFees', label: 'Follow-up Fees' },
+  { key: 'workplace', label: 'Workplace' },
   { key: 'phone',           label: 'Phone' },
   { key: 'rating',          label: 'Rating' },
   { key: 'about',           label: 'About' },
@@ -110,7 +116,8 @@ function DoctorForm({ form, setForm, hospitals, onSave, onCancel, editingId }) {
   }
 
   return (
-    <form onSubmit={onSave} className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+    <form onSubmit={onSave} className={editingId ? "flex flex-col flex-1 min-h-0" : ""}>
+      <div className={`grid grid-cols-2 sm:grid-cols-3 gap-3 ${editingId ? 'min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-6' : ''}`}>
       {/* Photo row — upload UI in edit mode, URL text field in add mode */}
       <div className="col-span-2 sm:col-span-3 flex items-center gap-4 pb-3 border-b border-gray-100">
         {editingId ? (
@@ -148,6 +155,11 @@ function DoctorForm({ form, setForm, hospitals, onSave, onCancel, editingId }) {
         )}
       </div>
 
+      <label className="col-span-full flex flex-col gap-1 rounded-xl border border-primary/20 bg-primary/5 p-3"><span className="text-sm font-semibold text-primary">Doctor gender</span>
+        <select value={form.gender ?? ''} onChange={event => setForm(f => ({ ...f, gender: event.target.value }))} className="border border-gray-200 rounded-lg px-3 py-2 text-sm">
+          <option value="">Not specified</option><option value="female">Female</option><option value="male">Male</option>
+        </select>
+      </label>
       {DOCTOR_FIELDS.map(({ key, label }) => (
         <label key={key} className="flex flex-col gap-1">
           <span className="text-xs font-medium text-gray-500">{label}</span>
@@ -156,11 +168,12 @@ function DoctorForm({ form, setForm, hospitals, onSave, onCancel, editingId }) {
             className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none" />
         </label>
       ))}
+      <DoctorChambersFields entries={form.weeklySchedule ?? []} hospitals={hospitals} onChange={weeklySchedule => setForm(f => ({ ...f, weeklySchedule }))} />
       <label className="flex flex-col gap-1">
-        <span className="text-xs font-medium text-gray-500">Hospital</span>
+        <span className="text-xs font-medium text-gray-500">Primary hospital or diagnostic centre</span>
         <select value={form.hospitalId ?? ''} onChange={e => setForm(f => ({ ...f, hospitalId: e.target.value }))}
           className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none">
-          <option value="">No hospital</option>
+          <option value="">No primary affiliation</option>
           {hospitals.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
         </select>
       </label>
@@ -180,9 +193,10 @@ function DoctorForm({ form, setForm, hospitals, onSave, onCancel, editingId }) {
           {districtOptions.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
       </label>
-      <div className="flex gap-2 mt-1 col-span-2 sm:col-span-3">
-        <button type="submit" className="flex-1 bg-primary text-white py-2 rounded-lg text-sm font-medium">Save</button>
-        <button type="button" onClick={onCancel} className="flex-1 border border-gray-300 py-2 rounded-lg text-sm bg-white">Cancel</button>
+      </div>
+      <div className={editingId ? "flex gap-2 flex-shrink-0 border-t border-gray-200 bg-white px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]" : "flex gap-2 mt-3"}>
+        <button type="submit" className="flex-1 bg-primary text-white min-h-11 py-2 rounded-lg text-sm font-medium">Save</button>
+        <button type="button" onClick={onCancel} className="flex-1 border border-gray-300 min-h-11 py-2 rounded-lg text-sm bg-white">Cancel</button>
       </div>
     </form>
   );
@@ -300,6 +314,7 @@ export default function AdminDoctorsTab() {
                 <div className="min-w-0">
                   <p className="font-medium text-gray-800 truncate">{d.name}</p>
                   <p className="text-xs text-gray-500 truncate">{d.specialty} · {d.hospital_name || 'No hospital'}</p>
+                  <p className="text-xs text-primary">Gender: {d.gender === 'female' ? 'Female' : d.gender === 'male' ? 'Male' : 'Not specified'}{d.gender_is_demo ? ' · Sample data' : ''}</p>
                 </div>
               </div>
               <Pencil size={16} className="text-gray-400 flex-shrink-0 ml-2" />
@@ -316,8 +331,8 @@ export default function AdminDoctorsTab() {
       {editForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center glass-scrim"
           onClick={e => { if (e.target === e.currentTarget) setEditForm(null); }}>
-          <div className="glass-panel rounded-2xl p-6 w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
+          <div className="glass-panel rounded-2xl w-full max-w-3xl mx-4 h-[90dvh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between flex-shrink-0 px-6 pt-6 pb-4">
               <h3 className="font-semibold text-gray-800 text-base">Edit Doctor</h3>
               <button onClick={() => setEditForm(null)} className="text-gray-400 hover:text-gray-600">
                 <X size={18} />

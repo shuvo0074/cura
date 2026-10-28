@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import HomeHero from '../components/home/HomeHero';
+import TestCalculatorCta from '../components/home/TestCalculatorCta';
 import ServiceCards from '../components/home/ServiceCards';
 import HowItWorks from '../components/home/HowItWorks';
 import PopularSpecialties from '../components/home/PopularSpecialties';
@@ -31,6 +32,8 @@ export default function HomePage() {
     <div className="flex flex-col gap-9 sm:gap-12">
       <HomeHero stats={stats} />
       <ServiceCards />
+      <BangladeshMap counts={stats?.byCity} />
+      <TestCalculatorCta />
       <PopularSpecialties counts={stats?.bySpecialty} />
       <HowItWorks />
       <CommonProblems />
@@ -46,8 +49,6 @@ export default function HomePage() {
           </div>
         </HomeSection>
       )}
-
-      <BangladeshMap counts={stats?.byCity} />
 
       <FaqAccordion />
     </div>

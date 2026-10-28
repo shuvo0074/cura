@@ -41,6 +41,7 @@ export default function DoctorCard({ doctor }) {
           <div className="flex items-start justify-between gap-1">
             <div className="min-w-0">
               <h3 className="font-semibold text-gray-900 text-sm leading-tight truncate">{doctor.name}</h3>
+              {doctor.degrees && <p className="text-[11px] text-gray-500 truncate">{doctor.degrees}</p>}
               <p className="text-primary text-xs font-medium mt-0.5">{doctor.specialty}</p>
             </div>
             <button
@@ -51,6 +52,7 @@ export default function DoctorCard({ doctor }) {
             </button>
           </div>
 
+          <p className="text-gray-600 text-xs mt-1">{t('workplace')}: {doctor.workplace || doctor.hospital_name || doctor.chamber || '—'}</p>
           <p className="text-gray-500 text-xs mt-1">{doctor.experience} {t('experience')}</p>
 
           <div className="flex items-center gap-1 mt-1">
@@ -61,7 +63,7 @@ export default function DoctorCard({ doctor }) {
           </div>
 
           <div className="flex items-center justify-between mt-2">
-            <span className="text-primary text-sm font-bold">৳{doctor.fees}</span>
+            <span className="text-primary text-sm font-bold">৳{doctor.fees}</span><span className="ml-2 text-xs text-gray-500">{t('followup_fees')}: {doctor.followup_fees != null ? `৳${doctor.followup_fees}` : t('not_listed')}</span>
             {doctor.rating && (
               <span className="flex items-center gap-0.5 text-xs text-amber-500 font-medium">
                 <Star size={11} fill="currentColor" /> {Number(doctor.rating).toFixed(1)}

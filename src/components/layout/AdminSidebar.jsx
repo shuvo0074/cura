@@ -1,10 +1,11 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Building2, UserRound, CalendarCheck } from 'lucide-react';
+import { LayoutDashboard, Building2, UserRound, CalendarCheck, BadgeCheck } from 'lucide-react';
 
 const NAV_ITEMS = [
   { path: '/admin/hospitals',    label: 'Hospitals',     icon: Building2 },
   { path: '/admin/doctors',      label: 'Doctors',       icon: UserRound },
   { path: '/admin/appointments', label: 'Appointments',  icon: CalendarCheck },
+  { path: '/admin/verifications', label: 'Verifications', icon: BadgeCheck },
 ];
 
 export default function AdminSidebar() {

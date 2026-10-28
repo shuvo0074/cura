@@ -11,7 +11,7 @@ export default function Photo({ src, alt, className = '', kind = 'person', iconS
   const [loadedSrc, setLoadedSrc] = useState(null);
   const [failedSrc, setFailedSrc] = useState(null);
   const Icon = ICONS[kind];
-  const loaded = loadedSrc === src;
+  const loaded = Boolean(src) && loadedSrc === src;
 
   return (
     <div role="img" aria-label={alt} className={`${className} relative overflow-hidden bg-primary/5 flex items-center justify-center`}>

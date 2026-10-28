@@ -1,6 +1,7 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { BedDouble, Calculator, House, Info, Phone, ReceiptText, Search, Stethoscope, X } from 'lucide-react';
+import { BedDouble, Calculator, House, Info, ReceiptText, Search, Stethoscope, X } from 'lucide-react';
 import { FACILITY_ICONS, SERVICE_GROUPS, SERVICE_ICONS, TEST_CATEGORIES, is24x7 } from './hospitalCatalogue';
 
 const CARD = 'bg-white rounded-xl border border-gray-100 shadow-sm';
@@ -92,9 +93,10 @@ export function ServicesSection({ hospital, id }) {
 // between places before choosing where to have tests done.
 export function TestPricesSection({ hospital, id }) {
   const { t, i18n } = useTranslation();
-  const [picked, setPicked] = useState(() => new Set());
+  const [params] = useSearchParams();
+  const [picked, setPicked] = useState(() => new Set(params.getAll('test')));
   const [query, setQuery] = useState('');
-  const tests = hospital.tests || [];
+  const tests = [...(hospital.tests || [])].sort((a, b) => a.name.localeCompare(b.name, i18n.language, { sensitivity: 'base', numeric: true }));
   if (!tests.length) return null;
 
   const money = new Intl.NumberFormat(i18n.language === 'bn' ? 'bn-BD' : 'en-IN');
@@ -105,12 +107,13 @@ export function TestPricesSection({ hospital, id }) {
     .map(cat => ({ cat, items: tests.filter(x => x.category === cat && (!q || x.name.toLowerCase().includes(q))) }))
     .filter(g => g.items.length);
   const chosen = tests.filter(x => picked.has(x.name));
-  // Centres that don't publish rates have tests without a price: those
-  // count as "call for price" rather than as zero.
+  // Unpublished prices are excluded from the subtotal, never counted as zero.
   const priced = chosen.filter(x => x.price != null);
   const unpriced = chosen.length - priced.length;
   const total = priced.reduce((sum, x) => sum + x.price, 0);
   const anyPrices = tests.some(x => x.price != null);
+  const hasPublished = tests.some(x => x.source_url && x.price != null);
+  const hasDemo = tests.some(x => x.price_kind === 'demo');
 
   function toggle(name) {
     setPicked(prev => {
@@ -126,9 +129,10 @@ export function TestPricesSection({ hospital, id }) {
         <ReceiptText size={18} className="text-primary" /> {t('test_prices')}
       </h2>
       <p className="text-sm text-gray-600 mt-1">{t(anyPrices ? 'test_calc_hint' : 'test_calc_hint_no_prices')}</p>
-      <p className="flex items-center gap-1.5 text-xs text-gray-500 mt-1">
-        <Info size={12} className="flex-shrink-0" /> {t(anyPrices ? 'test_prices_note' : 'test_prices_unpublished')}
-      </p>
+      {(!hasDemo || hasPublished) && <p className="flex items-center gap-1.5 text-xs text-gray-500 mt-1">
+        <Info size={12} className="flex-shrink-0" /> {t(hasPublished ? 'test_prices_published_note' : anyPrices ? 'test_prices_note' : 'test_prices_unpublished')}
+      </p>}
+      {hasDemo && <p className="text-xs text-gray-500 mt-3">{t('test_prices_demo_note')}</p>}
       {homeSample && (
         <p className="inline-flex items-center gap-1.5 text-xs font-medium text-primary bg-primary/5 rounded-full px-3 py-1.5 mt-3">
           <House size={13} /> {t('home_sample_available')}
@@ -155,10 +159,15 @@ export function TestPricesSection({ hospital, id }) {
                 <li key={x.name}>
                   <label className={`flex items-center gap-3 py-2.5 -mx-2 px-2 rounded-lg text-sm cursor-pointer select-none transition-colors ${on ? 'bg-primary/5' : 'hover:bg-gray-50'}`}>
                     <input type="checkbox" checked={on} onChange={() => toggle(x.name)} className="accent-primary w-4 h-4 flex-shrink-0" />
-                    <span className={`flex-1 ${on ? 'text-gray-900 font-medium' : 'text-gray-800'}`}>{x.name}</span>
+                    <span className={`flex-1 ${on ? 'text-gray-900 font-medium' : 'text-gray-800'}`}>{x.name}
+                      {x.source_url && <a href={x.source_url} target="_blank" rel="noopener noreferrer"
+                        onClick={e => e.stopPropagation()} className="block text-[11px] text-primary underline mt-1">
+                        {t('test_price_source', { date: new Date(`${x.source_checked_on}T00:00:00`).toLocaleDateString(i18n.language === 'bn' ? 'bn-BD' : 'en-GB') })}
+                      </a>}
+                    </span>
                     {x.price != null
-                      ? <span className="flex-shrink-0 font-semibold text-gray-900 tabular-nums">৳{money.format(x.price)}</span>
-                      : <span className="flex-shrink-0 text-xs font-medium text-gray-500">{t('call_for_price')}</span>}
+                      ? <span className="flex-shrink-0 font-semibold text-gray-900 tabular-nums text-right">৳{money.format(x.price)}</span>
+                      : <span className="flex-shrink-0 text-xs font-medium text-gray-500">{t('price_not_published')}</span>}
                   </label>
                 </li>
               );
@@ -176,19 +185,13 @@ export function TestPricesSection({ hospital, id }) {
           <>
             <div className="flex-1 min-w-0">
               <p className="text-xs text-white/80">{t('tests_selected', { count: chosen.length })}</p>
-              {priced.length > 0 && <p className="text-lg font-bold leading-tight tabular-nums">৳{money.format(total)}</p>}
+              {priced.length > 0 && <><p className="text-xs text-white/80">{t('test_price_subtotal')}</p><p className="text-lg font-bold leading-tight tabular-nums">৳{money.format(total)}</p></>}
               {unpriced > 0 && (
                 <p className={priced.length ? 'text-xs text-white/80' : 'text-sm font-semibold'}>
-                  {priced.length ? t('n_need_call_for_price', { count: unpriced }) : t('call_for_prices')}
+                  {priced.length ? t('n_prices_unpublished', { count: unpriced }) : t('test_prices_all_unpublished')}
                 </p>
               )}
             </div>
-            {unpriced > 0 && hospital.hotline && (
-              <a href={`tel:${hospital.hotline}`}
-                className="flex-shrink-0 flex items-center gap-1.5 text-sm font-semibold rounded-lg px-3 py-1.5 bg-white text-primary">
-                <Phone size={14} /> {t('call')}
-              </a>
-            )}
             <button type="button" onClick={() => setPicked(new Set())}
               className="flex-shrink-0 text-sm font-medium rounded-lg px-3 py-1.5 bg-white/15 hover:bg-white/25">
               {t('clear')}

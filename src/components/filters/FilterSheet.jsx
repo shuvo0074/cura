@@ -61,7 +61,7 @@ function ChipSection({ section, selected, onToggle }) {
               className={`flex items-center gap-1.5 min-h-10 px-3.5 rounded-full text-sm border transition-colors
                 ${on ? 'bg-primary border-primary text-white font-medium' : 'bg-white border-gray-200 text-gray-700 active:bg-gray-50'}`}>
               {on && <Check size={14} />}
-              {option}
+              {section.getOptionLabel ? section.getOptionLabel(option) : option}
             </button>
           );
         })}

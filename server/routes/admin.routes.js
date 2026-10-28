@@ -3,6 +3,7 @@ import {
   listAllAppointments, createDoctor, updateDoctor, setDoctorPhoto, deleteDoctorPhoto,
   createHospital, updateHospital, setHospitalPhoto, deleteHospitalPhoto,
 } from '../controllers/admin.controller.js';
+import { listVerifications, approveVerification, rejectVerification } from '../controllers/verifications.controller.js';
 import { doctorPhotoUpload, hospitalPhotoUpload } from '../upload.js';
 import { verifyToken, requireRole } from '../middleware/auth.js';
 
@@ -10,6 +11,9 @@ const router = Router();
 
 router.use(verifyToken, requireRole('admin'));
 router.get('/appointments', listAllAppointments);
+router.get('/verifications', listVerifications);
+router.post('/verifications/:id/approve', approveVerification);
+router.post('/verifications/:id/reject', rejectVerification);
 router.post('/doctors', createDoctor);
 router.patch('/doctors/:id', updateDoctor);
 router.post('/doctors/:id/photo', doctorPhotoUpload.single('photo'), setDoctorPhoto);

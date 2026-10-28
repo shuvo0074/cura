@@ -1,0 +1,72 @@
+[
+  {
+    "name": "Complete Blood Count (CBC)",
+    "category": "blood",
+    "price": 400
+  },
+  {
+    "name": "Random Blood Sugar (RBS)",
+    "category": "blood",
+    "price": 200
+  },
+  {
+    "name": "HbA1c",
+    "category": "blood",
+    "price": 1400
+  },
+  {
+    "name": "Lipid Profile",
+    "category": "blood",
+    "price": 1400
+  },
+  {
+    "name": "Thyroid (TSH)",
+    "category": "blood",
+    "price": 1000
+  },
+  {
+    "name": "Serum Creatinine",
+    "category": "blood",
+    "price": 400
+  },
+  {
+    "name": "Urine Routine Examination",
+    "category": "blood",
+    "price": 300
+  },
+  {
+    "name": "Dengue NS1 Antigen",
+    "category": "blood",
+    "price": 300
+  },
+  {
+    "name": "X-ray Chest (PA view)",
+    "category": "imaging",
+    "price": 600
+  },
+  {
+    "name": "Ultrasound Whole Abdomen",
+    "category": "imaging",
+    "price": 2500
+  },
+  {
+    "name": "CT Scan Brain",
+    "category": "imaging",
+    "price": 5000
+  },
+  {
+    "name": "MRI Brain",
+    "category": "imaging",
+    "price": 8000
+  },
+  {
+    "name": "ECG",
+    "category": "cardiac",
+    "price": 400
+  },
+  {
+    "name": "Echocardiogram",
+    "category": "cardiac",
+    "price": 1600
+  }
+]

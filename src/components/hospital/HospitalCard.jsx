@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { withDivision } from '../../utils/place';
 import Photo from '../ui/Photo';
 
+import PlaceShareButton from './PlaceShareButton';
+
 export default function HospitalCard({ hospital }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -17,7 +19,10 @@ export default function HospitalCard({ hospital }) {
     <div
       onClick={() => navigate(`/hospitals/${hospital.id}`)}
       className="bg-white rounded-2xl shadow-sm overflow-hidden cursor-pointer active:scale-[0.99] transition-transform">
+      <div className="relative">
+      <PlaceShareButton place={hospital} overlay />
       <Photo src={hospital.photo} alt={hospital.name} kind="building" iconSize={40} className="w-full h-36" />
+      </div>
 
       <div className="p-4">
         <h3 className="font-semibold text-gray-900 leading-tight">{hospital.name}</h3>

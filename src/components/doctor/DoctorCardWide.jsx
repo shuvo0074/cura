@@ -40,6 +40,7 @@ export default function DoctorCardWide({ doctor }) {
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <h3 className="font-semibold text-gray-900 leading-tight">{doctor.name}</h3>
+              {doctor.degrees && <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{doctor.degrees}</p>}
               <p className="text-primary text-sm font-medium mt-0.5">
                 {doctor.specialty}{doctor.department ? ` · ${doctor.department}` : ''}
               </p>
@@ -50,7 +51,8 @@ export default function DoctorCardWide({ doctor }) {
             </button>
           </div>
 
-          <p className="text-gray-500 text-sm mt-1">{doctor.experience} · <span className="text-primary font-semibold">৳{doctor.fees}</span></p>
+          <p className="text-gray-600 text-sm mt-1">{t('workplace')}: {doctor.workplace || doctor.hospital_name || doctor.chamber || '—'}</p>
+          <p className="text-gray-500 text-sm mt-1">{doctor.experience} · <span className="text-primary font-semibold">৳{doctor.fees}</span><span className="ml-2 text-xs text-gray-500">{t('followup_fees')}: {doctor.followup_fees != null ? `৳${doctor.followup_fees}` : t('not_listed')}</span></p>
 
           <div className="flex items-center gap-1 mt-1.5">
             <MapPin size={12} className="text-primary flex-shrink-0" />
@@ -63,7 +65,7 @@ export default function DoctorCardWide({ doctor }) {
             <div className="flex items-center gap-0.5 mt-1.5 text-xs text-gray-500 font-medium">
               {doctor.rating && <><Star size={13} fill="#F59E0B" className="text-amber-400" /> {Number(doctor.rating).toFixed(1)}</>}
               {doctor.rating && doctor.bmdc_no && <span className="mx-1">·</span>}
-              {doctor.bmdc_no && <span>{t('bmdc_registered')}</span>}
+              {doctor.bmdc_no && <span className={doctor.bmdc_verified_at ? 'text-green-700' : undefined}>{t(doctor.bmdc_verified_at ? 'bmdc_verified_short' : 'bmdc_registered')}</span>}
             </div>
           )}
         </div>

@@ -12,6 +12,8 @@ import { callChamber } from '../components/booking/chambers';
 import { ServicesSection, TestPricesSection } from '../components/hospital/HospitalServices';
 import { is24x7 } from '../components/hospital/hospitalCatalogue';
 
+import PlaceShareButton from '../components/hospital/PlaceShareButton';
+
 const CARD = 'bg-white rounded-xl border border-gray-100 shadow-sm';
 const PAGE = 20;
 const FRIDAY = 5;
@@ -88,7 +90,9 @@ function DoctorRow({ doc, hospital }) {
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-gray-500">
             <span>{doc.experience}</span>
             {doc.rating && <span className="flex items-center gap-1"><Star size={11} className="fill-amber-500 text-amber-500" /> {doc.rating}</span>}
-            {doc.fees != null && <span className="font-medium text-gray-700">৳{doc.fees}</span>}
+            <span>{t('workplace')}: {doc.workplace || doc.chamber || '—'}</span>
+            {doc.source_url && <a href={doc.source_url} target="_blank" rel="noreferrer" className="text-primary underline">{t('doctor_source')}</a>}
+            {doc.fees != null && <span className="font-medium text-gray-700">৳{doc.fees}</span>}<span>{t('followup_fees')}: {doc.followup_fees != null ? `৳${doc.followup_fees}` : t('not_listed')}</span>
           </div>
 
           <div className="flex flex-wrap gap-1.5 mt-2.5">
@@ -239,7 +243,7 @@ export default function HospitalProfilePage() {
   const hasMap = !online && ((hospital.lat != null && hospital.lng != null) || !!hospital.address);
   // Diagnostic centres lead with tests, and only list doctors when they have any.
   const diagnostic = hospital.type === 'diagnostic';
-  const showDoctors = !diagnostic || doctors.length > 0;
+  const showDoctors = true;
   const emergency = (hospital.services || []).find(x => x.key === 'emergency');
   const jumps = [
     ...(diagnostic ? [['test-prices', 'jump_tests', (hospital.tests || []).length > 0]] : []),
@@ -274,7 +278,7 @@ export default function HospitalProfilePage() {
                 {is24x7(hospital.opening_hours) && <Badge tone="green" icon={Clock}>{t('open_24_hours')}</Badge>}
                 {emergency && is24x7(emergency.hours) && <Badge tone="red" icon={Siren}>{t('emergency_24_7')}</Badge>}
               </div>
-              <h1 className="font-bold text-gray-900 text-xl sm:text-2xl leading-tight">{hospital.name}</h1>
+              <div className="flex items-start justify-between gap-3"><h1 className="font-bold text-gray-900 text-xl sm:text-2xl leading-tight">{hospital.name}</h1><div className="sm:hidden flex-shrink-0"><PlaceShareButton place={hospital} /></div></div>
               <p className="flex items-center gap-1.5 text-sm text-gray-500 mt-1.5">
                 <MapPin size={14} className="text-primary flex-shrink-0" /> {place}
               </p>
@@ -286,6 +290,7 @@ export default function HospitalProfilePage() {
               </dl>}
 
               <div className="flex gap-2 mt-4">
+                <div className="hidden sm:block"><PlaceShareButton place={hospital} /></div>
                 {hospital.hotline && (
                   <a href={`tel:${hospital.hotline}`}
                     className={`flex-1 flex items-center justify-center gap-2 h-11 rounded-xl text-white text-sm font-semibold transition-colors
