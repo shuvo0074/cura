@@ -55,7 +55,14 @@ export const envSchema = z.object({
   STORAGE_REGION: z.string().optional(),
 
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
-  TRUST_PROXY: z.coerce.boolean().default(false),
+  /** Proxy hops in front of the API whose X-Forwarded-For is trusted:
+   *  false/0 = none, true = 1, or a count (Netlify proxy + host balancer = 2).
+   *  Parsed by hand: `z.coerce.boolean()` reads the string "false" as true. */
+  TRUST_PROXY: z
+    .string()
+    .default('false')
+    .transform((v) => (v === 'false' ? 0 : v === 'true' ? 1 : Number(v)))
+    .pipe(z.number().int().min(0).max(5)),
 });
 
 export type Env = z.infer<typeof envSchema>;

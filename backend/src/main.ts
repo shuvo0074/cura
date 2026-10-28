@@ -79,8 +79,8 @@ async function bootstrap(): Promise<void> {
 
   // Correct client IPs behind a load balancer — required for per-IP throttling
   // to work at all. Only enabled where a trusted proxy actually terminates TLS.
-  if (config.trustProxy) {
-    app.getHttpAdapter().getInstance().set('trust proxy', 1);
+  if (config.trustProxy > 0) {
+    app.getHttpAdapter().getInstance().set('trust proxy', config.trustProxy);
   }
 
   app.setGlobalPrefix(config.apiPrefix);

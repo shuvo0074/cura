@@ -32,7 +32,8 @@ export class AppConfigService {
   get apiPrefix(): string {
     return this.env.API_PREFIX;
   }
-  get trustProxy(): boolean {
+  /** Number of trusted proxy hops; 0 = trust none. */
+  get trustProxy(): number {
     return this.env.TRUST_PROXY;
   }
   get logLevel(): string {

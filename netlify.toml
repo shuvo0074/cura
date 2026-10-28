@@ -1,0 +1,26 @@
+# Netlify hosts the web app only. The API (NestJS + PostgreSQL + Redis) runs on
+# a separate host; Netlify forwards /api/* to it, so the browser sees one
+# origin — the refresh cookie (SameSite=Strict) and the page's CSP
+# (connect-src 'self') both work without cross-site exceptions.
+
+[build]
+  command = "npm run build:shared && npm run build -w @cura/web"
+  publish = "web/dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+  VITE_ENVIRONMENT = "production"
+  # VITE_API_BASE_URL is set in the Netlify UI: https://<your-site>.netlify.app/api
+
+# Replace the target with your API's public address. Must come before the
+# SPA fallback below.
+[[redirects]]
+  from = "/api/*"
+  to = "https://YOUR-API-HOST/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
