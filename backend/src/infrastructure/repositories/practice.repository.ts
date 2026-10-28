@@ -1,11 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotFoundError } from '../../common/errors/domain-error';
 import type {
   CommunicationSettingRecord,
+  EmailSettingRecord,
   PracticeRecord,
   PracticeRepository,
   PrintoutSettingRecord,
   SettingsRepository,
+  StaffNotificationPrefs,
   StaffRecord,
 } from '../../core/ports/clinical.ports';
 
@@ -17,13 +20,78 @@ export class PrismaPracticeRepository implements PracticeRepository {
     specialization: true,
     contactNumber: true,
     email: true,
+    website: true,
+    binNumber: true,
     address: true,
+    addressLine1: true,
+    locality: true,
+    city: true,
+    country: true,
+    postCode: true,
     mapsUrl: true,
     logoUrl: true,
     roomNumber: true,
     slotMinutes: true,
     timezone: true,
+    showTodayFirst: true,
+    smsLanguage: true,
+    hideCancelledInvoices: true,
+    hideCancelledPayments: true,
   } as const;
+
+  private static readonly STAFF_SELECT = {
+    id: true,
+    role: true,
+    isActive: true,
+    notifyScheduleSms: true,
+    notifyScheduleEmail: true,
+    notifyAppointmentSms: true,
+    notifyAppointmentEmail: true,
+    user: {
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        mobile: true,
+        bmdcNumber: true,
+        isActive: true,
+      },
+    },
+  } as const;
+
+  private static toStaff(row: {
+    id: string;
+    role: string;
+    isActive: boolean;
+    notifyScheduleSms: boolean;
+    notifyScheduleEmail: boolean;
+    notifyAppointmentSms: boolean;
+    notifyAppointmentEmail: boolean;
+    user: {
+      id: string;
+      fullName: string;
+      email: string | null;
+      mobile: string | null;
+      bmdcNumber: string | null;
+      isActive: boolean;
+    };
+  }): StaffRecord {
+    return {
+      membershipId: row.id,
+      userId: row.user.id,
+      fullName: row.user.fullName,
+      email: row.user.email,
+      mobile: row.user.mobile,
+      role: row.role,
+      bmdcNumber: row.user.bmdcNumber,
+      // Effective access requires both the account and the membership active.
+      isActive: row.isActive && row.user.isActive,
+      notifyScheduleSms: row.notifyScheduleSms,
+      notifyScheduleEmail: row.notifyScheduleEmail,
+      notifyAppointmentSms: row.notifyAppointmentSms,
+      notifyAppointmentEmail: row.notifyAppointmentEmail,
+    };
+  }
 
   constructor(private readonly prisma: PrismaService) {}
 
@@ -94,35 +162,11 @@ export class PrismaPracticeRepository implements PracticeRepository {
   async listStaff(practiceId: string): Promise<StaffRecord[]> {
     const rows = await this.prisma.practiceMembership.findMany({
       where: { practiceId },
-      select: {
-        id: true,
-        role: true,
-        isActive: true,
-        user: {
-          select: {
-            id: true,
-            fullName: true,
-            email: true,
-            mobile: true,
-            bmdcNumber: true,
-            isActive: true,
-          },
-        },
-      },
+      select: PrismaPracticeRepository.STAFF_SELECT,
       orderBy: { createdAt: 'asc' },
     });
 
-    return rows.map((row) => ({
-      membershipId: row.id,
-      userId: row.user.id,
-      fullName: row.user.fullName,
-      email: row.user.email,
-      mobile: row.user.mobile,
-      role: row.role,
-      bmdcNumber: row.user.bmdcNumber,
-      // Effective access requires both the account and the membership active.
-      isActive: row.isActive && row.user.isActive,
-    }));
+    return rows.map((row) => PrismaPracticeRepository.toStaff(row));
   }
 
   async addStaff(input: {
@@ -170,7 +214,60 @@ export class PrismaPracticeRepository implements PracticeRepository {
       role: input.role,
       bmdcNumber: created.user.bmdcNumber,
       isActive: true,
+      notifyScheduleSms: true,
+      notifyScheduleEmail: true,
+      notifyAppointmentSms: true,
+      notifyAppointmentEmail: true,
     };
+  }
+
+  /**
+   * Edits a member's details and notification matrix.
+   *
+   * The membership is located by (practiceId, userId) rather than by its own id
+   * so a caller from one practice can never address another practice's row.
+   */
+  async updateStaff(
+    practiceId: string,
+    userId: string,
+    patch: {
+      fullName?: string;
+      email?: string | null;
+      mobile?: string | null;
+      bmdcNumber?: string | null;
+      role?: string;
+      notifications?: Partial<StaffNotificationPrefs>;
+    },
+  ): Promise<StaffRecord> {
+    const membership = await this.prisma.practiceMembership.findUnique({
+      where: { practiceId_userId: { practiceId, userId } },
+      select: { id: true },
+    });
+    if (!membership) throw new NotFoundError('Staff member');
+
+    const userPatch = {
+      ...(patch.fullName !== undefined ? { fullName: patch.fullName } : {}),
+      ...(patch.email !== undefined ? { email: patch.email } : {}),
+      ...(patch.mobile !== undefined ? { mobile: patch.mobile } : {}),
+      ...(patch.bmdcNumber !== undefined ? { bmdcNumber: patch.bmdcNumber } : {}),
+      ...(patch.role !== undefined ? { role: patch.role as never } : {}),
+    };
+
+    const row = await this.prisma.$transaction(async (tx) => {
+      if (Object.keys(userPatch).length > 0) {
+        await tx.user.update({ where: { id: userId }, data: userPatch });
+      }
+      return tx.practiceMembership.update({
+        where: { id: membership.id },
+        data: {
+          ...(patch.role !== undefined ? { role: patch.role as never } : {}),
+          ...(patch.notifications ?? {}),
+        },
+        select: PrismaPracticeRepository.STAFF_SELECT,
+      });
+    });
+
+    return PrismaPracticeRepository.toStaff(row);
   }
 
   /**
@@ -260,20 +357,60 @@ export class PrismaSettingsRepository implements SettingsRepository {
     });
   }
 
+  /**
+   * The update branch is scoped by practiceId as well as id.
+   *
+   * `update({ where: { id } })` alone would let a member of practice A rewrite
+   * practice B's consent form by guessing a uuid — the service-level tenancy
+   * check only proves the caller belongs to the practice they *named*, not that
+   * the row does.
+   */
   async upsertConsentForm(
     practiceId: string,
     data: { id?: string; title: string; bodyHtml: string; isActive: boolean },
   ): Promise<{ id: string }> {
     if (data.id) {
-      return this.prisma.consentFormTemplate.update({
-        where: { id: data.id },
+      const { count } = await this.prisma.consentFormTemplate.updateMany({
+        where: { id: data.id, practiceId },
         data: { title: data.title, bodyHtml: data.bodyHtml, isActive: data.isActive },
-        select: { id: true },
       });
+      if (count === 0) throw new NotFoundError('Consent form');
+      return { id: data.id };
     }
     return this.prisma.consentFormTemplate.create({
       data: { practiceId, title: data.title, bodyHtml: data.bodyHtml, isActive: data.isActive },
       select: { id: true },
+    });
+  }
+
+  async deleteConsentForm(practiceId: string, id: string): Promise<void> {
+    await this.prisma.consentFormTemplate.deleteMany({ where: { id, practiceId } });
+  }
+
+  async listEmailSettings(practiceId: string): Promise<EmailSettingRecord[]> {
+    return this.prisma.emailSetting.findMany({
+      where: { practiceId },
+      select: {
+        section: true,
+        title: true,
+        leftText: true,
+        rightText: true,
+        includeLogo: true,
+      },
+      orderBy: { section: 'asc' },
+    });
+  }
+
+  async upsertEmailSetting(practiceId: string, record: EmailSettingRecord): Promise<void> {
+    await this.prisma.emailSetting.upsert({
+      where: { practiceId_section: { practiceId, section: record.section } },
+      create: { practiceId, ...record },
+      update: {
+        title: record.title,
+        leftText: record.leftText,
+        rightText: record.rightText,
+        includeLogo: record.includeLogo,
+      },
     });
   }
 

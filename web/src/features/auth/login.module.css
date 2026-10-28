@@ -4,21 +4,79 @@
  * appears here, so light/dark and rebrands need no change to this file.
  */
 
+/* Sub-bar (fixed) + split main area. Spec: clean white background. */
 .shell {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
   min-height: 100dvh;
-  background: var(--color-surface-canvas);
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface-raised);
 }
 
-/* Spec: split-screen with hero illustration; collapses on narrow viewports. */
-@media (max-width: 900px) {
-  .shell {
-    grid-template-columns: 1fr;
-  }
-  .hero {
-    display: none;
-  }
+.subBar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  height: var(--layout-header-height);
+  padding: 0 var(--space-xl);
+  background: var(--color-surface-raised);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+}
+
+.brandMark {
+  width: 24px;
+  height: 24px;
+}
+
+.brandMarkTile {
+  fill: var(--color-brand-default);
+}
+
+.brandMarkCross {
+  stroke: var(--color-brand-on-brand);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+}
+
+.subBarLinks {
+  display: flex;
+  gap: var(--space-lg);
+}
+
+.subBarLink {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+}
+
+.subBarLink:hover {
+  color: var(--color-text-primary);
+  text-decoration: underline;
+}
+
+.main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  /* Top-aligned so the card does not jump when the taller Register form shows. */
+  align-items: start;
+  align-content: start;
+  padding-top: var(--space-xxxl);
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .hero {
@@ -26,29 +84,128 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--space-xl);
-  padding: var(--space-xxxl);
-  background: var(--color-brand-subtle);
+  gap: var(--space-lg);
+  padding: var(--space-xxxl) var(--space-xl);
 }
 
 .heroArt {
-  width: min(380px, 70%);
-  aspect-ratio: 1;
-  border-radius: var(--radius-xl);
-  background:
-    radial-gradient(circle at 30% 30%, var(--color-brand-default) 0%, transparent 55%),
-    radial-gradient(circle at 70% 70%, var(--color-feedback-success-fg) 0%, transparent 55%),
-    var(--color-surface-raised);
-  opacity: 0.9;
+  width: min(420px, 90%);
+  height: auto;
 }
 
 .heroCaption {
+  margin: 0;
   max-width: 34ch;
   text-align: center;
   color: var(--color-text-secondary);
   font-size: var(--text-lg);
   line-height: var(--leading-relaxed);
 }
+
+/* Spec: split-screen with hero illustration; stacks on narrow viewports with a
+   compact illustration above the card. */
+@media (max-width: 900px) {
+  .main {
+    grid-template-columns: 1fr;
+    padding-top: 0;
+  }
+  .hero {
+    padding: var(--space-lg) var(--space-lg) 0;
+    gap: 0;
+  }
+  .heroArt {
+    width: 148px;
+  }
+  .heroCaption {
+    display: none;
+  }
+  .subBar {
+    padding: 0 var(--space-lg);
+  }
+}
+
+/* Illustration fills — each maps to a theme token so the art follows dark mode. */
+.artDisc { fill: var(--color-brand-subtle); }
+.artShadow { fill: var(--color-border-subtle); }
+.artPulse {
+  fill: none;
+  stroke: var(--color-feedback-success-fg);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.45;
+}
+.artCape { fill: var(--color-feedback-danger-fg); }
+.artTrousers { fill: var(--color-brand-default); }
+.artShoe { fill: var(--color-text-primary); }
+.artCoat,
+.artSleeve { fill: var(--color-surface-raised); }
+.artCoat {
+  stroke: var(--color-brand-default);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+.artSleeve,
+.artSleeveOutline {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.artSleeveOutline {
+  stroke: var(--color-brand-default);
+  stroke-width: 26;
+}
+.artSleeve {
+  stroke: var(--color-surface-raised);
+  stroke-width: 20;
+}
+.artScrubs { fill: var(--color-feedback-success-fg); }
+.artLine {
+  fill: none;
+  stroke: var(--color-brand-default);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+.artShield { fill: var(--color-brand-default); }
+.artCross { fill: var(--color-brand-on-brand); }
+.artSkin { fill: var(--color-status-waiting); }
+.artHair,
+.artFeature { fill: var(--color-text-primary); }
+.artSmile {
+  fill: none;
+  stroke: var(--color-text-primary);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+/* Text tokens invert in dark mode, which would turn hair and eyes white; the
+   canvas token stays near-black there and keeps the face legible. */
+:global([data-theme='dark']) .artHair,
+:global([data-theme='dark']) .artFeature,
+:global([data-theme='dark']) .artShoe {
+  fill: var(--color-surface-canvas);
+}
+:global([data-theme='dark']) .artSmile {
+  stroke: var(--color-surface-canvas);
+}
+.artStethoscope {
+  fill: none;
+  stroke: var(--color-text-secondary);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.artStethoscopeHead { fill: var(--color-border-strong); }
+.artHeart { fill: var(--color-feedback-danger-fg); }
+.artPillA { fill: var(--color-feedback-warning-fg); }
+.artPillB { fill: var(--color-border-default); }
+.artPlus,
+.artPlusAlt {
+  fill: none;
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+.artPlus { stroke: var(--color-feedback-success-fg); }
+.artPlusAlt { stroke: var(--color-brand-default); }
+.artSpark { fill: var(--color-border-strong); }
 
 .panel {
   display: flex;
@@ -59,15 +216,64 @@
 
 .card {
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
   display: flex;
   flex-direction: column;
-  gap: var(--space-lg);
-  padding: var(--space-xxl);
   background: var(--color-surface-raised);
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
+}
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.tab {
+  flex: 1;
+  padding: var(--space-lg) var(--space-md);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-muted);
+  background: none;
+  border: none;
+  /* Indicator drawn as an inset bar so the active tab does not shift layout. */
+  box-shadow: inset 0 -2px 0 transparent;
+  cursor: pointer;
+  transition:
+    color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+.tab:hover:not(:disabled) {
+  color: var(--color-text-primary);
+}
+
+.tab[aria-selected='true'] {
+  color: var(--color-brand-default);
+  box-shadow: inset 0 -2px 0 var(--color-brand-default);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: -2px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding: var(--space-xl) var(--space-xxl) var(--space-xxl);
+}
+
+@media (max-width: 480px) {
+  .panel {
+    padding: var(--space-lg);
+  }
+  .form {
+    padding: var(--space-xl) var(--space-lg);
+  }
 }
 
 .title {
@@ -193,4 +399,47 @@
 
 .secondary:hover {
   color: var(--color-text-primary);
+}
+
+.fieldHint {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  line-height: var(--leading-normal);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.social {
+  padding: var(--space-md);
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
+  background: var(--color-surface-sunken);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+}
+
+.social:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.socialNote {
+  margin: calc(-1 * var(--space-sm)) 0 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  text-align: center;
 }

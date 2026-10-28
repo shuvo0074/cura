@@ -113,7 +113,7 @@ export class PatientController {
   }
 
   @Post()
-  @RequirePermissions(Permission.PATIENT_WRITE)
+  @RequirePermissions(Permission.PATIENT_CREATE)
   async create(
     @Body(zodBody(practiceQuery.and(patientIntakeSchema)))
     body: PatientIntakeInput & { practiceId: string },

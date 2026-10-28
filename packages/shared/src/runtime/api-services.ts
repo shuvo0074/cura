@@ -3,10 +3,11 @@ import type {
   Appointment,
   AuthSession,
   LoginResult,
+  OtpChallenge,
   PatientSearchHit,
   QueueSummary,
 } from '../domain/models';
-import type { CreateAppointmentInput, LoginInput } from '../validation/schemas';
+import type { CreateAppointmentInput, LoginInput, RegisterInput } from '../validation/schemas';
 import type { AppError, Result } from '../utils/result';
 import type { HttpClient } from './http-client';
 import { tokenStore } from './token-store';
@@ -21,6 +22,8 @@ import { tokenStore } from './token-store';
 
 export interface AuthApi {
   login(input: LoginInput): Promise<Result<LoginResult, AppError>>;
+  /** Creates a doctor account. Always answers with an OTP challenge, never a session. */
+  register(input: RegisterInput): Promise<Result<{ status: 'otp_required'; challenge: OtpChallenge }, AppError>>;
   verifyOtp(challengeId: string, code: string): Promise<Result<AuthSession, AppError>>;
   restoreSession(): Promise<Result<{ accessToken: string; expiresIn: number }, AppError>>;
   logout(): Promise<void>;
@@ -40,6 +43,17 @@ export class HttpAuthApi implements AuthApi {
       tokenStore.set(result.value.session.accessToken, result.value.session.expiresIn);
     }
     return result;
+  }
+
+  async register(
+    input: RegisterInput,
+  ): Promise<Result<{ status: 'otp_required'; challenge: OtpChallenge }, AppError>> {
+    return this.http.request<{ status: 'otp_required'; challenge: OtpChallenge }>('/auth/register', {
+      method: 'POST',
+      body: input,
+      anonymous: true,
+      retry: false,
+    });
   }
 
   async verifyOtp(challengeId: string, code: string): Promise<Result<AuthSession, AppError>> {

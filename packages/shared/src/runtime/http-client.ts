@@ -24,6 +24,13 @@ export interface RequestOptions {
 
 type Unsubscribe = () => void;
 
+/** A downloaded file, held in memory for the caller to preview or save. */
+export interface BinaryPayload {
+  blob: Blob;
+  fileName: string;
+  mimeType: string;
+}
+
 /**
  * HTTP transport.
  *
@@ -70,6 +77,80 @@ export class HttpClient {
     return err(lastError);
   }
 
+  /**
+   * Fetches a binary response (a stored document, a rendered PDF).
+   *
+   * Downloads cannot be a plain `<a href>`: the endpoints are bearer-token
+   * protected, and a link carries no Authorization header. Routing them through
+   * the same client keeps token refresh, timeouts and error normalisation
+   * identical to every other call — and, importantly, keeps the access token
+   * out of a URL where it would land in history and server logs.
+   *
+   * Never retried: the body is streamed, and a second attempt on a partially
+   * consumed response would silently truncate the file.
+   */
+  async requestBinary(
+    path: string,
+    options: Omit<RequestOptions, 'retry'> = {},
+  ): Promise<Result<BinaryPayload, AppError>> {
+    return this.sendBinary(path, options, true);
+  }
+
+  private async sendBinary(
+    path: string,
+    options: Omit<RequestOptions, 'retry'>,
+    allowRefresh: boolean,
+  ): Promise<Result<BinaryPayload, AppError>> {
+    const url = this.buildUrl(path, options.query);
+
+    const timeout = new AbortController();
+    const timer = setTimeout(() => timeout.abort(), this.config.network.requestTimeoutMs);
+    const signal = options.signal
+      ? AbortSignal.any([options.signal, timeout.signal])
+      : timeout.signal;
+
+    const headers: Record<string, string> = {};
+    const token = tokenStore.get();
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    try {
+      const response = await fetch(url, {
+        method: options.method ?? 'GET',
+        headers,
+        credentials: 'include',
+        signal,
+        cache: 'no-store',
+        redirect: 'error',
+      });
+
+      if (response.status === 401 && allowRefresh) {
+        const refreshed = await this.refreshOnce();
+        if (refreshed) return this.sendBinary(path, options, false);
+
+        tokenStore.clear();
+        this.sessionExpiredHandlers.forEach((h) => h());
+        return err(makeError('unauthorized', defaultMessages.unauthorized));
+      }
+
+      if (!response.ok) return err(await this.toAppError(response));
+
+      const blob = await response.blob();
+      return ok({
+        blob,
+        fileName: fileNameFrom(response.headers.get('Content-Disposition')) ?? 'download',
+        mimeType: response.headers.get('Content-Type') ?? blob.type ?? 'application/octet-stream',
+      });
+    } catch (cause) {
+      if (cause instanceof DOMException && cause.name === 'AbortError') {
+        if (options.signal?.aborted) return err(makeError('unknown', 'Request cancelled'));
+        return err(makeError('timeout', defaultMessages.timeout));
+      }
+      return err(makeError('network', defaultMessages.network));
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   // -------------------------------------------------------------------------
 
   private async send<T>(
@@ -87,8 +168,14 @@ export class HttpClient {
       ? AbortSignal.any([options.signal, timeout.signal])
       : timeout.signal;
 
+    // Multipart uploads pass a FormData body. It must be handed to fetch
+    // untouched and *without* a Content-Type header — only the browser can
+    // append the boundary parameter, and setting the header ourselves would
+    // produce a body the server cannot parse.
+    const isMultipart = isFormData(options.body);
+
     const headers: Record<string, string> = { Accept: 'application/json' };
-    if (options.body !== undefined) headers['Content-Type'] = 'application/json';
+    if (options.body !== undefined && !isMultipart) headers['Content-Type'] = 'application/json';
     if (!options.anonymous) {
       const token = tokenStore.get();
       if (token) headers.Authorization = `Bearer ${token}`;
@@ -100,7 +187,12 @@ export class HttpClient {
         headers,
         // Required for the httpOnly refresh cookie to travel on /auth routes.
         credentials: 'include',
-        body: options.body === undefined ? undefined : JSON.stringify(options.body),
+        body:
+          options.body === undefined
+            ? undefined
+            : isMultipart
+              ? (options.body as BodyInit)
+              : JSON.stringify(options.body),
         signal,
         // Prevents a cached 401 or stale record being replayed by the browser.
         cache: 'no-store',
@@ -207,4 +299,37 @@ export class HttpClient {
     const delay = Math.random() * ceiling;
     return new Promise((resolve) => setTimeout(resolve, delay));
   }
+}
+
+/**
+ * `instanceof FormData` guarded for environments without it.
+ *
+ * React Native and Node both provide FormData, but the shared package is also
+ * imported by the API process, where a bare `instanceof` on an undefined global
+ * would throw at module scope.
+ */
+function isFormData(body: unknown): boolean {
+  return typeof FormData !== 'undefined' && body instanceof FormData;
+}
+
+/**
+ * Extracts the filename from a Content-Disposition header.
+ *
+ * Prefers RFC 5987 `filename*` (percent-encoded UTF-8) over the plain `filename`
+ * so a Bangla document name survives the round trip instead of arriving mangled.
+ */
+function fileNameFrom(header: string | null): string | null {
+  if (!header) return null;
+
+  const extended = /filename\*=UTF-8''([^;]+)/i.exec(header);
+  if (extended?.[1]) {
+    try {
+      return decodeURIComponent(extended[1]);
+    } catch {
+      /* malformed encoding — fall through to the plain form */
+    }
+  }
+
+  const plain = /filename="?([^";]+)"?/i.exec(header);
+  return plain?.[1] ?? null;
 }

@@ -3,6 +3,7 @@ import type { UserRole } from '@cura/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import type {
   CreateUserInput,
+  UserProfilePatch,
   UserRecord,
   UserRepository,
 } from '../../core/ports/repositories';
@@ -128,6 +129,36 @@ export class PrismaUserRepository implements UserRepository {
       where: { id: userId },
       data: isActive ? { isActive: true } : { isActive: false, tokenVersion: { increment: 1 } },
     });
+  }
+
+  /**
+   * A password change ends every existing session.
+   *
+   * Bumping the token version is the whole point: if the change was prompted by
+   * a suspected compromise, leaving the attacker's issued tokens valid until
+   * expiry defeats the exercise.
+   */
+  async setPassword(userId: string, passwordHash: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash, tokenVersion: { increment: 1 }, failedLoginCount: 0, lockedUntil: null },
+    });
+  }
+
+  async setTwoFactorEnabled(userId: string, enabled: boolean): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { twoFactorEnabled: enabled },
+    });
+  }
+
+  async updateProfile(userId: string, patch: UserProfilePatch): Promise<UserRecord> {
+    const row = await this.prisma.user.update({
+      where: { id: userId },
+      data: patch as never,
+      select: PrismaUserRepository.SELECT,
+    });
+    return this.toRecord(row);
   }
 
   async practiceIdsFor(userId: string): Promise<string[]> {

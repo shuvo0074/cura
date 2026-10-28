@@ -4,9 +4,12 @@ import { PrismaService } from '../prisma/prisma.service';
 import type { CursorQuery, Page } from '../../core/ports/repositories';
 import type {
   BillingRepository,
+  InvoiceFilter,
   InvoiceItemData,
   InvoiceRecord,
+  InvoiceSummary,
   IncomeRow,
+  PaymentRecord,
   ReportRepository,
 } from '../../core/ports/clinical.ports';
 
@@ -51,6 +54,100 @@ export class PrismaBillingRepository implements BillingRepository {
       nextCursor: hasMore ? (page[page.length - 1]?.id ?? null) : null,
       hasMore,
     };
+  }
+
+  /**
+   * The practice ledger.
+   *
+   * `outstandingMinor` is aggregated across the whole filtered set, not the
+   * current page — a receivables figure that only counted the visible 25 rows
+   * would be worse than showing none at all.
+   */
+  async listForPractice(
+    practiceId: string,
+    filter: InvoiceFilter,
+  ): Promise<{ items: InvoiceSummary[]; nextCursor: string | null; outstandingMinor: number }> {
+    const term = filter.q?.trim();
+
+    const where: Prisma.InvoiceWhereInput = {
+      practiceId,
+      ...(filter.status ? { status: filter.status as never } : {}),
+      ...(filter.patientId ? { patientId: filter.patientId } : {}),
+      // The data-security preference hides voided invoices from listings; the
+      // rows stay in the database and in the audit trail regardless.
+      ...(filter.includeCancelled ? {} : { status: { not: 'CANCELLED' as never } }),
+      ...(filter.from || filter.to
+        ? {
+            createdAt: {
+              ...(filter.from ? { gte: filter.from } : {}),
+              ...(filter.to ? { lt: filter.to } : {}),
+            },
+          }
+        : {}),
+      ...(term
+        ? {
+            OR: [
+              { number: { contains: term, mode: 'insensitive' } },
+              { patient: { searchName: { contains: term.toLowerCase() } } },
+            ],
+          }
+        : {}),
+    };
+
+    const [rows, totals] = await Promise.all([
+      this.prisma.invoice.findMany({
+        where,
+        select: {
+          id: true,
+          number: true,
+          status: true,
+          totalMinor: true,
+          paidMinor: true,
+          createdAt: true,
+          issuedAt: true,
+          patient: { select: { id: true, fullName: true, curaId: true, mobile: true } },
+        },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        take: filter.limit + 1,
+        ...(filter.cursor ? { cursor: { id: filter.cursor }, skip: 1 } : {}),
+      }),
+      // Cancelled invoices are excluded from receivables whether or not they
+      // are visible: a voided invoice is not money anyone owes.
+      this.prisma.invoice.aggregate({
+        where: { ...where, status: { notIn: ['CANCELLED', 'DRAFT'] as never } },
+        _sum: { totalMinor: true, paidMinor: true },
+      }),
+    ]);
+
+    const items = rows.slice(0, filter.limit) as InvoiceSummary[];
+    return {
+      items,
+      nextCursor: rows.length > filter.limit ? (items[items.length - 1]?.id ?? null) : null,
+      outstandingMinor: (totals._sum.totalMinor ?? 0) - (totals._sum.paidMinor ?? 0),
+    };
+  }
+
+  async listPayments(invoiceId: string): Promise<PaymentRecord[]> {
+    return this.prisma.payment.findMany({
+      where: { invoiceId },
+      select: { id: true, amountMinor: true, method: true, reference: true, receivedAt: true },
+      orderBy: { receivedAt: 'desc' },
+    });
+  }
+
+  /**
+   * Voids an invoice.
+   *
+   * Refused once any money has been received: reversing a settled invoice is a
+   * refund, which is a separate, auditable event — not a status flip that would
+   * silently drop collected cash out of the day's takings.
+   */
+  async cancel(practiceId: string, id: string): Promise<boolean> {
+    const { count } = await this.prisma.invoice.updateMany({
+      where: { id, practiceId, paidMinor: 0, status: { notIn: ['CANCELLED', 'PAID'] as never } },
+      data: { status: 'CANCELLED' as never },
+    });
+    return count > 0;
   }
 
   async create(input: {

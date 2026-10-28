@@ -72,6 +72,7 @@ export class AppConfigService {
     return {
       ttlSeconds: this.env.THROTTLE_TTL_SECONDS,
       limit: this.env.THROTTLE_LIMIT,
+      disabled: this.env.THROTTLE_DISABLED === 'true',
     } as const;
   }
 

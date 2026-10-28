@@ -3,10 +3,12 @@ import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '.
 import {
   BILLING_REPOSITORY,
   CATALOG_REPOSITORY,
+  PRACTICE_REPOSITORY,
   REPORT_REPOSITORY,
   type BillingRepository,
   type CatalogRepository,
   type InvoiceItemData,
+  type PracticeRepository,
   type ReportRepository,
 } from '../../core/ports/clinical.ports';
 import {
@@ -39,6 +41,7 @@ export class BillingService {
     @Inject(CATALOG_REPOSITORY) private readonly catalog: CatalogRepository,
     @Inject(PATIENT_REPOSITORY) private readonly patients: PatientRepository,
     @Inject(REPORT_REPOSITORY) private readonly reports: ReportRepository,
+    @Inject(PRACTICE_REPOSITORY) private readonly practices: PracticeRepository,
     @Inject(AUDIT_REPOSITORY) private readonly audit: AuditRepository,
   ) {}
 
@@ -182,6 +185,75 @@ export class BillingService {
   ) {
     this.assert(principal, practiceId);
     return this.invoices.listForPatient(practiceId, patientId, query);
+  }
+
+  /**
+   * The practice ledger.
+   *
+   * Whether voided invoices appear is the practice's Data Security preference,
+   * not a per-request flag: the point of that setting is that the whole team
+   * sees a consistent ledger.
+   */
+  async listInvoices(
+    practiceId: string,
+    filter: {
+      status?: string | undefined;
+      patientId?: string | undefined;
+      q?: string | undefined;
+      from?: Date | undefined;
+      to?: Date | undefined;
+      cursor?: string | undefined;
+      limit: number;
+    },
+    principal: AuthenticatedPrincipal,
+  ) {
+    this.assert(principal, practiceId);
+    const practice = await this.practices.findById(practiceId);
+
+    return this.invoices.listForPractice(practiceId, {
+      ...filter,
+      includeCancelled: !(practice?.hideCancelledInvoices ?? false),
+    });
+  }
+
+  async listPayments(practiceId: string, invoiceId: string, principal: AuthenticatedPrincipal) {
+    this.assert(principal, practiceId);
+    // Resolved through the practice-scoped finder first, so an invoice id from
+    // another clinic cannot be used to read its payment history.
+    const invoice = await this.invoices.findById(practiceId, invoiceId);
+    if (!invoice) throw new NotFoundError('Invoice');
+    return this.invoices.listPayments(invoiceId);
+  }
+
+  async cancelInvoice(practiceId: string, id: string, principal: AuthenticatedPrincipal) {
+    this.assert(principal, practiceId);
+
+    const invoice = await this.invoices.findById(practiceId, id);
+    if (!invoice) throw new NotFoundError('Invoice');
+
+    const cancelled = await this.invoices.cancel(practiceId, id);
+    if (!cancelled) {
+      throw new ConflictError(
+        'INVOICE_NOT_CANCELLABLE',
+        invoice.paidMinor > 0
+          ? 'This invoice has payments against it. Refund them before cancelling.'
+          : 'This invoice is already cancelled.',
+      );
+    }
+
+    await this.audit.record({
+      actorUserId: principal.userId,
+      action: 'billing.invoice.cancelled',
+      resourceType: 'invoice',
+      resourceId: id,
+      practiceId,
+      ipHash: null,
+      userAgent: null,
+      requestId: null,
+      metadata: { number: invoice.number, totalMinor: invoice.totalMinor },
+    });
+
+    return this.invoices.findById(practiceId, id);
   }
 
   async getInvoice(practiceId: string, id: string, principal: AuthenticatedPrincipal) {

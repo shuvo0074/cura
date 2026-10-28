@@ -208,6 +208,70 @@ export class DocumentService {
     return this.documents.listForOwner(principal.userId);
   }
 
+  /** Practice-wide browse for the Documents module. */
+  async listForPractice(
+    practiceId: string,
+    filter: {
+      category?: DocumentCategory | undefined;
+      patientId?: string | undefined;
+      q?: string | undefined;
+      from?: Date | undefined;
+      to?: Date | undefined;
+      cursor?: string | undefined;
+      limit: number;
+    },
+    principal: AuthenticatedPrincipal,
+  ) {
+    this.assertPractice(principal, practiceId);
+
+    if (filter.patientId) {
+      // Resolving the patient first means a foreign id returns 404 rather than
+      // an empty page, which would read as "this patient has no documents".
+      const patient = await this.patients.findById(practiceId, filter.patientId);
+      if (!patient) throw new NotFoundError('Patient');
+    }
+
+    return this.documents.listForPractice(practiceId, {
+      ...filter,
+      ownerUserId: principal.userId,
+    });
+  }
+
+  /**
+   * Removes a document from the practice's view.
+   *
+   * Reuses `openForDownload`'s access check by resolving the record the same
+   * way: a caller who could not read the file must not be able to delete it.
+   */
+  async remove(id: string, practiceId: string, principal: AuthenticatedPrincipal) {
+    this.assertPractice(principal, practiceId);
+
+    const record = await this.documents.findById(id);
+    if (!record) throw new NotFoundError('Document');
+
+    if (record.patientId) {
+      const patient = await this.patients.findById(practiceId, record.patientId);
+      if (!patient) throw new ForbiddenError('This document belongs to another practice.');
+    } else if (record.ownerUserId && record.ownerUserId !== principal.userId) {
+      throw new ForbiddenError('This document belongs to another user.');
+    }
+
+    await this.documents.softDelete(id);
+    await this.audit.record({
+      actorUserId: principal.userId,
+      action: 'document.deleted',
+      resourceType: 'document',
+      resourceId: id,
+      practiceId,
+      ipHash: null,
+      userAgent: null,
+      requestId: null,
+      metadata: { fileName: record.fileName, category: record.category },
+    });
+
+    return { deleted: true };
+  }
+
   private assertPractice(principal: AuthenticatedPrincipal, practiceId: string): void {
     if (!principal.practiceIds.includes(practiceId)) {
       throw new ForbiddenError('You do not have access to this practice.');

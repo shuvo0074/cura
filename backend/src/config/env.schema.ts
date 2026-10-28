@@ -38,6 +38,9 @@ export const envSchema = z.object({
 
   THROTTLE_TTL_SECONDS: z.coerce.number().int().positive().default(60),
   THROTTLE_LIMIT: z.coerce.number().int().positive().default(120),
+  /** Turns every rate limit off — for the end-to-end suite only. Rejected
+   *  outside development and test below. */
+  THROTTLE_DISABLED: z.enum(['true', 'false']).default('false'),
 
   SMS_PROVIDER: z.enum(['console', 'ssl_wireless', 'twilio']).default('console'),
   SMS_API_KEY: z.string().optional(),
@@ -67,6 +70,10 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
   }
 
   const env = parsed.data;
+
+  if (env.THROTTLE_DISABLED === 'true' && env.NODE_ENV !== 'development' && env.NODE_ENV !== 'test') {
+    throw new Error('THROTTLE_DISABLED is only allowed in development and test');
+  }
 
   // Production must not run on development defaults.
   if (env.NODE_ENV === 'production') {

@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+// Adapters raise the domain's own not-found error rather than a bare Error:
+// these misses are almost always a row belonging to another practice, and that
+// must reach the client as a 404, not a 500.
+import { NotFoundError } from '../../common/errors/domain-error';
 import type {
   CatalogEntryRecord,
   CatalogRepository,
@@ -54,6 +58,42 @@ export class PrismaCatalogRepository implements CatalogRepository {
     });
   }
 
+  /**
+   * The catalog table view (spec: Drug Catalog → "Catalog List & Management").
+   *
+   * Unlike `searchDrugs` this returns the practice's own entries only — the
+   * shared global catalog is auto-suggest fodder, not something the doctor can
+   * edit or delete, and showing it here would offer actions that always fail.
+   */
+  async listDrugs(practiceId: string, term: string | undefined, limit: number): Promise<DrugRecord[]> {
+    return this.prisma.drug.findMany({
+      where: {
+        practiceId,
+        deletedAt: null,
+        ...(term ? { searchName: { startsWith: this.normalise(term) } } : {}),
+      },
+      select: { id: true, name: true, form: true, strength: true, unit: true, instruction: true },
+      take: limit,
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  async updateDrug(practiceId: string, id: string, data: Omit<DrugRecord, 'id'>): Promise<DrugRecord> {
+    const { count } = await this.prisma.drug.updateMany({
+      where: { id, practiceId, deletedAt: null },
+      data: {
+        name: data.name,
+        form: data.form,
+        strength: data.strength,
+        unit: data.unit,
+        instruction: data.instruction,
+        searchName: this.normalise(data.name),
+      },
+    });
+    if (count === 0) throw new NotFoundError('Drug');
+    return { id, ...data };
+  }
+
   async deleteDrug(practiceId: string, id: string): Promise<void> {
     // Soft delete: prescriptions already written must keep resolving.
     await this.prisma.drug.updateMany({
@@ -88,6 +128,20 @@ export class PrismaCatalogRepository implements CatalogRepository {
     });
   }
 
+  async updateEntry(practiceId: string, id: string, value: string): Promise<CatalogEntryRecord> {
+    const existing = await this.prisma.catalogEntry.findFirst({
+      where: { id, practiceId, deletedAt: null },
+      select: { kind: true },
+    });
+    if (!existing) throw new NotFoundError('Catalog entry');
+
+    await this.prisma.catalogEntry.updateMany({
+      where: { id, practiceId },
+      data: { value, searchValue: this.normalise(value) },
+    });
+    return { id, kind: existing.kind, value };
+  }
+
   async deleteEntry(practiceId: string, id: string): Promise<void> {
     await this.prisma.catalogEntry.updateMany({
       where: { id, practiceId },
@@ -111,12 +165,19 @@ export class PrismaCatalogRepository implements CatalogRepository {
   ): Promise<PricingItemRecord> {
     const select = { id: true, name: true, priceMinor: true, notes: true, isDefault: true } as const;
 
+    // Scoped by practiceId as well as id: an update keyed on the primary key
+    // alone would let one practice reprice another's catalog.
     if (data.id) {
-      return this.prisma.pricingItem.update({
-        where: { id: data.id },
+      const { count } = await this.prisma.pricingItem.updateMany({
+        where: { id: data.id, practiceId, deletedAt: null },
         data: { name: data.name, priceMinor: data.priceMinor, notes: data.notes },
+      });
+      if (count === 0) throw new NotFoundError('Pricing item');
+      const row = await this.prisma.pricingItem.findUniqueOrThrow({
+        where: { id: data.id },
         select,
       });
+      return row;
     }
 
     return this.prisma.pricingItem.upsert({
@@ -170,5 +231,9 @@ export class PrismaCatalogRepository implements CatalogRepository {
       },
       select: { id: true },
     });
+  }
+
+  async deleteChartingTemplate(practiceId: string, id: string): Promise<void> {
+    await this.prisma.chartingTemplate.deleteMany({ where: { id, practiceId } });
   }
 }

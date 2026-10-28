@@ -107,20 +107,87 @@ LAN IP in that file.
 
 ## Sign in
 
-The seed creates a verified account, so login skips OTP:
+The seed creates one verified account per access level, so login skips OTP.
+Sign in with the mobile number or the email — either works.
 
-```
-01711111111  /  CuraDoctor123
-```
+| Role | Mobile | Email | Password |
+|---|---|---|---|
+| Administrator | `01700000001` | `admin@cura.local` | `CuraAdmin123` |
+| Doctor | `01711111111` | `doctor@cura.local` | `CuraDoctor123` |
+| Desk staff | `01700000003` | `desk@cura.local` | `CuraDesk123` |
+
+### What each level can do
+
+There are three, and the sidebar reflects them — a module you cannot use is not
+shown rather than shown failing.
+
+| | Administrator | Doctor | Desk staff |
+|---|---|---|---|
+| Calendar (view) | ✅ | ✅ | ✅ |
+| Book / reschedule a session | ✅ | — | ✅ |
+| Move a session through the queue | ✅ | ✅ | ✅ |
+| Register a patient | ✅ | — | ✅ |
+| Edit a patient record | ✅ | ✅ | ✅ |
+| Vitals, notes, prescriptions | ✅ | ✅ | — |
+| Drug / note auto-suggest | ✅ | ✅ | ✅ |
+| Billing and payments | ✅ | view only | ✅ |
+| Statistics | ✅ | ✅ | — |
+| Patient Management (queue board) | ✅ | ✅ | ✅ |
+| Communications / Feedback (view) | ✅ | ✅ | ✅ |
+| Record and reply to feedback | ✅ | ✅ | ✅ |
+| Integrations, Prime Services | ✅ | — | — |
+| Settings (incl. adding drugs and staff) | ✅ | — | — |
+| Own profile and password | ✅ | ✅ | ✅ |
+
+Booking a session and registering a patient are front-desk work, so a doctor
+has neither — but a doctor can still check a patient in and out of the queue.
+Only an administrator adds staff or edits the catalogues.
 
 To exercise the OTP flow, register a new account in the UI — in development the
 code is printed to the API console.
+
+## Demo data
+
+`npx prisma db seed` (idempotent — safe to re-run) creates:
+
+- the three accounts above, all attached to **Cura Demo Clinic**
+- 5 patients with appointments on today's date
+- **103 drugs** in the catalogue, so the prescription auto-suggest has realistic
+  matches from the first login. Type three letters into a drug field to see it.
+
+## End-to-end UI tests
+
+Playwright drives the real web app against the real API (`web/e2e/`).
+
+```bash
+cd web && npx playwright install chromium   # first time only
+
+# API with rate limits off (refused outside development/test), in its own terminal
+THROTTLE_DISABLED=true npm run dev:backend  # from the repo root
+npm run dev:web
+
+npm run test:e2e                            # from the repo root
+```
+
+Login is throttled to 10 attempts per 15 minutes, which the suite exceeds, so
+start the API with `THROTTLE_DISABLED=true` for test runs. Re-run `npm run seed`
+first on a fresh database. The suite adds a patient (named `E2E Queue …`) and a
+feedback entry per run.
+
+The OTP registration test is skipped unless `CURA_API_LOG` points at the API's
+console output, where the development SMS driver prints the code — e.g.
+`npm run dev:backend > /tmp/api.log` and `CURA_API_LOG=/tmp/api.log npm run test:e2e`.
+Each run of it creates a real doctor account.
+
+Failures leave a screenshot and trace in `web/test-results/`;
+`npx playwright show-report` (in `web/`) opens the HTML report.
 
 ## Common commands
 
 | Command | Where | Purpose |
 |---|---|---|
 | `npm run typecheck` | root | typecheck shared + backend + web |
+| `npm run test:e2e` | root | Playwright UI tests (see above) |
 | `npm run build:shared` | root | rebuild after editing `packages/shared` |
 | `npx prisma migrate dev` | `backend/` | apply schema changes |
 | `npm run seed` | `backend/` | reset demo data (idempotent) |

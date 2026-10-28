@@ -153,6 +153,12 @@ export interface CatalogRepository {
     practiceId: string,
     data: { id?: string; name: string; diagnoses: string[]; labOrders: string[]; followUpDays: number | null },
   ): Promise<{ id: string }>;
+  deleteChartingTemplate(practiceId: string, id: string): Promise<void>;
+
+  listDrugs(practiceId: string, term: string | undefined, limit: number): Promise<DrugRecord[]>;
+  updateDrug(practiceId: string, id: string, data: Omit<DrugRecord, 'id'>): Promise<DrugRecord>;
+
+  updateEntry(practiceId: string, id: string, value: string): Promise<CatalogEntryRecord>;
 }
 
 // ---------------------------------------------------------------------------
@@ -165,15 +171,34 @@ export interface PracticeRecord {
   specialization: string | null;
   contactNumber: string | null;
   email: string | null;
+  website: string | null;
+  binNumber: string | null;
   address: string | null;
+  addressLine1: string | null;
+  locality: string | null;
+  city: string | null;
+  country: string;
+  postCode: string | null;
   mapsUrl: string | null;
   logoUrl: string | null;
   roomNumber: string | null;
   slotMinutes: number;
   timezone: string;
+  showTodayFirst: boolean;
+  smsLanguage: string;
+  hideCancelledInvoices: boolean;
+  hideCancelledPayments: boolean;
 }
 
-export interface StaffRecord {
+/** Per-member notification matrix (spec: Practice Staff → Notifications). */
+export interface StaffNotificationPrefs {
+  notifyScheduleSms: boolean;
+  notifyScheduleEmail: boolean;
+  notifyAppointmentSms: boolean;
+  notifyAppointmentEmail: boolean;
+}
+
+export interface StaffRecord extends StaffNotificationPrefs {
   membershipId: string;
   userId: string;
   fullName: string;
@@ -209,6 +234,18 @@ export interface PracticeRepository {
     passwordHash: string;
   }): Promise<StaffRecord>;
   setStaffActive(practiceId: string, userId: string, isActive: boolean): Promise<void>;
+  updateStaff(
+    practiceId: string,
+    userId: string,
+    patch: {
+      fullName?: string;
+      email?: string | null;
+      mobile?: string | null;
+      bmdcNumber?: string | null;
+      role?: string;
+      notifications?: Partial<StaffNotificationPrefs>;
+    },
+  ): Promise<StaffRecord>;
 }
 
 export const SETTINGS_REPOSITORY = Symbol('SETTINGS_REPOSITORY');
@@ -239,6 +276,15 @@ export interface PrintoutSettingRecord {
   sectionOrder: string[];
 }
 
+export interface EmailSettingRecord {
+  /** HEADER | FOOTER */
+  section: string;
+  title: string | null;
+  leftText: string | null;
+  rightText: string | null;
+  includeLogo: boolean;
+}
+
 export interface SettingsRepository {
   listCommunication(practiceId: string): Promise<CommunicationSettingRecord[]>;
   upsertCommunication(practiceId: string, record: CommunicationSettingRecord): Promise<void>;
@@ -251,6 +297,10 @@ export interface SettingsRepository {
     practiceId: string,
     data: { id?: string; title: string; bodyHtml: string; isActive: boolean },
   ): Promise<{ id: string }>;
+  deleteConsentForm(practiceId: string, id: string): Promise<void>;
+
+  listEmailSettings(practiceId: string): Promise<EmailSettingRecord[]>;
+  upsertEmailSetting(practiceId: string, record: EmailSettingRecord): Promise<void>;
 
   getSubscription(practiceId: string): Promise<{ plan: string; status: string; expiresAt: Date | null } | null>;
   upsertSubscription(practiceId: string, plan: string, expiresAt: Date | null): Promise<void>;
@@ -289,9 +339,49 @@ export interface InvoiceRecord {
 
 export const BILLING_REPOSITORY = Symbol('BILLING_REPOSITORY');
 
+/** An invoice row for the ledger, with the patient and payments joined. */
+export interface InvoiceSummary {
+  id: string;
+  number: string;
+  status: string;
+  totalMinor: number;
+  paidMinor: number;
+  createdAt: Date;
+  issuedAt: Date | null;
+  patient: { id: string; fullName: string; curaId: string; mobile: string } | null;
+}
+
+export interface InvoiceFilter {
+  status?: string | undefined;
+  patientId?: string | undefined;
+  /** Matches the invoice number or the patient's name. */
+  q?: string | undefined;
+  from?: Date | undefined;
+  to?: Date | undefined;
+  /** Set from the practice's data-security preference. */
+  includeCancelled: boolean;
+  cursor?: string | undefined;
+  limit: number;
+}
+
+export interface PaymentRecord {
+  id: string;
+  amountMinor: number;
+  method: string;
+  reference: string | null;
+  receivedAt: Date;
+}
+
 export interface BillingRepository {
   findById(practiceId: string, id: string): Promise<InvoiceRecord | null>;
   listForPatient(practiceId: string, patientId: string, query: CursorQuery): Promise<Page<InvoiceRecord>>;
+  listForPractice(
+    practiceId: string,
+    filter: InvoiceFilter,
+  ): Promise<{ items: InvoiceSummary[]; nextCursor: string | null; outstandingMinor: number }>;
+  listPayments(invoiceId: string): Promise<PaymentRecord[]>;
+  /** Voids an invoice. Returns false when it is already cancelled or paid. */
+  cancel(practiceId: string, id: string): Promise<boolean>;
   create(input: {
     practiceId: string;
     patientId: string;

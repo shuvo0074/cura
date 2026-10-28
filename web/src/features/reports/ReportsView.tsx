@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useServices } from '../../app/services';
 import styles from './reports.module.css';
+import { Metric } from '../../ui';
 
 type Kind = 'income' | 'appointments' | 'procedures' | 'demographics';
 
@@ -172,15 +173,6 @@ export function ReportsView({ practiceId }: { practiceId: string }) {
           </tbody>
         </table>
       )}
-    </div>
-  );
-}
-
-function Metric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className={styles.metric}>
-      <span className={styles.metricValue}>{value}</span>
-      <span className={styles.metricLabel}>{label}</span>
     </div>
   );
 }

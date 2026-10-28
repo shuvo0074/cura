@@ -16,11 +16,16 @@ import { Permission } from '@cura/shared';
 export type RouteKey =
   | 'calendar'
   | 'patients'
+  | 'queue'
+  | 'communications'
   | 'settings'
   | 'reports'
   | 'billing'
   | 'documents'
-  | 'communication'
+  | 'feedback'
+  | 'integrations'
+  | 'community'
+  | 'prime'
   | 'profile';
 
 export interface NavItem {
@@ -30,6 +35,8 @@ export interface NavItem {
   permission?: Permission;
   status: 'ready' | 'partial' | 'pending';
   hint?: string;
+  /** Second sidebar block: the doctor's outward-facing presence and add-ons. */
+  group?: 'network';
 }
 
 export const NAV_ITEMS: readonly NavItem[] = [
@@ -48,12 +55,25 @@ export const NAV_ITEMS: readonly NavItem[] = [
     status: 'ready',
   },
   {
+    key: 'queue',
+    label: 'Patient Management',
+    icon: '⇶',
+    permission: Permission.APPOINTMENT_READ,
+    status: 'ready',
+  },
+  {
+    key: 'communications',
+    label: 'Communication',
+    icon: '✉',
+    permission: Permission.PATIENT_READ,
+    status: 'ready',
+  },
+  {
     key: 'billing',
     label: 'Billing',
     icon: '৳',
     permission: Permission.BILLING_READ,
-    status: 'partial',
-    hint: 'Invoices are listed per patient from the patient record.',
+    status: 'ready',
   },
   {
     key: 'reports',
@@ -74,23 +94,46 @@ export const NAV_ITEMS: readonly NavItem[] = [
     label: 'Documents',
     icon: '⎘',
     permission: Permission.PATIENT_READ,
-    status: 'partial',
-    hint: 'Upload and download work through the API; the browser UI is not built.',
+    status: 'ready',
   },
   {
-    key: 'communication',
-    label: 'Communication',
-    icon: '✉',
+    key: 'integrations',
+    label: 'Integrations',
+    icon: '⇄',
     permission: Permission.SETTINGS_MANAGE,
-    status: 'partial',
-    hint: 'The SMS/email toggle matrix lives under Settings → Communications.',
+    status: 'pending',
   },
   {
+    // No permission: every account holder administers their own profile.
     key: 'profile',
     label: 'Profile',
     icon: '◍',
+    status: 'ready',
+    group: 'network',
+  },
+  {
+    key: 'feedback',
+    label: 'Feedback',
+    icon: '☆',
+    permission: Permission.PATIENT_READ,
+    status: 'ready',
+    group: 'network',
+  },
+  {
+    key: 'community',
+    label: 'Community',
+    icon: '❖',
     status: 'pending',
-    hint: 'Edit qualifications and chamber details — not built yet.',
+    group: 'network',
+    hint: 'Professional forums, peer networking and medical news. This module has no backend yet — it is planned, not built.',
+  },
+  {
+    key: 'prime',
+    label: 'Prime Services',
+    icon: '✦',
+    permission: Permission.SETTINGS_MANAGE,
+    status: 'ready',
+    group: 'network',
   },
 ];
 

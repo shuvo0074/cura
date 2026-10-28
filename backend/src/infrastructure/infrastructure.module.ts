@@ -41,6 +41,8 @@ import { PrismaCatalogRepository } from './repositories/catalog.repository';
 import { PrismaBillingRepository, PrismaReportRepository } from './repositories/billing.repository';
 import { PrismaPracticeRepository, PrismaSettingsRepository } from './repositories/practice.repository';
 import { PrismaDocumentRepository } from './repositories/document.repository';
+import { PrismaEngagementRepository } from './repositories/engagement.repository';
+import { ENGAGEMENT_REPOSITORY } from '../core/ports/engagement.ports';
 import { LocalFileStorage } from './adapters/file-storage.adapter';
 import {
   ConsoleEmailSender,
@@ -91,6 +93,7 @@ import {
     { provide: SETTINGS_REPOSITORY, useClass: PrismaSettingsRepository },
     { provide: DOCUMENT_REPOSITORY, useClass: PrismaDocumentRepository },
     { provide: FILE_STORAGE, useClass: LocalFileStorage },
+    { provide: ENGAGEMENT_REPOSITORY, useClass: PrismaEngagementRepository },
   ],
   exports: [
     AppConfigService,
@@ -117,6 +120,7 @@ import {
     SETTINGS_REPOSITORY,
     DOCUMENT_REPOSITORY,
     FILE_STORAGE,
+    ENGAGEMENT_REPOSITORY,
   ],
 })
 export class InfrastructureModule {}

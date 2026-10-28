@@ -1,5 +1,6 @@
 import {
   Controller,
+  Delete,
   Get,
   Param,
   ParseUUIDPipe,
@@ -28,6 +29,21 @@ const uploadQuery = z.object({
 });
 
 const practiceQuery = z.object({ practiceId: z.string().uuid() });
+
+const browseQuery = practiceQuery.extend({
+  category: z.nativeEnum(DocumentCategory).optional(),
+  patientId: z.string().uuid().optional(),
+  q: z.string().trim().max(120).optional(),
+  from: z.string().datetime({ offset: true }).optional(),
+  to: z.string().datetime({ offset: true }).optional(),
+  cursor: z.string().uuid().optional(),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(businessRules.pagination.maxPageSize)
+    .default(businessRules.pagination.defaultPageSize),
+});
 
 /**
  * Document upload, retrieval and printing.
@@ -71,6 +87,28 @@ export class DocumentController {
         practiceId: query.practiceId,
         patientId: query.patientId,
         encounterId: query.encounterId,
+      },
+      principal,
+    );
+  }
+
+  /** Practice-wide browse backing the Documents module. */
+  @Get()
+  @RequirePermissions(Permission.PATIENT_READ)
+  browse(
+    @Query(zodBody(browseQuery)) query: z.infer<typeof browseQuery>,
+    @CurrentUser() principal: AuthenticatedPrincipal,
+  ) {
+    return this.documents.listForPractice(
+      query.practiceId,
+      {
+        category: query.category,
+        patientId: query.patientId,
+        q: query.q,
+        from: query.from ? new Date(query.from) : undefined,
+        to: query.to ? new Date(query.to) : undefined,
+        cursor: query.cursor,
+        limit: query.limit,
       },
       principal,
     );
@@ -121,6 +159,16 @@ export class DocumentController {
     res.setHeader('Cache-Control', 'private, no-store');
 
     file.stream.pipe(res);
+  }
+
+  @Delete(':id')
+  @RequirePermissions(Permission.PATIENT_WRITE)
+  remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query(zodBody(practiceQuery)) query: z.infer<typeof practiceQuery>,
+    @CurrentUser() principal: AuthenticatedPrincipal,
+  ) {
+    return this.documents.remove(id, query.practiceId, principal);
   }
 
   /** Renders the prescription for an encounter as a PDF. */

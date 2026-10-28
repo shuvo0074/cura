@@ -35,6 +35,21 @@ const paymentSchema = practiceQuery.extend({
   reference: z.string().trim().max(120).optional(),
 });
 
+const ledgerQuery = practiceQuery.extend({
+  status: z.enum(['DRAFT', 'ISSUED', 'PARTIALLY_PAID', 'PAID', 'CANCELLED']).optional(),
+  patientId: z.string().uuid().optional(),
+  q: z.string().trim().max(120).optional(),
+  from: z.string().datetime({ offset: true }).optional(),
+  to: z.string().datetime({ offset: true }).optional(),
+  cursor: z.string().uuid().optional(),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(businessRules.pagination.maxPageSize)
+    .default(businessRules.pagination.defaultPageSize),
+});
+
 const reportQuery = practiceQuery.extend({
   kind: z.enum(['income', 'appointments', 'procedures', 'demographics']),
   from: z.string().datetime({ offset: true }),
@@ -50,6 +65,45 @@ export class BillingController {
   create(@Body(zodBody(invoiceSchema)) b: z.infer<typeof invoiceSchema>, @CurrentUser() p: AuthenticatedPrincipal) {
     const { practiceId, ...rest } = b;
     return this.billing.createInvoice(practiceId, rest, p);
+  }
+
+  /** Practice ledger backing the Billing module. */
+  @Get('invoices')
+  @RequirePermissions(Permission.BILLING_READ)
+  list(@Query(zodBody(ledgerQuery)) q: z.infer<typeof ledgerQuery>, @CurrentUser() p: AuthenticatedPrincipal) {
+    return this.billing.listInvoices(
+      q.practiceId,
+      {
+        status: q.status,
+        patientId: q.patientId,
+        q: q.q,
+        from: q.from ? new Date(q.from) : undefined,
+        to: q.to ? new Date(q.to) : undefined,
+        cursor: q.cursor,
+        limit: q.limit,
+      },
+      p,
+    );
+  }
+
+  @Get('invoices/:id/payments')
+  @RequirePermissions(Permission.BILLING_READ)
+  payments(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query(zodBody(practiceQuery)) q: z.infer<typeof practiceQuery>,
+    @CurrentUser() p: AuthenticatedPrincipal,
+  ) {
+    return this.billing.listPayments(q.practiceId, id, p);
+  }
+
+  @Post('invoices/:id/cancel')
+  @RequirePermissions(Permission.BILLING_WRITE)
+  cancel(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(zodBody(practiceQuery)) b: z.infer<typeof practiceQuery>,
+    @CurrentUser() p: AuthenticatedPrincipal,
+  ) {
+    return this.billing.cancelInvoice(b.practiceId, id, p);
   }
 
   @Get('invoices/:id')

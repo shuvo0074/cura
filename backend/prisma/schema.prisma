@@ -14,12 +14,9 @@ datasource db {
 }
 
 enum UserRole {
-  DOCTOR
-  ASSISTANT_DOCTOR
   ADMINISTRATOR
-  RECEPTIONIST
-  FRONT_DESK
-  NONE
+  DOCTOR
+  DESK_STAFF
 }
 
 enum Gender {
@@ -162,22 +159,41 @@ model Practice {
   specialization String?   @db.VarChar(120)
   contactNumber  String?   @db.VarChar(20)
   email          String?   @db.VarChar(160)
+  website        String?   @db.VarChar(200)
+  /// Business Identification Number — the Bangladeshi analogue of a GSTIN.
+  binNumber      String?   @db.VarChar(40)
   address        String?   @db.VarChar(400)
+  addressLine1   String?   @db.VarChar(200)
+  locality       String?   @db.VarChar(120)
+  city           String?   @db.VarChar(80)
+  country        String    @default("Bangladesh") @db.VarChar(80)
+  postCode       String?   @db.VarChar(12)
   mapsUrl        String?   @db.VarChar(512)
   logoUrl        String?   @db.VarChar(512)
   roomNumber     String?   @db.VarChar(40)
   slotMinutes    Int       @default(10)
   timezone       String    @default("Asia/Dhaka") @db.VarChar(60)
-  isActive       Boolean   @default(true)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  deletedAt      DateTime?
 
-  memberships  PracticeMembership[]
-  sessions     PracticeSession[]
-  closures     PracticeClosure[]
-  appointments Appointment[]
-  patients     Patient[]
+  /// Calendar display default (spec 6.6.c.1.4.1) — on by default.
+  showTodayFirst        Boolean @default(true)
+  /// Outgoing SMS language (spec: Communications → Language Settings).
+  smsLanguage           String  @default("en") @db.VarChar(5)
+  /// Data-security preferences: keep voided documents out of listings.
+  hideCancelledInvoices Boolean @default(false)
+  hideCancelledPayments Boolean @default(false)
+
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  memberships    PracticeMembership[]
+  sessions       PracticeSession[]
+  closures       PracticeClosure[]
+  appointments   Appointment[]
+  patients       Patient[]
+  emailSettings  EmailSetting[]
+  feedback       PatientFeedback[]
 
   @@index([isActive])
   @@map("practices")
@@ -190,6 +206,14 @@ model PracticeMembership {
   role       UserRole
   isActive   Boolean  @default(true)
   createdAt  DateTime @default(now())
+
+  /// Per-member notification matrix (spec: Practice Staff → Notifications).
+  /// Daily schedule summary and real-time appointment confirmations, each
+  /// deliverable over SMS, email, or both.
+  notifyScheduleSms      Boolean @default(true)
+  notifyScheduleEmail    Boolean @default(true)
+  notifyAppointmentSms   Boolean @default(true)
+  notifyAppointmentEmail Boolean @default(true)
 
   practice Practice @relation(fields: [practiceId], references: [id], onDelete: Cascade)
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -258,6 +282,8 @@ model Patient {
   encounters   Encounter[]
   consents     PatientConsent[]
   documents    DocumentAsset[]
+  invoices     Invoice[]
+  feedback     PatientFeedback[]
 
   /// Family members sharing one mobile number resolve through this index.
   @@index([practiceId, mobile])
@@ -588,6 +614,7 @@ model Invoice {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
+  patient  Patient       @relation(fields: [patientId], references: [id], onDelete: Restrict)
   items    InvoiceItem[]
   payments Payment[]
 
@@ -678,6 +705,26 @@ model PrintoutSetting {
   @@map("printout_settings")
 }
 
+/// Header and footer blocks for outgoing patient emails (spec: Settings →
+/// Email). Kept apart from PrintoutSetting because an email header is three
+/// independent text blocks rendered by an HTML mailer, not a page layout.
+model EmailSetting {
+  id          String   @id @default(uuid()) @db.Uuid
+  practiceId  String   @db.Uuid
+  /// HEADER | FOOTER
+  section     String   @db.VarChar(10)
+  title       String?  @db.VarChar(160)
+  leftText    String?  @db.VarChar(1000)
+  rightText   String?  @db.VarChar(1000)
+  includeLogo Boolean  @default(true)
+  updatedAt   DateTime @updatedAt
+
+  practice Practice @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+
+  @@unique([practiceId, section])
+  @@map("email_settings")
+}
+
 model ConsentFormTemplate {
   id         String   @id @default(uuid()) @db.Uuid
   practiceId String   @db.Uuid
@@ -715,4 +762,31 @@ model Subscription {
   updatedAt  DateTime  @updatedAt
 
   @@map("subscriptions")
+}
+
+// ---------------------------------------------------------------------------
+// Engagement
+// ---------------------------------------------------------------------------
+
+/// A patient's rating of a visit (spec: Feedback Management). Recorded by the
+/// practice on the patient's behalf; the reply is the practice's response.
+model PatientFeedback {
+  id            String    @id @default(uuid()) @db.Uuid
+  practiceId    String    @db.Uuid
+  patientId     String    @db.Uuid
+  appointmentId String?   @db.Uuid
+  /// 1–5 stars.
+  rating        Int       @db.SmallInt
+  comment       String?   @db.VarChar(1000)
+  reply         String?   @db.VarChar(1000)
+  repliedAt     DateTime?
+  repliedById   String?   @db.Uuid
+  createdById   String?   @db.Uuid
+  createdAt     DateTime  @default(now())
+
+  practice Practice @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+  patient  Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([practiceId, createdAt(sort: Desc)])
+  @@map("patient_feedback")
 }

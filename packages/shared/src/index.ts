@@ -24,6 +24,7 @@ export * from './runtime/token-store';
 export * from './runtime/http-client';
 export * from './runtime/api-services';
 export * from './runtime/login.view-model';
+export * from './runtime/register.view-model';
 export * from './runtime/calendar.view-model';
 export * from './runtime/clinical-services';
 export * from './runtime/onboarding.view-model';

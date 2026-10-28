@@ -19,12 +19,28 @@
   grid-area: header;
   display: flex;
   align-items: center;
-  gap: var(--space-md);
+  gap: var(--space-sm);
   padding: 0 var(--space-lg);
   background: var(--color-surface-raised);
   border-bottom: 1px solid var(--color-border-subtle);
+  /* Above the content but below modals, so search results and the profile
+     popover overlay the page while a dialog still covers them. */
   z-index: 2;
 }
+
+/** Primary header action: patient intake. */
+.cta {
+  padding: var(--space-xs) var(--space-md);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-brand-on-brand);
+  background: var(--color-brand-default);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.cta:hover { filter: brightness(1.05); }
 
 .hamburger,
 .iconButton {
@@ -196,4 +212,20 @@
   .userName {
     display: none;
   }
+  /* The CTA collapses to its icon before search does: search is the thing a
+     doctor reaches for on a phone, intake is not. */
+  .cta {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: 0;
+  }
+  .cta::before {
+    content: '+';
+    font-size: var(--text-lg);
+  }
+}
+
+.navDivider {
+  height: 1px;
+  margin: var(--space-sm) var(--space-sm);
+  background: var(--color-border-subtle);
 }

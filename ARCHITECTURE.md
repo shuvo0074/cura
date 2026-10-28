@@ -94,6 +94,9 @@ additionally rejects console SMS/email drivers and an empty CORS allowlist.
   aggregated in SQL
 - Realtime: authenticated WebSocket gateway pushing `queue.changed` into
   per-practice rooms
+- Engagement: outreach list (prescribed follow-ups, 180-day preventive
+  recall, birthdays — year wrap handled in SQL) and patient feedback with
+  ratings summary and practice replies
 
 **Web:** login/OTP, calendar, onboarding wizard, patient dashboard
 (timeline + prescription writer with drug auto-suggest and consent unlock).
@@ -102,6 +105,11 @@ additionally rejects console SMS/email drivers and an empty CORS allowlist.
 Bare React Native CLI — native `ios/` and `android/` projects are checked in,
 so native modules can be added without an eject step.
 
-Not built: document upload endpoints (schema and storage port exist, the
-multipart route does not), PDF rendering for printouts (settings are stored;
-generation is not implemented), Practo integration, Prime Services, Community.
+Also on the web: Patient Management (today's queue board), Communications
+(follow-ups and birthday wishes, plus the SMS/email matrix for admins),
+Feedback, Integrations catalogue, and Prime Services (the subscription panel).
+
+Not built: PDF rendering for printouts (settings are stored; generation is not
+implemented), the integrations themselves (Practo, SMS gateway, payments — the
+Integrations screen lists them as not connected), Community, and automated
+patient SMS (only OTP messages are sent today, through the console driver).

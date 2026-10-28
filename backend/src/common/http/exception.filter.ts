@@ -84,7 +84,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       return {
         statusCode: status,
         code: this.codeForStatus(status),
-        message: Array.isArray(message) ? message.join(', ') : message,
+        // The throttler's own text ("ThrottlerException: Too Many Requests")
+        // reaches the login screen verbatim, so 429 gets a sentence instead.
+        message:
+          status === HttpStatus.TOO_MANY_REQUESTS
+            ? 'Too many attempts. Please wait a few minutes and try again.'
+            : Array.isArray(message)
+              ? message.join(', ')
+              : message,
         requestId,
         timestamp,
       };

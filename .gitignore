@@ -124,3 +124,7 @@ tmp/
 temp/
 *.local
 .cache/
+
+# Playwright
+web/playwright-report/
+web/test-results/

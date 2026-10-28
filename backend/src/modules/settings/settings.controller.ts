@@ -1,6 +1,12 @@
-import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Put, Query } from '@nestjs/common';
 import { z } from 'zod';
-import { Permission, UserRole, passwordSchema, practiceSessionSchema } from '@cura/shared';
+import {
+  Permission,
+  UserRole,
+  bdMobileSchema,
+  passwordSchema,
+  practiceSessionSchema,
+} from '@cura/shared';
 import { CurrentUser, RequirePermissions } from '../../common/security/decorators';
 import { zodBody } from '../../common/http/zod-validation.pipe';
 import type { AuthenticatedPrincipal } from '../../common/security/jwt-auth.guard';
@@ -8,15 +14,76 @@ import { SettingsService } from './settings.service';
 
 const practiceQuery = z.object({ practiceId: z.string().uuid() });
 
+/** Empty strings from a cleared form field mean "unset", not "save a blank". */
+const optionalText = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max)
+    .nullable()
+    .optional()
+    .transform((v) => (v === '' ? null : v));
+
 const practicePatchSchema = practiceQuery.extend({
   name: z.string().trim().min(2).max(160).optional(),
-  specialization: z.string().trim().max(120).nullable().optional(),
-  contactNumber: z.string().trim().max(20).nullable().optional(),
-  email: z.string().email().nullable().optional(),
-  address: z.string().trim().max(400).nullable().optional(),
-  mapsUrl: z.string().url().nullable().optional(),
-  roomNumber: z.string().trim().max(40).nullable().optional(),
+  specialization: optionalText(120),
+  contactNumber: optionalText(20),
+  email: z.union([z.string().email(), z.literal('')]).nullable().optional().transform((v) => (v === '' ? null : v)),
+  website: z.union([z.string().url().max(200), z.literal('')]).nullable().optional().transform((v) => (v === '' ? null : v)),
+  binNumber: optionalText(40),
+  address: optionalText(400),
+  addressLine1: optionalText(200),
+  locality: optionalText(120),
+  city: optionalText(80),
+  country: z.string().trim().min(2).max(80).optional(),
+  postCode: optionalText(12),
+  mapsUrl: z.union([z.string().url().max(512), z.literal('')]).nullable().optional().transform((v) => (v === '' ? null : v)),
+  logoUrl: optionalText(512),
+  roomNumber: optionalText(40),
   slotMinutes: z.number().int().min(5).max(60).optional(),
+});
+
+/** Spec 6.6.c.1.4 — calendar display defaults and appointment duration. */
+const calendarSchema = practiceQuery.extend({
+  showTodayFirst: z.boolean().optional(),
+  slotMinutes: z.number().int().min(5).max(60).optional(),
+});
+
+/** Spec: Data Security — 2FA plus the cancelled-document visibility flags. */
+const securitySchema = practiceQuery.extend({
+  hideCancelledInvoices: z.boolean().optional(),
+  hideCancelledPayments: z.boolean().optional(),
+});
+
+/** Like `optionalText`, but always resolves to a value — the email editor sends
+ *  every block on each save, so an absent field means "cleared", not "untouched". */
+const clearableText = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max)
+    .nullable()
+    .default(null)
+    .transform((v) => (v === '' ? null : v));
+
+const emailSettingSchema = practiceQuery.extend({
+  section: z.enum(['HEADER', 'FOOTER']),
+  title: clearableText(160),
+  leftText: clearableText(1000),
+  rightText: clearableText(1000),
+  includeLogo: z.boolean().default(true),
+});
+
+const staffPatchSchema = practiceQuery.extend({
+  fullName: z.string().trim().min(2).max(120).optional(),
+  email: z.union([z.string().email(), z.literal('')]).nullable().optional().transform((v) => (v === '' ? null : v)),
+  mobile: bdMobileSchema.nullable().optional(),
+  bmdcNumber: optionalText(20),
+  role: z.nativeEnum(UserRole).optional(),
+  notifyScheduleSms: z.boolean().optional(),
+  notifyScheduleEmail: z.boolean().optional(),
+  notifyAppointmentSms: z.boolean().optional(),
+  notifyAppointmentEmail: z.boolean().optional(),
 });
 
 const sessionsSchema = practiceQuery.extend({
@@ -33,7 +100,7 @@ const closureSchema = practiceQuery.extend({
 const staffSchema = practiceQuery.extend({
   fullName: z.string().trim().min(2).max(120),
   email: z.string().email().nullable().default(null),
-  mobile: z.string().trim().max(20).nullable().default(null),
+  mobile: bdMobileSchema.nullable().default(null),
   role: z.nativeEnum(UserRole),
   bmdcNumber: z.string().trim().max(20).nullable().default(null),
   temporaryPassword: passwordSchema,
@@ -110,9 +177,10 @@ const subscriptionSchema = practiceQuery.extend({
 /**
  * Settings surface.
  *
- * Read endpoints require `SETTINGS_MANAGE` alongside writes: the catalogs and
- * staff list disclose the practice's internal structure, so they are not
- * broadly readable.
+ * `SETTINGS_MANAGE` at the class level, so a new endpoint is administrator-only
+ * unless it says otherwise. The catalogue *lookups* opt down to `CATALOG_READ`
+ * because they back the auto-suggest on the prescription screen — a doctor has
+ * to reach them, and a method-level decorator overrides the class one.
  */
 @Controller('settings')
 @RequirePermissions(Permission.SETTINGS_MANAGE)
@@ -164,6 +232,22 @@ export class SettingsController {
     return this.settings.removeClosure(q.practiceId, id, p);
   }
 
+  // -- Calendar defaults (spec 6.6.c.1.4) ------------------------------------
+
+  @Put('calendar')
+  updateCalendar(@Body(zodBody(calendarSchema)) b: z.infer<typeof calendarSchema>, @CurrentUser() p: AuthenticatedPrincipal) {
+    const { practiceId, ...patch } = b;
+    return this.settings.updatePractice(practiceId, patch, p);
+  }
+
+  // -- Data security ---------------------------------------------------------
+
+  @Put('security')
+  updateSecurity(@Body(zodBody(securitySchema)) b: z.infer<typeof securitySchema>, @CurrentUser() p: AuthenticatedPrincipal) {
+    const { practiceId, ...patch } = b;
+    return this.settings.updatePractice(practiceId, patch, p);
+  }
+
   // -- Staff -----------------------------------------------------------------
 
   @Get('staff')
@@ -190,9 +274,43 @@ export class SettingsController {
     return this.settings.setStaffActive(b.practiceId, userId, b.isActive, p);
   }
 
+  @Patch('staff/:userId')
+  @RequirePermissions(Permission.STAFF_MANAGE)
+  updateStaff(
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @Body(zodBody(staffPatchSchema)) b: z.infer<typeof staffPatchSchema>,
+    @CurrentUser() p: AuthenticatedPrincipal,
+  ) {
+    const {
+      practiceId,
+      notifyScheduleSms,
+      notifyScheduleEmail,
+      notifyAppointmentSms,
+      notifyAppointmentEmail,
+      ...details
+    } = b;
+
+    // Only forward the notification keys the caller actually sent, so a patch
+    // that touches the name alone does not reset the whole matrix to defaults.
+    const notifications = {
+      ...(notifyScheduleSms !== undefined ? { notifyScheduleSms } : {}),
+      ...(notifyScheduleEmail !== undefined ? { notifyScheduleEmail } : {}),
+      ...(notifyAppointmentSms !== undefined ? { notifyAppointmentSms } : {}),
+      ...(notifyAppointmentEmail !== undefined ? { notifyAppointmentEmail } : {}),
+    };
+
+    return this.settings.updateStaff(
+      practiceId,
+      userId,
+      { ...details, ...(Object.keys(notifications).length > 0 ? { notifications } : {}) },
+      p,
+    );
+  }
+
   // -- Catalogs --------------------------------------------------------------
 
   @Get('drugs')
+  @RequirePermissions(Permission.CATALOG_READ)
   searchDrugs(
     @Query(zodBody(practiceQuery.extend({ q: z.string().trim().min(1) }))) q: { practiceId: string; q: string },
     @CurrentUser() p: AuthenticatedPrincipal,
@@ -200,10 +318,30 @@ export class SettingsController {
     return this.settings.searchDrugs(q.practiceId, q.q, p);
   }
 
+  /** Table view for the catalog screen; `q` narrows it, absence lists everything. */
+  @Get('drugs/list')
+  @RequirePermissions(Permission.CATALOG_READ)
+  listDrugs(
+    @Query(zodBody(practiceQuery.extend({ q: z.string().trim().optional() }))) q: { practiceId: string; q?: string },
+    @CurrentUser() p: AuthenticatedPrincipal,
+  ) {
+    return this.settings.listDrugs(q.practiceId, q.q, p);
+  }
+
   @Post('drugs')
   createDrug(@Body(zodBody(drugSchema)) b: z.infer<typeof drugSchema>, @CurrentUser() p: AuthenticatedPrincipal) {
     const { practiceId, ...data } = b;
     return this.settings.createDrug(practiceId, data, p);
+  }
+
+  @Put('drugs/:id')
+  updateDrug(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(zodBody(drugSchema)) b: z.infer<typeof drugSchema>,
+    @CurrentUser() p: AuthenticatedPrincipal,
+  ) {
+    const { practiceId, ...data } = b;
+    return this.settings.updateDrug(practiceId, id, data, p);
   }
 
   @Delete('drugs/:id')
@@ -216,6 +354,7 @@ export class SettingsController {
   }
 
   @Get('catalog')
+  @RequirePermissions(Permission.CATALOG_READ)
   listCatalog(
     @Query(zodBody(practiceQuery.extend({ kind: z.enum(CATALOG_KINDS), q: z.string().trim().optional() })))
     q: { practiceId: string; kind: string; q?: string },
@@ -229,6 +368,16 @@ export class SettingsController {
     return this.settings.createCatalogEntry(b.practiceId, b.kind, b.value, p);
   }
 
+  @Put('catalog/:id')
+  updateCatalogEntry(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(zodBody(practiceQuery.extend({ value: z.string().trim().min(1).max(300) })))
+    b: { practiceId: string; value: string },
+    @CurrentUser() p: AuthenticatedPrincipal,
+  ) {
+    return this.settings.updateCatalogEntry(b.practiceId, id, b.value, p);
+  }
+
   @Delete('catalog/:id')
   deleteCatalogEntry(
     @Param('id', ParseUUIDPipe) id: string,
@@ -239,6 +388,7 @@ export class SettingsController {
   }
 
   @Get('pricing')
+  @RequirePermissions(Permission.CATALOG_READ)
   listPricing(@Query(zodBody(practiceQuery)) q: z.infer<typeof practiceQuery>, @CurrentUser() p: AuthenticatedPrincipal) {
     return this.settings.listPricing(q.practiceId, p);
   }
@@ -269,6 +419,15 @@ export class SettingsController {
     return this.settings.upsertChartingTemplate(practiceId, data, p);
   }
 
+  @Delete('charting-templates/:id')
+  deleteCharting(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query(zodBody(practiceQuery)) q: z.infer<typeof practiceQuery>,
+    @CurrentUser() p: AuthenticatedPrincipal,
+  ) {
+    return this.settings.deleteChartingTemplate(q.practiceId, id, p);
+  }
+
   // -- Communications / printouts / consent / subscription -------------------
 
   @Get('communications')
@@ -280,6 +439,27 @@ export class SettingsController {
   upsertCommunication(@Body(zodBody(communicationSchema)) b: z.infer<typeof communicationSchema>, @CurrentUser() p: AuthenticatedPrincipal) {
     const { practiceId, ...record } = b;
     return this.settings.upsertCommunication(practiceId, record, p);
+  }
+
+  /** Outgoing SMS language (spec: Communications → Language Settings). */
+  @Put('communications/language')
+  setSmsLanguage(
+    @Body(zodBody(practiceQuery.extend({ smsLanguage: z.enum(['en', 'bn']) })))
+    b: { practiceId: string; smsLanguage: string },
+    @CurrentUser() p: AuthenticatedPrincipal,
+  ) {
+    return this.settings.updatePractice(b.practiceId, { smsLanguage: b.smsLanguage }, p);
+  }
+
+  @Get('email')
+  getEmailSettings(@Query(zodBody(practiceQuery)) q: z.infer<typeof practiceQuery>, @CurrentUser() p: AuthenticatedPrincipal) {
+    return this.settings.getEmailSettings(q.practiceId, p);
+  }
+
+  @Put('email')
+  upsertEmailSetting(@Body(zodBody(emailSettingSchema)) b: z.infer<typeof emailSettingSchema>, @CurrentUser() p: AuthenticatedPrincipal) {
+    const { practiceId, ...record } = b;
+    return this.settings.upsertEmailSetting(practiceId, record, p);
   }
 
   @Get('printouts')
@@ -306,6 +486,15 @@ export class SettingsController {
   upsertConsentForm(@Body(zodBody(consentFormSchema)) b: z.infer<typeof consentFormSchema>, @CurrentUser() p: AuthenticatedPrincipal) {
     const { practiceId, ...data } = b;
     return this.settings.upsertConsentForm(practiceId, data, p);
+  }
+
+  @Delete('consent-forms/:id')
+  deleteConsentForm(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query(zodBody(practiceQuery)) q: z.infer<typeof practiceQuery>,
+    @CurrentUser() p: AuthenticatedPrincipal,
+  ) {
+    return this.settings.deleteConsentForm(q.practiceId, id, p);
   }
 
   @Get('subscription')

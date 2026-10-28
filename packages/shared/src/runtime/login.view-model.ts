@@ -99,7 +99,7 @@ export class LoginViewModel extends ViewModel<LoginState> {
     }
 
     if (result.value.status === 'otp_required') {
-      this.beginOtpPhase(result.value.challenge);
+      this.beginVerification(result.value.challenge);
       return;
     }
 
@@ -133,7 +133,12 @@ export class LoginViewModel extends ViewModel<LoginState> {
     this.setState({ phase: 'credentials', challenge: null, otpCode: '', formError: null });
   }
 
-  private beginOtpPhase(challenge: OtpChallenge): void {
+  /**
+   * Enters the OTP step for a challenge issued elsewhere — registration hands
+   * its challenge here so both flows share one verification step and one
+   * resend countdown.
+   */
+  beginVerification(challenge: OtpChallenge): void {
     this.setState({ phase: 'otp', challenge, otpCode: '', formError: null });
     this.startCountdown(challenge.resendAvailableAt);
   }

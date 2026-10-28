@@ -67,7 +67,7 @@ export class AppointmentController {
   }
 
   @Patch(':id/status')
-  @RequirePermissions(Permission.APPOINTMENT_WRITE)
+  @RequirePermissions(Permission.APPOINTMENT_STATUS_WRITE)
   async changeStatus(
     @Param('id', ParseUUIDPipe) id: string,
     @Body(zodBody(statusSchema)) dto: z.infer<typeof statusSchema>,

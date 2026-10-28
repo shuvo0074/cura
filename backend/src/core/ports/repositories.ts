@@ -77,6 +77,21 @@ export interface UserRepository {
   bumpTokenVersion(userId: string): Promise<void>;
   setActive(userId: string, isActive: boolean): Promise<void>;
   practiceIdsFor(userId: string): Promise<string[]>;
+  /** Replaces the password hash and revokes every session in one step. */
+  setPassword(userId: string, passwordHash: string): Promise<void>;
+  setTwoFactorEnabled(userId: string, enabled: boolean): Promise<void>;
+  updateProfile(userId: string, patch: UserProfilePatch): Promise<UserRecord>;
+}
+
+/** Fields the account owner may edit about themselves (spec: Profile Management). */
+export interface UserProfilePatch {
+  fullName?: string;
+  gender?: string | null;
+  dateOfBirth?: Date | null;
+  bloodGroup?: string | null;
+  secondaryPhone?: string | null;
+  avatarUrl?: string | null;
+  locale?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -367,4 +382,35 @@ export interface DocumentRepository {
   findByChecksum(checksum: string): Promise<{ id: string; storageKey: string } | null>;
   listForPatient(patientId: string): Promise<DocumentRecord[]>;
   listForOwner(ownerUserId: string): Promise<DocumentRecord[]>;
+  /** Practice-wide browse, keyset-paginated. */
+  listForPractice(
+    practiceId: string,
+    filter: DocumentFilter,
+  ): Promise<{ items: DocumentListRow[]; nextCursor: string | null }>;
+  softDelete(id: string): Promise<void>;
+}
+
+export interface DocumentFilter {
+  ownerUserId: string;
+  category?: DocumentCategory | undefined;
+  patientId?: string | undefined;
+  /** Matches the file name or the patient's name. */
+  q?: string | undefined;
+  from?: Date | undefined;
+  to?: Date | undefined;
+  cursor?: string | undefined;
+  limit: number;
+}
+
+/** A document plus the patient it hangs off, for the browser's list. */
+export interface DocumentListRow {
+  id: string;
+  category: DocumentCategory;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  createdAt: Date;
+  capturedOn: Date | null;
+  encounterId: string | null;
+  patient: { id: string; fullName: string; curaId: string } | null;
 }

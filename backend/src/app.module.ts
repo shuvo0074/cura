@@ -17,6 +17,8 @@ import { BillingModule } from './modules/billing/billing.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
 import { DocumentModule } from './modules/documents/document.module';
 import { PatientModule } from './modules/patients/patient.module';
+import { AccountModule } from './modules/account/account.module';
+import { EngagementModule } from './modules/engagement/engagement.module';
 
 /**
  * Application root.
@@ -36,12 +38,17 @@ import { PatientModule } from './modules/patients/patient.module';
     JwtModule.register({}),
     ThrottlerModule.forRootAsync({
       inject: [AppConfigService],
-      useFactory: (config: AppConfigService) => [
-        {
-          ttl: config.throttle.ttlSeconds * 1000,
-          limit: config.throttle.limit,
-        },
-      ],
+      useFactory: (config: AppConfigService) => ({
+        throttlers: [
+          {
+            ttl: config.throttle.ttlSeconds * 1000,
+            limit: config.throttle.limit,
+          },
+        ],
+        // Also skips the per-route @Throttle limits (login, register, OTP),
+        // which is what lets the e2e suite sign in repeatedly.
+        skipIf: () => config.throttle.disabled,
+      }),
     }),
     AuthModule,
     AppointmentModule,
@@ -52,6 +59,8 @@ import { PatientModule } from './modules/patients/patient.module';
     RealtimeModule,
     DocumentModule,
     PatientModule,
+    AccountModule,
+    EngagementModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },

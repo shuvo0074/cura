@@ -1,48 +1,59 @@
 import { useCallback, useEffect, useState } from 'react';
-import { tokenStore, type AuthenticatedUser, type AuthSession } from '@cura/shared';
+import { Permission, tokenStore, type AuthSession, type AuthenticatedUser } from '@cura/shared';
 import { useServices } from './services';
 import { LoginView } from '../features/auth/LoginView';
-import { CalendarView } from '../features/calendar/CalendarView';
 import { OnboardingView } from '../features/onboarding/OnboardingView';
 import { PatientDashboardView } from '../features/patient/PatientDashboardView';
-import { PatientsView } from '../features/patients/PatientsView';
-import { SettingsView } from '../features/settings/SettingsView';
-import { ReportsView } from '../features/reports/ReportsView';
 import { AppShell } from '../features/shell/AppShell';
-import { NAV_ITEMS, type RouteKey } from '../features/shell/navigation';
+import type { RouteKey } from '../features/shell/navigation';
+import type { SettingsKey } from '../features/settings/settings-nav';
+import { Module } from './Module';
+import type { Location, SessionState } from './app-shared';
 import styles from './app.module.css';
-
-type SessionState =
-  | { status: 'restoring' }
-  | { status: 'anonymous' }
-  | { status: 'authenticated'; user: AuthenticatedUser };
-
-/**
- * A patient record is opened *over* whichever module you were in, and closing
- * it returns you there — so jumping to a chart from the calendar does not lose
- * your place, which is the whole point of the four-pane layout.
- */
-interface Location {
-  route: RouteKey;
-  patient?: { id: string; appointmentId?: string | undefined } | undefined;
-}
 
 export function App() {
   const { auth, http } = useServices();
   const [session, setSession] = useState<SessionState>({ status: 'restoring' });
   const [location, setLocation] = useState<Location>({ route: 'calendar' });
   const [onboardingDone, setOnboardingDone] = useState(false);
+  const [intakeOpen, setIntakeOpen] = useState(false);
+  /** Pre-filled time for the intake modal: a clicked calendar slot, else now. */
+  const [intakeAt, setIntakeAt] = useState<Date | undefined>(undefined);
 
+  /**
+   * Session restore on boot.
+   *
+   * The access token lives in memory only, so it is gone after a reload. The
+   * refresh token survives in an httpOnly cookie: exchanging it gives a new
+   * access token, and `/account/profile` rebuilds the user behind it. Both
+   * steps are required — a token with no user leaves the shell with nothing to
+   * render, which is why this waits for the profile before declaring a session.
+   */
   useEffect(() => {
     let cancelled = false;
+
     void (async () => {
-      await auth.restoreSession();
-      if (!cancelled) setSession({ status: 'anonymous' });
+      const restored = await auth.restoreSession();
+      if (cancelled) return;
+
+      if (restored.ok) {
+        const me = await http.request<AuthenticatedUser>('/account/profile');
+        if (cancelled) return;
+
+        if (me.ok) {
+          setOnboardingDone(me.value.onboardingCompleted);
+          setSession({ status: 'authenticated', user: me.value });
+          return;
+        }
+      }
+
+      setSession({ status: 'anonymous' });
     })();
+
     return () => {
       cancelled = true;
     };
-  }, [auth]);
+  }, [auth, http]);
 
   useEffect(
     () =>
@@ -66,6 +77,11 @@ export function App() {
 
   const navigate = useCallback((route: RouteKey) => setLocation({ route }), []);
 
+  const openSettings = useCallback(
+    (section: SettingsKey) => setLocation({ route: 'settings', settingsSection: section }),
+    [],
+  );
+
   const openPatient = useCallback(
     (patientId: string, appointmentId?: string) =>
       setLocation((current) => ({ ...current, patient: { id: patientId, appointmentId } })),
@@ -73,7 +89,7 @@ export function App() {
   );
 
   const closePatient = useCallback(
-    () => setLocation((current) => ({ route: current.route })),
+    () => setLocation((current) => ({ route: current.route, settingsSection: current.settingsSection })),
     [],
   );
 
@@ -99,9 +115,18 @@ export function App() {
   return (
     <AppShell
       user={session.user}
+      practiceId={practiceId}
       active={location.route}
       onNavigate={navigate}
+      onOpenPatient={openPatient}
+      onOpenSettings={openSettings}
       onSignOut={handleSignOut}
+      intakeOpen={intakeOpen}
+      intakeAt={intakeAt}
+      onIntakeOpenChange={(open) => {
+        setIntakeOpen(open);
+        if (!open) setIntakeAt(undefined);
+      }}
     >
       {!practiceId ? (
         <p className={styles.notice}>
@@ -112,55 +137,23 @@ export function App() {
           practiceId={practiceId}
           patientId={location.patient.id}
           appointmentId={location.patient.appointmentId}
+          canWrite={session.user.permissions.includes(Permission.CLINICAL_WRITE)}
           onClose={closePatient}
         />
       ) : (
-        <Module route={location.route} practiceId={practiceId} onOpenPatient={openPatient} />
+        <Module
+          route={location.route}
+          practiceId={practiceId}
+          settingsSection={location.settingsSection}
+          permissions={session.user.permissions}
+          onOpenPatient={openPatient}
+          onAddWalkIn={(at) => {
+            setIntakeAt(at);
+            setIntakeOpen(true);
+          }}
+          onOpenSettings={openSettings}
+        />
       )}
     </AppShell>
-  );
-}
-
-function Module({
-  route,
-  practiceId,
-  onOpenPatient,
-}: {
-  route: RouteKey;
-  practiceId: string;
-  onOpenPatient: (patientId: string, appointmentId?: string) => void;
-}) {
-  switch (route) {
-    case 'calendar':
-      return <CalendarView practiceId={practiceId} onOpenPatient={onOpenPatient} />;
-    case 'patients':
-      return <PatientsView practiceId={practiceId} onOpenPatient={onOpenPatient} />;
-    case 'settings':
-      return <SettingsView practiceId={practiceId} />;
-    case 'reports':
-      return <ReportsView practiceId={practiceId} />;
-    default:
-      return <NotBuilt route={route} />;
-  }
-}
-
-/**
- * Placeholder for modules whose API exists but whose screen does not.
- *
- * It names the endpoints that are live, so the gap is a known quantity rather
- * than a dead menu item.
- */
-function NotBuilt({ route }: { route: RouteKey }) {
-  const item = NAV_ITEMS.find((i) => i.key === route);
-
-  return (
-    <div className={styles.placeholder}>
-      <h2>{item?.label}</h2>
-      <p>{item?.hint ?? 'This screen is not built yet.'}</p>
-      <p className={styles.placeholderNote}>
-        The API for this module is implemented and testable — only the browser UI
-        is outstanding.
-      </p>
-    </div>
   );
 }

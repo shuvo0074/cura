@@ -13,9 +13,11 @@ import {
   SETTINGS_REPOSITORY,
   type CatalogRepository,
   type CommunicationSettingRecord,
+  type EmailSettingRecord,
   type PracticeRepository,
   type PrintoutSettingRecord,
   type SettingsRepository,
+  type StaffNotificationPrefs,
 } from '../../core/ports/clinical.ports';
 import { AUDIT_REPOSITORY, type AuditRepository } from '../../core/ports/repositories';
 import { CLOCK, type Clock } from '../../core/ports/services';
@@ -31,6 +33,23 @@ import type { AuthenticatedPrincipal } from '../../common/security/jwt-auth.guar
  */
 @Injectable()
 export class SettingsService {
+  /** Spec: Communications → "Category vs type". Fixed grid, not user-editable. */
+  private static readonly COMMUNICATION_MATRIX: ReadonlyArray<{
+    category: string;
+    type: string;
+    label: string;
+    offsetDays: number | null;
+  }> = [
+    { category: 'APPOINTMENT', type: 'CONFIRMATION', label: 'Appointment confirmation', offsetDays: null },
+    { category: 'APPOINTMENT', type: 'CANCELLATION', label: 'Appointment cancellation', offsetDays: null },
+    { category: 'APPOINTMENT', type: 'REMINDER', label: 'Appointment reminder', offsetDays: 1 },
+    // 180 days ≈ the six-month recall the spec calls out for category B.a.
+    { category: 'FOLLOW_UP', type: 'REMINDER', label: 'Preventive follow-up reminder', offsetDays: 180 },
+    { category: 'PAYMENT', type: 'INVOICE', label: 'Invoice', offsetDays: null },
+    { category: 'WISHES', type: 'BIRTHDAY', label: 'Birthday wishes', offsetDays: null },
+    { category: 'WISHES', type: 'ANNIVERSARY', label: 'Anniversary wishes', offsetDays: null },
+  ];
+
   constructor(
     private readonly crypto: CryptoService,
     @Inject(PRACTICE_REPOSITORY) private readonly practices: PracticeRepository,
@@ -144,10 +163,10 @@ export class SettingsService {
   ) {
     this.assert(principal, practiceId);
 
-    // Assistant doctors practise under their own registration; the spec makes
-    // BMDC mandatory for medical personnel and irrelevant for admin staff.
-    if (input.role === UserRole.ASSISTANT_DOCTOR && !input.bmdcNumber) {
-      throw new ValidationError('A BMDC registration number is required for assistant doctors.');
+    // BMDC registration is mandatory for anyone who practises and irrelevant
+    // for the front desk.
+    if (input.role === UserRole.DOCTOR && !input.bmdcNumber) {
+      throw new ValidationError('A BMDC registration number is required for doctors.');
     }
 
     const staff = await this.practices.addStaff({
@@ -193,11 +212,70 @@ export class SettingsService {
     return { userId, isActive };
   }
 
+  /**
+   * Edits a member's record and notification matrix.
+   *
+   * Demoting yourself is rejected for the same reason self-deactivation is: a
+   * sole administrator who picks "Consultant" locks the practice out of its own
+   * settings with no way back in.
+   */
+  async updateStaff(
+    practiceId: string,
+    userId: string,
+    patch: {
+      fullName?: string;
+      email?: string | null;
+      mobile?: string | null;
+      bmdcNumber?: string | null;
+      role?: string;
+      notifications?: Partial<StaffNotificationPrefs>;
+    },
+    principal: AuthenticatedPrincipal,
+  ) {
+    this.assert(principal, practiceId);
+
+    if (patch.role && userId === principal.userId) {
+      throw new ConflictError('CANNOT_DEMOTE_SELF', 'You cannot change your own access level.');
+    }
+    if (patch.role === UserRole.DOCTOR && patch.bmdcNumber === null) {
+      throw new ValidationError('A BMDC registration number is required for doctors.');
+    }
+
+    const updated = await this.practices.updateStaff(practiceId, userId, patch);
+    await this.trail(principal, practiceId, 'settings.staff.updated', 'user', userId);
+    return updated;
+  }
+
   // -- Catalogs --------------------------------------------------------------
 
   async searchDrugs(practiceId: string, term: string, principal: AuthenticatedPrincipal) {
     this.assert(principal, practiceId);
     return this.catalog.searchDrugs(practiceId, term, 20);
+  }
+
+  async listDrugs(practiceId: string, term: string | undefined, principal: AuthenticatedPrincipal) {
+    this.assert(principal, practiceId);
+    return this.catalog.listDrugs(practiceId, term, 200);
+  }
+
+  async updateDrug(
+    practiceId: string,
+    id: string,
+    data: { name: string; form: string | null; strength: string | null; unit: string | null; instruction: string | null },
+    principal: AuthenticatedPrincipal,
+  ) {
+    this.assert(principal, practiceId);
+    return this.catalog.updateDrug(practiceId, id, data);
+  }
+
+  async updateCatalogEntry(
+    practiceId: string,
+    id: string,
+    value: string,
+    principal: AuthenticatedPrincipal,
+  ) {
+    this.assert(principal, practiceId);
+    return this.catalog.updateEntry(practiceId, id, value);
   }
 
   async createDrug(
@@ -276,11 +354,38 @@ export class SettingsService {
     return this.catalog.upsertChartingTemplate(practiceId, data);
   }
 
+  async deleteChartingTemplate(practiceId: string, id: string, principal: AuthenticatedPrincipal) {
+    this.assert(principal, practiceId);
+    await this.catalog.deleteChartingTemplate(practiceId, id);
+    return { deleted: true };
+  }
+
   // -- Communications, printouts, consent, subscription ----------------------
 
+  /**
+   * The full notification matrix, not just the rows that happen to be stored.
+   *
+   * The spec fixes the category/type grid (Appointments ×3, Follow-up, Payment,
+   * Wishes ×2), so a practice that has never saved a preference must still see
+   * all seven rows with their defaults — otherwise the screen renders empty and
+   * looks broken on a fresh account.
+   */
   async listCommunication(practiceId: string, principal: AuthenticatedPrincipal) {
     this.assert(principal, practiceId);
-    return this.settings.listCommunication(practiceId);
+    const stored = await this.settings.listCommunication(practiceId);
+    const byKey = new Map(stored.map((row) => [`${row.category}:${row.type}`, row]));
+
+    return SettingsService.COMMUNICATION_MATRIX.map((cell) => {
+      const saved = byKey.get(`${cell.category}:${cell.type}`);
+      return {
+        category: cell.category,
+        type: cell.type,
+        label: cell.label,
+        smsEnabled: saved?.smsEnabled ?? false,
+        emailEnabled: saved?.emailEnabled ?? false,
+        offsetDays: saved?.offsetDays ?? cell.offsetDays,
+      };
+    });
   }
 
   async upsertCommunication(
@@ -322,6 +427,47 @@ export class SettingsService {
   ) {
     this.assert(principal, practiceId);
     return this.settings.upsertConsentForm(practiceId, data);
+  }
+
+  async deleteConsentForm(practiceId: string, id: string, principal: AuthenticatedPrincipal) {
+    this.assert(principal, practiceId);
+    await this.settings.deleteConsentForm(practiceId, id);
+    return { deleted: true };
+  }
+
+  // -- Email header / footer -------------------------------------------------
+
+  /**
+   * Always returns both sections. The editor renders a Header and a Footer tab
+   * unconditionally, so an unsaved practice gets blank blocks rather than a tab
+   * that has nothing behind it.
+   */
+  async getEmailSettings(practiceId: string, principal: AuthenticatedPrincipal) {
+    this.assert(principal, practiceId);
+    const stored = await this.settings.listEmailSettings(practiceId);
+    const bySection = new Map(stored.map((row) => [row.section, row]));
+
+    return ['HEADER', 'FOOTER'].map(
+      (section) =>
+        bySection.get(section) ?? {
+          section,
+          title: null,
+          leftText: null,
+          rightText: null,
+          includeLogo: true,
+        },
+    );
+  }
+
+  async upsertEmailSetting(
+    practiceId: string,
+    record: EmailSettingRecord,
+    principal: AuthenticatedPrincipal,
+  ) {
+    this.assert(principal, practiceId);
+    await this.settings.upsertEmailSetting(practiceId, record);
+    await this.trail(principal, practiceId, 'settings.email.updated', 'practice', practiceId);
+    return this.getEmailSettings(practiceId, principal);
   }
 
   async getSubscription(practiceId: string, principal: AuthenticatedPrincipal) {

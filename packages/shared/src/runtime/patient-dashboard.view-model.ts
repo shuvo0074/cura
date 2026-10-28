@@ -28,6 +28,10 @@ export interface PatientDashboardState {
 
   complaintSuggestions: string[];
 
+  /** Draft vitals and clinical note for the open encounter. */
+  vitals: VitalsDraft;
+  note: NoteDraft;
+
   privacyWindowDays: number;
   hasLockedHistory: boolean;
   consentGrantedUntil: string | null;
@@ -39,6 +43,47 @@ export interface PatientDashboardState {
   error: string | null;
   fieldErrors: Record<string, string>;
 }
+
+/** Vitals are held as strings so a half-typed "12" is not coerced to a number. */
+export interface VitalsDraft {
+  weightKg: string;
+  systolic: string;
+  diastolic: string;
+  pulseBpm: string;
+  temperatureC: string;
+  respiratoryRate: string;
+}
+
+export interface NoteDraft {
+  complaints: string[];
+  observations: string[];
+  diagnoses: string[];
+  advice: string[];
+  notes: string;
+}
+
+export type NoteListField = 'complaints' | 'observations' | 'diagnoses' | 'advice';
+
+/** Collapses the API's per-field error arrays into one message each. */
+const flatten = (errors: Record<string, string[]> | undefined): Record<string, string> =>
+  Object.fromEntries(Object.entries(errors ?? {}).map(([k, v]) => [k, v[0] ?? '']));
+
+const emptyVitals = (): VitalsDraft => ({
+  weightKg: '',
+  systolic: '',
+  diastolic: '',
+  pulseBpm: '',
+  temperatureC: '',
+  respiratoryRate: '',
+});
+
+const emptyNote = (): NoteDraft => ({
+  complaints: [],
+  observations: [],
+  diagnoses: [],
+  advice: [],
+  notes: '',
+});
 
 const emptyRow = (): PrescriptionRow => ({
   key: Math.random().toString(36).slice(2),
@@ -86,6 +131,8 @@ export class PatientDashboardViewModel extends ViewModel<PatientDashboardState> 
       drugSuggestions: [],
       suggestionRow: null,
       complaintSuggestions: [],
+      vitals: emptyVitals(),
+      note: emptyNote(),
       privacyWindowDays: 90,
       hasLockedHistory: false,
       consentGrantedUntil: null,
@@ -300,6 +347,66 @@ export class PatientDashboardViewModel extends ViewModel<PatientDashboardState> 
 
   // -------------------------------------------------------------------------
 
+  setVital(field: keyof VitalsDraft, value: string): void {
+    this.setState({ vitals: { ...this.state.vitals, [field]: value } });
+  }
+
+  setNoteList(field: NoteListField, values: string[]): void {
+    this.setState({ note: { ...this.state.note, [field]: values } });
+  }
+
+  setNoteText(value: string): void {
+    this.setState({ note: { ...this.state.note, notes: value } });
+  }
+
+  /**
+   * Saves vitals.
+   *
+   * Blank fields are omitted rather than sent as 0 — the schema treats every
+   * reading as optional, and a zero pulse is a clinical claim, not "unknown".
+   */
+  async saveVitals(): Promise<void> {
+    const encounter = this.state.activeEncounter;
+    if (!encounter) return;
+
+    const numeric = (raw: string): number | undefined => {
+      const trimmed = raw.trim();
+      if (trimmed === '') return undefined;
+      const value = Number(trimmed);
+      return Number.isFinite(value) ? value : undefined;
+    };
+
+    const body: Record<string, number> = {};
+    for (const [key, raw] of Object.entries(this.state.vitals)) {
+      const value = numeric(raw);
+      if (value !== undefined) body[key] = value;
+    }
+
+    this.setState({ saving: true, error: null, fieldErrors: {} });
+    const result = await this.clinical.saveVitals(this.practiceId, encounter.id, body);
+    this.setState({ saving: false });
+
+    if (result.ok) this.adoptEncounter(result.value);
+    else this.setState({ error: result.error.message, fieldErrors: flatten(result.error.fieldErrors) });
+  }
+
+  async saveNote(): Promise<void> {
+    const encounter = this.state.activeEncounter;
+    if (!encounter) return;
+
+    const { notes, ...lists } = this.state.note;
+    this.setState({ saving: true, error: null, fieldErrors: {} });
+
+    const result = await this.clinical.saveNote(this.practiceId, encounter.id, {
+      ...lists,
+      ...(notes.trim() ? { notes: notes.trim() } : {}),
+    });
+    this.setState({ saving: false });
+
+    if (result.ok) this.adoptEncounter(result.value);
+    else this.setState({ error: result.error.message, fieldErrors: flatten(result.error.fieldErrors) });
+  }
+
   private adoptEncounter(encounter: EncounterView): void {
     const rows: PrescriptionRow[] = (encounter.prescription?.items ?? []).map((item) => ({
       ...item,
@@ -307,11 +414,30 @@ export class PatientDashboardViewModel extends ViewModel<PatientDashboardState> 
     }));
     rows.push(emptyRow());
 
+    const v = encounter.vitals;
+    const n = encounter.clinicalNote;
+
     this.setState({
       activeEncounter: encounter,
       rows,
       investigations: encounter.prescription?.investigations ?? [],
       followUpDate: encounter.prescription?.followUpDate ?? null,
+      vitals: {
+        // `?? ''` rather than `String(x ?? '')` so a stored 0 still renders.
+        weightKg: v?.weightKg != null ? String(v.weightKg) : '',
+        systolic: v?.systolic != null ? String(v.systolic) : '',
+        diastolic: v?.diastolic != null ? String(v.diastolic) : '',
+        pulseBpm: v?.pulseBpm != null ? String(v.pulseBpm) : '',
+        temperatureC: v?.temperatureC != null ? String(v.temperatureC) : '',
+        respiratoryRate: v?.respiratoryRate != null ? String(v.respiratoryRate) : '',
+      },
+      note: {
+        complaints: n?.complaints ?? [],
+        observations: n?.observations ?? [],
+        diagnoses: n?.diagnoses ?? [],
+        advice: n?.advice ?? [],
+        notes: n?.notes ?? '',
+      },
     });
   }
 
