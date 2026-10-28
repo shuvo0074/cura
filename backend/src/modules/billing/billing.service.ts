@@ -2,13 +2,13 @@ import { Inject, Injectable } from '@nestjs/common';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../common/errors/domain-error';
 import {
   BILLING_REPOSITORY,
-  CATALOG_REPOSITORY,
   PRACTICE_REPOSITORY,
+  PRICING_REPOSITORY,
   REPORT_REPOSITORY,
   type BillingRepository,
-  type CatalogRepository,
   type InvoiceItemData,
   type PracticeRepository,
+  type PricingRepository,
   type ReportRepository,
 } from '../../core/ports/clinical.ports';
 import {
@@ -38,7 +38,7 @@ export interface InvoiceLineInput {
 export class BillingService {
   constructor(
     @Inject(BILLING_REPOSITORY) private readonly invoices: BillingRepository,
-    @Inject(CATALOG_REPOSITORY) private readonly catalog: CatalogRepository,
+    @Inject(PRICING_REPOSITORY) private readonly pricing: PricingRepository,
     @Inject(PATIENT_REPOSITORY) private readonly patients: PatientRepository,
     @Inject(REPORT_REPOSITORY) private readonly reports: ReportRepository,
     @Inject(PRACTICE_REPOSITORY) private readonly practices: PracticeRepository,
@@ -63,7 +63,7 @@ export class BillingService {
     if (!patient) throw new NotFoundError('Patient');
     if (input.lines.length === 0) throw new ValidationError('Add at least one line item.');
 
-    const pricing = await this.catalog.listPricing(practiceId);
+    const pricing = await this.pricing.listPricing(practiceId);
     const byId = new Map(pricing.map((item) => [item.id, item]));
 
     const items: InvoiceItemData[] = input.lines.map((line) => {

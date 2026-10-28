@@ -3,17 +3,22 @@ import { PrismaService } from '../prisma/prisma.service';
 import { NotFoundError } from '../../common/errors/domain-error';
 import type {
   CommunicationSettingRecord,
+  CommunicationSettingsRepository,
+  ConsentFormRepository,
   EmailSettingRecord,
+  EmailSettingsRepository,
   PracticeRecord,
   PracticeRepository,
   PrintoutSettingRecord,
-  SettingsRepository,
+  PrintoutSettingsRepository,
   StaffNotificationPrefs,
   StaffRecord,
+  StaffRepository,
+  SubscriptionRepository,
 } from '../../core/ports/clinical.ports';
 
 @Injectable()
-export class PrismaPracticeRepository implements PracticeRepository {
+export class PrismaPracticeRepository implements PracticeRepository, StaffRepository {
   private static readonly SELECT = {
     id: true,
     name: true,
@@ -292,7 +297,14 @@ export class PrismaPracticeRepository implements PracticeRepository {
 }
 
 @Injectable()
-export class PrismaSettingsRepository implements SettingsRepository {
+export class PrismaSettingsRepository
+  implements
+    CommunicationSettingsRepository,
+    EmailSettingsRepository,
+    PrintoutSettingsRepository,
+    ConsentFormRepository,
+    SubscriptionRepository
+{
   constructor(private readonly prisma: PrismaService) {}
 
   async listCommunication(practiceId: string): Promise<CommunicationSettingRecord[]> {

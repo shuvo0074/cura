@@ -128,37 +128,57 @@ export interface PricingItemRecord {
   isDefault: boolean;
 }
 
-export const CATALOG_REPOSITORY = Symbol('CATALOG_REPOSITORY');
+export interface ChartingTemplateRecord {
+  id: string;
+  name: string;
+  diagnoses: string[];
+  labOrders: string[];
+  followUpDays: number | null;
+}
 
-export interface CatalogRepository {
+// One port per catalog: billing reads prices and has no business seeing the
+// drug list, and the settings screens for each catalog evolve independently.
+
+export const DRUG_CATALOG_REPOSITORY = Symbol('DRUG_CATALOG_REPOSITORY');
+
+export interface DrugCatalogRepository {
   searchDrugs(practiceId: string, term: string, limit: number): Promise<DrugRecord[]>;
+  listDrugs(practiceId: string, term: string | undefined, limit: number): Promise<DrugRecord[]>;
   createDrug(practiceId: string, data: Omit<DrugRecord, 'id'>): Promise<DrugRecord>;
+  updateDrug(practiceId: string, id: string, data: Omit<DrugRecord, 'id'>): Promise<DrugRecord>;
   deleteDrug(practiceId: string, id: string): Promise<void>;
+}
 
+/** Complaints, observations, diagnoses, advice and free notes. */
+export const CLINICAL_NOTE_CATALOG_REPOSITORY = Symbol('CLINICAL_NOTE_CATALOG_REPOSITORY');
+
+export interface ClinicalNoteCatalogRepository {
   listEntries(practiceId: string, kind: string, term?: string): Promise<CatalogEntryRecord[]>;
   createEntry(practiceId: string, kind: string, value: string): Promise<CatalogEntryRecord>;
+  updateEntry(practiceId: string, id: string, value: string): Promise<CatalogEntryRecord>;
   deleteEntry(practiceId: string, id: string): Promise<void>;
+}
 
+export const PRICING_REPOSITORY = Symbol('PRICING_REPOSITORY');
+
+export interface PricingRepository {
   listPricing(practiceId: string): Promise<PricingItemRecord[]>;
   upsertPricing(
     practiceId: string,
     data: Omit<PricingItemRecord, 'id'> & { id?: string },
   ): Promise<PricingItemRecord>;
   deletePricing(practiceId: string, id: string): Promise<void>;
+}
 
-  listChartingTemplates(practiceId: string): Promise<
-    Array<{ id: string; name: string; diagnoses: string[]; labOrders: string[]; followUpDays: number | null }>
-  >;
+export const CHARTING_TEMPLATE_REPOSITORY = Symbol('CHARTING_TEMPLATE_REPOSITORY');
+
+export interface ChartingTemplateRepository {
+  listChartingTemplates(practiceId: string): Promise<ChartingTemplateRecord[]>;
   upsertChartingTemplate(
     practiceId: string,
-    data: { id?: string; name: string; diagnoses: string[]; labOrders: string[]; followUpDays: number | null },
+    data: Omit<ChartingTemplateRecord, 'id'> & { id?: string },
   ): Promise<{ id: string }>;
   deleteChartingTemplate(practiceId: string, id: string): Promise<void>;
-
-  listDrugs(practiceId: string, term: string | undefined, limit: number): Promise<DrugRecord[]>;
-  updateDrug(practiceId: string, id: string, data: Omit<DrugRecord, 'id'>): Promise<DrugRecord>;
-
-  updateEntry(practiceId: string, id: string, value: string): Promise<CatalogEntryRecord>;
 }
 
 // ---------------------------------------------------------------------------
@@ -211,6 +231,7 @@ export interface StaffRecord extends StaffNotificationPrefs {
 
 export const PRACTICE_REPOSITORY = Symbol('PRACTICE_REPOSITORY');
 
+/** The practice itself: profile, weekly sessions and closures. */
 export interface PracticeRepository {
   findById(id: string): Promise<PracticeRecord | null>;
   update(id: string, patch: Partial<Omit<PracticeRecord, 'id'>>): Promise<PracticeRecord>;
@@ -222,7 +243,12 @@ export interface PracticeRepository {
   listClosures(practiceId: string, from: Date, to: Date): Promise<Array<{ id: string; startsAt: Date; endsAt: Date; reason: string | null }>>;
   addClosure(practiceId: string, input: { startsAt: Date; endsAt: Date; allDay: boolean; reason: string | null }): Promise<{ id: string }>;
   removeClosure(practiceId: string, id: string): Promise<void>;
+}
 
+export const STAFF_REPOSITORY = Symbol('STAFF_REPOSITORY');
+
+/** Practice memberships and the accounts behind them. */
+export interface StaffRepository {
   listStaff(practiceId: string): Promise<StaffRecord[]>;
   addStaff(input: {
     practiceId: string;
@@ -247,8 +273,6 @@ export interface PracticeRepository {
     },
   ): Promise<StaffRecord>;
 }
-
-export const SETTINGS_REPOSITORY = Symbol('SETTINGS_REPOSITORY');
 
 export interface CommunicationSettingRecord {
   category: string;
@@ -285,25 +309,73 @@ export interface EmailSettingRecord {
   includeLogo: boolean;
 }
 
-export interface SettingsRepository {
+export interface ConsentFormRecord {
+  id: string;
+  title: string;
+  bodyHtml: string;
+  isActive: boolean;
+}
+
+export interface SubscriptionRecord {
+  plan: string;
+  status: string;
+  expiresAt: Date | null;
+}
+
+// Per-practice preferences, one port per settings screen. A consumer such as
+// the printout renderer depends on its page setup and nothing else.
+
+export const COMMUNICATION_SETTINGS_REPOSITORY = Symbol('COMMUNICATION_SETTINGS_REPOSITORY');
+
+export interface CommunicationSettingsRepository {
   listCommunication(practiceId: string): Promise<CommunicationSettingRecord[]>;
   upsertCommunication(practiceId: string, record: CommunicationSettingRecord): Promise<void>;
+}
 
-  getPrintout(practiceId: string, documentType: string): Promise<PrintoutSettingRecord | null>;
-  upsertPrintout(practiceId: string, record: PrintoutSettingRecord): Promise<void>;
+export const EMAIL_SETTINGS_REPOSITORY = Symbol('EMAIL_SETTINGS_REPOSITORY');
 
-  listConsentForms(practiceId: string): Promise<Array<{ id: string; title: string; bodyHtml: string; isActive: boolean }>>;
-  upsertConsentForm(
-    practiceId: string,
-    data: { id?: string; title: string; bodyHtml: string; isActive: boolean },
-  ): Promise<{ id: string }>;
-  deleteConsentForm(practiceId: string, id: string): Promise<void>;
-
+export interface EmailSettingsRepository {
   listEmailSettings(practiceId: string): Promise<EmailSettingRecord[]>;
   upsertEmailSetting(practiceId: string, record: EmailSettingRecord): Promise<void>;
+}
 
-  getSubscription(practiceId: string): Promise<{ plan: string; status: string; expiresAt: Date | null } | null>;
+export const PRINTOUT_SETTINGS_REPOSITORY = Symbol('PRINTOUT_SETTINGS_REPOSITORY');
+
+export interface PrintoutSettingsRepository {
+  getPrintout(practiceId: string, documentType: string): Promise<PrintoutSettingRecord | null>;
+  upsertPrintout(practiceId: string, record: PrintoutSettingRecord): Promise<void>;
+}
+
+export const CONSENT_FORM_REPOSITORY = Symbol('CONSENT_FORM_REPOSITORY');
+
+export interface ConsentFormRepository {
+  listConsentForms(practiceId: string): Promise<ConsentFormRecord[]>;
+  upsertConsentForm(practiceId: string, data: Omit<ConsentFormRecord, 'id'> & { id?: string }): Promise<{ id: string }>;
+  deleteConsentForm(practiceId: string, id: string): Promise<void>;
+}
+
+export const SUBSCRIPTION_REPOSITORY = Symbol('SUBSCRIPTION_REPOSITORY');
+
+export interface SubscriptionRepository {
+  getSubscription(practiceId: string): Promise<SubscriptionRecord | null>;
   upsertSubscription(practiceId: string, plan: string, expiresAt: Date | null): Promise<void>;
+}
+
+// ---------------------------------------------------------------------------
+// Prescriber credentials (printouts)
+// ---------------------------------------------------------------------------
+
+export interface PrescriberCredentials {
+  fullName: string;
+  bmdcNumber: string | null;
+  /** Degree names, earliest passing year first — the order printed on the pad. */
+  qualifications: string[];
+}
+
+export const PRESCRIBER_REPOSITORY = Symbol('PRESCRIBER_REPOSITORY');
+
+export interface PrescriberRepository {
+  findCredentials(userId: string): Promise<PrescriberCredentials | null>;
 }
 
 // ---------------------------------------------------------------------------

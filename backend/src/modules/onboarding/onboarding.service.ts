@@ -8,9 +8,9 @@ import {
   type ProfessionalDetailsInput,
 } from '@cura/shared';
 import { AppConfigService } from '../../config/app.config';
-import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { CryptoService } from '../../common/crypto/crypto.service';
 import { ConflictError, NotFoundError, ValidationError } from '../../common/errors/domain-error';
+import { ONBOARDING_REPOSITORY, type OnboardingRepository } from '../../core/ports/onboarding.ports';
 import { AUDIT_REPOSITORY, type AuditRepository } from '../../core/ports/repositories';
 import { CLOCK, type Clock } from '../../core/ports/services';
 import type { AuthenticatedPrincipal } from '../../common/security/jwt-auth.guard';
@@ -43,7 +43,7 @@ export interface OnboardingState {
 @Injectable()
 export class OnboardingService {
   constructor(
-    private readonly prisma: PrismaService,
+    @Inject(ONBOARDING_REPOSITORY) private readonly onboarding: OnboardingRepository,
     private readonly config: AppConfigService,
     private readonly crypto: CryptoService,
     @Inject(AUDIT_REPOSITORY) private readonly audit: AuditRepository,
@@ -51,17 +51,14 @@ export class OnboardingService {
   ) {}
 
   async getState(principal: AuthenticatedPrincipal): Promise<OnboardingState> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: principal.userId },
-      select: { onboardingStep: true, onboardingComplete: true, onboardingDraft: true },
-    });
-    if (!user) throw new NotFoundError('User');
+    const progress = await this.onboarding.findProgress(principal.userId);
+    if (!progress) throw new NotFoundError('User');
 
-    const draft = (user.onboardingDraft?.payload as Record<string, unknown>) ?? {};
+    const draft = progress.draft ?? {};
     return {
-      step: user.onboardingStep || 1,
-      completed: user.onboardingComplete,
-      completedSteps: this.completedStepsFrom(draft, user.onboardingStep),
+      step: progress.step || 1,
+      completed: progress.complete,
+      completedSteps: this.completedStepsFrom(draft, progress.step),
       draft,
     };
   }
@@ -78,21 +75,14 @@ export class OnboardingService {
   ): Promise<{ savedAt: string }> {
     await this.assertNotComplete(principal.userId);
 
-    const existing = await this.prisma.onboardingDraft.findUnique({
-      where: { userId: principal.userId },
-      select: { payload: true },
-    });
+    const existing = await this.onboarding.findDraft(principal.userId);
 
     const merged = {
-      ...((existing?.payload as Record<string, unknown>) ?? {}),
+      ...(existing ?? {}),
       [`step${step}`]: payload,
     };
 
-    await this.prisma.onboardingDraft.upsert({
-      where: { userId: principal.userId },
-      create: { userId: principal.userId, step, payload: merged as never },
-      update: { step, payload: merged as never },
-    });
+    await this.onboarding.saveDraft(principal.userId, step, merged);
 
     return { savedAt: this.clock.now().toISOString() };
   }
@@ -135,10 +125,10 @@ export class OnboardingService {
 
     // Clamped to the last step: skipping step 4 leaves the wizard *on* step 4
     // awaiting "Finish", rather than pointing at a step that does not exist.
-    await this.prisma.user.update({
-      where: { id: principal.userId },
-      data: { onboardingStep: Math.min(step + 1, this.config.rules.onboarding.totalSteps) },
-    });
+    await this.onboarding.setStep(
+      principal.userId,
+      Math.min(step + 1, this.config.rules.onboarding.totalSteps),
+    );
     return this.getState(principal);
   }
 
@@ -157,10 +147,7 @@ export class OnboardingService {
       throw new ValidationError('Complete your personal details before finishing.');
     }
 
-    await this.prisma.user.update({
-      where: { id: principal.userId },
-      data: { onboardingComplete: true, onboardingStep: 4 },
-    });
+    await this.onboarding.markComplete(principal.userId, 4);
 
     await this.audit.record({
       actorUserId: principal.userId,
@@ -181,86 +168,60 @@ export class OnboardingService {
   private async savePersonal(userId: string, input: PersonalDetailsInput): Promise<void> {
     // NID is sensitive: stored as AES-256-GCM ciphertext plus a keyed
     // fingerprint, so duplicates can be detected without ever decrypting.
-    const nidEncrypted = input.nid ? this.crypto.encryptField(input.nid) : null;
-    const nidFingerprint = input.nid ? this.crypto.fingerprint(input.nid) : null;
+    const nid = input.nid
+      ? { encrypted: this.crypto.encryptField(input.nid), fingerprint: this.crypto.fingerprint(input.nid) }
+      : undefined;
 
-    if (nidFingerprint) {
-      const clash = await this.prisma.user.findFirst({
-        where: { nidFingerprint, NOT: { id: userId } },
-        select: { id: true },
-      });
-      if (clash) {
-        throw new ConflictError('NID_IN_USE', 'That NID is already registered to another account.');
-      }
+    if (nid && (await this.onboarding.nidTakenByOther(nid.fingerprint, userId))) {
+      throw new ConflictError('NID_IN_USE', 'That NID is already registered to another account.');
     }
 
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        fullName: input.fullName,
-        mobile: input.mobile,
-        email: input.email,
-        gender: input.gender as never,
-        dateOfBirth: input.dateOfBirth ? new Date(input.dateOfBirth) : null,
-        bloodGroup: input.bloodGroup ?? null,
-        secondaryPhone: input.secondaryPhone ?? null,
-        locale: input.language,
-        ...(nidEncrypted ? { nidEncrypted, nidFingerprint } : {}),
-      },
+    await this.onboarding.savePersonalDetails(userId, {
+      fullName: input.fullName,
+      mobile: input.mobile,
+      email: input.email,
+      gender: input.gender,
+      dateOfBirth: input.dateOfBirth ? new Date(input.dateOfBirth) : null,
+      bloodGroup: input.bloodGroup ?? null,
+      secondaryPhone: input.secondaryPhone ?? null,
+      locale: input.language,
+      nid,
     });
   }
 
   private async saveProfessional(userId: string, input: ProfessionalDetailsInput): Promise<void> {
-    const clash = await this.prisma.user.findFirst({
-      where: { bmdcNumber: input.bmdcNumber, NOT: { id: userId } },
-      select: { id: true },
-    });
-    if (clash) {
+    if (await this.onboarding.bmdcTakenByOther(input.bmdcNumber, userId)) {
       throw new ConflictError(
         'BMDC_IN_USE',
         'That BMDC registration number belongs to another account.',
       );
     }
 
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { bmdcNumber: input.bmdcNumber },
-    });
+    await this.onboarding.setBmdcNumber(userId, input.bmdcNumber);
   }
 
   private async saveAcademic(userId: string, input: AcademicDetailsInput): Promise<void> {
     // Replaced wholesale so the stored list always mirrors what the doctor sees
     // in the repeater, including removals.
-    await this.prisma.$transaction([
-      this.prisma.qualification.deleteMany({ where: { userId } }),
-      this.prisma.award.deleteMany({ where: { userId } }),
-      this.prisma.qualification.createMany({
-        data: input.qualifications.map((q) => ({
-          userId,
-          degreeName: q.degreeName,
-          instituteName: q.instituteName,
-          passingYear: q.passingYear ?? null,
-          country: q.country ?? null,
-        })),
-      }),
-      this.prisma.award.createMany({
-        data: input.awards.map((a) => ({
-          userId,
-          title: a.title,
-          year: a.year ?? null,
-          issuer: a.issuer ?? null,
-          country: a.country ?? null,
-        })),
-      }),
-    ]);
+    await this.onboarding.replaceAcademicRecord(
+      userId,
+      input.qualifications.map((q) => ({
+        degreeName: q.degreeName,
+        instituteName: q.instituteName,
+        passingYear: q.passingYear ?? null,
+        country: q.country ?? null,
+      })),
+      input.awards.map((a) => ({
+        title: a.title,
+        year: a.year ?? null,
+        issuer: a.issuer ?? null,
+        country: a.country ?? null,
+      })),
+    );
   }
 
   private async recordStepDone(userId: string, step: number, payload: unknown): Promise<void> {
-    const existing = await this.prisma.onboardingDraft.findUnique({
-      where: { userId },
-      select: { payload: true },
-    });
-    const draft = (existing?.payload as Record<string, unknown>) ?? {};
+    const draft = (await this.onboarding.findDraft(userId)) ?? {};
     const done = new Set<number>((draft._completedSteps as number[] | undefined) ?? []);
     done.add(step);
 
@@ -270,17 +231,7 @@ export class OnboardingService {
       _completedSteps: [...done].sort(),
     };
 
-    await this.prisma.$transaction([
-      this.prisma.onboardingDraft.upsert({
-        where: { userId },
-        create: { userId, step, payload: merged as never },
-        update: { step, payload: merged as never },
-      }),
-      this.prisma.user.update({
-        where: { id: userId },
-        data: { onboardingStep: Math.min(step + 1, 4) },
-      }),
-    ]);
+    await this.onboarding.saveDraftAndAdvance(userId, step, merged, Math.min(step + 1, 4));
   }
 
   /**
@@ -290,13 +241,8 @@ export class OnboardingService {
   private async assertGate(userId: string, step: OnboardingStep): Promise<void> {
     if (step === 1) return;
 
-    const draft = await this.prisma.onboardingDraft.findUnique({
-      where: { userId },
-      select: { payload: true },
-    });
-    const done = new Set<number>(
-      ((draft?.payload as Record<string, unknown>)?._completedSteps as number[] | undefined) ?? [],
-    );
+    const draft = await this.onboarding.findDraft(userId);
+    const done = new Set<number>((draft?._completedSteps as number[] | undefined) ?? []);
 
     const required = step === 2 ? [1] : step === 3 ? [1, 2] : [1];
     const missing = required.filter((r) => !done.has(r));
@@ -309,11 +255,7 @@ export class OnboardingService {
   }
 
   private async assertNotComplete(userId: string): Promise<void> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { onboardingComplete: true },
-    });
-    if (user?.onboardingComplete) {
+    if (await this.onboarding.isComplete(userId)) {
       throw new ConflictError(
         'ONBOARDING_COMPLETE',
         'Account setup is already complete. Edit your details from Profile settings instead.',

@@ -6,9 +6,12 @@ import { PrismaService } from '../prisma/prisma.service';
 import { NotFoundError } from '../../common/errors/domain-error';
 import type {
   CatalogEntryRecord,
-  CatalogRepository,
+  ChartingTemplateRepository,
+  ClinicalNoteCatalogRepository,
+  DrugCatalogRepository,
   DrugRecord,
   PricingItemRecord,
+  PricingRepository,
 } from '../../core/ports/clinical.ports';
 
 /**
@@ -19,7 +22,9 @@ import type {
  * sequential scan here would be felt immediately by the doctor typing.
  */
 @Injectable()
-export class PrismaCatalogRepository implements CatalogRepository {
+export class PrismaCatalogRepository
+  implements DrugCatalogRepository, ClinicalNoteCatalogRepository, PricingRepository, ChartingTemplateRepository
+{
   constructor(private readonly prisma: PrismaService) {}
 
   private normalise(value: string): string {

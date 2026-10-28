@@ -2,14 +2,16 @@ import { Inject, Injectable } from '@nestjs/common';
 import { resolve } from 'node:path';
 import { ageFromDateOfBirth } from '@cura/shared';
 import { ForbiddenError, NotFoundError } from '../../common/errors/domain-error';
-import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { assertPracticeAccess } from '../../common/security/practice-access';
 import {
   CLINICAL_REPOSITORY,
   PRACTICE_REPOSITORY,
-  SETTINGS_REPOSITORY,
+  PRESCRIBER_REPOSITORY,
+  PRINTOUT_SETTINGS_REPOSITORY,
   type ClinicalRepository,
   type PracticeRepository,
-  type SettingsRepository,
+  type PrescriberRepository,
+  type PrintoutSettingsRepository,
 } from '../../core/ports/clinical.ports';
 import {
   AUDIT_REPOSITORY,
@@ -31,11 +33,11 @@ import { PdfRendererService } from './pdf-renderer.service';
 @Injectable()
 export class PrintoutService {
   constructor(
-    private readonly prisma: PrismaService,
     private readonly renderer: PdfRendererService,
     @Inject(CLINICAL_REPOSITORY) private readonly clinical: ClinicalRepository,
     @Inject(PRACTICE_REPOSITORY) private readonly practices: PracticeRepository,
-    @Inject(SETTINGS_REPOSITORY) private readonly settings: SettingsRepository,
+    @Inject(PRESCRIBER_REPOSITORY) private readonly prescribers: PrescriberRepository,
+    @Inject(PRINTOUT_SETTINGS_REPOSITORY) private readonly settings: PrintoutSettingsRepository,
     @Inject(PATIENT_REPOSITORY) private readonly patients: PatientRepository,
     @Inject(AUDIT_REPOSITORY) private readonly audit: AuditRepository,
   ) {}
@@ -45,9 +47,7 @@ export class PrintoutService {
     encounterId: string,
     principal: AuthenticatedPrincipal,
   ): Promise<{ buffer: Buffer; fileName: string }> {
-    if (!principal.practiceIds.includes(practiceId)) {
-      throw new ForbiddenError('You do not have access to this practice.');
-    }
+    assertPracticeAccess(principal, practiceId);
 
     const encounter = await this.clinical.findEncounter(encounterId);
     if (!encounter) throw new NotFoundError('Encounter');
@@ -59,14 +59,7 @@ export class PrintoutService {
     const practice = await this.practices.findById(practiceId);
     if (!practice) throw new NotFoundError('Practice');
 
-    const prescriber = await this.prisma.user.findUnique({
-      where: { id: encounter.doctorId },
-      select: {
-        fullName: true,
-        bmdcNumber: true,
-        qualifications: { select: { degreeName: true }, orderBy: { passingYear: 'asc' } },
-      },
-    });
+    const prescriber = await this.prescribers.findCredentials(encounter.doctorId);
 
     const settings =
       (await this.settings.getPrintout(practiceId, 'EMR')) ?? this.fallbackSettings();
@@ -85,9 +78,7 @@ export class PrintoutService {
         practiceAddress: practice.address,
         practiceContact: practice.contactNumber,
         doctorName: prescriber?.fullName ?? 'Attending physician',
-        doctorQualifications: (prescriber?.qualifications ?? [])
-          .map((q) => q.degreeName)
-          .join(', '),
+        doctorQualifications: (prescriber?.qualifications ?? []).join(', '),
         bmdcNumber: prescriber?.bmdcNumber ?? null,
         patientName: patient.fullName,
         patientCuraId: patient.curaId,
