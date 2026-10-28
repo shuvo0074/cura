@@ -1,3 +1,5 @@
+// Must stay the first import: see runtime-tuning.ts.
+import './runtime-tuning';
 import 'reflect-metadata';
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';

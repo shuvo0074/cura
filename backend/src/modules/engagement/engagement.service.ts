@@ -8,6 +8,17 @@ import type { AuthenticatedPrincipal } from '../../common/security/jwt-auth.guar
 /** The six-month preventive recall the spec names for category B.a. */
 const DEFAULT_RECALL_DAYS = 180;
 
+/** Outreach dates are the clinic's calendar days, as elsewhere in the API. */
+const PRACTICE_TIME_ZONE = 'Asia/Dhaka';
+
+const localDate = (instant: Date): string =>
+  new Intl.DateTimeFormat('en-CA', {
+    timeZone: PRACTICE_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(instant);
+
 /**
  * Patient engagement: who to contact next (Communications) and what patients
  * said about their visits (Feedback Management).
@@ -24,26 +35,41 @@ export class EngagementService {
    * Outreach list for the next `days` days: prescribed follow-ups, preventive
    * recalls and birthdays. Read-only — sending is the scheduler's job, gated by
    * the Communications settings matrix.
+   *
+   * Each list is capped at `limit` with its true total alongside: at practice
+   * scale a 30-day birthday list runs to four figures, which no front desk can
+   * act on from one screen and which made this the API's heaviest response.
    */
-  async upcoming(principal: AuthenticatedPrincipal, practiceId: string, days: number) {
+  async upcoming(principal: AuthenticatedPrincipal, practiceId: string, days: number, limit: number) {
     this.assert(principal, practiceId);
-    const from = this.clock.startOfDay(this.clock.now(), 'Asia/Dhaka');
+    const from = this.clock.startOfDay(this.clock.now(), PRACTICE_TIME_ZONE);
     const to = this.clock.addDays(from, days);
+    // Local calendar dates: date columns compared against a UTC instant would
+    // start the window a day early for a UTC+6 practice.
+    const fromDate = localDate(from);
+    const toDate = localDate(to);
     const recallDays = (await this.repo.recallOffsetDays(practiceId)) ?? DEFAULT_RECALL_DAYS;
 
     const [prescribed, recalls, birthdays] = await Promise.all([
-      this.repo.prescribedFollowUps(practiceId, from, to),
-      this.repo.recallsDue(practiceId, recallDays, from, to),
-      this.repo.birthdaysDue(practiceId, from, days),
+      this.repo.prescribedFollowUps(practiceId, fromDate, toDate, limit),
+      this.repo.recallsDue(practiceId, recallDays, { from, to, fromDate, toDate }, limit),
+      this.repo.birthdaysDue(practiceId, fromDate, days, limit),
     ]);
 
-    // A written follow-up outranks the generic recall for the same patient.
-    const prescribedIds = new Set(prescribed.map((f) => f.patient.id));
-    const followUps = [...prescribed, ...recalls.filter((r) => !prescribedIds.has(r.patient.id))].sort(
-      (a, b) => a.dueDate.localeCompare(b.dueDate),
-    );
+    // The two follow-up sources are disjoint (see recallsDue), so merging their
+    // first `limit` rows by date yields the true first `limit` of the union.
+    const followUps = [...prescribed.items, ...recalls.items]
+      .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
+      .slice(0, limit);
 
-    return { days, recallDays, followUps, birthdays };
+    return {
+      days,
+      recallDays,
+      limit,
+      followUps,
+      birthdays: birthdays.items,
+      totals: { followUps: prescribed.total + recalls.total, birthdays: birthdays.total },
+    };
   }
 
   async listFeedback(

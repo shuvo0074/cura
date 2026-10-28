@@ -50,11 +50,28 @@ export interface FeedbackSummary {
   distribution: [number, number, number, number, number];
 }
 
+/** A capped list plus the size of the whole set it was cut from. */
+export interface Capped<T> {
+  items: T[];
+  total: number;
+}
+
 export interface EngagementRepository {
-  prescribedFollowUps(practiceId: string, from: Date, to: Date): Promise<FollowUpDue[]>;
-  /** Patients whose last visit plus `offsetDays` falls inside the window. */
-  recallsDue(practiceId: string, offsetDays: number, from: Date, to: Date): Promise<FollowUpDue[]>;
-  birthdaysDue(practiceId: string, from: Date, days: number): Promise<BirthdayDue[]>;
+  /** One row per patient, earliest due date first. Dates are YYYY-MM-DD. */
+  prescribedFollowUps(practiceId: string, from: string, to: string, limit: number): Promise<Capped<FollowUpDue>>;
+  /**
+   * Patients whose last visit plus `offsetDays` falls inside the window, who
+   * are not booked back in and have no prescribed follow-up in the window
+   * (that list already holds them, so the two never overlap).
+   */
+  recallsDue(
+    practiceId: string,
+    offsetDays: number,
+    window: { from: Date; to: Date; fromDate: string; toDate: string },
+    limit: number,
+  ): Promise<Capped<FollowUpDue>>;
+  /** `fromDate` is the practice's local today (YYYY-MM-DD). */
+  birthdaysDue(practiceId: string, fromDate: string, days: number, limit: number): Promise<Capped<BirthdayDue>>;
 
   listFeedback(practiceId: string, filter: { rating?: number; unanswered?: boolean }): Promise<FeedbackRecord[]>;
   feedbackSummary(practiceId: string): Promise<FeedbackSummary>;

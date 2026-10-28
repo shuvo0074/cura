@@ -251,6 +251,17 @@ export interface AppointmentRepository {
     includeCancelled: boolean;
   }): Promise<AppointmentWithPatient[]>;
   /**
+   * Bookings per local calendar day (cancellations and no-shows excluded) —
+   * the mini month's load dots, without shipping every appointment to draw them.
+   */
+  dailyCounts(input: {
+    practiceId: string;
+    doctorId?: string | undefined;
+    from: Date;
+    to: Date;
+    timeZone: string;
+  }): Promise<Array<{ date: string; count: number }>>;
+  /**
    * Overlap check for double-booking. Excludes cancelled/no-show and may skip
    * one id so an appointment can be rescheduled onto its own slot.
    */

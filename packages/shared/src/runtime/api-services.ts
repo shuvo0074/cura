@@ -92,6 +92,15 @@ export interface AppointmentApi {
     signal?: AbortSignal;
   }): Promise<Result<Appointment[], AppError>>;
   queueSummary(practiceId: string, date: string): Promise<Result<QueueSummary, AppError>>;
+  /** Bookings per local day across a window — the mini month's load dots. */
+  dailyCounts(input: {
+    practiceId: string;
+    from: string;
+    to: string;
+    timeZone: string;
+    doctorId?: string;
+    signal?: AbortSignal;
+  }): Promise<Result<Array<{ date: string; count: number }>, AppError>>;
   create(input: CreateAppointmentInput): Promise<Result<Appointment, AppError>>;
   changeStatus(id: string, status: AppointmentStatus): Promise<Result<Appointment, AppError>>;
   reschedule(id: string, scheduledAt: string): Promise<Result<Appointment, AppError>>;
@@ -121,6 +130,26 @@ export class HttpAppointmentApi implements AppointmentApi {
   queueSummary(practiceId: string, date: string) {
     return this.http.request<QueueSummary>('/appointments/queue-summary', {
       query: { practiceId, date },
+    });
+  }
+
+  dailyCounts(input: {
+    practiceId: string;
+    from: string;
+    to: string;
+    timeZone: string;
+    doctorId?: string;
+    signal?: AbortSignal;
+  }) {
+    return this.http.request<Array<{ date: string; count: number }>>('/appointments/daily-counts', {
+      query: {
+        practiceId: input.practiceId,
+        from: input.from,
+        to: input.to,
+        timeZone: input.timeZone,
+        doctorId: input.doctorId,
+      },
+      ...(input.signal ? { signal: input.signal } : {}),
     });
   }
 

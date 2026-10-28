@@ -20,6 +20,14 @@ const rangeQuerySchema = z.object({
   includeCancelled: z.coerce.boolean().default(false),
 });
 
+const dailyCountsSchema = z.object({
+  practiceId: z.string().uuid(),
+  from: z.string().datetime({ offset: true }),
+  to: z.string().datetime({ offset: true }),
+  timeZone: z.string().min(1).max(64),
+  doctorId: z.string().uuid().optional(),
+});
+
 const statusSchema = z.object({ status: z.nativeEnum(AppointmentStatus) });
 
 /**
@@ -44,6 +52,23 @@ export class AppointmentController {
       new Date(query.to),
       principal,
       { doctorId: query.doctorId, includeCancelled: query.includeCancelled },
+    );
+  }
+
+  /** Mini-month load dots: bookings per local day. */
+  @Get('daily-counts')
+  @RequirePermissions(Permission.APPOINTMENT_READ)
+  async dailyCounts(
+    @Query(zodBody(dailyCountsSchema)) query: z.infer<typeof dailyCountsSchema>,
+    @CurrentUser() principal: AuthenticatedPrincipal,
+  ) {
+    return this.appointments.dailyCounts(
+      query.practiceId,
+      new Date(query.from),
+      new Date(query.to),
+      query.timeZone,
+      principal,
+      query.doctorId,
     );
   }
 

@@ -417,6 +417,8 @@ model Prescription {
   encounter Encounter          @relation(fields: [encounterId], references: [id], onDelete: Cascade)
   items     PrescriptionItem[]
 
+  /// Communications' follow-up list reads by due date.
+  @@index([followUpDate])
   @@map("prescriptions")
 }
 

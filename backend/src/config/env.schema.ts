@@ -13,6 +13,13 @@ export const envSchema = z.object({
   API_PREFIX: z.string().default('api'),
 
   DATABASE_URL: z.string().url(),
+  /**
+   * Prisma connections per API process. Prisma's own default is derived from
+   * the CPU count it sees, which on shared hosts can be the host's core count
+   * and exceed what the database accepts. Ignored when DATABASE_URL already
+   * sets `connection_limit`.
+   */
+  DB_POOL_SIZE: z.coerce.number().int().min(1).max(100).default(10),
   REDIS_URL: z.string().url(),
 
   /** Distinct secrets: a leaked access secret must not mint refresh tokens. */

@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { utc } from '../prisma/sql';
 import type {
   BirthdayDue,
+  Capped,
   EngagementRepository,
   FeedbackRecord,
   FeedbackSummary,
@@ -14,86 +16,142 @@ const patientSelect = { id: true, curaId: true, fullName: true, mobile: true, em
 
 const isoDate = (d: Date): string => d.toISOString().slice(0, 10);
 
+/** MMDD keys (e.g. 1028) for each day from `fromDate` over `days` days. */
+function monthDaysInWindow(fromDate: string, days: number): number[] {
+  const keys = new Set<number>();
+  const cursor = new Date(`${fromDate}T00:00:00Z`);
+  for (let i = 0; i <= days; i += 1) {
+    const month = cursor.getUTCMonth() + 1;
+    const day = cursor.getUTCDate();
+    keys.add(month * 100 + day);
+    // In a common year a 29 February birthday is celebrated on the 28th.
+    const year = cursor.getUTCFullYear();
+    const leap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+    if (month === 2 && day === 28 && !leap) keys.add(229);
+    cursor.setUTCDate(day + 1);
+  }
+  return [...keys];
+}
+
 @Injectable()
 export class PrismaEngagementRepository implements EngagementRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async prescribedFollowUps(practiceId: string, from: Date, to: Date): Promise<FollowUpDue[]> {
-    const rows = await this.prisma.prescription.findMany({
-      where: {
-        followUpDate: { gte: from, lte: to },
-        encounter: { patient: { practiceId, deletedAt: null } },
-      },
-      select: { followUpDate: true, encounter: { select: { patient: { select: patientSelect } } } },
-      orderBy: { followUpDate: 'asc' },
-    });
-
-    // One row per patient: a later prescription can restate the same follow-up,
-    // and the outreach list is about whom to contact, not how often it was noted.
-    const seen = new Set<string>();
-    const due: FollowUpDue[] = [];
-    for (const row of rows) {
-      const patient = row.encounter.patient;
-      if (!row.followUpDate || seen.has(patient.id)) continue;
-      seen.add(patient.id);
-      due.push({ patient, dueDate: isoDate(row.followUpDate), source: 'PRESCRIPTION' });
-    }
-    return due;
+  async prescribedFollowUps(
+    practiceId: string,
+    from: string,
+    to: string,
+    limit: number,
+  ): Promise<Capped<FollowUpDue>> {
+    // DISTINCT ON keeps one row per patient (a later prescription can restate
+    // the same follow-up) in SQL, so only the capped page leaves the database.
+    const rows = await this.prisma.$queryRaw<Array<OutreachPatient & { due: Date; total: bigint }>>(Prisma.sql`
+      SELECT *, count(*) OVER () AS total FROM (
+        SELECT DISTINCT ON (p.id) p.id, p."curaId", p."fullName", p.mobile, p.email, pr."followUpDate" AS due
+        FROM prescriptions pr
+        JOIN encounters e ON e.id = pr."encounterId"
+        JOIN patients p ON p.id = e."patientId"
+        WHERE pr."followUpDate" BETWEEN ${from}::date AND ${to}::date
+          AND p."practiceId" = ${practiceId}::uuid
+          AND p."deletedAt" IS NULL
+        ORDER BY p.id, pr."followUpDate"
+      ) per_patient
+      ORDER BY due, "fullName"
+      LIMIT ${limit}
+    `);
+    return {
+      items: rows.map(({ due, total: _total, ...patient }) => ({
+        patient,
+        dueDate: isoDate(due),
+        source: 'PRESCRIPTION' as const,
+      })),
+      total: Number(rows[0]?.total ?? 0),
+    };
   }
 
-  async recallsDue(practiceId: string, offsetDays: number, from: Date, to: Date): Promise<FollowUpDue[]> {
+  async recallsDue(
+    practiceId: string,
+    offsetDays: number,
+    window: { from: Date; to: Date; fromDate: string; toDate: string },
+    limit: number,
+  ): Promise<Capped<FollowUpDue>> {
+    // Hand-written rather than Prisma `none` filters: Prisma compiles those to
+    // `id NOT IN (SELECT …)` over every future appointment — tens of thousands
+    // of rows at practice scale, twice per request (rows + count). Correlated
+    // NOT EXISTS probes the (patientId, scheduledAt) index per candidate.
     const shift = offsetDays * 86_400_000;
-    const rows = await this.prisma.patient.findMany({
-      where: {
-        practiceId,
-        deletedAt: null,
-        lastVisitAt: { gte: new Date(from.getTime() - shift), lte: new Date(to.getTime() - shift) },
-        // Someone already booked back in does not need a recall.
-        appointments: {
-          none: { scheduledAt: { gte: from }, status: { notIn: ['CANCELLED', 'NO_SHOW'] } },
-        },
-      },
-      select: { ...patientSelect, lastVisitAt: true },
-      orderBy: { lastVisitAt: 'asc' },
-    });
+    const rows = await this.prisma.$queryRaw<Array<OutreachPatient & { lastVisitAt: Date; total: bigint }>>(Prisma.sql`
+      SELECT p.id, p."curaId", p."fullName", p.mobile, p.email, p."lastVisitAt", count(*) OVER () AS total
+      FROM patients p
+      WHERE p."practiceId" = ${practiceId}::uuid
+        AND p."deletedAt" IS NULL
+        AND p."lastVisitAt" BETWEEN ${utc(new Date(window.from.getTime() - shift))} AND ${utc(new Date(window.to.getTime() - shift))}
+        -- Already booked back in: no recall needed.
+        AND NOT EXISTS (
+          SELECT 1 FROM appointments a
+          WHERE a."patientId" = p.id AND a."scheduledAt" >= ${utc(window.from)}
+            AND a.status NOT IN ('CANCELLED', 'NO_SHOW')
+        )
+        -- A written follow-up in the window outranks the generic recall; the
+        -- prescribed list already carries this patient.
+        AND NOT EXISTS (
+          SELECT 1 FROM encounters e JOIN prescriptions pr ON pr."encounterId" = e.id
+          WHERE e."patientId" = p.id
+            AND pr."followUpDate" BETWEEN ${window.fromDate}::date AND ${window.toDate}::date
+        )
+      ORDER BY p."lastVisitAt", p."fullName"
+      LIMIT ${limit}
+    `);
 
-    return rows.map(({ lastVisitAt, ...patient }) => ({
-      patient,
-      dueDate: isoDate(new Date((lastVisitAt as Date).getTime() + shift)),
-      source: 'RECALL' as const,
-    }));
+    return {
+      items: rows.map(({ lastVisitAt, total: _total, ...patient }) => ({
+        patient,
+        dueDate: isoDate(new Date(lastVisitAt.getTime() + shift)),
+        source: 'RECALL' as const,
+      })),
+      total: Number(rows[0]?.total ?? 0),
+    };
   }
 
   /**
-   * Next birthday of each patient, computed in SQL so the year wrap
-   * (a December window running into January) and 29 February are handled by
-   * Postgres date arithmetic rather than reimplemented here.
+   * Next birthday of each patient whose month-day falls in the window.
+   *
+   * The month-day filter is what `patients_birthday_idx` serves — the
+   * expression must match that index exactly. Postgres date arithmetic then
+   * handles the year wrap and 29 February (which lands on the 28th in a
+   * common year, so 0229 is also matched on those years' 28 February).
    */
-  async birthdaysDue(practiceId: string, from: Date, days: number): Promise<BirthdayDue[]> {
+  async birthdaysDue(
+    practiceId: string,
+    fromDate: string,
+    days: number,
+    limit: number,
+  ): Promise<Capped<BirthdayDue>> {
+    const monthDays = monthDaysInWindow(fromDate, days);
     const rows = await this.prisma.$queryRaw<
-      Array<OutreachPatient & { next: Date; turning: number }>
+      Array<OutreachPatient & { next: Date; turning: number; total: bigint }>
     >(Prisma.sql`
-      SELECT * FROM (
-        SELECT p.id, p."curaId", p."fullName", p.mobile, p.email,
-               (p."dateOfBirth" + make_interval(years => b.turning))::date AS next,
-               b.turning
-        FROM patients p
-        CROSS JOIN LATERAL (
-          SELECT date_part('year', age(${from}::date - 1, p."dateOfBirth"))::int + 1 AS turning
-        ) b
-        WHERE p."practiceId" = ${practiceId}::uuid
-          AND p."deletedAt" IS NULL
-          AND p."dateOfBirth" IS NOT NULL
-      ) upcoming
-      WHERE next <= ${from}::date + ${days}::int
-      ORDER BY next
+      SELECT p.id, p."curaId", p."fullName", p.mobile, p.email, b.next, t.turning, count(*) OVER () AS total
+      FROM patients p
+      CROSS JOIN LATERAL (
+        SELECT date_part('year', age(${fromDate}::date - 1, p."dateOfBirth"))::int + 1 AS turning
+      ) t
+      CROSS JOIN LATERAL (
+        SELECT (p."dateOfBirth" + make_interval(years => t.turning))::date AS next
+      ) b
+      WHERE p."practiceId" = ${practiceId}::uuid
+        AND p."dateOfBirth" IS NOT NULL
+        AND p."deletedAt" IS NULL
+        AND (EXTRACT(MONTH FROM p."dateOfBirth") * 100 + EXTRACT(DAY FROM p."dateOfBirth"))::int = ANY(${monthDays}::int[])
+        AND b.next <= ${fromDate}::date + ${days}::int
+      ORDER BY b.next, p."fullName"
+      LIMIT ${limit}
     `);
 
-    return rows.map(({ next, turning, ...patient }) => ({
-      patient,
-      date: isoDate(next),
-      turning,
-    }));
+    return {
+      items: rows.map(({ next, turning, total: _total, ...patient }) => ({ patient, date: isoDate(next), turning })),
+      total: Number(rows[0]?.total ?? 0),
+    };
   }
 
   async listFeedback(

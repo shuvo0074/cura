@@ -10,6 +10,7 @@ const practiceQuery = z.object({ practiceId: z.string().uuid() });
 
 const upcomingQuery = practiceQuery.extend({
   days: z.coerce.number().int().min(1).max(90).default(30),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
 });
 
 const feedbackQuery = practiceQuery.extend({
@@ -37,7 +38,7 @@ export class EngagementController {
   @Get('upcoming')
   @RequirePermissions(Permission.PATIENT_READ)
   upcoming(@Query(zodBody(upcomingQuery)) q: z.infer<typeof upcomingQuery>, @CurrentUser() p: AuthenticatedPrincipal) {
-    return this.engagement.upcoming(p, q.practiceId, q.days);
+    return this.engagement.upcoming(p, q.practiceId, q.days, q.limit);
   }
 
   @Get('feedback')

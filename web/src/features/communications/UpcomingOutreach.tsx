@@ -13,6 +13,9 @@ interface OutreachPatient {
 interface UpcomingResponse {
   days: number;
   recallDays: number;
+  /** Each list is capped at this many rows; `totals` is the full count. */
+  limit: number;
+  totals: { followUps: number; birthdays: number };
   followUps: Array<{ patient: OutreachPatient; dueDate: string; source: 'PRESCRIPTION' | 'RECALL' }>;
   birthdays: Array<{ patient: OutreachPatient; date: string; turning: number }>;
 }
@@ -56,12 +59,13 @@ export function UpcomingOutreach({
       <div className={styles.columns}>
         <section className={styles.column} aria-labelledby="followups-head">
           <h2 id="followups-head" className={styles.columnHead}>
-            Follow-ups <span className={styles.count}>{data.followUps.length}</span>
+            Follow-ups <span className={styles.count}>{data.totals.followUps}</span>
           </h2>
           <p className={s.muted}>
             Follow-up dates written on prescriptions, plus the {data.recallDays}-day preventive recall for patients
             not yet booked back in.
           </p>
+          <Truncated shown={data.followUps.length} total={data.totals.followUps} />
           {data.followUps.length === 0 ? (
             <p className={styles.empty}>No follow-ups due in the next {data.days} days.</p>
           ) : (
@@ -82,9 +86,10 @@ export function UpcomingOutreach({
 
         <section className={styles.column} aria-labelledby="birthdays-head">
           <h2 id="birthdays-head" className={styles.columnHead}>
-            Birthday wishes <span className={styles.count}>{data.birthdays.length}</span>
+            Birthday wishes <span className={styles.count}>{data.totals.birthdays}</span>
           </h2>
           <p className={s.muted}>Patients with a date of birth on file whose birthday falls in this window.</p>
+          <Truncated shown={data.birthdays.length} total={data.totals.birthdays} />
           {data.birthdays.length === 0 ? (
             <p className={styles.empty}>No birthdays in the next {data.days} days.</p>
           ) : (
@@ -104,6 +109,16 @@ export function UpcomingOutreach({
         </section>
       </div>
     </>
+  );
+}
+
+/** Says when a list is the first page of a longer one, soonest first. */
+function Truncated({ shown, total }: { shown: number; total: number }) {
+  if (total <= shown) return null;
+  return (
+    <p className={s.muted}>
+      Showing the {shown} soonest of {total.toLocaleString()}. Narrow the window to see the rest.
+    </p>
   );
 }
 

@@ -43,8 +43,13 @@ export class AppConfigService {
     return this.env.CORS_ORIGINS;
   }
 
+  /** The database URL with an explicit pool size (see DB_POOL_SIZE). */
   get database() {
-    return { url: this.env.DATABASE_URL } as const;
+    const url = new URL(this.env.DATABASE_URL);
+    if (!url.searchParams.has('connection_limit')) {
+      url.searchParams.set('connection_limit', String(this.env.DB_POOL_SIZE));
+    }
+    return { url: url.toString() } as const;
   }
 
   get redis() {

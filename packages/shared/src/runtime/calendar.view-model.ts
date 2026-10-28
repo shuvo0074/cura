@@ -336,21 +336,21 @@ export class CalendarViewModel extends ViewModel<CalendarState> {
 
     const month = this.state.miniMonth;
     const [y, m] = month.split('-').map(Number);
-    const result = await this.api.listRange({
+    // Counts, not appointments: the dots need ~30 numbers, and a busy month is
+    // ~1,500 bookings — fetching those just to count them was the heaviest
+    // request the calendar made.
+    const result = await this.api.dailyCounts({
       practiceId: this.practiceId,
       from: new Date(y!, m! - 1, 1).toISOString(),
       to: new Date(y!, m!, 1).toISOString(),
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       ...(this.doctorId ? { doctorId: this.doctorId } : {}),
       signal: controller.signal,
     });
     if (controller.signal.aborted || !result.ok) return;
 
     const load: Record<string, number> = {};
-    for (const a of result.value) {
-      if (isCancelled(a.status)) continue;
-      const key = toDateKey(new Date(a.scheduledAt));
-      load[key] = (load[key] ?? 0) + 1;
-    }
+    for (const { date, count } of result.value) load[date] = count;
     this.setState({ monthLoad: load });
   }
 

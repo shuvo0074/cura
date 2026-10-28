@@ -260,6 +260,31 @@ export class AppointmentService {
     });
   }
 
+  async dailyCounts(
+    practiceId: string,
+    from: Date,
+    to: Date,
+    timeZone: string,
+    principal: AuthenticatedPrincipal,
+    doctorId?: string,
+  ): Promise<Array<{ date: string; count: number }>> {
+    this.assertPracticeAccess(principal, practiceId);
+
+    const spanDays = (to.getTime() - from.getTime()) / 86_400_000;
+    if (spanDays <= 0 || spanDays > 62) {
+      throw new ValidationError('Requested date range must be between 1 and 62 days.');
+    }
+    // The zone reaches SQL as a bound parameter, but an unknown name would
+    // still fail there as a 500; reject it here as the client error it is.
+    try {
+      new Intl.DateTimeFormat('en', { timeZone });
+    } catch {
+      throw new ValidationError('Unknown time zone.');
+    }
+
+    return this.appointments.dailyCounts({ practiceId, doctorId, from, to, timeZone });
+  }
+
   async queueSummary(
     practiceId: string,
     day: Date,

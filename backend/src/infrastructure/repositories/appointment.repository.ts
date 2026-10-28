@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { AppointmentStatus, type VisitType } from '@cura/shared';
 import { PrismaService } from '../prisma/prisma.service';
+import { utc } from '../prisma/sql';
 import type {
   AppointmentRecord,
   AppointmentRepository,
@@ -19,6 +21,32 @@ export class PrismaAppointmentRepository implements AppointmentRepository {
     avatarUrl: true,
   } as const;
 
+  /**
+   * Exactly the columns of `AppointmentWithPatient` — the calendar's read path
+   * returns hundreds of rows per request, so internal columns (author, cancel
+   * metadata) are not hydrated and serialised for clients that never read them.
+   */
+  private static readonly SELECT = {
+    id: true,
+    practiceId: true,
+    doctorId: true,
+    patientId: true,
+    scheduledAt: true,
+    endsAt: true,
+    durationMinutes: true,
+    status: true,
+    visitType: true,
+    tokenNumber: true,
+    plannedProcedures: true,
+    notes: true,
+    checkedInAt: true,
+    engagedAt: true,
+    completedAt: true,
+    createdAt: true,
+    updatedAt: true,
+    patient: { select: PrismaAppointmentRepository.PATIENT_SELECT },
+  } as const;
+
   /** Statuses that still occupy a slot for overlap purposes. */
   private static readonly BLOCKING: AppointmentStatus[] = [
     AppointmentStatus.SCHEDULED,
@@ -31,17 +59,18 @@ export class PrismaAppointmentRepository implements AppointmentRepository {
   async findById(id: string): Promise<AppointmentWithPatient | null> {
     const row = await this.prisma.appointment.findUnique({
       where: { id },
-      include: { patient: { select: PrismaAppointmentRepository.PATIENT_SELECT } },
+      select: PrismaAppointmentRepository.SELECT,
     });
     return row ? (row as unknown as AppointmentWithPatient) : null;
   }
 
   /**
-   * Calendar window read.
+   * Calendar window read — the API's hottest path (a busy week is ~400 rows).
    *
-   * A single query with the patient joined in avoids the N+1 that would follow
-   * from loading appointments then fetching each patient — at 30+ slots a day
-   * across a week view that is the difference between one round trip and 200.
+   * One joined SQL query rather than Prisma `findMany` + `include`: Prisma
+   * resolves the relation with a second query and stitches the rows together
+   * in its engine, which roughly halved throughput on this endpoint under load.
+   * Columns are exactly those of `AppointmentWithPatient`.
    */
   async findInRange(input: {
     practiceId: string;
@@ -50,19 +79,49 @@ export class PrismaAppointmentRepository implements AppointmentRepository {
     to: Date;
     includeCancelled: boolean;
   }): Promise<AppointmentWithPatient[]> {
-    const rows = await this.prisma.appointment.findMany({
-      where: {
-        practiceId: input.practiceId,
-        ...(input.doctorId ? { doctorId: input.doctorId } : {}),
-        scheduledAt: { gte: input.from, lt: input.to },
-        ...(input.includeCancelled
-          ? {}
-          : { status: { notIn: [AppointmentStatus.CANCELLED, AppointmentStatus.NO_SHOW] as never } }),
-      },
-      include: { patient: { select: PrismaAppointmentRepository.PATIENT_SELECT } },
-      orderBy: { scheduledAt: 'asc' },
-    });
-    return rows as unknown as AppointmentWithPatient[];
+    const doctor = input.doctorId ? Prisma.sql`AND a."doctorId" = ${input.doctorId}::uuid` : Prisma.empty;
+    const active = input.includeCancelled ? Prisma.empty : Prisma.sql`AND a.status NOT IN ('CANCELLED', 'NO_SHOW')`;
+    const rows = await this.prisma.$queryRaw<Array<AppointmentRow>>(Prisma.sql`
+      SELECT a.id, a."practiceId", a."doctorId", a."patientId", a."scheduledAt", a."endsAt",
+             a."durationMinutes", a.status, a."visitType", a."tokenNumber", a."plannedProcedures",
+             a.notes, a."checkedInAt", a."engagedAt", a."completedAt", a."createdAt", a."updatedAt",
+             p."curaId" AS "p_curaId", p."fullName" AS "p_fullName", p.mobile AS p_mobile,
+             p.gender AS p_gender, p."dateOfBirth" AS "p_dateOfBirth", p."avatarUrl" AS "p_avatarUrl"
+      FROM appointments a
+      JOIN patients p ON p.id = a."patientId"
+      WHERE a."practiceId" = ${input.practiceId}::uuid
+        AND a."scheduledAt" >= ${utc(input.from)} AND a."scheduledAt" < ${utc(input.to)}
+        ${active}
+        ${doctor}
+      -- Token, then id: appointments sharing a start time keep a stable order.
+      ORDER BY a."scheduledAt", a."tokenNumber" NULLS LAST, a.id
+    `);
+    return rows.map(toAppointmentWithPatient);
+  }
+
+  async dailyCounts(input: {
+    practiceId: string;
+    doctorId?: string | undefined;
+    from: Date;
+    to: Date;
+    timeZone: string;
+  }): Promise<Array<{ date: string; count: number }>> {
+    // Grouped in SQL: a busy month is ~1,500 rows, and the caller only needs
+    // ~30 numbers. Timestamps are stored as UTC, so the day is taken in the
+    // viewer's zone — a 02:00 Dhaka visit belongs to its local date.
+    const doctor = input.doctorId ? Prisma.sql`AND "doctorId" = ${input.doctorId}::uuid` : Prisma.empty;
+    const rows = await this.prisma.$queryRaw<Array<{ date: string; count: bigint }>>(Prisma.sql`
+      SELECT to_char(("scheduledAt" AT TIME ZONE 'UTC') AT TIME ZONE ${input.timeZone}, 'YYYY-MM-DD') AS date,
+             count(*) AS count
+      FROM appointments
+      WHERE "practiceId" = ${input.practiceId}::uuid
+        AND "scheduledAt" >= ${utc(input.from)} AND "scheduledAt" < ${utc(input.to)}
+        AND status NOT IN ('CANCELLED', 'NO_SHOW')
+        ${doctor}
+      GROUP BY 1
+      ORDER BY 1
+    `);
+    return rows.map((r) => ({ date: r.date, count: Number(r.count) }));
   }
 
   /**
@@ -194,4 +253,47 @@ export class PrismaAppointmentRepository implements AppointmentRepository {
     });
     return (result._max.tokenNumber ?? 0) + 1;
   }
+}
+
+/** Flat row of the calendar join; `p_*` columns are the patient's. */
+interface AppointmentRow {
+  id: string;
+  practiceId: string;
+  doctorId: string;
+  patientId: string;
+  scheduledAt: Date;
+  endsAt: Date;
+  durationMinutes: number;
+  status: AppointmentStatus;
+  visitType: VisitType;
+  tokenNumber: number | null;
+  plannedProcedures: string[];
+  notes: string | null;
+  checkedInAt: Date | null;
+  engagedAt: Date | null;
+  completedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  p_curaId: string;
+  p_fullName: string;
+  p_mobile: string;
+  p_gender: AppointmentWithPatient['patient']['gender'];
+  p_dateOfBirth: Date | null;
+  p_avatarUrl: string | null;
+}
+
+function toAppointmentWithPatient(row: AppointmentRow): AppointmentWithPatient {
+  const { p_curaId, p_fullName, p_mobile, p_gender, p_dateOfBirth, p_avatarUrl, ...appointment } = row;
+  return {
+    ...appointment,
+    patient: {
+      id: row.patientId,
+      curaId: p_curaId,
+      fullName: p_fullName,
+      mobile: p_mobile,
+      gender: p_gender,
+      dateOfBirth: p_dateOfBirth,
+      avatarUrl: p_avatarUrl,
+    },
+  };
 }
