@@ -1,10 +1,7 @@
-import { memo, type CSSProperties, type DragEvent } from 'react';
+import { memo, type CSSProperties, type PointerEvent } from 'react';
 import { visitTypePrefix, type Appointment } from '@cura/shared';
 import { clockTime } from './calendar-shared';
 import styles from './calendar.module.css';
-
-/** MIME type used to carry an appointment id through a drag. */
-export const DRAG_TYPE = 'application/x-cura-appointment';
 
 /**
  * Appointment card, placed in its slot on the time grid.
@@ -22,9 +19,9 @@ export const AppointmentCard = memo(function AppointmentCard({
   style,
   compact,
   hideTime,
-  draggable,
-  onDragStart,
-  onDragEnd,
+  movable,
+  moving,
+  onPressMove,
 }: {
   appointment: Appointment;
   selected: boolean;
@@ -33,17 +30,13 @@ export const AppointmentCard = memo(function AppointmentCard({
   compact?: boolean;
   /** Week columns are too narrow for the time; the gutter already shows it. */
   hideTime?: boolean;
-  draggable?: boolean;
-  onDragStart?: (id: string) => void;
-  onDragEnd?: () => void;
+  /** Can be dragged to a new time (see use-appointment-drag). */
+  movable?: boolean;
+  /** This card is the one being dragged. */
+  moving?: boolean;
+  onPressMove?: (id: string, e: PointerEvent<HTMLElement>) => void;
 }) {
   const start = new Date(appointment.scheduledAt);
-
-  const beginDrag = (e: DragEvent) => {
-    e.dataTransfer.setData(DRAG_TYPE, appointment.id);
-    e.dataTransfer.effectAllowed = 'move';
-    onDragStart?.(appointment.id);
-  };
 
   return (
     <button
@@ -61,11 +54,11 @@ export const AppointmentCard = memo(function AppointmentCard({
       // The only cue for what can move: done visits are history and the server
       // refuses to reschedule them, so say so instead of silently not dragging.
       title={`${clockTime(start)} · ${appointment.patient.fullName}${
-        draggable ? ' — drag to move' : appointment.status === 'DONE' ? ' — finished visits can’t be moved' : ''
+        movable ? ' — drag to move' : appointment.status === 'DONE' ? ' — finished visits can’t be moved' : ''
       }`}
-      draggable={draggable}
-      onDragStart={draggable ? beginDrag : undefined}
-      onDragEnd={draggable ? onDragEnd : undefined}
+      data-movable={movable || undefined}
+      data-moving={moving || undefined}
+      onPointerDown={movable && onPressMove ? (e) => onPressMove(appointment.id, e) : undefined}
     >
       <span className={styles.visitBadge} data-visit={appointment.visitType.toLowerCase()}>
         {visitTypePrefix[appointment.visitType]}

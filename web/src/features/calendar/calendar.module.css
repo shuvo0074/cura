@@ -134,7 +134,6 @@
   transition: box-shadow var(--duration-fast) var(--ease-standard);
 }
 .card:hover { box-shadow: var(--shadow-md); z-index: 2; }
-.card[draggable='true'] { cursor: grab; }
 .chip { width: 100%; padding: 1px var(--space-xs); margin-top: 2px; }
 .card[data-selected], .chip[data-selected] { outline: 2px solid var(--color-border-focus); outline-offset: 1px; z-index: 3; }
 
@@ -195,6 +194,9 @@
   .title .clinic { display: none; }
 }
 
-/* Movable cards say so on hover; the tooltip explains the ones that are not. */
-.card[draggable='true'], .chip[draggable='true'] { cursor: grab; }
-.card[draggable='true']:active, .chip[draggable='true']:active { cursor: grabbing; }
+/* Movable cards say so on hover; the tooltip explains the ones that are not.
+   No touch scrolling from a movable card: a finger on it drags it instead. */
+.card[data-movable], .chip[data-movable] { cursor: grab; touch-action: none; user-select: none; }
+.card[data-moving], .chip[data-moving] { opacity: 0.4; }
+:global(body[data-appointment-drag]),
+:global(body[data-appointment-drag]) * { cursor: grabbing !important; user-select: none; }

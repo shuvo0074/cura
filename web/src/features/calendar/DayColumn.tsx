@@ -1,6 +1,6 @@
-import { memo, useMemo, type DragEvent, type MouseEvent } from 'react';
+import { memo, useMemo, type MouseEvent, type PointerEvent } from 'react';
 import { AppointmentStatus, fromDateKey, type Appointment } from '@cura/shared';
-import { AppointmentCard, DRAG_TYPE } from './AppointmentCard';
+import { AppointmentCard } from './AppointmentCard';
 import { layoutOverlaps, minuteOfDay } from './calendar-shared';
 import type { Closure, GridConfig } from './use-calendar-settings';
 import styles from './grid.module.css';
@@ -16,9 +16,9 @@ export interface GridGeometry {
 /**
  * One day of the time grid: slot boxes underneath, appointment cards on top.
  *
- * Slot interaction is delegated to the column (one handler, not one per box):
- * the row is derived from the pointer's offset, which also works while a card
- * is being dragged across other cards.
+ * Slot clicks are delegated to the column (one handler, not one per box): the
+ * row is derived from the pointer's offset. While a card is dragged, TimeGrid
+ * resolves the drop row from `data-date` and the slot boxes' `data-blocked`.
  */
 export const DayColumn = memo(function DayColumn({
   date,
@@ -29,14 +29,11 @@ export const DayColumn = memo(function DayColumn({
   selectedId,
   nowMinute,
   narrow,
-  dragging,
+  movingId,
   dropRow,
   onSelect,
   onSlotClick,
-  onDragStart,
-  onDragEnd,
-  onDragOverRow,
-  onDropAt,
+  onPressMove,
 }: {
   date: string;
   appointments: readonly Appointment[];
@@ -47,14 +44,13 @@ export const DayColumn = memo(function DayColumn({
   /** Minute of day for the "now" line; null when this column is not today. */
   nowMinute: number | null;
   narrow: boolean;
-  dragging: boolean;
+  /** Card being dragged, if it is on this day. */
+  movingId: string | null;
   dropRow: number | null;
   onSelect: (id: string) => void;
   onSlotClick?: ((at: Date) => void) | undefined;
-  onDragStart?: ((id: string) => void) | undefined;
-  onDragEnd?: (() => void) | undefined;
-  onDragOverRow: (date: string, row: number | null) => void;
-  onDropAt: (id: string, at: Date) => void;
+  /** Present only for users who may reschedule. */
+  onPressMove?: ((id: string, e: PointerEvent<HTMLElement>) => void) | undefined;
 }) {
   const { start, rows, slot, rowHeight } = geometry;
   const day = useMemo(() => fromDateKey(date), [date]);
@@ -89,30 +85,13 @@ export const DayColumn = memo(function DayColumn({
     if (row !== null && !slots[row]!.blocked) onSlotClick(slotAt(row));
   };
 
-  const dragOver = (e: DragEvent<HTMLDivElement>) => {
-    if (!e.dataTransfer.types.includes(DRAG_TYPE)) return;
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    onDragOverRow(date, rowFromPointer(e));
-  };
-
-  const drop = (e: DragEvent<HTMLDivElement>) => {
-    const id = e.dataTransfer.getData(DRAG_TYPE);
-    const row = rowFromPointer(e);
-    e.preventDefault();
-    if (id && row !== null && !slots[row]!.blocked) onDropAt(id, slotAt(row));
-  };
-
   return (
     <div
       className={styles.column}
       style={{ height: rows * rowHeight }}
       data-bookable={onSlotClick ? true : undefined}
-      data-dragging={dragging || undefined}
+      data-date={date}
       onClick={click}
-      onDragOver={dragOver}
-      onDragLeave={() => onDragOverRow(date, null)}
-      onDrop={drop}
     >
       {slots.map((s, row) => (
         <div
@@ -145,9 +124,9 @@ export const DayColumn = memo(function DayColumn({
               width: `calc(${100 / at.cols}% - 4px)`,
             }}
             // A finished visit is history: it cannot be moved.
-            draggable={!!onDragStart && a.status !== AppointmentStatus.DONE}
-            onDragStart={onDragStart}
-            onDragEnd={onDragEnd}
+            movable={!!onPressMove && a.status !== AppointmentStatus.DONE}
+            moving={a.id === movingId}
+            onPressMove={onPressMove}
           />
         );
       })}

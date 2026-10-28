@@ -49,8 +49,6 @@
   background: var(--color-surface-raised);
 }
 .column[data-bookable] { cursor: cell; }
-/* While dragging, cards let the drop land on the slot beneath them. */
-.column[data-dragging] .slot ~ button { pointer-events: none; }
 
 .slot { box-sizing: border-box; border-bottom: 1px dashed var(--color-border-subtle); }
 .slot[data-hour] { border-top: 1px solid var(--color-border-subtle); }

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { fromDateKey, layout, toDateKey, type CalendarLane } from '@cura/shared';
 import { minuteOfDay } from './calendar-shared';
 import { DayColumn, type GridGeometry } from './DayColumn';
+import { useAppointmentDrag } from './use-appointment-drag';
 import type { Closure, GridConfig } from './use-calendar-settings';
 import styles from './grid.module.css';
 
@@ -52,8 +53,6 @@ export function TimeGrid({
   const scroller = useRef<HTMLDivElement>(null);
   const now = useNow();
   const todayKey = toDateKey(now);
-  const [dragging, setDragging] = useState(false);
-  const [dropTarget, setDropTarget] = useState<{ date: string; row: number } | null>(null);
 
   // Hours stretch to cover any booking made outside the session window, so
   // nothing on the diary is ever unreachable.
@@ -92,22 +91,29 @@ export function TimeGrid({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [daysKey, geometry.start, geometry.rowHeight, config.startMinute]);
 
-  const startDrag = useCallback(() => setDragging(true), []);
-  const endDrag = useCallback(() => {
-    setDragging(false);
-    setDropTarget(null);
-  }, []);
-  const dragOverRow = useCallback(
-    (date: string, row: number | null) => setDropTarget(row === null ? null : { date, row }),
-    [],
+  // Drop key is `date#row`: the day column under the pointer, and the slot
+  // row within it unless that slot is blocked.
+  const resolveDrop = useCallback(
+    (x: number, y: number) => {
+      const column = document.elementFromPoint(x, y)?.closest<HTMLElement>('[data-date]');
+      if (!column || !scroller.current?.contains(column)) return null;
+      const row = Math.floor((y - column.getBoundingClientRect().top) / geometry.rowHeight);
+      if (row < 0 || row >= geometry.rows || column.children[row]?.hasAttribute('data-blocked')) return null;
+      return `${column.dataset.date}#${row}`;
+    },
+    [geometry],
   );
   const dropAt = useCallback(
-    (id: string, at: Date) => {
-      endDrag();
-      onMove?.(id, at);
+    (id: string, target: string) => {
+      const [date, row] = target.split('#');
+      const day = fromDateKey(date!);
+      const minute = geometry.start + Number(row) * geometry.slot;
+      onMove?.(id, new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, minute));
     },
-    [endDrag, onMove],
+    [geometry, onMove],
   );
+  const { drag, start: pressMove } = useAppointmentDrag(resolveDrop, onMove ? dropAt : undefined);
+  const [dropDate, dropRow] = drag?.target?.split('#') ?? [];
 
   const labels = useMemo(
     () =>
@@ -157,14 +163,11 @@ export function TimeGrid({
             selectedId={selectedId}
             nowMinute={lane.date === todayKey ? minuteOfDay(now) : null}
             narrow={lanes.length > 3}
-            dragging={dragging}
-            dropRow={dropTarget?.date === lane.date ? dropTarget.row : null}
+            movingId={drag?.id ?? null}
+            dropRow={dropDate === lane.date ? Number(dropRow) : null}
             onSelect={onSelect}
             onSlotClick={onSlotClick}
-            onDragStart={onMove ? startDrag : undefined}
-            onDragEnd={onMove ? endDrag : undefined}
-            onDragOverRow={dragOverRow}
-            onDropAt={dropAt}
+            onPressMove={onMove ? pressMove : undefined}
           />
         ))}
       </div>
