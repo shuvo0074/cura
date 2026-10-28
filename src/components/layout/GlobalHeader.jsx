@@ -21,7 +21,7 @@ export default function GlobalHeader() {
   const { t, i18n } = useTranslation();
   const { contacts } = useSiteContent();
   const hotline = phoneDigits(contacts.hotline, i18n.language);
-  const { user, logout } = useAuth();
+  const { user, logout, hasRole } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -77,9 +77,9 @@ export default function GlobalHeader() {
   }
 
   let accountLink = { label: 'Login', path: '/login' };
-  if (user?.role === 'patient') accountLink = { label: 'My Appointments', path: '/appointments' };
-  if (user?.role === 'doctor') accountLink = { label: 'Doctor Dashboard', path: '/doctor-dashboard' };
-  if (user?.role === 'admin') accountLink = null;
+  if (hasRole('patient')) accountLink = { label: 'My Appointments', path: '/appointments' };
+  if (hasRole('doctor')) accountLink = { label: 'Doctor Dashboard', path: '/doctor-dashboard' };
+  if (hasRole('admin')) accountLink = null;
 
   return (
     <>

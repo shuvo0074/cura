@@ -1,7 +1,7 @@
 import { api } from '../api/client';
 
 export function buildShareUrl(doctor) {
-  return `${window.location.origin}/doctors/${doctor.id}`;
+  return `${window.location.origin}${doctor.slug ? `/dr/${doctor.slug}` : `/doctors/${doctor.id}`}`;
 }
 
 export function logShare(doctor) {

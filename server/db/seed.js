@@ -6,6 +6,7 @@ import pg from 'pg';
 import 'dotenv/config';
 import { hospitalExtras } from './hospitalExtras.js';
 import { insertMissingCentres } from './diagnosticCentres.js';
+import { runMigrations } from './migrate.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const dataDir = join(__dirname, '..', '..', 'src', 'data');
@@ -85,6 +86,9 @@ async function main() {
     [adminEmail, adminHash, 'Cura Admin']
   );
   console.log(`Seeded admin user: ${adminEmail} / password: ${adminPassword}`);
+
+  // The schema's account step turns the logins above into users with roles.
+  await runMigrations(pool);
 
   await pool.end();
 }

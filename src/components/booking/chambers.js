@@ -62,10 +62,10 @@ const TONES = [
 ];
 const REMOTE_TONE = { tile: 'bg-sky-500 text-white', bar: 'bg-sky-500' };
 
-export function chamberTones(schedule = []) {
+export function chamberTones(schedule) {
   const tones = new Map();
   let next = 0;
-  for (const v of groupByVenue(schedule)) {
+  for (const v of groupByVenue(schedule ?? [])) {
     tones.set(v.venue, isRemote(v) ? REMOTE_TONE : TONES[next++ % TONES.length]);
   }
   return tones;

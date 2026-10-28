@@ -41,6 +41,7 @@ export default function DoctorCard({ doctor }) {
           <div className="flex items-start justify-between gap-1">
             <div className="min-w-0">
               <h3 className="font-semibold text-gray-900 text-sm leading-tight truncate">{doctor.name}</h3>
+              {doctor.degrees && <p className="text-[11px] text-gray-500 truncate">{doctor.degrees}</p>}
               <p className="text-primary text-xs font-medium mt-0.5">{doctor.specialty}</p>
             </div>
             <button

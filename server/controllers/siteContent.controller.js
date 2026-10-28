@@ -31,7 +31,7 @@ function saver(key, validate, prepare = async value => value) {
       const problem = await prepare(value);
       if (typeof problem === 'string') return res.status(400).json({ error: problem });
       await setSetting(key, problem ?? value);
-      logger.info({ event: 'admin_site_content_updated', adminId: req.user?.sub, key }, 'Admin updated site content');
+      logger.info({ event: 'admin_site_content_updated', adminId: req.user?.id, key }, 'Admin updated site content');
       res.json(await siteContent());
     } catch (err) {
       next(err);
@@ -74,7 +74,7 @@ export async function uploadSiteImage(req, res, next) {
     if (!req.file) return res.status(400).json({ error: 'No image uploaded' });
     const ext = path.extname(req.file.originalname).toLowerCase() || '.jpg';
     const url = await uploadBuffer(`site-images/${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`, req.file.buffer, req.file.mimetype);
-    logger.info({ event: 'admin_site_image_uploaded', adminId: req.user?.sub, url }, 'Admin uploaded site image');
+    logger.info({ event: 'admin_site_image_uploaded', adminId: req.user?.id, url }, 'Admin uploaded site image');
     res.json({ url });
   } catch (err) {
     next(err);

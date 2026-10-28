@@ -9,6 +9,7 @@ import AdminCatalogTab from './AdminCatalogTab';
 import AdminHomePageTab from './AdminHomePageTab';
 import AdminSiteTextTab from './AdminSiteTextTab';
 import AdminPhotoCreditsTab from './AdminPhotoCreditsTab';
+import AdminVerificationsTab from './AdminVerificationsTab';
 
 export default function AdminDashboardPage() {
   const { pathname } = useLocation();
@@ -24,6 +25,7 @@ export default function AdminDashboardPage() {
     if (pathname === '/admin/site-text')    return <AdminSiteTextTab />;
     if (pathname === '/admin/photo-credits') return <AdminPhotoCreditsTab />;
     if (pathname === '/admin/sample-prices') return <AdminSamplePricesTab />;
+    if (pathname === '/admin/verifications') return <AdminVerificationsTab />;
     return (
       <div className="flex flex-col items-center justify-center h-64 text-gray-400 text-sm gap-2">
         <p className="text-base font-medium text-gray-600">Welcome to the Admin Dashboard</p>

@@ -7,6 +7,7 @@ import {
 import {
   listAdminAmbulances, createAmbulance, updateAmbulance, setAmbulanceHidden, deleteAmbulance, getSamplePrices, updateSamplePrices,
 } from '../controllers/adminContent.controller.js';
+import { listVerifications, approveVerification, rejectVerification } from '../controllers/verifications.controller.js';
 import { doctorPhotoUpload, hospitalPhotoUpload, catalogImageUpload } from '../upload.js';
 import * as catalog from '../controllers/catalog.controller.js';
 import { getSiteContent, updateSiteText, updateHomeContent, updateContacts, updatePhotoCredits, uploadSiteImage } from '../controllers/siteContent.controller.js';
@@ -17,6 +18,9 @@ const router = Router();
 router.use(verifyToken, requireRole('admin'));
 router.get('/appointments', listAllAppointments);
 router.get('/doctors', listAdminDoctors);
+router.get('/verifications', listVerifications);
+router.post('/verifications/:id/approve', approveVerification);
+router.post('/verifications/:id/reject', rejectVerification);
 router.post('/doctors', createDoctor);
 router.patch('/doctors/:id', updateDoctor);
 router.patch('/doctors/:id/hidden', setDoctorHidden);

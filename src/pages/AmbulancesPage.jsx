@@ -119,7 +119,7 @@ export default function AmbulancesPage() {
             <EmptyState title={t('ambulance_load_error')} message={t('ambulance_retry_note')} actions={[{ label: t('retry'), onClick: () => { setLoading(true); setError(false); setReload(n => n + 1); } }]} />
           ) : <>
             <p role="status" className="text-sm text-gray-500 mb-3">{t('ambulance_results_count', { count: visible.length })}</p>
-            {visible.length === 0 ? <EmptyState title={t('ambulance_empty')} message={t('ambulance_empty_note')} actions={[{ label: t('clear_search_filters'), onClick: reset }]} /> : <ul className="grid md:grid-cols-2 gap-4">{visible.map(vendor => <AmbulanceVendorCard key={vendor.id} vendor={vendor} areaName={areaName} lang={lang} selectedCategory={category} />)}</ul>}
+            {visible.length === 0 ? <EmptyState title={t('ambulance_empty')} message={t('ambulance_empty_note')} actions={[{ label: t('clear_search_filters'), onClick: reset }]} /> : <ul className="grid md:grid-cols-2 gap-4">{visible.map(vendor => <AmbulanceVendorCard key={vendor.id} vendor={vendor} areaName={areaName} lang={lang} />)}</ul>}
           </>}
         </section>
       </div>

@@ -21,10 +21,13 @@ import HospitalsPage from './pages/HospitalsPage';
 import HospitalProfilePage from './pages/HospitalProfilePage';
 import DiagnosticCentresPage from './pages/DiagnosticCentresPage';
 import AppointmentsPage from './pages/AppointmentsPage';
-import PatientLoginPage from './pages/PatientLoginPage';
-import DoctorAdminLoginPage from './pages/DoctorAdminLoginPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import DoctorRegisterPage from './pages/DoctorRegisterPage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import DoctorDashboardPage from './pages/DoctorDashboardPage';
+import DoctorProfileEditorPage from './pages/DoctorProfileEditorPage';
+import DoctorQrCardPage from './pages/DoctorQrCardPage';
 import CreditsPage from './pages/CreditsPage';
 import AmbulancesPage from './pages/AmbulancesPage';
 
@@ -64,6 +67,7 @@ export default function App() {
               <Route path="/search-results" element={<SearchResultsPage />} />
               <Route path="/doctors" element={<DoctorsPage />} />
               <Route path="/doctors/:id" element={<DoctorProfilePage />} />
+              <Route path="/dr/:slug" element={<DoctorProfilePage />} />
               <Route path="/specialties" element={<SpecialtiesPage />} />
               <Route path="/specialties/:slug" element={<SpecialtyPage />} />
               <Route path="/symptoms" element={<SymptomsPage />} />
@@ -73,8 +77,10 @@ export default function App() {
               <Route path="/diagnostic-centres" element={<DiagnosticCentresPage />} />
               <Route path="/diagnostic-centres/:id" element={<HospitalProfilePage />} />
               <Route path="/appointments" element={<AppointmentsPage />} />
-              <Route path="/login" element={<PatientLoginPage />} />
-              <Route path="/staff-login" element={<DoctorAdminLoginPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/register/doctor" element={<DoctorRegisterPage />} />
+              <Route path="/staff-login" element={<Navigate to="/login" replace />} />
               <Route path="/admin" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
               <Route path="/admin/doctors" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
               <Route path="/admin/hospitals" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
@@ -86,7 +92,10 @@ export default function App() {
               <Route path="/admin/photo-credits" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
               <Route path="/admin/ambulances" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
               <Route path="/admin/sample-prices" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
+              <Route path="/admin/verifications" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
               <Route path="/doctor-dashboard" element={<ProtectedRoute role="doctor"><DoctorDashboardPage /></ProtectedRoute>} />
+              <Route path="/doctor-dashboard/profile" element={<ProtectedRoute role="doctor"><DoctorProfileEditorPage /></ProtectedRoute>} />
+              <Route path="/doctor-dashboard/card" element={<ProtectedRoute role="doctor"><DoctorQrCardPage /></ProtectedRoute>} />
               <Route path="/health-blogs" element={<PlaceholderPage titleKey="health_blogs" />} />
               <Route path="/credits" element={<CreditsPage />} />
               <Route path="/ambulances" element={<AmbulancesPage />} />

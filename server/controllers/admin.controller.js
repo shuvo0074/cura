@@ -1,4 +1,3 @@
-import path from 'path';
 import { query } from '../db.js';
 import { logger } from '../logger.js';
 import { uploadBuffer, deleteObject, objectNameFromUrl } from '../storage.js';
@@ -6,6 +5,8 @@ import { adminHospitalExtras } from '../db/hospitalExtras.js';
 import { rating, latitude, longitude, sourceUrl, checkedOn } from '../adminFields.js';
 import { PUBLIC_DOCTOR_COLUMNS } from './doctors.controller.js';
 import { ensureSpecialty } from './catalog.controller.js';
+import { saveDoctorPhoto, removeDoctorPhoto } from '../doctorPhotos.js';
+import { IMAGE_TYPES } from '../upload.js';
 
 function toNum(value) {
   if (value === '' || value === undefined || value === null) return null;
@@ -78,7 +79,7 @@ export async function createDoctor(req, res, next) {
     );
     await ensureSpecialty(rows[0].specialty);
     logger.info(
-      { event: 'admin_doctor_created', adminId: req.user?.sub, doctorId: rows[0].id, name: rows[0].name },
+      { event: 'admin_doctor_created', adminId: req.user?.id, doctorId: rows[0].id, name: rows[0].name },
       'Admin created doctor'
     );
     res.status(201).json(rows[0]);
@@ -106,7 +107,7 @@ export async function updateDoctor(req, res, next) {
     if (!rows[0]) return res.status(404).json({ error: 'Doctor not found' });
     await ensureSpecialty(rows[0].specialty);
     logger.info(
-      { event: 'admin_doctor_updated', adminId: req.user?.sub, doctorId: rows[0].id, name: rows[0].name },
+      { event: 'admin_doctor_updated', adminId: req.user?.id, doctorId: rows[0].id, name: rows[0].name },
       'Admin updated doctor'
     );
     res.json(rows[0]);
@@ -117,12 +118,8 @@ export async function updateDoctor(req, res, next) {
 
 export async function setDoctorPhoto(req, res, next) {
   try {
-    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-    const ext = path.extname(req.file.originalname).toLowerCase() || '.jpg';
-    const objectName = `doctor-photos/doctor-upload-${req.params.id}${ext}`;
-    const photoPath = await uploadBuffer(objectName, req.file.buffer, req.file.mimetype);
-    await query('UPDATE doctors SET photo = $1 WHERE id = $2', [photoPath, req.params.id]);
-    res.json({ photo: photoPath });
+    if (!req.file) return res.status(400).json({ error: 'Upload a JPEG, PNG or WebP image' });
+    res.json({ photo: await saveDoctorPhoto(req.params.id, req.file) });
   } catch (err) {
     next(err);
   }
@@ -130,11 +127,7 @@ export async function setDoctorPhoto(req, res, next) {
 
 export async function deleteDoctorPhoto(req, res, next) {
   try {
-    const { rows } = await query('SELECT photo FROM doctors WHERE id = $1', [req.params.id]);
-    if (!rows[0]) return res.status(404).json({ error: 'Doctor not found' });
-    const objName = objectNameFromUrl(rows[0].photo);
-    await query('UPDATE doctors SET photo = NULL WHERE id = $1', [req.params.id]);
-    if (objName && objName.includes('doctor-upload-')) await deleteObject(objName);
+    if (!(await removeDoctorPhoto(req.params.id))) return res.status(404).json({ error: 'Doctor not found' });
     res.json({ photo: null });
   } catch (err) {
     next(err);
@@ -161,7 +154,7 @@ export async function createHospital(req, res, next) {
       [h.name, h.location, h.address, h.hotline, h.photo, c.lat, c.lng, h.website, h.division || null, h.description || null, c.sourceUrl, c.checkedOn, ...x.values]
     );
     logger.info(
-      { event: 'admin_hospital_created', adminId: req.user?.sub, hospitalId: rows[0].id, name: rows[0].name },
+      { event: 'admin_hospital_created', adminId: req.user?.id, hospitalId: rows[0].id, name: rows[0].name },
       'Admin created hospital'
     );
     res.status(201).json(rows[0]);
@@ -186,7 +179,7 @@ export async function updateHospital(req, res, next) {
     );
     if (!rows[0]) return res.status(404).json({ error: 'Hospital not found' });
     logger.info(
-      { event: 'admin_hospital_updated', adminId: req.user?.sub, hospitalId: rows[0].id, name: rows[0].name },
+      { event: 'admin_hospital_updated', adminId: req.user?.id, hospitalId: rows[0].id, name: rows[0].name },
       'Admin updated hospital'
     );
     res.json(rows[0]);
@@ -198,7 +191,7 @@ export async function updateHospital(req, res, next) {
 export async function setHospitalPhoto(req, res, next) {
   try {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-    const ext = path.extname(req.file.originalname).toLowerCase() || '.jpg';
+    const ext = IMAGE_TYPES[req.file.mimetype] || '.jpg';
     const objectName = `hospital-photos/hospital-upload-${req.params.id}${ext}`;
     const photoPath = await uploadBuffer(objectName, req.file.buffer, req.file.mimetype);
     await query('UPDATE hospitals SET photo = $1 WHERE id = $2', [photoPath, req.params.id]);
@@ -262,7 +255,7 @@ function setHidden(table, label) {
       if (typeof req.body?.hidden !== 'boolean') return res.status(400).json({ error: 'hidden must be true or false' });
       const { rows } = await query(`UPDATE ${table} SET hidden = $1 WHERE id = $2 RETURNING id, name, hidden`, [req.body.hidden, req.params.id]);
       if (!rows[0]) return res.status(404).json({ error: `${label} not found` });
-      logger.info({ event: `admin_${label.toLowerCase()}_${rows[0].hidden ? 'hidden' : 'shown'}`, adminId: req.user?.sub, id: rows[0].id, name: rows[0].name },
+      logger.info({ event: `admin_${label.toLowerCase()}_${rows[0].hidden ? 'hidden' : 'shown'}`, adminId: req.user?.id, id: rows[0].id, name: rows[0].name },
         `Admin ${rows[0].hidden ? 'hid' : 'showed'} ${label.toLowerCase()}`);
       res.json(rows[0]);
     } catch (err) {
@@ -291,7 +284,7 @@ export async function deleteDoctor(req, res, next) {
     const { rows } = await query(`DELETE FROM doctors WHERE id = $1 RETURNING id, name, photo`, [req.params.id]);
     if (!rows[0]) return res.status(404).json({ error: 'Doctor not found' });
     await removeUploadedPhoto(rows[0].photo, 'doctor-upload-');
-    logger.info({ event: 'admin_doctor_deleted', adminId: req.user?.sub, doctorId: rows[0].id, name: rows[0].name }, 'Admin deleted doctor');
+    logger.info({ event: 'admin_doctor_deleted', adminId: req.user?.id, doctorId: rows[0].id, name: rows[0].name }, 'Admin deleted doctor');
     res.json({ id: rows[0].id });
   } catch (err) {
     next(err);
@@ -315,7 +308,7 @@ export async function deleteHospital(req, res, next) {
     }
     const { rows } = await query(`DELETE FROM hospitals WHERE id = $1 RETURNING id, name, photo`, [hospital.id]);
     await removeUploadedPhoto(rows[0].photo, 'hospital-upload-');
-    logger.info({ event: 'admin_hospital_deleted', adminId: req.user?.sub, hospitalId: rows[0].id, name: rows[0].name }, 'Admin deleted hospital');
+    logger.info({ event: 'admin_hospital_deleted', adminId: req.user?.id, hospitalId: rows[0].id, name: rows[0].name }, 'Admin deleted hospital');
     res.json({ id: rows[0].id });
   } catch (err) {
     next(err);

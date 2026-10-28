@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Building2, UserRound, CalendarCheck, Ambulance, Tags, Stethoscope, Thermometer, House, Languages, Images } from 'lucide-react';
+import { LayoutDashboard, Building2, UserRound, CalendarCheck, Ambulance, Tags, Stethoscope, Thermometer, House, Languages, Images, BadgeCheck } from 'lucide-react';
 
 const NAV_ITEMS = [
   { path: '/admin/hospitals',    label: 'Hospitals',     icon: Building2 },
@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { path: '/admin/site-text',    label: 'Site text',     icon: Languages },
   { path: '/admin/photo-credits', label: 'Photo credits', icon: Images },
   { path: '/admin/appointments', label: 'Appointments',  icon: CalendarCheck },
+  { path: '/admin/verifications', label: 'Verifications', icon: BadgeCheck },
 ];
 
 export default function AdminSidebar() {

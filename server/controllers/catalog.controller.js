@@ -71,7 +71,7 @@ export const create = kind => async (req, res, next) => {
     const { rows } = await query(
       `INSERT INTO ${kind} (slug, ${columns.join(', ')}) VALUES ($1, ${columns.map((_, i) => `$${i + 2}`).join(', ')}) RETURNING *`,
       [await freeSlug(pool, kind, entry.name), ...values(kind, entry)]);
-    logger.info({ event: `admin_${kind}_created`, adminId: req.user?.sub, id: rows[0].id, name: rows[0].name }, `Admin created ${label.toLowerCase()}`);
+    logger.info({ event: `admin_${kind}_created`, adminId: req.user?.id, id: rows[0].id, name: rows[0].name }, `Admin created ${label.toLowerCase()}`);
     res.status(201).json(rows[0]);
   } catch (err) {
     const message = duplicateName(err, label);
@@ -105,7 +105,7 @@ export const update = kind => async (req, res, next) => {
          WHERE specialties @> to_jsonb(ARRAY[$2::text])`, [entry.name, before.name]);
     }
     await client.query('COMMIT');
-    logger.info({ event: `admin_${kind}_updated`, adminId: req.user?.sub, id: rows[0].id, name: rows[0].name, renamedFrom: before.name !== entry.name ? before.name : undefined, renamedDoctors },
+    logger.info({ event: `admin_${kind}_updated`, adminId: req.user?.id, id: rows[0].id, name: rows[0].name, renamedFrom: before.name !== entry.name ? before.name : undefined, renamedDoctors },
       `Admin updated ${label.toLowerCase()}`);
     res.json({ ...rows[0], renamedDoctors });
   } catch (err) {
@@ -123,7 +123,7 @@ export const setHidden = kind => async (req, res, next) => {
     if (typeof req.body?.hidden !== 'boolean') return res.status(400).json({ error: 'hidden must be true or false' });
     const { rows } = await query(`UPDATE ${kind} SET hidden = $1 WHERE id = $2 RETURNING id, name, hidden`, [req.body.hidden, req.params.id]);
     if (!rows[0]) return res.status(404).json({ error: `${KINDS[kind].label} not found` });
-    logger.info({ event: `admin_${kind}_${rows[0].hidden ? 'hidden' : 'shown'}`, adminId: req.user?.sub, id: rows[0].id }, 'Admin changed visibility');
+    logger.info({ event: `admin_${kind}_${rows[0].hidden ? 'hidden' : 'shown'}`, adminId: req.user?.id, id: rows[0].id }, 'Admin changed visibility');
     res.json(rows[0]);
   } catch (err) {
     next(err);
@@ -153,7 +153,7 @@ export const remove = kind => async (req, res, next) => {
     }
     await query(`DELETE FROM ${kind} WHERE id = $1`, [row.id]);
     await removeUploadedImage(row.image);
-    logger.info({ event: `admin_${kind}_deleted`, adminId: req.user?.sub, id: row.id, name: row.name }, 'Admin deleted catalog entry');
+    logger.info({ event: `admin_${kind}_deleted`, adminId: req.user?.id, id: row.id, name: row.name }, 'Admin deleted catalog entry');
     res.json({ id: row.id });
   } catch (err) {
     next(err);

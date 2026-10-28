@@ -40,7 +40,7 @@ export async function createAmbulance(req, res, next) {
        VALUES ($1, ${VENDOR_COLUMNS.map((_, i) => `$${i + 2}`).join(', ')}) RETURNING *`,
       [await freeSlug(v.name), ...vendorValues(v)]
     );
-    logger.info({ event: 'admin_ambulance_created', adminId: req.user?.sub, ambulanceId: rows[0].id, name: rows[0].name }, 'Admin created ambulance vendor');
+    logger.info({ event: 'admin_ambulance_created', adminId: req.user?.id, ambulanceId: rows[0].id, name: rows[0].name }, 'Admin created ambulance vendor');
     res.status(201).json(rows[0]);
   } catch (err) {
     next(err);
@@ -57,7 +57,7 @@ export async function updateAmbulance(req, res, next) {
       [...vendorValues(v), req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Ambulance vendor not found' });
-    logger.info({ event: 'admin_ambulance_updated', adminId: req.user?.sub, ambulanceId: rows[0].id, name: rows[0].name }, 'Admin updated ambulance vendor');
+    logger.info({ event: 'admin_ambulance_updated', adminId: req.user?.id, ambulanceId: rows[0].id, name: rows[0].name }, 'Admin updated ambulance vendor');
     res.json(rows[0]);
   } catch (err) {
     next(err);
@@ -69,7 +69,7 @@ export async function setAmbulanceHidden(req, res, next) {
     if (typeof req.body?.hidden !== 'boolean') return res.status(400).json({ error: 'hidden must be true or false' });
     const { rows } = await query(`UPDATE ambulance_vendors SET hidden = $1 WHERE id = $2 RETURNING id, name, hidden`, [req.body.hidden, req.params.id]);
     if (!rows[0]) return res.status(404).json({ error: 'Ambulance vendor not found' });
-    logger.info({ event: `admin_ambulance_${rows[0].hidden ? 'hidden' : 'shown'}`, adminId: req.user?.sub, ambulanceId: rows[0].id }, 'Admin changed ambulance visibility');
+    logger.info({ event: `admin_ambulance_${rows[0].hidden ? 'hidden' : 'shown'}`, adminId: req.user?.id, ambulanceId: rows[0].id }, 'Admin changed ambulance visibility');
     res.json(rows[0]);
   } catch (err) {
     next(err);
@@ -81,7 +81,7 @@ export async function deleteAmbulance(req, res, next) {
   try {
     const { rows } = await query(`DELETE FROM ambulance_vendors WHERE id = $1 RETURNING id, name`, [req.params.id]);
     if (!rows[0]) return res.status(404).json({ error: 'Ambulance vendor not found' });
-    logger.info({ event: 'admin_ambulance_deleted', adminId: req.user?.sub, ambulanceId: rows[0].id, name: rows[0].name }, 'Admin deleted ambulance vendor');
+    logger.info({ event: 'admin_ambulance_deleted', adminId: req.user?.id, ambulanceId: rows[0].id, name: rows[0].name }, 'Admin deleted ambulance vendor');
     res.json({ id: rows[0].id });
   } catch (err) {
     next(err);
@@ -110,7 +110,7 @@ export async function updateSamplePrices(req, res, next) {
     }));
     if (!changes) return;
     for (const [key, value] of Object.entries(changes)) await setSetting(key, value);
-    logger.info({ event: 'admin_sample_prices_updated', adminId: req.user?.sub, keys: Object.keys(changes) }, 'Admin updated sample prices');
+    logger.info({ event: 'admin_sample_prices_updated', adminId: req.user?.id, keys: Object.keys(changes) }, 'Admin updated sample prices');
     await getSamplePrices(req, res, next);
   } catch (err) {
     next(err);

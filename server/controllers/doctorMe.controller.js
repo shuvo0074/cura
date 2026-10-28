@@ -10,7 +10,7 @@ export async function myAppointments(req, res, next) {
        JOIN patients p ON p.id = a.patient_id
        WHERE a.doctor_id = $1
        ORDER BY a.appointment_date DESC, a.appointment_time, a.venue, a.serial_no`,
-      [req.user.sub]
+      [req.user.doctorId]
     );
     // Within a day: by session, then serial — the order patients will be seen.
     res.json(rows.map(withEstimatedArrival));
@@ -26,11 +26,11 @@ export async function completeAppointment(req, res, next) {
        FROM patients p
        WHERE a.id = $1 AND a.doctor_id = $2 AND a.status = 'confirmed' AND p.id = a.patient_id
        RETURNING a.*, p.phone AS patient_phone, p.name AS patient_name`,
-      [req.params.id, req.user.sub]
+      [req.params.id, req.user.doctorId]
     );
-    if (!rows[0]) return res.status(404).json({ error: 'Appointment not found or not completable' });
+    if (!rows[0]) return res.status(404).json({ error: 'Appointment not found or not completable', code: 'NOT_FOUND' });
     logger.info(
-      { event: 'appointment_completed', appointmentId: rows[0].id, doctorId: req.user.sub },
+      { event: 'appointment_completed', appointmentId: rows[0].id, doctorId: req.user.doctorId },
       'Appointment marked completed'
     );
     res.json(rows[0]);

@@ -24,7 +24,7 @@ export default function ChamberList({ doctor, selectedDate, hospitalIds }) {
     api.get(`/doctors/${doctor.id}/sessions?date=${date}`)
       .then(res => setSessions({ date, list: res.sessions }))
       .catch(() => setSessions({ date, list: [] }));
-  }, [doctor.id, date, user?.sub]);
+  }, [doctor.id, date, user?.id]);
 
   const isFriday = selectedDate.getDay() === FRIDAY;
   const daySessions = sessions?.date === date ? sessions.list : null;
