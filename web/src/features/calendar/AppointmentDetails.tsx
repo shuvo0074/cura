@@ -36,6 +36,7 @@ const toLocalInput = (iso: string) => {
 export function AppointmentDetails({
   practiceId,
   appointment,
+  doctorName,
   canReschedule,
   canChangeStatus,
   onChangeStatus,
@@ -45,6 +46,8 @@ export function AppointmentDetails({
 }: {
   practiceId: string;
   appointment: Appointment;
+  /** Whose diary the visit is in; omitted while the doctor list loads. */
+  doctorName?: string | undefined;
   canReschedule: boolean;
   canChangeStatus: boolean;
   onChangeStatus: (status: AppointmentStatus) => void;
@@ -153,6 +156,12 @@ export function AppointmentDetails({
             </>
           )}
         </dd>
+        {doctorName && (
+          <>
+            <dt>Doctor</dt>
+            <dd>{doctorName}</dd>
+          </>
+        )}
         <dt>Visit</dt>
         <dd>{VISIT_LABELS[appointment.visitType] ?? appointment.visitType}</dd>
         <dt>Planned procedures</dt>

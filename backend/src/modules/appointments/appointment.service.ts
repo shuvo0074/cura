@@ -58,6 +58,12 @@ export class AppointmentService {
     if (Number.isNaN(scheduledAt.getTime())) {
       throw new ValidationError('The appointment time is not a valid date.');
     }
+    // Bookings belong to a doctor's diary. Without this, a desk booking sent
+    // with the booker's own id would file the visit under the receptionist.
+    const doctors = await this.appointments.listDoctors(input.practiceId);
+    if (!doctors.some((d) => d.id === input.doctorId)) {
+      throw new ValidationError('Choose a doctor of this practice for the appointment.');
+    }
 
     const endsAt = this.clock.addSeconds(scheduledAt, input.durationMinutes * 60);
 
@@ -289,12 +295,13 @@ export class AppointmentService {
     practiceId: string,
     day: Date,
     principal: AuthenticatedPrincipal,
+    doctorId?: string,
   ): Promise<QueueSummary> {
     this.assertPracticeAccess(principal, practiceId);
 
     const from = this.clock.startOfDay(day, 'Asia/Dhaka');
     const to = this.clock.endOfDay(day, 'Asia/Dhaka');
-    const counts = await this.appointments.countsByStatus(practiceId, from, to);
+    const counts = await this.appointments.countsByStatus(practiceId, from, to, doctorId);
 
     return {
       date: day.toISOString().slice(0, 10),
@@ -315,6 +322,12 @@ export class AppointmentService {
    * is read or written. Without this an authenticated doctor could address
    * another clinic's data simply by changing an id in the URL.
    */
+  /** Bookable doctors, for the calendar's doctor filter and the booking form. */
+  async listDoctors(practiceId: string, principal: AuthenticatedPrincipal) {
+    this.assertPracticeAccess(principal, practiceId);
+    return this.appointments.listDoctors(practiceId);
+  }
+
   private assertPracticeAccess(principal: AuthenticatedPrincipal, practiceId: string): void {
     if (!principal.practiceIds.includes(practiceId)) {
       throw new ForbiddenError('You do not have access to this practice.');

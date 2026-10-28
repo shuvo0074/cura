@@ -1,9 +1,16 @@
+import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures';
 import { API, PRACTICE_ID, apiToken, navButton, testMobile, watchErrors } from './helpers';
 
 /** Local YYYY-MM-DD, matching what a datetime-local input holds. */
 const localDate = (d = new Date()) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+/** Opens the left-pane doctor dropdown and picks an entry. */
+const pickDoctor = async (page: Page, name: string) => {
+  await page.getByRole('button', { name: /^Show schedule for/ }).click();
+  await page.getByRole('radiogroup', { name: 'Show schedule for' }).getByRole('radio', { name }).click();
+};
 
 test.describe('Calendar', () => {
   test('three panes render with today’s seeded schedule', async ({ signIn }) => {
@@ -163,12 +170,13 @@ test.describe('Calendar', () => {
     const chip = cell(from).getByText(name);
     await expect(chip).toBeVisible();
 
-    // Synthetic drag events: headless Chromium does not run a native
-    // mouse-driven HTML5 drag, but the handlers are the same either way.
-    const dt = await page.evaluateHandle(() => new DataTransfer());
-    await chip.dispatchEvent('dragstart', { dataTransfer: dt });
-    await cell(to).dispatchEvent('dragover', { dataTransfer: dt });
-    await cell(to).dispatchEvent('drop', { dataTransfer: dt });
+    // A real pointer drag: press the chip, move onto the target day, release.
+    const fromBox = (await chip.boundingBox())!;
+    const toBox = (await cell(to).boundingBox())!;
+    await page.mouse.move(fromBox.x + fromBox.width / 2, fromBox.y + fromBox.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(toBox.x + toBox.width / 2, toBox.y + toBox.height / 2, { steps: 8 });
+    await page.mouse.up();
 
     const dialog = page.getByRole('dialog', { name: 'Move appointment' });
     await expect(dialog).toContainText(name);
@@ -187,6 +195,68 @@ test.describe('Calendar', () => {
     const at = new Date(moved!.scheduledAt);
     expect([at.getDate(), at.getHours(), at.getMinutes()]).toEqual([targetDay, booked.getHours(), booked.getMinutes()]);
     expect(errors).toEqual([]);
+  });
+
+  test('week view: drag an appointment to another time', async ({ signIn }) => {
+    const page = await signIn();
+    const errors = watchErrors(page);
+    await page.getByRole('tablist', { name: 'Calendar view' }).getByRole('tab', { name: 'Week', exact: true }).click();
+    await page.getByRole('button', { name: 'Today' }).click();
+    await expect(page.getByRole('region', { name: 'Schedule' })).not.toHaveAttribute('data-loading', /.*/);
+
+    const card = page.getByRole('region', { name: 'Schedule' }).locator('[data-movable]').first();
+    await card.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+    const box = (await card.boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + 8);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2, box.y + 8 + 26 * 3, { steps: 8 });
+    await page.mouse.up();
+
+    // Cancel: the drag is proven by the confirmation, and the diary stays put.
+    const dialog = page.getByRole('dialog', { name: 'Move appointment' });
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(dialog).toHaveCount(0);
+    expect(errors).toEqual([]);
+  });
+
+  test('doctor filter narrows the diary to one doctor and marks cards when mixed', async ({ signIn }) => {
+    const page = await signIn();
+    const errors = watchErrors(page);
+    await page.getByRole('tablist', { name: 'Calendar view' }).getByRole('tab', { name: 'Day', exact: true }).click();
+    await page.getByRole('button', { name: 'Today' }).click();
+    const schedule = page.getByRole('region', { name: 'Schedule' });
+
+    // All doctors: Dr Ariful's patient is there, and cards name their doctor.
+    await expect(page.getByRole('button', { name: /^Show schedule for/ })).toHaveText(/All doctors/);
+    await expect(schedule.getByText('Rahima Begum').first()).toBeVisible();
+    await expect(schedule.locator('[title*="Dr Nadia Karim"]').first()).toBeVisible();
+
+    // One doctor: only her diary, no markers.
+    await pickDoctor(page, 'Dr Nadia Karim');
+    await expect(page.getByRole('button', { name: /^Show schedule for/ })).toHaveText(/Dr Nadia Karim/);
+    await expect(page.getByRole('radiogroup', { name: 'Show schedule for' })).toHaveCount(0);
+    await expect(schedule.getByText('Rahima Begum')).toHaveCount(0);
+    await expect(schedule.locator('[data-status]').first()).toBeVisible();
+    await expect(schedule.locator('[title*="Dr "]')).toHaveCount(0);
+
+    await pickDoctor(page, 'All doctors');
+    await expect(schedule.getByText('Rahima Begum').first()).toBeVisible();
+    expect(errors).toEqual([]);
+  });
+
+  test('booking from a filtered calendar books with that doctor', async ({ signIn }) => {
+    const page = await signIn('desk');
+    await pickDoctor(page, 'Dr Sajid Hasan');
+    await page.getByRole('button', { name: /Add Walk-in Appointment/ }).click();
+    const doctor = page.getByRole('dialog').getByLabel('Doctor');
+    await expect(doctor.locator('option:checked')).toHaveText('Dr Sajid Hasan');
+    await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click();
+
+    // From the header, with no calendar context, the form starts on the lead.
+    await pickDoctor(page, 'All doctors');
+    await page.getByRole('button', { name: /Add Patient/ }).click();
+    await expect(page.getByRole('dialog').getByLabel('Doctor').locator('option:checked')).toHaveText('Dr Ariful Islam');
   });
 
   test('a doctor sees the diary but cannot book into it', async ({ signIn }) => {

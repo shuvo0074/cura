@@ -55,6 +55,16 @@ export class AppointmentController {
     );
   }
 
+  /** Doctors whose diaries can be viewed and booked into. */
+  @Get('doctors')
+  @RequirePermissions(Permission.APPOINTMENT_READ)
+  async listDoctors(
+    @Query(zodBody(z.object({ practiceId: z.string().uuid() }))) query: { practiceId: string },
+    @CurrentUser() principal: AuthenticatedPrincipal,
+  ) {
+    return this.appointments.listDoctors(query.practiceId, principal);
+  }
+
   /** Mini-month load dots: bookings per local day. */
   @Get('daily-counts')
   @RequirePermissions(Permission.APPOINTMENT_READ)
@@ -75,11 +85,13 @@ export class AppointmentController {
   @Get('queue-summary')
   @RequirePermissions(Permission.APPOINTMENT_READ)
   async queueSummary(
-    @Query(zodBody(z.object({ practiceId: z.string().uuid(), date: z.string().date() })))
-    query: { practiceId: string; date: string },
+    @Query(
+      zodBody(z.object({ practiceId: z.string().uuid(), date: z.string().date(), doctorId: z.string().uuid().optional() })),
+    )
+    query: { practiceId: string; date: string; doctorId?: string },
     @CurrentUser() principal: AuthenticatedPrincipal,
   ) {
-    return this.appointments.queueSummary(query.practiceId, new Date(query.date), principal);
+    return this.appointments.queueSummary(query.practiceId, new Date(query.date), principal, query.doctorId);
   }
 
   @Post()

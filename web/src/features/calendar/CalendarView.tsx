@@ -5,6 +5,7 @@ import { Modal, uiStyles as s } from '../../ui';
 import { AppointmentDetails } from './AppointmentDetails';
 import { BlockCalendarDialog } from './BlockCalendarDialog';
 import { CalendarToolbar } from './CalendarToolbar';
+import { DoctorFilter, DoctorMarkers, usePracticeDoctors } from './doctors';
 import { MiniMonth } from './MiniMonth';
 import { MonthGrid } from './MonthGrid';
 import { TeamDirectory } from './TeamDirectory';
@@ -39,8 +40,11 @@ export function CalendarView({
   /** Opens the patient dashboard, carrying the appointment so the encounter
    *  can be opened in one step (spec: one-click prescription access). */
   onOpenPatient?: (patientId: string, appointmentId?: string) => void;
-  /** Opens the intake modal at `at`, or now for a walk-in. Absent = cannot book. */
-  onAddWalkIn?: (at?: Date) => void;
+  /**
+   * Opens the intake modal at `at` (or now, for a walk-in), booking with the
+   * doctor the calendar is showing. Absent = cannot book.
+   */
+  onAddWalkIn?: (at?: Date, doctorId?: string) => void;
   /** Drag-and-drop and "Edit" time (APPOINTMENT_WRITE). */
   canReschedule?: boolean;
   /** Check in / Engage / Check out / No show (APPOINTMENT_STATUS_WRITE). */
@@ -57,6 +61,15 @@ export function CalendarView({
   const [pendingMove, setPendingMove] = useState<{ appointment: Appointment; at: Date } | null>(null);
   const [state, vm] = useViewModel(() => new CalendarViewModel(appointments, practiceId, doctorId));
   const settings = useCalendarSettings(practiceId, { settings: canManageSettings, staff: canViewStaff });
+  const doctors = usePracticeDoctors(practiceId);
+  const [doctorFilter, setDoctorFilter] = useState<string | undefined>(doctorId);
+  const filterByDoctor = useCallback(
+    (id: string | undefined) => {
+      setDoctorFilter(id);
+      vm.setDoctor(id);
+    },
+    [vm],
+  );
 
   useEffect(() => {
     void vm.initialise();
@@ -82,7 +95,7 @@ export function CalendarView({
   );
 
   const handleSelect = useCallback((id: string) => vm.select(id), [vm]);
-  const handleSlot = useCallback((at: Date) => onAddWalkIn?.(at), [onAddWalkIn]);
+  const handleSlot = useCallback((at: Date) => onAddWalkIn?.(at, doctorFilter), [onAddWalkIn, doctorFilter]);
   const handleMove = useCallback(
     (id: string, at: Date) => {
       const appointment = vm.find(id);
@@ -96,138 +109,144 @@ export function CalendarView({
   const selected = vm.find(state.selectedAppointmentId);
 
   return (
-    <div className={styles.shell}>
-      <CalendarToolbar
-        clinicName={settings.practiceName}
-        view={state.view}
-        anchorDate={state.anchorDate}
-        label={rangeLabel(state.view, state.anchorDate, range.days)}
-        showCancelled={state.showCancelled}
-        onShift={(d) => vm.shift(d)}
-        onToday={() => vm.goToToday()}
-        onJump={(date) => vm.jumpTo(date)}
-        onView={(view) => vm.setView(view)}
-        onShowCancelled={(show) => vm.setShowCancelled(show)}
-        onOpenCalendarSettings={onOpenCalendarSettings}
-      />
-
-      <div className={styles.body}>
-        <aside className={panes.left} aria-label="Navigator and team">
-          {/* Closures are a practice setting; others would only see it fail. */}
-          {canManageSettings && (
-            <button type="button" className={panes.blockButton} onClick={() => setBlocking(true)}>
-              ▦ Block Calendar
-            </button>
-          )}
-          <MiniMonth
-            month={state.miniMonth}
-            anchorDate={state.anchorDate}
-            load={state.monthLoad}
-            onBrowse={(d) => vm.browseMonth(d)}
-            onPick={(date) => vm.jumpTo(date)}
-          />
-          {settings.staff && settings.staff.length > 0 && (
-            <TeamDirectory staff={settings.staff} specialization={settings.specialization} />
-          )}
-        </aside>
-
-        <section className={styles.main} data-loading={state.loading || undefined} aria-label="Schedule">
-          {state.error && (
-            <p className={styles.error} role="alert">
-              {state.error}
-              <button type="button" className={s.linkButton} onClick={() => vm.dismissError()}>
-                Dismiss
-              </button>
-            </p>
-          )}
-          {state.view === 'month' ? (
-            <MonthGrid
-              anchorDate={state.anchorDate}
-              lanes={lanes}
-              selectedId={state.selectedAppointmentId}
-              onSelect={handleSelect}
-              onOpenDay={(date) => vm.openDay(date)}
-              onMove={canReschedule ? handleMove : undefined}
-            />
-          ) : (
-            <TimeGrid
-              lanes={lanes}
-              config={settings.config}
-              closures={closures.closures}
-              selectedId={state.selectedAppointmentId}
-              onSelect={handleSelect}
-              onSlotClick={onAddWalkIn ? handleSlot : undefined}
-              onMove={canReschedule ? handleMove : undefined}
-            />
-          )}
-        </section>
-
-        <TodayPane
-          queue={state.queue}
-          today={state.today}
+    <DoctorMarkers doctors={doctors} filtered={doctorFilter !== undefined}>
+      <div className={styles.shell}>
+        <CalendarToolbar
+          clinicName={settings.practiceName}
+          view={state.view}
+          anchorDate={state.anchorDate}
+          label={rangeLabel(state.view, state.anchorDate, range.days)}
           showCancelled={state.showCancelled}
-          onSelect={handleSelect}
-          onAddWalkIn={onAddWalkIn ? () => onAddWalkIn() : undefined}
-          details={
-            selected && (
-              <AppointmentDetails
-                key={selected.id}
-                practiceId={practiceId}
-                appointment={selected}
-                canReschedule={canReschedule}
-                canChangeStatus={canChangeStatus}
-                onChangeStatus={(status) => void vm.changeStatus(selected.id, status)}
-                onReschedule={(at) => vm.reschedule(selected.id, at)}
-                onOpenPatient={onOpenPatient}
-                onBack={() => vm.select(null)}
+          onShift={(d) => vm.shift(d)}
+          onToday={() => vm.goToToday()}
+          onJump={(date) => vm.jumpTo(date)}
+          onView={(view) => vm.setView(view)}
+          onShowCancelled={(show) => vm.setShowCancelled(show)}
+          onOpenCalendarSettings={onOpenCalendarSettings}
+        />
+
+        <div className={styles.body}>
+          <aside className={panes.left} aria-label="Navigator and team">
+            {/* Closures are a practice setting; others would only see it fail. */}
+            {canManageSettings && (
+              <button type="button" className={panes.blockButton} onClick={() => setBlocking(true)}>
+                ▦ Block Calendar
+              </button>
+            )}
+            <MiniMonth
+              month={state.miniMonth}
+              anchorDate={state.anchorDate}
+              load={state.monthLoad}
+              onBrowse={(d) => vm.browseMonth(d)}
+              onPick={(date) => vm.jumpTo(date)}
+            />
+            {doctors && doctors.length > 1 && (
+              <DoctorFilter doctors={doctors} selected={doctorFilter} onSelect={filterByDoctor} />
+            )}
+            {settings.staff && settings.staff.length > 0 && (
+              <TeamDirectory staff={settings.staff} specialization={settings.specialization} />
+            )}
+          </aside>
+
+          <section className={styles.main} data-loading={state.loading || undefined} aria-label="Schedule">
+            {state.error && (
+              <p className={styles.error} role="alert">
+                {state.error}
+                <button type="button" className={s.linkButton} onClick={() => vm.dismissError()}>
+                  Dismiss
+                </button>
+              </p>
+            )}
+            {state.view === 'month' ? (
+              <MonthGrid
+                anchorDate={state.anchorDate}
+                lanes={lanes}
+                selectedId={state.selectedAppointmentId}
+                onSelect={handleSelect}
+                onOpenDay={(date) => vm.openDay(date)}
+                onMove={canReschedule ? handleMove : undefined}
               />
-            )
-          }
-        />
+            ) : (
+              <TimeGrid
+                lanes={lanes}
+                config={settings.config}
+                closures={closures.closures}
+                selectedId={state.selectedAppointmentId}
+                onSelect={handleSelect}
+                onSlotClick={onAddWalkIn ? handleSlot : undefined}
+                onMove={canReschedule ? handleMove : undefined}
+              />
+            )}
+          </section>
+
+          <TodayPane
+            queue={state.queue}
+            today={state.today}
+            showCancelled={state.showCancelled}
+            onSelect={handleSelect}
+            onAddWalkIn={onAddWalkIn ? () => onAddWalkIn(undefined, doctorFilter) : undefined}
+            details={
+              selected && (
+                <AppointmentDetails
+                  key={selected.id}
+                  practiceId={practiceId}
+                  appointment={selected}
+                  doctorName={doctors?.find((d) => d.id === selected.doctorId)?.fullName}
+                  canReschedule={canReschedule}
+                  canChangeStatus={canChangeStatus}
+                  onChangeStatus={(status) => void vm.changeStatus(selected.id, status)}
+                  onReschedule={(at) => vm.reschedule(selected.id, at)}
+                  onOpenPatient={onOpenPatient}
+                  onBack={() => vm.select(null)}
+                />
+              )
+            }
+          />
+        </div>
+
+        {pendingMove && (
+          <Modal
+            title="Move appointment"
+            onClose={() => setPendingMove(null)}
+            footer={
+              <>
+                <button type="button" className={s.secondary} onClick={() => setPendingMove(null)}>
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className={s.primary}
+                  autoFocus
+                  onClick={() => {
+                    void vm.reschedule(pendingMove.appointment.id, pendingMove.at);
+                    setPendingMove(null);
+                  }}
+                >
+                  Move
+                </button>
+              </>
+            }
+          >
+            <p>
+              Move <strong>{pendingMove.appointment.patient.fullName}</strong> from{' '}
+              {slotLabel(new Date(pendingMove.appointment.scheduledAt))} to <strong>{slotLabel(pendingMove.at)}</strong>?
+            </p>
+          </Modal>
+        )}
+
+        {blocking && (
+          <BlockCalendarDialog
+            practiceId={practiceId}
+            onClose={() => setBlocking(false)}
+            // Blocking changes which slots exist, so the grid is reloaded rather
+            // than left showing availability that no longer applies.
+            onChanged={() => {
+              void vm.load();
+              void closures.reload();
+            }}
+          />
+        )}
       </div>
-
-      {pendingMove && (
-        <Modal
-          title="Move appointment"
-          onClose={() => setPendingMove(null)}
-          footer={
-            <>
-              <button type="button" className={s.secondary} onClick={() => setPendingMove(null)}>
-                Cancel
-              </button>
-              <button
-                type="button"
-                className={s.primary}
-                autoFocus
-                onClick={() => {
-                  void vm.reschedule(pendingMove.appointment.id, pendingMove.at);
-                  setPendingMove(null);
-                }}
-              >
-                Move
-              </button>
-            </>
-          }
-        >
-          <p>
-            Move <strong>{pendingMove.appointment.patient.fullName}</strong> from{' '}
-            {slotLabel(new Date(pendingMove.appointment.scheduledAt))} to <strong>{slotLabel(pendingMove.at)}</strong>?
-          </p>
-        </Modal>
-      )}
-
-      {blocking && (
-        <BlockCalendarDialog
-          practiceId={practiceId}
-          onClose={() => setBlocking(false)}
-          // Blocking changes which slots exist, so the grid is reloaded rather
-          // than left showing availability that no longer applies.
-          onChanged={() => {
-            void vm.load();
-            void closures.reload();
-          }}
-        />
-      )}
-    </div>
+    </DoctorMarkers>
   );
 }

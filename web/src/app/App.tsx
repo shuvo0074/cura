@@ -19,6 +19,8 @@ export function App() {
   const [intakeOpen, setIntakeOpen] = useState(false);
   /** Pre-filled time for the intake modal: a clicked calendar slot, else now. */
   const [intakeAt, setIntakeAt] = useState<Date | undefined>(undefined);
+  /** Doctor the calendar is showing when booking from it; else the form picks. */
+  const [intakeDoctorId, setIntakeDoctorId] = useState<string | undefined>(undefined);
 
   /**
    * Session restore on boot.
@@ -123,9 +125,13 @@ export function App() {
       onSignOut={handleSignOut}
       intakeOpen={intakeOpen}
       intakeAt={intakeAt}
+      intakeDoctorId={intakeDoctorId}
       onIntakeOpenChange={(open) => {
         setIntakeOpen(open);
-        if (!open) setIntakeAt(undefined);
+        if (!open) {
+          setIntakeAt(undefined);
+          setIntakeDoctorId(undefined);
+        }
       }}
     >
       {!practiceId ? (
@@ -148,8 +154,9 @@ export function App() {
           settingsSection={location.settingsSection}
           permissions={session.user.permissions}
           onOpenPatient={openPatient}
-          onAddWalkIn={(at) => {
+          onAddWalkIn={(at, doctorId) => {
             setIntakeAt(at);
+            setIntakeDoctorId(doctorId);
             setIntakeOpen(true);
           }}
           onOpenSettings={openSettings}

@@ -54,6 +54,49 @@
 .miniDay[data-load='heavy']::after { width: 6px; height: 6px; bottom: 1px; background: var(--color-status-waiting); }
 .miniDay[data-today]::after { background: var(--color-brand-on-brand); }
 
+/* -- Doctor filter ---------------------------------------------------------- */
+
+.doctorFilter { position: relative; padding: 0 var(--space-md); }
+.doctorTrigger {
+  display: flex; align-items: center; gap: var(--space-sm); width: 100%;
+  padding: var(--space-sm); text-align: left; font: inherit;
+  font-size: var(--text-sm); font-weight: var(--weight-medium); color: var(--color-text-primary);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border-default); border-radius: var(--radius-sm); cursor: pointer;
+}
+.doctorTrigger:hover { border-color: var(--color-border-strong); }
+.doctorTrigger[aria-expanded='true'], .doctorTrigger:focus-visible {
+  outline: 2px solid var(--color-border-focus); outline-offset: 1px;
+}
+.doctorChevron { margin-left: auto; color: var(--color-text-muted); }
+.doctorMenu {
+  position: absolute; left: var(--space-md); right: var(--space-md); top: calc(100% + var(--space-xs)); z-index: 10;
+  display: flex; flex-direction: column; gap: 2px; padding: var(--space-xs);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border-subtle); border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+}
+.doctorOption {
+  display: flex; align-items: center; gap: var(--space-sm); width: 100%;
+  padding: var(--space-xs) var(--space-sm); text-align: left; font: inherit;
+  font-size: var(--text-sm); color: var(--color-text-secondary);
+  background: none; border: 1px solid transparent; border-radius: var(--radius-sm); cursor: pointer;
+}
+.doctorOption:hover { background: var(--color-surface-sunken); }
+.doctorOption[aria-checked='true'] {
+  color: var(--color-text-primary); font-weight: var(--weight-semibold);
+  background: var(--color-brand-subtle); border-color: var(--color-border-focus);
+}
+.doctorOption:focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: 1px; }
+/* "All doctors" has no colour of its own: an empty ring. */
+.doctorSwatch {
+  flex-shrink: 0; width: 10px; height: 10px; border-radius: var(--radius-pill);
+  box-shadow: inset 0 0 0 2px var(--color-border-strong);
+}
+.doctorSwatch[style] { box-shadow: none; }
+.todayDoctor { display: inline-block; flex-shrink: 0; width: 8px; height: 8px; margin-left: var(--space-xs); border-radius: var(--radius-pill); }
+.doctorName { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 /* -- Team directory (scrolls independently of the navigator) --------------- */
 
 .team { flex: 1; min-height: 0; overflow-y: auto; padding: var(--space-sm) var(--space-md) var(--space-md); }

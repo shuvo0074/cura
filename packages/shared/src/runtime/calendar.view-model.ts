@@ -65,7 +65,7 @@ export class CalendarViewModel extends ViewModel<CalendarState> {
   constructor(
     private readonly api: AppointmentApi,
     private readonly practiceId: string,
-    private readonly doctorId: string | undefined,
+    private doctorId: string | undefined,
     initialDate: Date = new Date(),
     options: CalendarOptions = {},
   ) {
@@ -93,6 +93,24 @@ export class CalendarViewModel extends ViewModel<CalendarState> {
     if (view === this.state.view) return;
     this.setState({ view });
     void this.load();
+  }
+
+  /** The doctor whose diary is shown; undefined shows every doctor. */
+  get doctor(): string | undefined {
+    return this.doctorId;
+  }
+
+  /**
+   * Narrows the grid, today's list, the counters and the month dots to one
+   * doctor, or widens them back to all (undefined). Cached ranges belong to
+   * the previous filter, so they are dropped.
+   */
+  setDoctor(doctorId: string | undefined): void {
+    if (doctorId === this.doctorId) return;
+    this.doctorId = doctorId;
+    this.cache.clear();
+    this.setState({ selectedAppointmentId: null });
+    void this.initialise();
   }
 
   /** Applies the practice's "today first" preference once it has loaded. */
@@ -215,7 +233,7 @@ export class CalendarViewModel extends ViewModel<CalendarState> {
   }
 
   async refreshQueue(): Promise<void> {
-    const result = await this.api.queueSummary(this.practiceId, toDateKey(new Date()));
+    const result = await this.api.queueSummary(this.practiceId, toDateKey(new Date()), this.doctorId);
     if (result.ok) this.setState({ queue: result.value });
   }
 
@@ -303,6 +321,11 @@ export class CalendarViewModel extends ViewModel<CalendarState> {
   /** Applies a websocket queue broadcast without a refetch. */
   applyQueueUpdate(summary: QueueSummary): void {
     if (summary.date !== toDateKey(new Date())) return;
+    // Broadcasts are practice-wide; one doctor's counters are fetched instead.
+    if (this.doctorId) {
+      void this.refreshQueue();
+      return;
+    }
     this.setState({ queue: summary });
   }
 

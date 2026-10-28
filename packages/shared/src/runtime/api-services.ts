@@ -83,6 +83,12 @@ export class HttpAuthApi implements AuthApi {
   }
 }
 
+/** A doctor whose diary can be viewed and booked into. */
+export interface BookableDoctor {
+  id: string;
+  fullName: string;
+}
+
 export interface AppointmentApi {
   listRange(input: {
     practiceId: string;
@@ -91,7 +97,10 @@ export interface AppointmentApi {
     doctorId?: string;
     signal?: AbortSignal;
   }): Promise<Result<Appointment[], AppError>>;
-  queueSummary(practiceId: string, date: string): Promise<Result<QueueSummary, AppError>>;
+  /** Today's counters; one doctor's when `doctorId` is given. */
+  queueSummary(practiceId: string, date: string, doctorId?: string): Promise<Result<QueueSummary, AppError>>;
+  /** The practice's doctors, lead consultant first. */
+  listDoctors(practiceId: string): Promise<Result<BookableDoctor[], AppError>>;
   /** Bookings per local day across a window — the mini month's load dots. */
   dailyCounts(input: {
     practiceId: string;
@@ -127,10 +136,14 @@ export class HttpAppointmentApi implements AppointmentApi {
     });
   }
 
-  queueSummary(practiceId: string, date: string) {
+  queueSummary(practiceId: string, date: string, doctorId?: string) {
     return this.http.request<QueueSummary>('/appointments/queue-summary', {
-      query: { practiceId, date },
+      query: { practiceId, date, doctorId },
     });
+  }
+
+  listDoctors(practiceId: string) {
+    return this.http.request<BookableDoctor[]>('/appointments/doctors', { query: { practiceId } });
   }
 
   dailyCounts(input: {

@@ -286,8 +286,19 @@ export interface AppointmentRepository {
   }): Promise<AppointmentRecord>;
   updateStatus(id: string, status: AppointmentStatus, at: Date): Promise<AppointmentRecord>;
   reschedule(id: string, scheduledAt: Date, endsAt: Date, durationMinutes: number): Promise<AppointmentRecord>;
-  countsByStatus(practiceId: string, from: Date, to: Date): Promise<Record<AppointmentStatus, number>>;
+  /** Per-status counts in a window; one doctor's diary when `doctorId` is given. */
+  countsByStatus(
+    practiceId: string,
+    from: Date,
+    to: Date,
+    doctorId?: string | undefined,
+  ): Promise<Record<AppointmentStatus, number>>;
   nextTokenNumber(practiceId: string, doctorId: string, day: Date): Promise<number>;
+  /**
+   * Active doctors who can be booked: practice role DOCTOR or a BMDC
+   * registration, in roster order (the lead consultant first).
+   */
+  listDoctors(practiceId: string): Promise<Array<{ id: string; fullName: string }>>;
 }
 
 // ---------------------------------------------------------------------------

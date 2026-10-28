@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useMemo, useState, type ReactNode } from 'react';
-import { Permission, type AuthenticatedUser } from '@cura/shared';
+import { Permission, UserRole, type AuthenticatedUser } from '@cura/shared';
 import { useTheme } from '../../design/theme-provider';
 import { NAV_ITEMS, visibleNavItems, type RouteKey } from './navigation';
 import { UniversalSearch } from './header/UniversalSearch';
@@ -32,6 +32,7 @@ export function AppShell({
   onSignOut,
   intakeOpen,
   intakeAt,
+  intakeDoctorId,
   onIntakeOpenChange,
   children,
 }: {
@@ -47,6 +48,8 @@ export function AppShell({
   intakeOpen: boolean;
   /** Slot time when opened from an empty calendar slot; otherwise now. */
   intakeAt?: Date | undefined;
+  /** The doctor the calendar was filtered to, if any. */
+  intakeDoctorId?: string | undefined;
   onIntakeOpenChange: (open: boolean) => void;
   children: ReactNode;
 }) {
@@ -131,7 +134,9 @@ export function AppShell({
       {intakeOpen && practiceId && (
         <PatientIntakeModal
           practiceId={practiceId}
-          doctorId={user.id}
+          // The calendar's doctor, else the signed-in doctor's own diary; for
+          // anyone else the form starts on the lead consultant.
+          defaultDoctorId={intakeDoctorId ?? (user.role === UserRole.DOCTOR ? user.id : undefined)}
           {...(intakeAt ? { defaultAt: intakeAt } : {})}
           onClose={() => onIntakeOpenChange(false)}
           onCreated={(patientId, appointmentId) => {

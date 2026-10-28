@@ -99,6 +99,20 @@ export class PrismaAppointmentRepository implements AppointmentRepository {
     return rows.map(toAppointmentWithPatient);
   }
 
+  async listDoctors(practiceId: string): Promise<Array<{ id: string; fullName: string }>> {
+    const rows = await this.prisma.practiceMembership.findMany({
+      where: {
+        practiceId,
+        isActive: true,
+        user: { isActive: true },
+        OR: [{ role: 'DOCTOR' }, { user: { bmdcNumber: { not: null } } }],
+      },
+      select: { user: { select: { id: true, fullName: true } } },
+      orderBy: { createdAt: 'asc' },
+    });
+    return rows.map((row) => row.user);
+  }
+
   async dailyCounts(input: {
     practiceId: string;
     doctorId?: string | undefined;
@@ -219,10 +233,11 @@ export class PrismaAppointmentRepository implements AppointmentRepository {
     practiceId: string,
     from: Date,
     to: Date,
+    doctorId?: string | undefined,
   ): Promise<Record<AppointmentStatus, number>> {
     const rows = await this.prisma.appointment.groupBy({
       by: ['status'],
-      where: { practiceId, scheduledAt: { gte: from, lt: to } },
+      where: { practiceId, scheduledAt: { gte: from, lt: to }, ...(doctorId ? { doctorId } : {}) },
       _count: { _all: true },
     });
 

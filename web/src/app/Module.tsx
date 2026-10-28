@@ -31,7 +31,7 @@ export function Module({
   permissions: readonly Permission[];
   onOpenPatient: (patientId: string, appointmentId?: string) => void;
   /** Opens the intake modal at `at` (an empty calendar slot), or now. */
-  onAddWalkIn: (at?: Date) => void;
+  onAddWalkIn: (at?: Date, doctorId?: string) => void;
   onOpenSettings: (section: SettingsKey) => void;
 }) {
   switch (route) {

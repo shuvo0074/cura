@@ -1,5 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { BloodGroup, Gender, VisitType, businessRules, type Appointment, type Patient } from '@cura/shared';
+import {
+  BloodGroup,
+  Gender,
+  VisitType,
+  businessRules,
+  type Appointment,
+  type BookableDoctor,
+  type Patient,
+} from '@cura/shared';
 import { useServices } from '../../../app/services';
 import { Field, Modal, Row, uiStyles as s } from '../../../ui';
 import styles from './header.module.css';
@@ -14,20 +22,42 @@ import styles from './header.module.css';
  */
 export function PatientIntakeModal({
   practiceId,
-  doctorId,
+  defaultDoctorId,
   defaultAt,
   onClose,
   onCreated,
 }: {
   practiceId: string;
-  doctorId: string;
+  /** Preselected doctor; otherwise the practice's lead consultant. */
+  defaultDoctorId?: string | undefined;
   /** Walk-ins default to now; a slot click passes the slot's time. */
   defaultAt?: Date;
   onClose: () => void;
   /** Carries the new appointment so the record opens ready to chart it. */
   onCreated: (patientId: string, appointmentId: string) => void;
 }) {
-  const { http } = useServices();
+  const { http, appointments } = useServices();
+  const [doctors, setDoctors] = useState<BookableDoctor[] | null>(null);
+  const [doctorId, setDoctorId] = useState(defaultDoctorId ?? '');
+
+  useEffect(() => {
+    let cancelled = false;
+    void appointments.listDoctors(practiceId).then((result) => {
+      if (cancelled) return;
+      if (!result.ok) {
+        setError(result.error.message);
+        return;
+      }
+      setDoctors(result.value);
+      // Keep the preselection only if it is a doctor here; else the lead.
+      setDoctorId((current) =>
+        result.value.some((d) => d.id === current) ? current : (result.value[0]?.id ?? ''),
+      );
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [appointments, practiceId]);
   const [form, setForm] = useState(() => {
     const at = defaultAt ?? new Date();
     // datetime-local wants wall-clock text, so the offset is removed rather
@@ -163,7 +193,7 @@ export function PatientIntakeModal({
             type="button"
             className={s.primary}
             onClick={() => void submit()}
-            disabled={busy || form.fullName.trim() === '' || form.mobile.trim() === ''}
+            disabled={busy || !doctorId || form.fullName.trim() === '' || form.mobile.trim() === ''}
           >
             {busy ? 'Saving…' : 'Save'}
           </button>
@@ -270,7 +300,22 @@ export function PatientIntakeModal({
         </Field>
       </Row>
 
-      <Row cols={2}>
+      <Row>
+        <Field label="Doctor" required>
+          <select
+            className={s.input}
+            value={doctorId}
+            onChange={(e) => setDoctorId(e.target.value)}
+            disabled={!doctors}
+          >
+            {!doctors && <option value="">Loading…</option>}
+            {doctors?.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.fullName}
+              </option>
+            ))}
+          </select>
+        </Field>
         <Field label="Scheduled on" required>
           <input
             className={s.input}

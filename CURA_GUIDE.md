@@ -96,9 +96,11 @@ Log in as **Administrator** unless a step says otherwise. The menu is the list o
 5. Click an empty time in the middle. A new-appointment form opens with that time filled in. Click **×** to close.
 6. Drag a patient name to another time. Click **Move** in the box that appears.
 7. On the left, click **›** next to the month name, then click any date. The middle jumps to that date. Click **Today**.
-8. Click **Settings ▾** at the top right. Tick **Show cancelled appointments**. Click **Calendar settings…**.
-9. Back in **Calendar**, click **Block Calendar** on the left, choose a date, save.
-10. On the right, click **+ Add Walk-in Appointment**, fill the form, click **Save**. The patient's record opens.
+8. On the left, click the box under **Show schedule for** and choose **Dr Nadia Karim**. Only her appointments stay. Open the box again and choose **All doctors**. Each card now has a coloured dot matching its doctor's colour in that list.
+9. In the same box, choose **Dr Sajid Hasan**, then click **+ Add Walk-in Appointment**. The **Doctor** box in the form already says Dr Sajid Hasan. Click **Cancel**, then choose **All doctors** again.
+10. Click **Settings ▾** at the top right. Tick **Show cancelled appointments**. Click **Calendar settings…**.
+11. Back in **Calendar**, click **Block Calendar** on the left, choose a date, save.
+12. On the right, click **+ Add Walk-in Appointment**, choose a **Doctor**, fill the form, click **Save**. The patient's record opens.
 
 ### Add a patient and search
 

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { isCancelled, visitTypePrefix, type Appointment, type QueueSummary } from '@cura/shared';
 import { clockTime } from './calendar-shared';
+import { DoctorDot } from './doctors';
 import { Counter } from './QueueCounter';
 import styles from './panes.module.css';
 
@@ -67,6 +68,7 @@ export function TodayPane({
                         {visitTypePrefix[a.visitType]}
                       </span>
                       {a.patient.fullName}
+                      <DoctorDot doctorId={a.doctorId} className={styles.todayDoctor} />
                     </span>
                     <span className={styles.todayReason}>
                       {a.plannedProcedures[0] ?? 'Visit reason not specified'}

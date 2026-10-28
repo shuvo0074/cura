@@ -70,6 +70,19 @@ export interface ColorTokens {
     followUp: string;
     old: string;
   };
+  /**
+   * One colour per doctor on a shared calendar, assigned in roster order and
+   * reused after six. Hues stay clear of the status colours, which own a
+   * card's border and fill; the doctor colour is only a marker beside it.
+   */
+  doctor: {
+    one: string;
+    two: string;
+    three: string;
+    four: string;
+    five: string;
+    six: string;
+  };
 }
 
 const lightColors: ColorTokens = {
@@ -126,6 +139,14 @@ const lightColors: ColorTokens = {
     followUp: ramp.brand[600],
     old: ramp.neutral[500],
   },
+  doctor: {
+    one: ramp.violet[600],
+    two: ramp.amber[600],
+    three: ramp.teal[600],
+    four: ramp.brand[500],
+    five: ramp.red[600],
+    six: ramp.neutral[600],
+  },
 };
 
 const darkColors: ColorTokens = {
@@ -181,6 +202,14 @@ const darkColors: ColorTokens = {
     new: ramp.teal[300],
     followUp: ramp.brand[300],
     old: ramp.neutral[400],
+  },
+  doctor: {
+    one: ramp.violet[300],
+    two: ramp.amber[300],
+    three: ramp.teal[300],
+    four: ramp.brand[300],
+    five: ramp.red[300],
+    six: ramp.neutral[300],
   },
 };
 
