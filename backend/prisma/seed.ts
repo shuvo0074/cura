@@ -289,10 +289,9 @@ async function main(): Promise<void> {
   //
   // 30 appointments around today — the 7 clinic days before it (finished,
   // no-shows, cancellations) and the 8 after it (booked) — so every calendar
-  // view has something in it. Created once: seeded rows have no `createdById`
-  // (every real booking records its author), and any such row off today means
-  // this set exists — a re-seed on a later day leaves it alone rather than
-  // piling up another 30.
+  // view has something in it. Created once: the set is the only thing that
+  // books the eight patients below, so any appointment of theirs means it
+  // exists — a re-seed on a later day leaves it alone rather than piling up.
   const extraPeople = [
     { fullName: 'Arif Chowdhury', mobile: '+8801877000001', gender: 'MALE', born: 1981 },
     { fullName: 'Sumaiya Rahman', mobile: '+8801877000002', gender: 'FEMALE', born: 1994 },
@@ -305,14 +304,8 @@ async function main(): Promise<void> {
   ] as const;
 
   let calendarAdded = 0;
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
   const alreadySeeded = await prisma.appointment.count({
-    where: {
-      practiceId: practice.id,
-      createdById: null,
-      OR: [{ scheduledAt: { lt: todayStart } }, { scheduledAt: { gte: new Date(todayStart.getTime() + 86_400_000) } }],
-    },
+    where: { practiceId: practice.id, patient: { mobile: { in: extraPeople.map((p) => p.mobile) } } },
   });
 
   if (alreadySeeded === 0) {
@@ -403,7 +396,11 @@ async function main(): Promise<void> {
     console.log(`  ${a.role.padEnd(13)}: ${a.mobile}  /  ${a.password}   (${a.email})`);
   }
   console.log(`  ${people.length} patients and appointments created for today.`);
-  console.log(`  ${calendarAdded} past and upcoming appointments added (${alreadySeeded} already present).`);
+  console.log(
+    alreadySeeded > 0
+      ? '  Past and upcoming appointments already seeded (skipped).'
+      : `  ${calendarAdded} past and upcoming appointments added.`,
+  );
   console.log(`  ${SEED_DRUGS.length} drugs in the catalogue (${freshDrugs.length} added now).\n`);
 }
 

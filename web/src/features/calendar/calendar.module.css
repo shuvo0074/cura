@@ -194,3 +194,7 @@
 @media (max-width: 1100px) {
   .title .clinic { display: none; }
 }
+
+/* Movable cards say so on hover; the tooltip explains the ones that are not. */
+.card[draggable='true'], .chip[draggable='true'] { cursor: grab; }
+.card[draggable='true']:active, .chip[draggable='true']:active { cursor: grabbing; }

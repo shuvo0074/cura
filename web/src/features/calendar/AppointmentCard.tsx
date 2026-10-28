@@ -58,7 +58,11 @@ export const AppointmentCard = memo(function AppointmentCard({
         onSelect(appointment.id);
       }}
       aria-pressed={selected}
-      title={`${clockTime(start)} · ${appointment.patient.fullName}`}
+      // The only cue for what can move: done visits are history and the server
+      // refuses to reschedule them, so say so instead of silently not dragging.
+      title={`${clockTime(start)} · ${appointment.patient.fullName}${
+        draggable ? ' — drag to move' : appointment.status === 'DONE' ? ' — finished visits can’t be moved' : ''
+      }`}
       draggable={draggable}
       onDragStart={draggable ? beginDrag : undefined}
       onDragEnd={draggable ? onDragEnd : undefined}
