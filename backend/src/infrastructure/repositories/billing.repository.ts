@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { utc } from '../prisma/sql';
 import type { CursorQuery, Page } from '../../core/ports/repositories';
 import type {
   BillingRepository,
@@ -310,8 +311,8 @@ export class PrismaReportRepository implements ReportRepository {
              COUNT(*)::int                          AS "invoiceCount"
       FROM invoices i
       WHERE i."practiceId" = ${practiceId}::uuid
-        AND i."createdAt" >= ${from}
-        AND i."createdAt" <  ${to}
+        AND i."createdAt" >= ${utc(from)}
+        AND i."createdAt" <  ${utc(to)}
         AND i.status <> 'CANCELLED'
       GROUP BY 1
       ORDER BY 1
@@ -327,8 +328,8 @@ export class PrismaReportRepository implements ReportRepository {
                COUNT(*) FILTER (WHERE a.status IN ('CANCELLED','NO_SHOW'))::int AS cancelled
         FROM appointments a
         WHERE a."practiceId" = ${practiceId}::uuid
-          AND a."scheduledAt" >= ${from}
-          AND a."scheduledAt" <  ${to}
+          AND a."scheduledAt" >= ${utc(from)}
+          AND a."scheduledAt" <  ${utc(to)}
         GROUP BY 1
         ORDER BY 1
       `,
@@ -344,8 +345,8 @@ export class PrismaReportRepository implements ReportRepository {
         FROM invoice_items ii
         JOIN invoices i ON i.id = ii."invoiceId"
         WHERE i."practiceId" = ${practiceId}::uuid
-          AND i."createdAt" >= ${from}
-          AND i."createdAt" <  ${to}
+          AND i."createdAt" >= ${utc(from)}
+          AND i."createdAt" <  ${utc(to)}
           AND i.status <> 'CANCELLED'
         GROUP BY 1
         ORDER BY "revenueMinor" DESC
