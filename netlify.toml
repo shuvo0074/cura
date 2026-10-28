@@ -16,7 +16,7 @@
 # SPA fallback below.
 [[redirects]]
   from = "/api/*"
-  to = "https://YOUR-API-HOST/api/:splat"
+  to = "https://cura-api-otxn.onrender.com/api/:splat"
   status = 200
   force = true
 

@@ -19,9 +19,11 @@ function readEnv(): ClientEnv {
 
   if (raw.VITE_SENTRY_DSN) env.sentryDsn = raw.VITE_SENTRY_DSN;
 
-  if (environment === 'production' && !env.apiBaseUrl.startsWith('https://')) {
+  // A path ("/api") means the API is proxied on the page's own origin, which is
+  // https whenever the page is; anything absolute must be https outright.
+  if (environment === 'production' && !/^(https:\/\/|\/)/.test(env.apiBaseUrl)) {
     // Fail loudly rather than shipping a build that sends credentials in clear.
-    throw new Error('VITE_API_BASE_URL must use https in production builds');
+    throw new Error('VITE_API_BASE_URL must be https or a same-origin path in production builds');
   }
 
   return env;
