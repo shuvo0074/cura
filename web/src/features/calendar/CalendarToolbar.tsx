@@ -68,6 +68,10 @@ export function CalendarToolbar({
         </button>
         <span className={styles.rangeWrap}>
           <button type="button" className={styles.anchor} onClick={openPicker} title="Jump to a date">
+            <svg className={styles.anchorIcon} viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <rect x="1.75" y="3" width="12.5" height="11" rx="2" stroke="currentColor" strokeWidth="1.5" />
+              <path d="M1.75 6.5h12.5M5 1.5v3M11 1.5v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
             {label}
           </button>
           <input
@@ -85,7 +89,7 @@ export function CalendarToolbar({
         </button>
       </div>
 
-      <button type="button" className={styles.today} onClick={onToday}>
+      <button type="button" className={styles.todayButton} onClick={onToday}>
         Today
       </button>
 

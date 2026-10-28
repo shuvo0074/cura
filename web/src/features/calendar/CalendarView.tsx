@@ -147,6 +147,7 @@ export function CalendarView({
               selectedId={state.selectedAppointmentId}
               onSelect={handleSelect}
               onOpenDay={(date) => vm.openDay(date)}
+              onMove={canReschedule ? handleMove : undefined}
             />
           ) : (
             <TimeGrid

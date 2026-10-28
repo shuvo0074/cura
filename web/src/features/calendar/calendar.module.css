@@ -4,52 +4,93 @@
 
 .toolbar {
   display: flex; align-items: center; flex-wrap: wrap;
-  gap: var(--space-sm); padding: var(--space-sm) var(--space-lg);
+  gap: var(--space-md); padding: var(--space-md) var(--space-lg);
   background: var(--color-surface-raised);
-  border-bottom: 1px solid var(--color-border-subtle);
+  border-bottom: 1px solid var(--color-border-default);
+  box-shadow: var(--shadow-sm);
   /* Spec: header stays reachable while a long patient list scrolls. */
   position: sticky; top: 0; z-index: 5;
 }
 
 .title {
   display: flex; align-items: baseline; gap: var(--space-sm); margin: 0;
-  font-size: var(--text-lg); font-weight: var(--weight-semibold); color: var(--color-text-primary);
+  font-size: var(--text-xl); font-weight: var(--weight-bold); color: var(--color-text-primary);
 }
 .clinic { font-size: var(--text-sm); font-weight: var(--weight-regular); color: var(--color-text-muted); }
 
 .toolbarSpacer { flex: 1; }
 
-.navGroup, .viewGroup { display: flex; align-items: center; gap: var(--space-xs); }
-
-.navGroup > button, .viewGroup button, .today {
-  padding: var(--space-xs) var(--space-md);
-  font-size: var(--text-sm); color: var(--color-text-secondary);
-  background: var(--color-surface-raised);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-sm); cursor: pointer;
+/* -- Date navigator: the focal point -------------------------------------- *
+ * Arrows and the date read as one control on a sunken track, so the eye lands
+ * on "where am I" first and the arrows are clearly what move it. */
+.navGroup {
+  display: flex; align-items: center; gap: 2px; padding: 3px;
+  background: var(--color-surface-sunken);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
 }
-.navGroup > button:hover, .viewGroup button:hover, .today:hover { color: var(--color-text-primary); border-color: var(--color-border-default); }
-.viewGroup { gap: 0; }
-.viewGroup button { border-radius: 0; margin-left: -1px; }
-.viewGroup button:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); margin-left: 0; }
-.viewGroup button:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
-.viewGroup button[data-active] {
-  position: relative;
-  color: var(--color-brand-on-brand); background: var(--color-brand-default);
-  border-color: var(--color-brand-default);
+.navGroup > button {
+  display: grid; place-items: center; width: 36px; height: 36px; padding: 0;
+  font-size: var(--text-xl); line-height: 1; color: var(--color-text-primary);
+  background: none; border: none; border-radius: var(--radius-sm); cursor: pointer;
 }
-
-.today { font-weight: var(--weight-medium); }
+.navGroup > button:hover { background: var(--color-surface-raised); }
 
 .rangeWrap { position: relative; }
 .anchor {
-  min-width: 16ch; padding: var(--space-xs) var(--space-sm);
-  font-size: var(--text-sm); font-weight: var(--weight-semibold); color: var(--color-text-primary);
-  text-align: center; background: none; border: none; border-radius: var(--radius-sm); cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-sm);
+  min-width: 22ch; height: 36px; padding: 0 var(--space-md);
+  font-size: var(--text-lg); font-weight: var(--weight-bold); color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border-subtle); border-radius: var(--radius-sm); cursor: pointer;
 }
-.anchor:hover { background: var(--color-surface-sunken); }
+.anchor:hover { border-color: var(--color-brand-default); }
+.anchorIcon { width: 16px; height: 16px; color: var(--color-brand-default); flex-shrink: 0; }
 /* The native picker anchors itself to this field, so it sits under the label. */
 .hiddenPicker { position: absolute; left: 0; bottom: 0; width: 100%; height: 0; padding: 0; border: 0; opacity: 0; pointer-events: none; }
+
+/* -- Today: the one-click way home ---------------------------------------- */
+.todayButton {
+  height: 42px; padding: 0 var(--space-lg);
+  font-size: var(--text-md); font-weight: var(--weight-semibold);
+  color: var(--color-brand-on-brand); background: var(--color-brand-default);
+  border: 1px solid var(--color-brand-default); border-radius: var(--radius-md); cursor: pointer;
+}
+.todayButton:hover { background: var(--color-brand-hover); border-color: var(--color-brand-hover); }
+.todayButton:disabled { cursor: default; opacity: 0.45; }
+
+/* -- View switch: segmented control --------------------------------------- */
+.viewGroup {
+  display: flex; align-items: center; gap: 2px; padding: 3px;
+  background: var(--color-surface-sunken);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+}
+.viewGroup button {
+  height: 34px; padding: 0 var(--space-md);
+  font-size: var(--text-md); font-weight: var(--weight-medium); color: var(--color-text-secondary);
+  background: none; border: none; border-radius: var(--radius-sm); cursor: pointer;
+}
+.viewGroup button:hover { color: var(--color-text-primary); background: var(--color-surface-raised); }
+.viewGroup button[data-active] {
+  color: var(--color-brand-on-brand); background: var(--color-brand-default);
+  font-weight: var(--weight-semibold); box-shadow: var(--shadow-sm);
+}
+
+/* Secondary: the quick-settings trigger. */
+.today {
+  height: 42px; padding: 0 var(--space-md);
+  font-size: var(--text-md); font-weight: var(--weight-medium); color: var(--color-text-secondary);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border-default); border-radius: var(--radius-md); cursor: pointer;
+}
+.today:hover { color: var(--color-text-primary); border-color: var(--color-border-strong); }
+
+.navGroup button:focus-visible, .anchor:focus-visible, .todayButton:focus-visible,
+.viewGroup button:focus-visible, .today:focus-visible {
+  outline: 2px solid var(--color-border-focus); outline-offset: 2px;
+}
 
 .menuWrap { position: relative; }
 .menu {

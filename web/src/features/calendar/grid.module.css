@@ -96,6 +96,7 @@
   padding: var(--space-xs); background: var(--color-surface-raised); cursor: pointer;
 }
 .monthCell:hover { background: var(--color-surface-sunken); }
+.monthCell[data-drop] { background: var(--color-brand-subtle); outline: 2px dashed var(--color-border-focus); outline-offset: -2px; }
 .monthCell[data-outside] { background: var(--color-surface-canvas); }
 .monthCell[data-outside] .monthDate { color: var(--color-text-muted); }
 .monthDate {
