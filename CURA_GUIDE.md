@@ -32,11 +32,17 @@ password, and text messages to patients.
 
 On the welcome page, stay on the **Login** tab, type the email (or mobile) and password, click **Login**.
 
-| Role | Email | Mobile | Password | Sees |
-| --- | --- | --- | --- | --- |
-| Administrator | admin@cura.local | 01700000001 | CuraAdmin123 | Everything |
-| Doctor | doctor@cura.local | 01711111111 | CuraDoctor123 | Clinical work; no booking, Settings or Billing changes |
-| Desk staff | desk@cura.local | 01700000003 | CuraDesk123 | Booking, patients, billing; no Settings or Statistics |
+| Role | Name | Email | Mobile | Password | Sees |
+| --- | --- | --- | --- | --- | --- |
+| Administrator | Shahnaz Rahman | admin@cura.local | 01700000001 | CuraAdmin123 | Everything |
+| Doctor | Dr Ariful Islam | doctor@cura.local | 01711111111 | CuraDoctor123 | Clinical work; no booking, Settings or Billing changes |
+| Doctor | Dr Nadia Karim | doctor2@cura.local | 01711111112 | CuraDoctor123 | Same as Doctor |
+| Doctor | Dr Sajid Hasan | doctor3@cura.local | 01711111113 | CuraDoctor123 | Same as Doctor |
+| Desk staff | Rekha Sultana | desk@cura.local | 01700000003 | CuraDesk123 | Booking, patients, billing; no Settings or Statistics |
+| Desk staff | Mitu Akter | desk2@cura.local | 01700000004 | CuraDesk123 | Same as Desk staff |
+| Desk staff | Jahid Hasan | desk3@cura.local | 01700000005 | CuraDesk123 | Same as Desk staff |
+
+The calendar shows all three doctors' appointments together. Dr Nadia Karim's are in the morning and early afternoon; Dr Sajid Hasan's are in the afternoon and evening.
 
 After 10 login attempts in 15 minutes Cura says **Too many attempts**. Wait 15 minutes and try again.
 
@@ -196,3 +202,5 @@ Click **Settings**, then each item in the second menu:
 
 1. Click **Log out**, confirm. Log in as **Doctor**. Check that **Settings** is missing and the calendar has no **+ Add Walk-in Appointment**.
 2. Log out. Log in as **Desk staff**. Check that **Settings** and **Statistics** are missing.
+3. Log out. Log in as **Dr Nadia Karim** (doctor2@cura.local), then as **Mitu Akter** (desk2@cura.local). Each works like the Doctor and Desk staff accounts above.
+4. As Administrator, click **Calendar**, then **Week**. Check that the left panel lists three doctors under **Doctor** and that appointments for Fahim Rahman (Dr Nadia Karim) and Moushumi Das (Dr Sajid Hasan) appear.

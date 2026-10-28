@@ -19,7 +19,11 @@ import { SEED_DRUGS } from './seed-drugs';
 
 const prisma = new PrismaClient();
 
-/** One account per access level, so each can be signed into directly. */
+/**
+ * Every access level, signed into directly. The first doctor holds the
+ * original demo diary; the other two get their own patients and schedules
+ * below, so the calendar shows a multi-doctor clinic.
+ */
 const ACCOUNTS = [
   {
     role: 'ADMINISTRATOR',
@@ -43,6 +47,38 @@ const ACCOUNTS = [
     email: 'desk@cura.local',
     password: 'CuraDesk123',
     fullName: 'Rekha Sultana',
+    bmdc: null,
+  },
+  {
+    role: 'DOCTOR',
+    mobile: '+8801711111112',
+    email: 'doctor2@cura.local',
+    password: 'CuraDoctor123',
+    fullName: 'Dr Nadia Karim',
+    bmdc: 'A-100201',
+  },
+  {
+    role: 'DOCTOR',
+    mobile: '+8801711111113',
+    email: 'doctor3@cura.local',
+    password: 'CuraDoctor123',
+    fullName: 'Dr Sajid Hasan',
+    bmdc: 'A-100202',
+  },
+  {
+    role: 'DESK_STAFF',
+    mobile: '+8801700000004',
+    email: 'desk2@cura.local',
+    password: 'CuraDesk123',
+    fullName: 'Mitu Akter',
+    bmdc: null,
+  },
+  {
+    role: 'DESK_STAFF',
+    mobile: '+8801700000005',
+    email: 'desk3@cura.local',
+    password: 'CuraDesk123',
+    fullName: 'Jahid Hasan',
     bmdc: null,
   },
 ] as const;
@@ -128,11 +164,11 @@ async function main(): Promise<void> {
       create: { practiceId: practice.id, userId: user.id, role: account.role, isActive: true },
     });
 
-    users[account.role] = user;
+    users[account.email] = user;
   }
 
   // Appointments are booked against the doctor, who is the one holding clinics.
-  const doctor = users.DOCTOR!;
+  const doctor = users['doctor@cura.local']!;
 
   const people = [
     { fullName: 'Rahima Begum', mobile: '+8801811111111', gender: 'FEMALE', visit: 'NEW' },
@@ -390,6 +426,120 @@ async function main(): Promise<void> {
     calendarAdded = n;
   }
 
+  // -- Two more doctors' diaries ---------------------------------------------
+  //
+  // Five patients of their own each, booked over the 3 clinic days before
+  // today, today, and the 5 after. Created once per doctor: any appointment
+  // already against that doctor means their diary exists.
+  const colleagues = [
+    {
+      email: 'doctor2@cura.local',
+      patients: [
+        { fullName: 'Fahim Rahman', mobile: '+8801899000001', gender: 'MALE', born: 2015 },
+        { fullName: 'Lamia Haque', mobile: '+8801899000002', gender: 'FEMALE', born: 1992 },
+        { fullName: 'Shafiqul Bari', mobile: '+8801899000003', gender: 'MALE', born: 1972 },
+        { fullName: 'Rokeya Begum', mobile: '+8801899000004', gender: 'FEMALE', born: 1963 },
+        { fullName: 'Tahmid Khan', mobile: '+8801899000005', gender: 'MALE', born: 2008 },
+      ],
+      // Clinic mornings and early afternoons.
+      times: [[9, 0], [10, 30], [11, 20], [12, 40], [14, 0]],
+    },
+    {
+      email: 'doctor3@cura.local',
+      patients: [
+        { fullName: 'Moushumi Das', mobile: '+8801899000006', gender: 'FEMALE', born: 1985 },
+        { fullName: 'Habibur Rahman', mobile: '+8801899000007', gender: 'MALE', born: 1955 },
+        { fullName: 'Sadia Afrin', mobile: '+8801899000008', gender: 'FEMALE', born: 1998 },
+        { fullName: 'Kamrul Hasan', mobile: '+8801899000009', gender: 'MALE', born: 1979 },
+        { fullName: 'Jannatul Ferdous', mobile: '+8801899000010', gender: 'FEMALE', born: 2003 },
+      ],
+      // Afternoon and evening clinics.
+      times: [[15, 0], [16, 10], [17, 40], [18, 30], [19, 50]],
+    },
+  ] as const;
+
+  const colleagueLog: string[] = [];
+  for (const [c, colleague] of colleagues.entries()) {
+    const doctorUser = users[colleague.email]!;
+    if (await prisma.appointment.count({ where: { practiceId: practice.id, doctorId: doctorUser.id } })) {
+      colleagueLog.push(`${colleague.email}: diary already seeded (skipped)`);
+      continue;
+    }
+
+    const own: string[] = [];
+    for (const [index, person] of colleague.patients.entries()) {
+      const found = await prisma.patient.findFirst({ where: { practiceId: practice.id, mobile: person.mobile } });
+      if (found) {
+        own.push(found.id);
+        continue;
+      }
+      const [row] = await prisma.$queryRaw<Array<{ nextval: bigint }>>`SELECT nextval('cura_patient_seq') AS nextval`;
+      const created = await prisma.patient.create({
+        data: {
+          curaId: `CURA-${String(row?.nextval ?? 39_000 + c * 10 + index).padStart(5, '0')}`,
+          practiceId: practice.id,
+          fullName: person.fullName,
+          mobile: person.mobile,
+          gender: person.gender,
+          searchName: person.fullName.toLowerCase(),
+          profileComplete: true,
+          dateOfBirth: new Date(person.born, (index * 4 + c * 3) % 12, 5 + index * 4),
+        },
+      });
+      own.push(created.id);
+    }
+
+    // Sunday–Thursday, as the practice's sessions: 3 days back, today, 5 ahead.
+    const days: Array<{ day: Date; when: -1 | 0 | 1 }> = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    for (const direction of [-1, 1] as const) {
+      const cursor = new Date(today);
+      let found = 0;
+      while (found < (direction === -1 ? 3 : 5)) {
+        cursor.setDate(cursor.getDate() + direction);
+        if (cursor.getDay() <= 4) {
+          days.push({ day: new Date(cursor), when: direction });
+          found += 1;
+        }
+      }
+    }
+    if (today.getDay() <= 4) days.push({ day: today, when: 0 });
+
+    const visitTypes = ['NEW', 'FOLLOW_UP', 'OLD'] as const;
+    let n = 0;
+    for (const [d, { day, when }] of days.entries()) {
+      // Two a day, at times that shift from day to day.
+      for (let k = 0; k < 2; k += 1) {
+        const [hour, minute] = colleague.times[(d + k * 2) % colleague.times.length]!;
+        const scheduledAt = new Date(day);
+        scheduledAt.setHours(hour, minute, 0, 0);
+        const at = (offsetMin: number) => new Date(scheduledAt.getTime() + offsetMin * 60_000);
+        // Past: finished, bar the odd no-show. Today: one in the queue, one booked.
+        const status = when === 1 ? 'SCHEDULED' : when === 0 ? (k === 0 ? 'WAITING' : 'SCHEDULED') : n % 5 === 2 ? 'NO_SHOW' : 'DONE';
+
+        await prisma.appointment.create({
+          data: {
+            practiceId: practice.id,
+            doctorId: doctorUser.id,
+            patientId: own[n % own.length]!,
+            scheduledAt,
+            endsAt: at(10),
+            durationMinutes: 10,
+            status,
+            visitType: visitTypes[n % visitTypes.length]!,
+            tokenNumber: k + 1,
+            plannedProcedures: ['Consultation'],
+            ...(status === 'WAITING' ? { checkedInAt: new Date() } : {}),
+            ...(status === 'DONE' ? { checkedInAt: at(-5), engagedAt: at(2), completedAt: at(12) } : {}),
+          },
+        });
+        n += 1;
+      }
+    }
+    colleagueLog.push(`${colleague.email}: ${own.length} patients, ${n} appointments added`);
+  }
+
   console.log('\nSeed complete.');
   console.log(`  Practice : ${practice.name} (${practice.id})`);
   for (const a of ACCOUNTS) {
@@ -401,6 +551,7 @@ async function main(): Promise<void> {
       ? '  Past and upcoming appointments already seeded (skipped).'
       : `  ${calendarAdded} past and upcoming appointments added.`,
   );
+  for (const line of colleagueLog) console.log(`  ${line}.`);
   console.log(`  ${SEED_DRUGS.length} drugs in the catalogue (${freshDrugs.length} added now).\n`);
 }
 
