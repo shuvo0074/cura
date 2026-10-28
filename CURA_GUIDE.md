@@ -26,7 +26,7 @@ password, and text messages to patients.
 ## Open Cura
 
 1. Open Chrome or Safari.
-2. Go to **CURA_LINK_HERE**
+2. Go to **https://cura-web-qvfx.onrender.com**
 
 ## Login details
 
