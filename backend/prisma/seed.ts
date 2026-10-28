@@ -285,12 +285,125 @@ async function main(): Promise<void> {
     });
   }
 
+  // -- Calendar history and bookings ------------------------------------------
+  //
+  // 30 appointments around today — the 7 clinic days before it (finished,
+  // no-shows, cancellations) and the 8 after it (booked) — so every calendar
+  // view has something in it. Created once: seeded rows have no `createdById`
+  // (every real booking records its author), and any such row off today means
+  // this set exists — a re-seed on a later day leaves it alone rather than
+  // piling up another 30.
+  const extraPeople = [
+    { fullName: 'Arif Chowdhury', mobile: '+8801877000001', gender: 'MALE', born: 1981 },
+    { fullName: 'Sumaiya Rahman', mobile: '+8801877000002', gender: 'FEMALE', born: 1994 },
+    { fullName: 'Mahbub Alam', mobile: '+8801877000003', gender: 'MALE', born: 1967 },
+    { fullName: 'Nasrin Sultana', mobile: '+8801877000004', gender: 'FEMALE', born: 1988 },
+    { fullName: 'Rafiqul Islam', mobile: '+8801877000005', gender: 'MALE', born: 1959 },
+    { fullName: 'Taslima Khatun', mobile: '+8801877000006', gender: 'FEMALE', born: 1976 },
+    { fullName: 'Imran Hossain', mobile: '+8801877000007', gender: 'MALE', born: 2001 },
+    { fullName: 'Ayesha Siddiqua', mobile: '+8801877000008', gender: 'FEMALE', born: 1990 },
+  ] as const;
+
+  let calendarAdded = 0;
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const alreadySeeded = await prisma.appointment.count({
+    where: {
+      practiceId: practice.id,
+      createdById: null,
+      OR: [{ scheduledAt: { lt: todayStart } }, { scheduledAt: { gte: new Date(todayStart.getTime() + 86_400_000) } }],
+    },
+  });
+
+  if (alreadySeeded === 0) {
+    const pool: string[] = [...seededPatients];
+    for (const [index, person] of extraPeople.entries()) {
+      const found = await prisma.patient.findFirst({ where: { practiceId: practice.id, mobile: person.mobile } });
+      if (found) {
+        pool.push(found.id);
+        continue;
+      }
+      const [row] = await prisma.$queryRaw<Array<{ nextval: bigint }>>`SELECT nextval('cura_patient_seq') AS nextval`;
+      const created = await prisma.patient.create({
+        data: {
+          curaId: `CURA-${String(row?.nextval ?? 29_000 + index).padStart(5, '0')}`,
+          practiceId: practice.id,
+          fullName: person.fullName,
+          mobile: person.mobile,
+          gender: person.gender,
+          searchName: person.fullName.toLowerCase(),
+          profileComplete: true,
+          dateOfBirth: new Date(person.born, (index * 5) % 12, 3 + index * 3),
+        },
+      });
+      pool.push(created.id);
+    }
+
+    // Sunday–Thursday only, matching the practice's sessions.
+    const clinicDays = (direction: -1 | 1, count: number): Date[] => {
+      const days: Date[] = [];
+      const cursor = new Date();
+      cursor.setHours(0, 0, 0, 0);
+      while (days.length < count) {
+        cursor.setDate(cursor.getDate() + direction);
+        if (cursor.getDay() <= 4) days.push(new Date(cursor));
+      }
+      return days;
+    };
+
+    const procedures = ['Follow-up visit', 'Blood pressure review', 'Diabetes check', 'Dressing', 'Vaccination', 'Consultation'];
+    const visitTypes = ['NEW', 'FOLLOW_UP', 'OLD'] as const;
+    // Two a day — one morning, one evening — at times that vary day to day.
+    const mornings = [[9, 30], [11, 40], [10, 10], [12, 0], [9, 50]] as const;
+    const evenings = [[17, 0], [18, 20], [19, 0], [16, 30], [20, 10]] as const;
+
+    const plan = [
+      ...clinicDays(-1, 7).map((day) => ({ day, past: true })),
+      ...clinicDays(1, 8).map((day) => ({ day, past: false })),
+    ];
+
+    let n = 0;
+    for (const [d, { day, past }] of plan.entries()) {
+      for (let k = 0; k < 2; k += 1) {
+        const [hour, minute] = (k === 0 ? mornings : evenings)[d % 5]!;
+        const scheduledAt = new Date(day);
+        scheduledAt.setHours(hour, minute, 0, 0);
+        const endsAt = new Date(scheduledAt.getTime() + 10 * 60_000);
+
+        // Past: mostly finished, with the odd no-show and cancellation so the
+        // "show cancelled" filter and the counters have something to show.
+        const status = !past ? 'SCHEDULED' : n % 7 === 3 ? 'NO_SHOW' : n % 9 === 5 ? 'CANCELLED' : 'DONE';
+        const at = (offsetMin: number) => new Date(scheduledAt.getTime() + offsetMin * 60_000);
+
+        await prisma.appointment.create({
+          data: {
+            practiceId: practice.id,
+            doctorId: doctor.id,
+            patientId: pool[n % pool.length]!,
+            scheduledAt,
+            endsAt,
+            durationMinutes: 10,
+            status,
+            visitType: visitTypes[n % visitTypes.length]!,
+            tokenNumber: k + 1,
+            plannedProcedures: [procedures[n % procedures.length]!],
+            ...(status === 'DONE' ? { checkedInAt: at(-5), engagedAt: at(2), completedAt: at(12) } : {}),
+            ...(status === 'CANCELLED' ? { cancelledAt: at(-120), cancelReason: 'Patient rescheduled by phone' } : {}),
+          },
+        });
+        n += 1;
+      }
+    }
+    calendarAdded = n;
+  }
+
   console.log('\nSeed complete.');
   console.log(`  Practice : ${practice.name} (${practice.id})`);
   for (const a of ACCOUNTS) {
     console.log(`  ${a.role.padEnd(13)}: ${a.mobile}  /  ${a.password}   (${a.email})`);
   }
   console.log(`  ${people.length} patients and appointments created for today.`);
+  console.log(`  ${calendarAdded} past and upcoming appointments added (${alreadySeeded} already present).`);
   console.log(`  ${SEED_DRUGS.length} drugs in the catalogue (${freshDrugs.length} added now).\n`);
 }
 
