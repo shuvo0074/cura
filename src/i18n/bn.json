@@ -126,6 +126,8 @@
   "your_serial_short": "আপনার সিরিয়াল #{{serial}}",
   "arrive_around": "আনুমানিক {{time}}-এ আসুন",
   "arrival_estimate_note": "আসার সময়টি আনুমানিক (প্রতি রোগীতে প্রায় ১০ মিনিট)। একটু আগে আসুন।",
+  "booking_sent_to_clinic": "{{clinic}} তাদের ক্যালেন্ডারে এই বুকিংটি দেখতে পাবে।",
+  "booking_phone_needed": "পরের বার {{clinic}} যেন আপনার বুকিং পায়, সেজন্য অ্যাকাউন্টে একটি মোবাইল নম্বর যোগ করুন।",
   "next_serial_is": "আপনার সিরিয়াল হবে",
   "next_serial_short": "পরবর্তী সিরিয়াল #{{serial}} · ~{{time}}",
   "pay_at_chamber": "চেম্বারে পরিশোধ করুন",

@@ -75,6 +75,10 @@ function BookedNotice({ booked }) {
       </p>
       {booked.estimated_arrival && <p className="mt-1">{t('arrive_around', { time: booked.estimated_arrival })}</p>}
       <p className="text-xs text-gray-600 mt-1">{t('arrival_estimate_note')}</p>
+      {booked.clinic_status === 'sent' && <p className="mt-1">{t('booking_sent_to_clinic', { clinic: booked.clinic_name })}</p>}
+      {booked.clinic_status === 'phone_required' && (
+        <p className="mt-1 text-amber-800">{t('booking_phone_needed', { clinic: booked.clinic_name })}</p>
+      )}
       <Link to="/appointments" className="inline-block mt-2 text-sm font-semibold text-action hover:underline">{t('my_appointments')}</Link>
     </div>
   );

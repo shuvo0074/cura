@@ -126,6 +126,8 @@
   "your_serial_short": "Your serial #{{serial}}",
   "arrive_around": "Arrive around {{time}}",
   "arrival_estimate_note": "Arrival time is an estimate (about 10 minutes per patient). Please arrive a little early.",
+  "booking_sent_to_clinic": "{{clinic}} can see this booking in their calendar.",
+  "booking_phone_needed": "Add a mobile number to your account so {{clinic}} also gets your booking next time.",
   "next_serial_is": "Your serial will be",
   "next_serial_short": "Next serial #{{serial}} · ~{{time}}",
   "pay_at_chamber": "pay at the chamber",
