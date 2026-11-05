@@ -2,6 +2,10 @@
 
 React 19 and Vite 8. The backend is the separate Cura API, reached through a same-origin `/api` proxy. Direct browser calls fail: the API sends no CORS headers for other origins, and its refresh cookie is `SameSite=Strict`.
 
+## Who signs up where
+
+Patients sign up and log in here. Doctors sign up on Cura Dashboard, and this site sends them there. Set `VITE_DASHBOARD_URL` if the Dashboard is not at `https://cura-web-qvfx.onrender.com`.
+
 ## Develop
 
 Requires Node 22.

@@ -69,7 +69,7 @@ const DOCTOR_FIELDS = [
   { key: 'fees',            label: 'Consultation Fees' },
   { key: 'followupFees', label: 'Follow-up Fees' },
   { key: 'workplace', label: 'Workplace' },
-  { key: 'phone',           label: 'Phone' },
+  { key: 'phone',           label: 'Mobile number (required: the doctor signs up with it)' },
   { key: 'rating',          label: 'Rating (0–5)', type: 'number', min: 0, max: 5, step: 0.1 },
   { key: 'about',           label: 'About' },
   { key: 'website',         label: 'Website' },

@@ -5,7 +5,7 @@ const AuthContext = createContext();
 
 // Where each kind of account lands after logging in.
 export function homePathFor(user) {
-  if (user?.roles?.includes('admin')) return '/admin';
+  if (user?.roles?.includes('super_admin')) return '/admin';
   if (user?.roles?.includes('doctor')) return '/doctor-dashboard';
   // Clinic accounts sign in with no directory role, and /appointments needs one.
   if (!user?.roles?.length) return '/';
@@ -44,7 +44,6 @@ export function AuthProvider({ children }) {
   }
 
   const register = async fields => startSession(await api.post('/auth/register/patient', fields));
-  const registerDoctor = async fields => startSession(await api.post('/auth/register/doctor', fields));
 
   async function logout() {
     await api.post('/auth/logout').catch(() => {});
@@ -55,7 +54,7 @@ export function AuthProvider({ children }) {
   const hasRole = role => Boolean(user?.roles?.includes(role));
 
   return (
-    <AuthContext.Provider value={{ user, loading, hasRole, login, register, registerDoctor, logout, refresh }}>
+    <AuthContext.Provider value={{ user, loading, hasRole, login, register, logout, refresh }}>
       {children}
     </AuthContext.Provider>
   );

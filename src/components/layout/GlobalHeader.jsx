@@ -79,7 +79,7 @@ export default function GlobalHeader() {
   let accountLink = { label: 'Login', path: '/login' };
   if (hasRole('patient')) accountLink = { label: 'My Appointments', path: '/appointments' };
   if (hasRole('doctor')) accountLink = { label: 'Doctor Dashboard', path: '/doctor-dashboard' };
-  if (hasRole('admin')) accountLink = null;
+  if (hasRole('super_admin')) accountLink = null;
 
   return (
     <>

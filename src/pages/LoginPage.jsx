@@ -4,6 +4,7 @@ import { Mail, Lock, Stethoscope } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth, homePathFor } from '../context/AuthContext';
 import AuthField, { PasswordField } from '../components/auth/AuthField';
+import { doctorClaimUrl, doctorRegisterUrl } from '../config/dashboard';
 import { safeRedirect } from '../utils/authValidation';
 
 export default function LoginPage() {
@@ -27,6 +28,11 @@ export default function LoginPage() {
       const u = await login(email, password);
       navigate(safeRedirect(redirect, homePathFor(u)), { replace: true });
     } catch (err) {
+      // A clinic added this doctor, and they have not created a login yet.
+      if (err.code === 'DOCTOR_SIGNUP_REQUIRED') {
+        window.location.assign(doctorClaimUrl(email.trim()));
+        return;
+      }
       setError(err.message);
       setBusy(false);
     }
@@ -39,7 +45,7 @@ export default function LoginPage() {
         <p className="text-sm text-gray-500 mt-1 mb-6">{t('auth_login_sub')}</p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
-          <AuthField label={t('auth_email')} icon={Mail} type="email" autoComplete="email" required
+          <AuthField label={t('auth_email_or_phone')} icon={Mail} type="text" autoComplete="username" required
             value={email} onChange={e => setEmail(e.target.value)} />
           <PasswordField label={t('auth_password')} icon={Lock} autoComplete="current-password" required
             value={password} onChange={e => setPassword(e.target.value)} />

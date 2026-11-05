@@ -2,7 +2,6 @@
   "doctor_gender": "ডাক্তারের লিঙ্গ",
   "doctor_gender_male": "পুরুষ",
   "doctor_gender_female": "নারী",
-
   "home_calc_district": "জেলা",
   "home_calc_all_districts": "সব জেলা",
   "home_calc_near_me": "আমার কাছে",
@@ -10,7 +9,6 @@
   "home_calc_choose_centre": "ডায়াগনস্টিক সেন্টার বেছে নিন",
   "home_calc_no_centres": "কোনো সেন্টার মেলেনি",
   "home_calc_location_selected": "{{district}} জেলার সেন্টার দেখানো হচ্ছে। অবস্থান থেকে জেলা বেছে নেওয়া হয়েছে; সেন্টারের সঠিক দূরত্ব জানা নেই।",
-
   "home_calc_badge": "টেস্ট খরচের ক্যালকুলেটর",
   "home_calc_title": "আপনার টেস্ট, আপনার বাজেট। যাওয়ার আগেই জানুন।",
   "home_calc_desc": "প্রেসক্রিপশনের টেস্টগুলো বেছে নিন, মোট খরচ সঙ্গে সঙ্গে দেখুন। ডায়াগনস্টিক সেন্টার বেছে নিয়ে প্রস্তুতি নিন।",
@@ -18,13 +16,11 @@
   "home_calc_try": "এখনই চেষ্টা করুন — টেস্ট বেছে নিন",
   "home_calc_selected": "{{count}}টি বাছাই করা",
   "home_calc_fallback": "টেস্ট ও ডায়াগনস্টিক সেন্টার দেখতে ক্যালকুলেটর খুলুন।",
-
   "doctor_source": "অফিশিয়াল প্রোফাইল",
   "workplace": "কর্মস্থল",
   "followup_fees": "ফলোআপ ফি",
   "not_listed": "তথ্য নেই",
   "link_copied": "লিংক কপি হয়েছে",
-
   "ambulance_emergency_999": "জরুরি সেবা · {{number}}-এ কল করুন",
   "search_placeholder": "ডাক্তার, বিশেষজ্ঞতা, অবস্থান খুঁজুন",
   "search_doctors": "ডাক্তার খুঁজুন",
@@ -434,7 +430,6 @@
   "ambulance_fare_sample": "নমুনা",
   "ambulance_fares_title": "আনুমানিক ভাড়া · ঢাকা শহর, একমুখী যাত্রা",
   "ambulance_pricing_preview_note": "প্রিভিউ মূল্য: ভাড়ার পরিসর বাংলাদেশি টাকায় নমুনা হিসেবে দেওয়া। প্রকৃত ভাড়া ভেন্ডরের সঙ্গে মিলিয়ে নিন।",
-
   "auth_login_title": "আবার স্বাগতম",
   "auth_login_sub": "অ্যাপয়েন্টমেন্ট ও আপনার Cura প্রোফাইল পরিচালনা করতে লগ ইন করুন।",
   "auth_email": "ইমেইল",
@@ -510,10 +505,8 @@
   "dv_submitted_on": "জমা: {{date}}",
   "bmdc_reg_no": "বিএমডিসি নিবন্ধন {{no}}",
   "bmdc_verified_short": "বিএমডিসি যাচাইকৃত",
-
   "auth_confirm_password": "পাসওয়ার্ড নিশ্চিত করুন",
   "auth_err_password_match": "পাসওয়ার্ড মিলছে না",
-
   "dp_years_practising": "{{count}}+ বছরের অভিজ্ঞতা",
   "dp_practising_since": "{{year}} সাল থেকে চিকিৎসা-চর্চায়",
   "dp_reviews_count": "{{count}}টি যাচাইকৃত রিভিউ",
@@ -621,7 +614,6 @@
   "pe_f_issuer": "প্রদানকারী",
   "pe_f_description": "বিস্তারিত",
   "dd_profile_card_title": "আপনার পাবলিক প্রোফাইল",
-
   "dp_qualifications": "ডিগ্রি ও যোগ্যতা",
   "dp_positions": "পদ ও দায়িত্ব",
   "dp_current": "বর্তমান",
@@ -637,7 +629,6 @@
   "pe_degree_line": "আপনার নামের পরে দেখাবে",
   "dreg_degrees": "ডিগ্রি",
   "dreg_degrees_hint": "নামের পরে যেভাবে লেখেন, যেমন MBBS, FCPS (Medicine)। প্রতিটির পরে Enter চাপুন।",
-
   "pt_overview": "সংক্ষেপ",
   "pt_qualifications": "যোগ্যতা",
   "pt_experience": "অভিজ্ঞতা",
@@ -690,6 +681,12 @@
   "qc_print": "কার্ড প্রিন্ট",
   "qc_scan": "আমার চেম্বার ও সময় দেখতে স্ক্যান করুন",
   "qc_scan_sub": "পেজ থেকেই সিরিয়ালের জন্য কল করুন",
-
-  "di_recognised_zero": "এখনও কোনো সহকর্মীর স্বীকৃতি নেই"
+  "di_recognised_zero": "এখনও কোনো সহকর্মীর স্বীকৃতি নেই",
+  "auth_email_or_phone": "ইমেইল বা মোবাইল নম্বর",
+  "mc_title": "আমার ক্লিনিক",
+  "mc_sub": "আপনি যেসব ক্লিনিকে যান সেগুলো বেছে নিন। এরপর প্রতিটি ক্লিনিক আপনাকে তাদের রোগী হিসেবে দেখতে পাবে।",
+  "mc_join": "রোগী হোন",
+  "mc_leave": "বাদ দিন",
+  "mc_joined": "আপনি এখানকার রোগী",
+  "mc_empty": "এখনো কোনো ক্লিনিক নেই।"
 }

@@ -57,7 +57,7 @@ export default function DoctorCardWide({ doctor }) {
           <div className="flex items-center gap-1 mt-1.5">
             <MapPin size={12} className="text-primary flex-shrink-0" />
             <p className="text-gray-500 text-sm truncate">
-              {withDivision(`${doctor.hospital_name ? `${doctor.hospital_name}, ` : ''}${doctor.city}`, doctor.city, doctor.division)}
+              {withDivision([doctor.hospital_name, doctor.city].filter(Boolean).join(', '), doctor.city, doctor.division)}
             </p>
           </div>
 

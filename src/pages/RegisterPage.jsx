@@ -4,6 +4,7 @@ import { Mail, Lock, User, Phone, Stethoscope } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth, homePathFor } from '../context/AuthContext';
 import AuthField, { PasswordField } from '../components/auth/AuthField';
+import { doctorClaimUrl } from '../config/dashboard';
 import { isValidEmail, normalizeBdPhone, passwordProblemKey, safeRedirect } from '../utils/authValidation';
 
 // Patient sign-up. Doctors register through /register/doctor.
@@ -23,7 +24,8 @@ export default function RegisterPage() {
   const errors = {
     name: form.name.trim().length < 2 && t('auth_err_name'),
     email: !isValidEmail(form.email) && t('auth_err_email'),
-    phone: form.phone && !normalizeBdPhone(form.phone) && t('auth_err_phone'),
+    // Clinics reach patients by phone, so joining a clinic needs one.
+    phone: !normalizeBdPhone(form.phone) && t('auth_err_phone'),
     password: passwordProblemKey(form.password) && t(passwordProblemKey(form.password)),
     confirmPassword: form.confirmPassword !== form.password && t('auth_err_password_match'),
   };
@@ -47,6 +49,10 @@ export default function RegisterPage() {
       const u = await register({ ...fields, phone: form.phone ? normalizeBdPhone(form.phone) : undefined });
       navigate(safeRedirect(redirect, homePathFor(u)), { replace: true });
     } catch (err) {
+      if (err.code === 'DOCTOR_SIGNUP_REQUIRED') {
+        window.location.assign(doctorClaimUrl(form.phone.trim()));
+        return;
+      }
       setServerError({ code: err.code, message: err.message });
       setBusy(false);
     }
@@ -65,7 +71,7 @@ export default function RegisterPage() {
             value={form.name} onChange={set('name')} onBlur={touch('name')} error={shown('name')} />
           <AuthField label={t('auth_email')} icon={Mail} type="email" autoComplete="email"
             value={form.email} onChange={set('email')} onBlur={touch('email')} error={shown('email')} />
-          <AuthField label={t('auth_mobile')} optional icon={Phone} type="tel" autoComplete="tel" inputMode="tel"
+          <AuthField label={t('auth_mobile')} required icon={Phone} type="tel" autoComplete="tel" inputMode="tel"
             placeholder="01XXXXXXXXX" value={form.phone} onChange={set('phone')} onBlur={touch('phone')} error={shown('phone')} />
           <PasswordField label={t('auth_password')} icon={Lock} autoComplete="new-password"
             value={form.password} onChange={set('password')} onBlur={touch('password')}

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Construction } from 'lucide-react';
@@ -23,9 +24,10 @@ import DiagnosticCentresPage from './pages/DiagnosticCentresPage';
 import AppointmentsPage from './pages/AppointmentsPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import DoctorRegisterPage from './pages/DoctorRegisterPage';
+import { doctorRegisterUrl } from './config/dashboard';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import DoctorDashboardPage from './pages/DoctorDashboardPage';
+import MyClinicsPage from './pages/MyClinicsPage';
 import DoctorProfileEditorPage from './pages/DoctorProfileEditorPage';
 import DoctorQrCardPage from './pages/DoctorQrCardPage';
 import CreditsPage from './pages/CreditsPage';
@@ -50,7 +52,15 @@ function PlaceholderPage({ titleKey }) {
 }
 
 function AdminRoute({ children }) {
-  return <ProtectedRoute role="admin">{children}</ProtectedRoute>;
+  return <ProtectedRoute role="super_admin">{children}</ProtectedRoute>;
+}
+
+// Doctors sign up on Cura Dashboard, so old links to this page still work.
+function ToDashboardSignup() {
+  useEffect(() => {
+    window.location.replace(doctorRegisterUrl());
+  }, []);
+  return null;
 }
 
 export default function App() {
@@ -79,7 +89,7 @@ export default function App() {
               <Route path="/appointments" element={<AppointmentsPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
-              <Route path="/register/doctor" element={<DoctorRegisterPage />} />
+              <Route path="/register/doctor" element={<ToDashboardSignup />} />
               <Route path="/staff-login" element={<Navigate to="/login" replace />} />
               <Route path="/admin" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
               <Route path="/admin/doctors" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
@@ -93,6 +103,8 @@ export default function App() {
               <Route path="/admin/ambulances" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
               <Route path="/admin/sample-prices" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
               <Route path="/admin/verifications" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
+              <Route path="/admin/owners" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
+              <Route path="/my-clinics" element={<ProtectedRoute role="patient"><MyClinicsPage /></ProtectedRoute>} />
               <Route path="/doctor-dashboard" element={<ProtectedRoute role="doctor"><DoctorDashboardPage /></ProtectedRoute>} />
               <Route path="/doctor-dashboard/profile" element={<ProtectedRoute role="doctor"><DoctorProfileEditorPage /></ProtectedRoute>} />
               <Route path="/doctor-dashboard/card" element={<ProtectedRoute role="doctor"><DoctorQrCardPage /></ProtectedRoute>} />

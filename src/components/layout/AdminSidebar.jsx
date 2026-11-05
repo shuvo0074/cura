@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { path: '/admin/photo-credits', label: 'Photo credits', icon: Images },
   { path: '/admin/appointments', label: 'Appointments',  icon: CalendarCheck },
   { path: '/admin/verifications', label: 'Verifications', icon: BadgeCheck },
+  { path: '/admin/owners',       label: 'Owners',        icon: UserRound },
 ];
 
 export default function AdminSidebar() {

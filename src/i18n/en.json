@@ -2,7 +2,6 @@
   "doctor_gender": "Doctor gender",
   "doctor_gender_male": "Male",
   "doctor_gender_female": "Female",
-
   "home_calc_district": "District",
   "home_calc_all_districts": "All districts",
   "home_calc_near_me": "Near me",
@@ -10,7 +9,6 @@
   "home_calc_choose_centre": "Select a diagnostic centre",
   "home_calc_no_centres": "No centres match",
   "home_calc_location_selected": "Showing centres in {{district}}. Location selects your district; exact centre distances are unavailable.",
-
   "home_calc_badge": "Test cost calculator",
   "home_calc_title": "Your tests. Your budget. Know before you go.",
   "home_calc_desc": "Pick the tests on your prescription and watch the total update. Choose a diagnostic centre and plan your visit with confidence.",
@@ -18,13 +16,11 @@
   "home_calc_try": "Try it now — select your tests",
   "home_calc_selected": "{{count}} selected",
   "home_calc_fallback": "Open the calculator to browse diagnostic centres and their tests.",
-
   "doctor_source": "Official profile",
   "workplace": "Workplace",
   "followup_fees": "Follow-up fee",
   "not_listed": "Not listed",
   "link_copied": "Link copied",
-
   "ambulance_emergency_999": "Emergency · Call {{number}}",
   "search_placeholder": "Search doctors, specialities, locations",
   "search_doctors": "Search for doctors",
@@ -434,7 +430,6 @@
   "ambulance_fare_sample": "sample",
   "ambulance_fares_title": "Indicative fares · Dhaka city, one way",
   "ambulance_pricing_preview_note": "Preview pricing: fare ranges are sample amounts in BDT. Confirm the actual fare with the vendor.",
-
   "auth_login_title": "Welcome back",
   "auth_login_sub": "Log in to manage your appointments and your Cura profile.",
   "auth_email": "Email",
@@ -510,10 +505,8 @@
   "dv_submitted_on": "Submitted {{date}}",
   "bmdc_reg_no": "BMDC Reg. {{no}}",
   "bmdc_verified_short": "BMDC verified",
-
   "auth_confirm_password": "Confirm password",
   "auth_err_password_match": "Passwords don't match",
-
   "dp_years_practising": "{{count}}+ years in practice",
   "dp_practising_since": "Practising since {{year}}",
   "dp_reviews_count": "{{count}} verified reviews",
@@ -621,7 +614,6 @@
   "pe_f_issuer": "Awarded by",
   "pe_f_description": "Details",
   "dd_profile_card_title": "Your public profile",
-
   "dp_qualifications": "Degrees & qualifications",
   "dp_positions": "Appointments & positions",
   "dp_current": "Current",
@@ -637,7 +629,6 @@
   "pe_degree_line": "Shown after your name as",
   "dreg_degrees": "Degrees",
   "dreg_degrees_hint": "As written after your name, e.g. MBBS, FCPS (Medicine). Press Enter after each.",
-
   "pt_overview": "Overview",
   "pt_qualifications": "Qualifications",
   "pt_experience": "Experience",
@@ -690,6 +681,12 @@
   "qc_print": "Print card",
   "qc_scan": "Scan to see my chambers & hours",
   "qc_scan_sub": "Call for a serial straight from the page",
-
-  "di_recognised_zero": "No colleague recognitions yet"
+  "di_recognised_zero": "No colleague recognitions yet",
+  "auth_email_or_phone": "Email or mobile number",
+  "mc_title": "My clinics",
+  "mc_sub": "Choose the clinics you visit. Each clinic can then see you as its patient.",
+  "mc_join": "Become a patient",
+  "mc_leave": "Leave",
+  "mc_joined": "You are a patient here",
+  "mc_empty": "No clinics are available yet."
 }
