@@ -339,6 +339,33 @@ export interface AppointmentRepository {
   listDoctors(practiceId: string): Promise<Array<{ id: string; fullName: string }>>;
 }
 
+/** A clinic a doctor works at on Cura, with what booking into it needs. */
+export interface DoctorClinic {
+  practiceId: string;
+  name: string;
+  slotMinutes: number;
+  timezone: string;
+}
+
+export const WEBSITE_BOOKING_LINK = Symbol('WEBSITE_BOOKING_LINK');
+
+/**
+ * The bridge between a serial booking made on Cura Website and the clinic
+ * appointment it created, so each side follows the other's status.
+ */
+export interface WebsiteBookingLinkRepository {
+  /** Active clinics where this user is an active DOCTOR member. */
+  doctorClinics(doctorUserId: string): Promise<DoctorClinic[]>;
+  /** The website account's own patient record at this clinic, if any. */
+  clinicPatientId(accountId: string, practiceId: string): Promise<string | null>;
+  link(bookingId: string, appointmentId: string): Promise<void>;
+  /**
+   * Moves the confirmed website booking linked to this appointment. Returns the
+   * booking id, or null when none is linked or it is no longer confirmed.
+   */
+  settle(appointmentId: string, status: 'CANCELLED' | 'COMPLETED'): Promise<string | null>;
+}
+
 // ---------------------------------------------------------------------------
 // Clinical records & consent
 // ---------------------------------------------------------------------------

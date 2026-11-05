@@ -7,7 +7,9 @@
 - Complete the 4-step new-doctor setup (personal, professional, academic, documents)
 - See the calendar by day, 3 days, week or month, and book an appointment by clicking an empty time
 - Drag an appointment to a new time
-- Check patients in, start the visit, finish the visit, or mark them as no-show
+- Check patients in, start the visit, finish the visit, mark them as no-show, or cancel the visit
+- See serials patients book on Cura Website in the clinic's calendar, marked **Booked on Cura Website**; cancelling or
+  finishing the visit on either side updates the other
 - Add a new patient or a walk-in from the top bar
 - Search any patient by name, phone or Cura ID
 - Open a patient's record: vitals, clinical notes, prescriptions, files and bills
@@ -129,6 +131,23 @@ A patient who resets on Cura Dashboard is told to log in on Cura Website. A doct
 10. Click **Settings ▾** at the top right. Tick **Show cancelled appointments**. Click **Calendar settings…**.
 11. Back in **Calendar**, click **Block Calendar** on the left, choose a date, save.
 12. On the right, click **+ Add Walk-in Appointment**, choose a **Doctor**, fill the form, click **Save**. The patient's record opens.
+
+### Website booking reaches the clinic
+
+Online booking must be switched on in the Cura API (it is, unless `DIRECTORY_BOOKING_ENABLED=false`).
+
+1. On Cura Website, log in as patient01@cura.local. Search for **Dr Tanvir Hossain** and open his profile.
+2. Under **Book serial**, choose a day (not Friday), click **Book serial** next to the Cura Dhanmondi Clinic session,
+   then **Confirm serial**. The green box says **Cura Dhanmondi Clinic can see this booking in their calendar.**
+3. On Cura Dashboard, log in as owner1@cura.local. Click **Calendar**, then **Day**, and go to that day. The patient
+   is at the session's start, or one slot later per earlier serial. Click the name: the details show
+   **Booked on Cura Website** and the serial in **Notes**.
+4. Click **Cancel visit**. The status becomes **cancelled**.
+5. On Cura Website, click **My Appointments**. The serial is under **Past & cancelled**, marked **Cancelled**.
+6. Book again, and on Cura Dashboard click **Check in**, **Engage**, **Check out**. On Cura Website the serial shows
+   **Completed**, and the patient can rate the visit. A **No show** shows it as cancelled.
+7. A doctor who is not on a clinic on Cura (or a session at a hospital) still books on Cura Website only. A patient
+   with no mobile number is booked on Cura Website only, and told to add a number.
 
 ### Add a patient and search
 

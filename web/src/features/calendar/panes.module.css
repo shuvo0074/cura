@@ -203,7 +203,16 @@
 .statusPill[data-status='cancelled'],
 .statusPill[data-status='no_show']   { color: var(--color-status-cancelled); background: var(--color-status-cancelled-bg); }
 
+.sourceTag {
+  align-self: flex-start; padding: 2px var(--space-sm);
+  font-size: var(--text-xs); font-weight: var(--weight-semibold);
+  border-radius: var(--radius-pill);
+  color: var(--color-feedback-info-fg);
+  background: var(--color-feedback-info-bg);
+}
+
 .actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-xs); }
+.actions button:last-child:nth-child(odd) { grid-column: 1 / -1; }
 .actions button, .editTime button {
   padding: var(--space-sm) var(--space-md);
   font-size: var(--text-sm); color: var(--color-text-secondary);

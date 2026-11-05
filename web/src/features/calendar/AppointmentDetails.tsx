@@ -19,7 +19,11 @@ const ACTIONS = [
   { label: 'Engage', to: AppointmentStatus.ENGAGED },
   { label: 'Check out', to: AppointmentStatus.DONE },
   { label: 'No show', to: AppointmentStatus.NO_SHOW },
+  { label: 'Cancel visit', to: AppointmentStatus.CANCELLED },
 ] as const;
+
+/** The API starts the notes of a visit booked by the patient online with this. */
+const WEBSITE_NOTE = 'Booked on Cura Website';
 
 /** `datetime-local` wants wall-clock text, not UTC. */
 const toLocalInput = (iso: string) => {
@@ -39,6 +43,7 @@ export function AppointmentDetails({
   doctorName,
   canReschedule,
   canChangeStatus,
+  canCancel = false,
   onChangeStatus,
   onReschedule,
   onOpenPatient,
@@ -50,6 +55,8 @@ export function AppointmentDetails({
   doctorName?: string | undefined;
   canReschedule: boolean;
   canChangeStatus: boolean;
+  /** APPOINTMENT_CANCEL: the front desk and administrators. */
+  canCancel?: boolean;
   onChangeStatus: (status: AppointmentStatus) => void;
   onReschedule: (at: Date) => Promise<boolean>;
   onOpenPatient?: ((patientId: string, appointmentId?: string) => void) | undefined;
@@ -61,6 +68,7 @@ export function AppointmentDetails({
 
   const start = new Date(appointment.scheduledAt);
   const status = appointment.status;
+  const fromWebsite = appointment.notes?.startsWith(WEBSITE_NOTE) ?? false;
 
   const saveTime = async () => {
     if (!editing) return;
@@ -102,10 +110,11 @@ export function AppointmentDetails({
       <span className={styles.statusPill} data-status={status.toLowerCase()}>
         {status.replace('_', ' ').toLowerCase()}
       </span>
+      {fromWebsite && <span className={styles.sourceTag}>{WEBSITE_NOTE}</span>}
 
       {canChangeStatus && (
         <div className={styles.actions}>
-          {ACTIONS.map((action) => (
+          {ACTIONS.filter((action) => canCancel || action.to !== AppointmentStatus.CANCELLED).map((action) => (
             <button
               key={action.to}
               type="button"

@@ -196,7 +196,7 @@ export class PrismaDoctorListingRepository implements DoctorListingRepository {
   findVisible(id: string) {
     return this.prisma.doctorListing.findFirst({
       where: { id, hidden: false },
-      select: { id: true, weeklySchedule: true, clinicalExpertise: true },
+      select: { id: true, userId: true, weeklySchedule: true, clinicalExpertise: true },
     });
   }
 

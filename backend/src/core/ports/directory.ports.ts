@@ -81,7 +81,7 @@ export interface DoctorListingRepository {
   findPublicById(id: string): Promise<Row | null>;
   findPublicBySlug(slug: string): Promise<Row | null>;
   /** Null when the doctor is missing or hidden. */
-  findVisible(id: string): Promise<{ id: string; weeklySchedule: unknown; clinicalExpertise: string[] } | null>;
+  findVisible(id: string): Promise<{ id: string; userId: string; weeklySchedule: unknown; clinicalExpertise: string[] } | null>;
   findByBmdc(bmdcNo: string): Promise<{ id: string; userId: string | null } | null>;
   listForHospital(hospitalId: string, hospitalName: string): Promise<Row[]>;
   listAdmin(): Promise<Row[]>;

@@ -27,7 +27,8 @@ there. Nobody needs a login to browse doctors, hospitals, diagnostic centres and
   page, site text, photo credits, appointments, verifications and owners.
 - **Patients:** joining a clinic adds them to that clinic's patient list on Cura Dashboard. To join, open My Appointments
   and click **My clinics**.
-- **Booking:** patients can only book online if booking is switched on in the API.
+- **Booking:** patients can only book online if booking is switched on in the API. A serial at a clinic on Cura also
+  goes into that clinic's calendar on Cura Dashboard, where clinic staff can cancel, check out or mark it no-show.
 - **Ambulance and pharmacy owners:** their screens are on Cura Dashboard, under **My Ambulances** and **My Pharmacy**.
   There are no pharmacy owners on the live database yet.
 

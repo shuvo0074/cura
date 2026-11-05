@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AppointmentModule } from '../appointments/appointment.module';
 import { AuthModule } from '../auth/auth.module';
 import {
   AdminAmbulancesController,
@@ -48,7 +49,7 @@ import { DoctorVerificationService } from './services/verification.service';
  * table it writes is `patients`, and it never reads clinical records.
  */
 @Module({
-  imports: [AuthModule],
+  imports: [AuthModule, AppointmentModule],
   controllers: [
     DirectoryAuthController,
     // Before DoctorsController, so `me` is not matched as a doctor id.

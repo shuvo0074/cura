@@ -112,3 +112,16 @@ export function bookingBlocker(
 export function scheduleEntries(value: unknown): ScheduleEntry[] {
   return Array.isArray(value) ? (value as ScheduleEntry[]) : [];
 }
+
+const venueKey = (value: unknown) => String(value ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
+
+/**
+ * The clinic on Cura a chamber session takes place at. A clinic named like the
+ * venue wins; otherwise a doctor with a single clinic is booked there, unless
+ * the session is at a listed hospital.
+ */
+export function clinicForVenue<T extends { name: string }>(clinics: T[], entry: ScheduleEntry): T | null {
+  const exact = clinics.find((clinic) => venueKey(clinic.name) === venueKey(entry.venue));
+  if (exact) return exact;
+  return clinics.length === 1 && !entry.hospital_id ? clinics[0]! : null;
+}

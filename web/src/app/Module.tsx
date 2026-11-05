@@ -46,6 +46,7 @@ export function Module({
           {...(permissions.includes(Permission.APPOINTMENT_WRITE) ? { onAddWalkIn } : {})}
           canReschedule={permissions.includes(Permission.APPOINTMENT_WRITE)}
           canChangeStatus={permissions.includes(Permission.APPOINTMENT_STATUS_WRITE)}
+          canCancel={permissions.includes(Permission.APPOINTMENT_CANCEL)}
           canManageSettings={permissions.includes(Permission.SETTINGS_MANAGE)}
           canViewStaff={permissions.includes(Permission.STAFF_MANAGE)}
           {...(permissions.includes(Permission.SETTINGS_MANAGE)

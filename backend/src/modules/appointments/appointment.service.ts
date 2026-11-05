@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
+  Permission,
   AppointmentStatus,
   canTransition,
   VisitType,
@@ -17,10 +18,13 @@ import {
   APPOINTMENT_REPOSITORY,
   AUDIT_REPOSITORY,
   PATIENT_REPOSITORY,
+  WEBSITE_BOOKING_LINK,
+  type AppointmentRecord,
   type AppointmentRepository,
   type AppointmentWithPatient,
   type AuditRepository,
   type PatientRepository,
+  type WebsiteBookingLinkRepository,
 } from '../../core/ports/repositories';
 import {
   CLOCK,
@@ -46,6 +50,7 @@ export class AppointmentService {
     @Inject(AUDIT_REPOSITORY) private readonly audit: AuditRepository,
     @Inject(CLOCK) private readonly clock: Clock,
     @Inject(EVENT_BUS) private readonly events: EventBus,
+    @Inject(WEBSITE_BOOKING_LINK) private readonly websiteBookings: WebsiteBookingLinkRepository,
   ) {}
 
   async create(
@@ -157,6 +162,11 @@ export class AppointmentService {
 
     if (existing.status === next) return existing;
 
+    // Cancelling is front-desk work: a doctor can move a visit through the queue but not cancel it.
+    if (next === AppointmentStatus.CANCELLED && !principal.permissions.includes(Permission.APPOINTMENT_CANCEL)) {
+      throw new ForbiddenError('Only the front desk or an administrator can cancel a visit.');
+    }
+
     if (!canTransition(existing.status, next)) {
       throw new ConflictError(
         'INVALID_TRANSITION',
@@ -164,27 +174,156 @@ export class AppointmentService {
       );
     }
 
+    await this.applyStatus(existing, next, principal.userId);
+
+    const updated = await this.appointments.findById(appointmentId);
+    if (!updated) throw new NotFoundError('Appointment');
+    return updated;
+  }
+
+  /**
+   * A booking made on Cura Website, placed in the clinic's calendar. The
+   * patient is not a clinic member, so there is no principal: the caller has
+   * already matched the doctor to this clinic and found the clinic's patient
+   * record. The visit goes at its serial's place in the session, else the next
+   * free slot, else the session start so the clinic still sees it.
+   */
+  async bookFromWebsite(input: {
+    practiceId: string;
+    doctorId: string;
+    patientId: string;
+    /** YYYY-MM-DD, the clinic's local date. */
+    date: string;
+    /** Minutes since local midnight. */
+    sessionStart: number;
+    sessionEnd: number;
+    serialNo: number;
+    slotMinutes: number;
+    timeZone: string;
+    notes: string;
+    actorUserId: string;
+  }): Promise<AppointmentWithPatient> {
+    const doctors = await this.appointments.listDoctors(input.practiceId);
+    if (!doctors.some((d) => d.id === input.doctorId)) {
+      throw new ValidationError('This doctor does not see patients at this clinic.');
+    }
+
+    const slot = Math.max(1, input.slotMinutes);
+    const midnight = this.clock.startOfDay(new Date(`${input.date}T12:00:00Z`), input.timeZone);
+    const at = (minutes: number) => this.clock.addSeconds(midnight, minutes * 60);
+    const sessionFrom = at(input.sessionStart);
+    const sessionTo = at(Math.max(input.sessionEnd, input.sessionStart + slot));
+
+    const taken = await this.appointments.findOverlapping({
+      doctorId: input.doctorId,
+      from: sessionFrom,
+      to: sessionTo,
+    });
+    const free = (start: Date) => {
+      const end = this.clock.addSeconds(start, slot * 60);
+      return !taken.some((a) => a.scheduledAt < end && a.endsAt > start);
+    };
+    const slots: Date[] = [];
+    for (let m = input.sessionStart; m + slot <= input.sessionEnd; m += slot) slots.push(at(m));
+    const preferred = Math.max(0, input.serialNo - 1);
+    // The serial's own slot, then later ones, then earlier ones.
+    const order = [...slots.slice(preferred), ...slots.slice(0, Math.min(preferred, slots.length))];
+    const scheduledAt = order.find(free) ?? sessionFrom;
+    const endsAt = this.clock.addSeconds(scheduledAt, slot * 60);
+
+    const tokenNumber = await this.appointments.nextTokenNumber(
+      input.practiceId,
+      input.doctorId,
+      scheduledAt,
+    );
+    const created = await this.appointments.create({
+      practiceId: input.practiceId,
+      doctorId: input.doctorId,
+      patientId: input.patientId,
+      scheduledAt,
+      endsAt,
+      durationMinutes: slot,
+      visitType: VisitType.NEW,
+      plannedProcedures: [],
+      notes: input.notes.slice(0, 1000),
+      tokenNumber,
+      createdById: input.actorUserId,
+    });
+
+    await this.audit.record({
+      actorUserId: input.actorUserId,
+      action: 'appointment.create.website',
+      resourceType: 'appointment',
+      resourceId: created.id,
+      practiceId: input.practiceId,
+      ipHash: null,
+      userAgent: null,
+      requestId: null,
+    });
+    this.events.publish({
+      type: 'appointment.created',
+      appointmentId: created.id,
+      practiceId: input.practiceId,
+      doctorId: input.doctorId,
+      patientId: input.patientId,
+    });
+    this.events.publish({
+      type: 'queue.changed',
+      practiceId: input.practiceId,
+      date: scheduledAt.toISOString().slice(0, 10),
+    });
+
+    const full = await this.appointments.findById(created.id);
+    if (!full) throw new NotFoundError('Appointment');
+    return full;
+  }
+
+  /**
+   * The patient cancelled on Cura Website. Follows the clinic's status rules:
+   * a visit already done or closed stays as it is.
+   */
+  async cancelFromWebsite(appointmentId: string, actorUserId: string): Promise<void> {
+    const existing = await this.appointments.findById(appointmentId);
+    if (!existing || !canTransition(existing.status, AppointmentStatus.CANCELLED)) return;
+    await this.applyStatus(existing, AppointmentStatus.CANCELLED, actorUserId);
+  }
+
+  private async applyStatus(
+    existing: AppointmentRecord,
+    next: AppointmentStatus,
+    actorUserId: string,
+  ): Promise<void> {
     const now = this.clock.now();
-    await this.appointments.updateStatus(appointmentId, next, now);
+    await this.appointments.updateStatus(existing.id, next, now);
 
     if (next === AppointmentStatus.DONE) {
       await this.patients.touchLastVisit(existing.patientId, now);
     }
 
     await this.audit.record({
-      actorUserId: principal.userId,
+      actorUserId,
       action: `appointment.status.${next.toLowerCase()}`,
       resourceType: 'appointment',
-      resourceId: appointmentId,
+      resourceId: existing.id,
       practiceId: existing.practiceId,
       ipHash: null,
       userAgent: null,
       requestId: null,
     });
 
+    // A visit booked on Cura Website: the patient's booking follows. A no-show
+    // ends it as cancelled, since only a completed visit can be reviewed.
+    const settled =
+      next === AppointmentStatus.DONE
+        ? 'COMPLETED'
+        : next === AppointmentStatus.CANCELLED || next === AppointmentStatus.NO_SHOW
+          ? 'CANCELLED'
+          : null;
+    if (settled) await this.websiteBookings.settle(existing.id, settled);
+
     this.events.publish({
       type: 'appointment.status_changed',
-      appointmentId,
+      appointmentId: existing.id,
       practiceId: existing.practiceId,
       status: next,
     });
@@ -193,10 +332,6 @@ export class AppointmentService {
       practiceId: existing.practiceId,
       date: existing.scheduledAt.toISOString().slice(0, 10),
     });
-
-    const updated = await this.appointments.findById(appointmentId);
-    if (!updated) throw new NotFoundError('Appointment');
-    return updated;
   }
 
   /** Drag-and-drop reschedule. Re-runs the same overlap invariant. */

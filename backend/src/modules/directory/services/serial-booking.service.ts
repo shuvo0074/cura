@@ -1,4 +1,4 @@
-import { HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { AppConfigService } from '../../../config/app.config';
 import {
   DOCTOR_LISTING_REPOSITORY,
@@ -8,12 +8,20 @@ import {
   type Row,
   type SerialBookingRepository,
 } from '../../../core/ports/directory.ports';
+import {
+  PATIENT_REPOSITORY,
+  WEBSITE_BOOKING_LINK,
+  type PatientRepository,
+  type WebsiteBookingLinkRepository,
+} from '../../../core/ports/repositories';
 import { CLOCK, type Clock } from '../../../core/ports/services';
+import { AppointmentService } from '../../appointments/appointment.service';
 import { toNationalPhone } from '../domain/account-rules';
 import { DirectoryError, DirectoryValidationError, directoryNotFound } from '../domain/errors';
 import { present, presentBooking } from '../domain/presenter';
 import {
   bookingBlocker,
+  clinicForVenue,
   dateOnly,
   dhakaNow,
   estimatedArrival,
@@ -21,13 +29,25 @@ import {
   minutesToTime,
   parseSessionTime,
   scheduleEntries,
+  type ScheduleEntry,
+  type SessionTime,
 } from '../domain/schedule';
 import { DirectoryAudit } from './directory-audit.service';
 
+/** Starts the notes of a clinic appointment booked on Cura Website; Cura Dashboard looks for it. */
+export const WEBSITE_NOTE = 'Booked on Cura Website';
+
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/**
+ * What happened on the clinic's side of a booking: `sent` when it is in the
+ * clinic's calendar, `website_only` when the venue is not a clinic on Cura (or
+ * it could not be placed), `phone_required` when the account has no mobile.
+ */
+type ClinicStatus = 'sent' | 'website_only' | 'phone_required';
+
 function withArrival(row: Row): Row {
-  const { patientMobile, ...rest } = row;
+  const { patientMobile, appointmentId: _appointmentId, ...rest } = row;
   const out = presentBooking(rest as Row & { bookingDate: Date; startTime: string });
   if ('patientMobile' in row) out.patient_phone = toNationalPhone(patientMobile);
   const time = parseSessionTime(row.sessionTime);
@@ -41,9 +61,14 @@ export class SerialBookingService {
     @Inject(SERIAL_BOOKING_REPOSITORY) private readonly bookings: SerialBookingRepository,
     @Inject(DOCTOR_LISTING_REPOSITORY) private readonly listings: DoctorListingRepository,
     @Inject(CLOCK) private readonly clock: Clock,
+    @Inject(WEBSITE_BOOKING_LINK) private readonly clinicLink: WebsiteBookingLinkRepository,
+    @Inject(PATIENT_REPOSITORY) private readonly patients: PatientRepository,
+    private readonly appointments: AppointmentService,
     private readonly config: AppConfigService,
     private readonly audit: DirectoryAudit,
   ) {}
+
+  private readonly logger = new Logger(SerialBookingService.name);
 
   async book(identity: DirectoryIdentity, body: Row) {
     if (!this.config.directory.bookingEnabled) {
@@ -74,7 +99,62 @@ export class SerialBookingService {
       notes: typeof notes === 'string' && notes.trim() ? notes.trim().slice(0, 1000) : null,
     });
     await this.audit.record(identity.userId, 'booking_created', 'serial_booking', row.id, { doctorId, serialNo: row.serialNo });
-    return withArrival(row);
+    const clinic = await this.sendToClinic(identity, doctor.userId, entry!, time, row, date);
+    return { ...withArrival(row), clinic_status: clinic.status, clinic_name: clinic.name };
+  }
+
+  /**
+   * Puts the booking in the clinic's calendar when the venue is a clinic on
+   * Cura where this doctor works. The website booking stands either way.
+   */
+  private async sendToClinic(
+    identity: DirectoryIdentity,
+    doctorUserId: string,
+    entry: ScheduleEntry,
+    time: SessionTime,
+    row: Row,
+    date: string,
+  ): Promise<{ status: ClinicStatus; name: string | null }> {
+    try {
+      const clinic = clinicForVenue(await this.clinicLink.doctorClinics(doctorUserId), entry);
+      if (!clinic) return { status: 'website_only', name: null };
+
+      const accountId = identity.patientId!;
+      let patientId = await this.clinicLink.clinicPatientId(accountId, clinic.practiceId);
+      if (!patientId) {
+        // Clinics reach patients by phone, so their record requires one.
+        if (!identity.mobile) return { status: 'phone_required', name: clinic.name };
+        patientId = (
+          await this.patients.create({
+            practiceId: clinic.practiceId,
+            fullName: identity.name,
+            mobile: identity.mobile,
+            email: identity.email,
+            accountId,
+          })
+        ).id;
+      }
+
+      const reason = typeof row.notes === 'string' && row.notes ? ` Reason: ${row.notes}` : '';
+      const appointment = await this.appointments.bookFromWebsite({
+        practiceId: clinic.practiceId,
+        doctorId: doctorUserId,
+        patientId,
+        date,
+        sessionStart: time.start,
+        sessionEnd: time.end,
+        serialNo: row.serialNo,
+        slotMinutes: clinic.slotMinutes,
+        timeZone: clinic.timezone,
+        notes: `${WEBSITE_NOTE}: serial #${row.serialNo}, ${row.sessionTime}.${reason}`,
+        actorUserId: identity.userId,
+      });
+      await this.clinicLink.link(row.id, appointment.id);
+      return { status: 'sent', name: clinic.name };
+    } catch (error) {
+      this.logger.error(`Booking ${row.id} could not reach the clinic: ${(error as Error).message}`);
+      return { status: 'website_only', name: null };
+    }
   }
 
   async forPatient(patientId: string) {
@@ -95,6 +175,7 @@ export class SerialBookingService {
     const row = await this.bookings.cancel(id, identity.patientId!);
     if (!row) throw directoryNotFound('Appointment');
     await this.audit.record(identity.userId, 'booking_cancelled', 'serial_booking', id);
+    if (row.appointmentId) await this.appointments.cancelFromWebsite(row.appointmentId, identity.userId);
     return withArrival(row);
   }
 

@@ -31,6 +31,7 @@ export function CalendarView({
   onAddWalkIn,
   canReschedule = false,
   canChangeStatus = true,
+  canCancel = false,
   canManageSettings = false,
   canViewStaff = false,
   onOpenCalendarSettings,
@@ -49,6 +50,8 @@ export function CalendarView({
   canReschedule?: boolean;
   /** Check in / Engage / Check out / No show (APPOINTMENT_STATUS_WRITE). */
   canChangeStatus?: boolean;
+  /** APPOINTMENT_CANCEL: cancel a visit. */
+  canCancel?: boolean;
   /** SETTINGS_MANAGE: practice timings, closures and Block Calendar. */
   canManageSettings?: boolean;
   /** STAFF_MANAGE: the team directory. */
@@ -194,6 +197,7 @@ export function CalendarView({
                   doctorName={doctors?.find((d) => d.id === selected.doctorId)?.fullName}
                   canReschedule={canReschedule}
                   canChangeStatus={canChangeStatus}
+                  canCancel={canCancel}
                   onChangeStatus={(status) => void vm.changeStatus(selected.id, status)}
                   onReschedule={(at) => vm.reschedule(selected.id, at)}
                   onOpenPatient={onOpenPatient}

@@ -64,6 +64,14 @@ test('the patient, appointment, billing and settings flow still works', async ()
   }, token);
   assert.equal(appointment.status, 201, JSON.stringify(appointment.body));
 
+  // A doctor moves a visit through the queue but cannot cancel it; the front desk and owner can.
+  const doctor = await db.user.findUniqueOrThrow({ where: { id: doctorUserId } });
+  const doctorLogin = await api.post('/auth/login', { identifier: doctor.email, password: PASSWORD });
+  const doctorToken = doctorLogin.body.session.accessToken;
+  const statusPath = `/appointments/${appointment.body.id}/status`;
+  assert.equal((await api.patch(statusPath, { status: 'CANCELLED' }, doctorToken)).status, 403);
+  assert.equal((await api.patch(statusPath, { status: 'CANCELLED' }, token)).status, 200);
+
   const window = `practiceId=${practiceId}&from=${new Date(Date.now() - 86_400_000).toISOString()}&to=${new Date(Date.now() + 7 * 86_400_000).toISOString()}`;
   const calendar = await api.get(`/appointments?${window}`, token);
   assert.equal(calendar.status, 200, JSON.stringify(calendar.body));

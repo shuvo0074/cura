@@ -351,10 +351,12 @@ model Appointment {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  practice  Practice   @relation(fields: [practiceId], references: [id], onDelete: Cascade)
-  doctor    User       @relation("DoctorAppointments", fields: [doctorId], references: [id])
-  patient   Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  encounter Encounter?
+  practice       Practice       @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+  doctor         User           @relation("DoctorAppointments", fields: [doctorId], references: [id])
+  patient        Patient        @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  encounter      Encounter?
+  /// Set when a patient booked this visit on Cura Website.
+  websiteBooking SerialBooking?
 
   /// Primary calendar read path: one doctor's grid over a time window.
   @@index([doctorId, scheduledAt])
@@ -1119,22 +1121,25 @@ model DoctorEndorsement {
 /// A numbered place in one chamber session. Serials are never reused, and two
 /// partial unique indexes in the migration back that up.
 model SerialBooking {
-  id          String              @id @default(uuid()) @db.Uuid
-  patientId   String              @db.Uuid
-  doctorId    String              @db.Uuid
-  bookingDate DateTime            @db.Date
+  id            String              @id @default(uuid()) @db.Uuid
+  patientId     String              @db.Uuid
+  doctorId      String              @db.Uuid
+  bookingDate   DateTime            @db.Date
   /// Session start, HH:MM, Asia/Dhaka.
-  startTime   String              @db.VarChar(5)
-  status      SerialBookingStatus @default(CONFIRMED)
-  notes       String?
-  venue       String
-  sessionTime String
-  serialNo    Int
-  createdAt   DateTime            @default(now())
+  startTime     String              @db.VarChar(5)
+  status        SerialBookingStatus @default(CONFIRMED)
+  notes         String?
+  venue         String
+  sessionTime   String
+  serialNo      Int
+  /// The clinic's appointment, when the booked venue is a clinic on Cura.
+  appointmentId String?             @unique @db.Uuid
+  createdAt     DateTime            @default(now())
 
-  patient PatientAccount @relation(fields: [patientId], references: [id], onDelete: Restrict)
-  doctor  DoctorListing  @relation(fields: [doctorId], references: [id], onDelete: Restrict)
-  review  DoctorReview?
+  patient     PatientAccount @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  doctor      DoctorListing  @relation(fields: [doctorId], references: [id], onDelete: Restrict)
+  appointment Appointment?   @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  review      DoctorReview?
 
   @@index([patientId, bookingDate(sort: Desc)])
   @@index([doctorId, bookingDate(sort: Desc)])

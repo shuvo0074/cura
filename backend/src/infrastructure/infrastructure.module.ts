@@ -6,6 +6,7 @@ import { CryptoService } from '../common/crypto/crypto.service';
 import { PrismaService } from './prisma/prisma.service';
 import {
   APPOINTMENT_REPOSITORY,
+  WEBSITE_BOOKING_LINK,
   AUDIT_REPOSITORY,
   CONSENT_REPOSITORY,
   DOCUMENT_REPOSITORY,
@@ -46,6 +47,7 @@ import { PrismaOtpRepository, PrismaRefreshTokenRepository } from './repositorie
 import { PrismaAuditRepository } from './repositories/audit.repository';
 import { PrismaPatientRepository } from './repositories/patient.repository';
 import { PrismaAppointmentRepository } from './repositories/appointment.repository';
+import { PrismaWebsiteBookingLinkRepository } from './repositories/website-booking-link.repository';
 import { PrismaClinicalRepository } from './repositories/clinical.repository';
 import { PrismaConsentRepository } from './repositories/consent.repository';
 import { PrismaCatalogRepository } from './repositories/catalog.repository';
@@ -127,6 +129,7 @@ import {
     { provide: AUDIT_REPOSITORY, useClass: PrismaAuditRepository },
     { provide: PATIENT_REPOSITORY, useClass: PrismaPatientRepository },
     { provide: APPOINTMENT_REPOSITORY, useClass: PrismaAppointmentRepository },
+    { provide: WEBSITE_BOOKING_LINK, useClass: PrismaWebsiteBookingLinkRepository },
     { provide: CLINICAL_REPOSITORY, useClass: PrismaClinicalRepository },
     { provide: CONSENT_REPOSITORY, useClass: PrismaConsentRepository },
     { provide: BILLING_REPOSITORY, useClass: PrismaBillingRepository },
@@ -186,6 +189,7 @@ import {
     AUDIT_REPOSITORY,
     PATIENT_REPOSITORY,
     APPOINTMENT_REPOSITORY,
+    WEBSITE_BOOKING_LINK,
     CLINICAL_REPOSITORY,
     CONSENT_REPOSITORY,
     BILLING_REPOSITORY,
