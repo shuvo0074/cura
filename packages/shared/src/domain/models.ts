@@ -57,6 +57,15 @@ export type LoginResult =
   | { status: 'authenticated'; session: AuthSession }
   | { status: 'otp_required'; challenge: OtpChallenge };
 
+/**
+ * After a password reset. The person is logged in straight away unless the
+ * account needs a second code the reset did not prove, in which case they log in
+ * again with the new password.
+ */
+export type PasswordResetResult =
+  | { status: 'authenticated'; session: AuthSession }
+  | { status: 'login_required' };
+
 export interface Patient extends Identified {
   curaId: string;
   fullName: string;

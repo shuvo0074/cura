@@ -6,12 +6,16 @@ import {
   doctorClaimLookupSchema,
   doctorClaimStartSchema,
   loginSchema,
+  passwordResetConfirmSchema,
+  passwordResetRequestSchema,
   registerSchema,
   verifyOtpSchema,
   type DoctorClaimCompleteInput,
   type DoctorClaimLookupInput,
   type DoctorClaimStartInput,
   type LoginInput,
+  type PasswordResetConfirmInput,
+  type PasswordResetRequestInput,
   type RegisterInput,
   type VerifyOtpInput,
 } from '@cura/shared';
@@ -112,6 +116,32 @@ export class AuthController {
     const { session, refreshToken } = await this.auth.completeDoctorClaim(dto, this.contextOf(req));
     this.cookie.set(res, refreshToken);
     return session;
+  }
+
+  /** Always answers with a code challenge, whether or not the account exists. */
+  @Public()
+  @Post('password-reset/request')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 5, ttl: 900_000 } })
+  requestPasswordReset(@Body(zodBody(passwordResetRequestSchema)) dto: PasswordResetRequestInput) {
+    return this.auth.requestPasswordReset(dto.identifier);
+  }
+
+  @Public()
+  @Post('password-reset/confirm')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 10, ttl: 900_000 } })
+  async confirmPasswordReset(
+    @Body(zodBody(passwordResetConfirmSchema)) dto: PasswordResetConfirmInput,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.auth.confirmPasswordReset(dto, this.contextOf(req));
+    if (result.status === 'authenticated') {
+      this.cookie.set(res, result.refreshToken);
+      return { status: result.status, session: result.session };
+    }
+    return result;
   }
 
   @Public()

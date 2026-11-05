@@ -338,9 +338,14 @@
 }
 
 .link {
+  padding: 0;
+  font: inherit;
   font-size: var(--text-sm);
   color: var(--color-text-link);
   text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
 }
 
 .link:hover {

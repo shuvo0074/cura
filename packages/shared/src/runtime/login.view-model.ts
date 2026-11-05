@@ -21,6 +21,16 @@ export interface LoginState {
   resendAvailableInSeconds: number;
 }
 
+/** Patients use Cura Website. Clinic accounts, business owners and super admins use Cura Dashboard. */
+export function canUseDashboard(session: AuthSession): boolean {
+  // An API deployed before owner roles existed does not send them.
+  return (
+    session.user.permissions.includes(Permission.CLINIC_ACCESS) ||
+    (session.user.ownerRoles ?? []).length > 0 ||
+    session.user.isSuperAdmin === true
+  );
+}
+
 /**
  * Login flow.
  *
@@ -137,12 +147,7 @@ export class LoginViewModel extends ViewModel<LoginState> {
 
   /** Patients use Cura Website. Only clinic accounts and business owners continue. */
   private async finish(session: AuthSession): Promise<void> {
-    // An API deployed before owner roles existed does not send them.
-    const allowed =
-      session.user.permissions.includes(Permission.CLINIC_ACCESS) ||
-      (session.user.ownerRoles ?? []).length > 0 ||
-      session.user.isSuperAdmin === true;
-    if (!allowed) {
+    if (!canUseDashboard(session)) {
       await this.auth.logout();
       this.backToCredentials();
       this.setState({ formError: 'This account is for Cura Website. Please log in there.' });

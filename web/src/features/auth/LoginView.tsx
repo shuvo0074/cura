@@ -9,6 +9,7 @@ import {
 } from '@cura/shared';
 import { useServices } from '../../app/services';
 import { DoctorClaimForm } from './DoctorClaimForm';
+import { PasswordResetForm } from './PasswordResetForm';
 import { HeroIllustration } from './HeroIllustration';
 import styles from './login.module.css';
 
@@ -37,6 +38,7 @@ export function LoginView({ onAuthenticated }: { onAuthenticated: (s: AuthSessio
   const [params] = useState(() => new URLSearchParams(window.location.search));
   const [tab, setTab] = useState<WelcomeTab>(params.get('tab') === 'register' ? 'register' : 'login');
   const [claimMobile, setClaimMobile] = useState<string | null>(params.get('claim'));
+  const [resetting, setResetting] = useState(false);
   const [state, vm] = useViewModel(() => new LoginViewModel(auth, onAuthenticated, 'en', setClaimMobile));
 
   // StrictMode may replace the login ViewModel after mount; the ref keeps the
@@ -109,6 +111,16 @@ export function LoginView({ onAuthenticated }: { onAuthenticated: (s: AuthSessio
                 mobile={claimMobile}
                 onAuthenticated={onAuthenticated}
                 onCancel={() => setClaimMobile(null)}
+              />
+            ) : resetting ? (
+              <PasswordResetForm
+                initialIdentifier={state.identifier}
+                onAuthenticated={onAuthenticated}
+                onDoctorSignupRequired={(mobile) => {
+                  setResetting(false);
+                  setClaimMobile(mobile);
+                }}
+                onCancel={() => setResetting(false)}
               />
             ) : (
             <>
@@ -202,9 +214,14 @@ export function LoginView({ onAuthenticated }: { onAuthenticated: (s: AuthSessio
                       />
                       <span>Remember me for {businessRules.auth.rememberMeDays} days</span>
                     </label>
-                    <a className={styles.link} href="/forgot-password">
+                    <button
+                      className={styles.link}
+                      type="button"
+                      onClick={() => setResetting(true)}
+                      disabled={state.submitting}
+                    >
                       Forgot password?
-                    </a>
+                    </button>
                   </div>
                 </>
               ) : (

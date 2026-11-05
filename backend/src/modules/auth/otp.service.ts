@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { OtpPurpose, maskEmail, maskMobile, type OtpChallenge } from '@cura/shared';
 import { AppConfigService } from '../../config/app.config';
@@ -26,6 +27,8 @@ import {
 @Injectable()
 export class OtpService {
   private readonly logger = new Logger(OtpService.name);
+  /** When a decoy was last answered for each destination, to copy the resend cooldown. */
+  private readonly decoysIssuedAt = new Map<string, number>();
 
   constructor(
     private readonly config: AppConfigService,
@@ -75,6 +78,45 @@ export class OtpService {
       resendAvailableAt: this.clock
         .addSeconds(now, rules.otpResendCooldownSeconds)
         .toISOString(),
+    };
+  }
+
+  /**
+   * Answers exactly as `issue` would, but stores and sends nothing.
+   *
+   * Used where a request must not reveal whether an account exists. The resend
+   * cooldown is copied too, so a second request within the minute is refused
+   * the same way. The challenge id matches no stored challenge, so any code
+   * entered against it fails like a wrong code.
+   */
+  decoy(input: { purpose: OtpPurpose; destination: string }): OtpChallenge {
+    const rules = this.config.rules.auth;
+    const now = this.clock.now();
+    const key = `${input.purpose}:${input.destination}`;
+    const cooldownMs = rules.otpResendCooldownSeconds * 1000;
+
+    const last = this.decoysIssuedAt.get(key);
+    if (last !== undefined) {
+      const elapsed = (now.getTime() - last) / 1000;
+      if (elapsed < rules.otpResendCooldownSeconds) {
+        throw new RateLimitedError(
+          `Please wait ${Math.ceil(rules.otpResendCooldownSeconds - elapsed)}s before requesting another code.`,
+        );
+      }
+    }
+    // Keep the map small: entries older than the cooldown no longer matter.
+    if (this.decoysIssuedAt.size > 10_000) {
+      for (const [k, at] of this.decoysIssuedAt) {
+        if (now.getTime() - at >= cooldownMs) this.decoysIssuedAt.delete(k);
+      }
+    }
+    this.decoysIssuedAt.set(key, now.getTime());
+
+    return {
+      challengeId: randomUUID(),
+      maskedDestination: this.mask(input.destination),
+      expiresAt: this.clock.addSeconds(now, rules.otpTtlSeconds).toISOString(),
+      resendAvailableAt: this.clock.addSeconds(now, rules.otpResendCooldownSeconds).toISOString(),
     };
   }
 

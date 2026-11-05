@@ -22,7 +22,7 @@ test.describe('Welcome page', () => {
     await expect(tabs.getByRole('tab', { name: 'Register' })).toHaveAttribute('aria-selected', 'false');
     await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
     await expect(page.getByText(/Remember me for 30 days/)).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Forgot password?' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Forgot password?' })).toBeVisible();
     await expect(page.getByRole('navigation', { name: 'Help and legal' })).toBeVisible();
     expect(errors).toEqual([]);
   });

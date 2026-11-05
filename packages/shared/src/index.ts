@@ -26,6 +26,7 @@ export * from './runtime/api-services';
 export * from './runtime/login.view-model';
 export * from './runtime/register.view-model';
 export * from './runtime/doctor-claim.view-model';
+export * from './runtime/password-reset.view-model';
 export * from './runtime/calendar.view-model';
 export * from './runtime/clinical-services';
 export * from './runtime/onboarding.view-model';

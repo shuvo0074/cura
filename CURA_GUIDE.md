@@ -3,6 +3,7 @@
 ## What you can do in Cura right now
 
 - Log in, or register a new doctor account with a code sent to the phone
+- Reset a forgotten password with a code sent to your mobile or email, on Cura Dashboard and Cura Website
 - Complete the 4-step new-doctor setup (personal, professional, academic, documents)
 - See the calendar by day, 3 days, week or month, and book an appointment by clicking an empty time
 - Drag an appointment to a new time
@@ -100,6 +101,19 @@ Log in as **Administrator** unless a step says otherwise. The menu is the list o
 3. A **Verification code** box appears. Ask the developer for the code, type it, click **Verify**.
 4. The 4-step setup opens. Fill each step and click **Next**, or click **Skip** on steps 2–4. Click **Finish** at the end.
 5. Click **Log out** at the bottom of the left menu, then **Log out** in the box. Log in again as Administrator.
+
+### Forgot password
+
+Use an account you made for testing, so the demo passwords above keep working.
+
+1. On the welcome page of Cura Dashboard, click **Forgot password?** under the password box.
+2. Type the account's mobile number or email and click **Send code**. Ask the developer for the code (it is in the Cura API log).
+3. Type the code, a new password twice, and click **Change password**. Cura logs you in. Every other device that was logged in is logged out.
+4. Log out and log in again with the new password.
+5. Type a wrong code instead: **That code is wrong or has expired** appears. An email or number with no account shows the same **Choose a new password** step, and no code arrives.
+6. On Cura Website, click **Login**, then **Forgot password?**, and repeat steps 2–4. Switch to **বাং** at the top: the page is in Bangla.
+
+A patient who resets on Cura Dashboard is told to log in on Cura Website. A doctor a clinic added who has no password yet is sent to finish signing up instead.
 
 ### Calendar
 

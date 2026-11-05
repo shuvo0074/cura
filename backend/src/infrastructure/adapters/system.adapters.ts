@@ -151,8 +151,15 @@ export class ConsoleSmsSender implements SmsSender {
 export class ConsoleEmailSender implements EmailSender {
   private readonly logger = new Logger('EMAIL');
 
+  constructor(private readonly config: AppConfigService) {}
+
+  /** Like `ConsoleSmsSender`: the full text, codes included, only outside production. */
   async send(message: EmailMessage): Promise<{ providerMessageId: string | null }> {
-    this.logger.debug({ to: message.to, subject: message.subject }, 'Email dispatched (console driver)');
+    if (this.config.nodeEnv === 'development' || this.config.nodeEnv === 'test') {
+      this.logger.warn(`[DEV ONLY] To ${message.to}: ${message.text}`);
+    } else {
+      this.logger.debug({ to: message.to, subject: message.subject }, 'Email dispatched (console driver)');
+    }
     return { providerMessageId: `console-${randomUUID()}` };
   }
 }

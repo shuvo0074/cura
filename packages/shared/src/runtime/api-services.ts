@@ -4,6 +4,7 @@ import type {
   AuthSession,
   LoginResult,
   OtpChallenge,
+  PasswordResetResult,
   PatientSearchHit,
   QueueSummary,
 } from '../domain/models';
@@ -12,6 +13,8 @@ import type {
   DoctorClaimCompleteInput,
   DoctorClaimStartInput,
   LoginInput,
+  PasswordResetConfirmInput,
+  PasswordResetRequestInput,
   RegisterInput,
 } from '../validation/schemas';
 import type { AppError, Result } from '../utils/result';
@@ -41,6 +44,15 @@ export interface AuthApi {
     input: DoctorClaimStartInput,
   ): Promise<Result<{ status: 'otp_required'; challenge: OtpChallenge }, AppError>>;
   completeDoctorClaim(input: DoctorClaimCompleteInput): Promise<Result<AuthSession, AppError>>;
+  /**
+   * Sends a reset code. Answers the same way whether or not the account exists,
+   * so it cannot be used to find out who has an account.
+   */
+  requestPasswordReset(
+    input: PasswordResetRequestInput,
+  ): Promise<Result<{ status: 'code_sent'; challenge: OtpChallenge }, AppError>>;
+  /** Sets the new password and ends every other session. */
+  confirmPasswordReset(input: PasswordResetConfirmInput): Promise<Result<PasswordResetResult, AppError>>;
   restoreSession(): Promise<Result<{ accessToken: string; expiresIn: number }, AppError>>;
   logout(): Promise<void>;
 }
@@ -111,6 +123,30 @@ export class HttpAuthApi implements AuthApi {
       retry: false,
     });
     if (result.ok) tokenStore.set(result.value.accessToken, result.value.expiresIn);
+    return result;
+  }
+
+  requestPasswordReset(
+    input: PasswordResetRequestInput,
+  ): Promise<Result<{ status: 'code_sent'; challenge: OtpChallenge }, AppError>> {
+    return this.http.request<{ status: 'code_sent'; challenge: OtpChallenge }>('/auth/password-reset/request', {
+      method: 'POST',
+      body: input,
+      anonymous: true,
+      retry: false,
+    });
+  }
+
+  async confirmPasswordReset(input: PasswordResetConfirmInput): Promise<Result<PasswordResetResult, AppError>> {
+    const result = await this.http.request<PasswordResetResult>('/auth/password-reset/confirm', {
+      method: 'POST',
+      body: input,
+      anonymous: true,
+      retry: false,
+    });
+    if (result.ok && result.value.status === 'authenticated') {
+      tokenStore.set(result.value.session.accessToken, result.value.session.expiresIn);
+    }
     return result;
   }
 

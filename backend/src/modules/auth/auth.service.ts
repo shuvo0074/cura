@@ -9,6 +9,7 @@ import {
   type DoctorClaimStartInput,
   type LoginInput,
   type LoginResult,
+  type PasswordResetConfirmInput,
   type RegisterInput,
 } from '@cura/shared';
 import { AppConfigService } from '../../config/app.config';
@@ -201,8 +202,11 @@ export class AuthService {
   ): Promise<{ session: AuthSession; refreshToken: string }> {
     const result = await this.otp.verify(challengeId, code);
     if (!result.subjectId) throw new InvalidCredentialsError();
-    // This code proves a phone during sign-up. It never opens a session by itself.
-    if (result.purpose === OtpPurpose.DOCTOR_CLAIM) throw new InvalidCredentialsError();
+    // Only login and sign-up codes open a session here. A doctor sign-up code or a
+    // password reset code proves a phone or email for its own flow and nothing else.
+    if (result.purpose !== OtpPurpose.LOGIN && result.purpose !== OtpPurpose.REGISTRATION) {
+      throw new InvalidCredentialsError();
+    }
 
     const user = await this.users.findById(result.subjectId);
     if (!user || !user.isActive) throw new InvalidCredentialsError();
@@ -299,6 +303,98 @@ export class AuthService {
     return { doctor, bmdcNo };
   }
 
+  /**
+   * Sends a password reset code to the mobile number or email given.
+   *
+   * The answer is the same whether or not an account matches, so this cannot be
+   * used to find out who has an account. With no match, nothing is stored or sent.
+   * The one exception is a doctor a clinic added who has no password yet: the
+   * login form already tells them to finish signing up, and this does the same.
+   */
+  async requestPasswordReset(identifier: string) {
+    const user = await this.users.findByIdentifier(identifier);
+
+    if (user?.isActive && user.passwordHash === null && user.mobile) {
+      if (await this.users.findClaimableDoctor(user.mobile)) throw doctorSignupRequired();
+    }
+
+    const challenge =
+      user?.isActive && user.passwordHash !== null
+        ? await this.otp.issue({
+            purpose: OtpPurpose.PASSWORD_RESET,
+            // The address they typed, which is the one stored on the account.
+            destination: identifier,
+            subjectId: user.id,
+          })
+        : this.otp.decoy({ purpose: OtpPurpose.PASSWORD_RESET, destination: identifier });
+
+    return { status: 'code_sent' as const, challenge };
+  }
+
+  /**
+   * Sets a new password once the reset code checks out, which ends every
+   * existing session. The person is then logged in, unless the account needs a
+   * second code the reset did not prove (see `login`), in which case they log in
+   * again with the new password.
+   */
+  async confirmPasswordReset(
+    input: PasswordResetConfirmInput,
+    ctx: RequestContext,
+  ): Promise<
+    | { status: 'authenticated'; session: AuthSession; refreshToken: string }
+    | { status: 'login_required' }
+  > {
+    let proof: Awaited<ReturnType<OtpService['verify']>>;
+    try {
+      proof = await this.otp.verify(input.challengeId, input.code);
+    } catch (error) {
+      // A wrong code, an expired code and a code that was never sent all read the
+      // same, so the answer says nothing about whether the account exists.
+      if (error instanceof ValidationError || error instanceof RateLimitedError) throw resetCodeRejected();
+      throw error;
+    }
+    if (proof.purpose !== OtpPurpose.PASSWORD_RESET || !proof.subjectId) throw resetCodeRejected();
+
+    const user = await this.users.findById(proof.subjectId);
+    if (!user || !user.isActive || user.passwordHash === null) throw resetCodeRejected();
+    // The code went to an address on the account; refuse if that address has since changed.
+    if (proof.destination !== user.email && proof.destination !== user.mobile) throw resetCodeRejected();
+
+    await this.users.setPassword(user.id, await this.crypto.hashPassword(input.password));
+    const viaMobile = proof.destination === user.mobile;
+    if (viaMobile && !user.mobileVerifiedAt) await this.users.markVerified(user.id, 'mobile');
+    if (!viaMobile && !user.emailVerifiedAt) await this.users.markVerified(user.id, 'email');
+
+    await this.audit.record({
+      actorUserId: user.id,
+      action: 'auth.password_reset',
+      resourceType: 'user',
+      resourceId: user.id,
+      practiceId: null,
+      ipHash: this.crypto.hashIp(ctx.ip ?? undefined),
+      userAgent: ctx.userAgent ?? null,
+      requestId: ctx.requestId ?? null,
+      metadata: { channel: viaMobile ? 'mobile' : 'email' },
+    });
+
+    // Read again: the password change bumped the token version.
+    const fresh = await this.users.findById(user.id);
+    if (!fresh) throw resetCodeRejected();
+
+    // Same rule as login: the second code goes to the mobile, or to the email when
+    // there is no mobile. A reset code sent there already proves it.
+    const isClinicAccount = fresh.role !== UserRole.PUBLIC_USER;
+    const needsSecondFactor = fresh.twoFactorEnabled || (isClinicAccount && !fresh.mobileVerifiedAt);
+    const secondFactorDestination = fresh.mobile ?? fresh.email;
+    if (needsSecondFactor && secondFactorDestination !== proof.destination) {
+      return { status: 'login_required' };
+    }
+
+    await this.users.recordSuccessfulLogin(fresh.id);
+    const created = await this.createSession(fresh, ctx);
+    return { status: 'authenticated', ...created };
+  }
+
   async refresh(refreshToken: string, ctx: RequestContext) {
     const issued = await this.tokens.rotate(refreshToken, ctx);
     return issued;
@@ -383,6 +479,10 @@ export const doctorSignupRequired = (): ConflictError =>
     'DOCTOR_SIGNUP_REQUIRED',
     'A clinic already added you as a doctor. Finish signing up on Cura Dashboard.',
   );
+
+/** One answer for every failed reset code, whatever the reason. */
+const resetCodeRejected = (): ValidationError =>
+  new ValidationError('That code is wrong or has expired. Check it, or ask for a new code.');
 
 /**
  * A real Argon2id hash of a random value, used only to spend comparable CPU

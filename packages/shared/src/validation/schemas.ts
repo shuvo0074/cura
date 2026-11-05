@@ -149,6 +149,24 @@ export const doctorClaimCompleteSchema = z
   });
 export type DoctorClaimCompleteInput = z.infer<typeof doctorClaimCompleteSchema>;
 
+/** Asks for a password reset code, sent to the mobile number or email given. */
+export const passwordResetRequestSchema = z.object({ identifier: loginIdentifierSchema });
+export type PasswordResetRequestInput = z.infer<typeof passwordResetRequestSchema>;
+
+/** Sets a new password once the code proves the person owns the mobile or email. */
+export const passwordResetConfirmSchema = z
+  .object({
+    challengeId: z.string().uuid(),
+    code: otpSchema,
+    password: passwordSchema,
+    confirmPassword: z.string(),
+  })
+  .refine((d) => d.password === d.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  });
+export type PasswordResetConfirmInput = z.infer<typeof passwordResetConfirmSchema>;
+
 export const verifyOtpSchema = z.object({
   challengeId: z.string().uuid(),
   code: otpSchema,
