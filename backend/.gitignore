@@ -3,3 +3,6 @@ node_modules
 dist
 storage/
 storage-public/
+
+# Database copies from db:push-live hold real data.
+backups/

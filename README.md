@@ -105,6 +105,22 @@ The API host is resolved in `mobile/src/config/env.ts` — `localhost` on iOS,
 `10.0.2.2` on the Android emulator. For a physical device, put your machine's
 LAN IP in that file.
 
+## Copy data between live and your machine
+
+For use until the live launch only.
+
+```bash
+echo 'LIVE_DATABASE_URL="<Render External Database URL>"' > backend/.env.live   # once; not in git
+npm run db:pull-live    # replaces your local database with a copy of live
+npm run db:push-live    # replaces the live database with your local one
+```
+
+Pull only reads from live, and keeps your previous local database as `cura_backup_<time>`, along with the two before it.
+
+Push deletes anything added on live since your last pull, and logs everyone out. It shows what will change, asks you to
+type the database name, and first backs live up to `backend/backups/`. Always pull before you start changing data. Do not
+use push once real patients are on live.
+
 ## Sign in
 
 The seed creates one verified account per access level, so login skips OTP.

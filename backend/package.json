@@ -14,6 +14,8 @@
     "seed": "ts-node --transpile-only -P tsconfig.json prisma/seed.ts",
     "load": "node load/load-test.mjs",
     "seed:directory": "ts-node --transpile-only -P tsconfig.json prisma/seed-directory.ts",
+    "db:pull-live": "bash scripts/pull-live-db.sh",
+    "db:push-live": "bash scripts/push-live-db.sh",
     "directory:grant-admin": "ts-node --transpile-only -P tsconfig.json prisma/grant-directory-admin.ts"
   },
   "dependencies": {

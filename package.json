@@ -18,6 +18,8 @@
     "dev:backend": "npm run start:dev -w @cura/backend",
     "dev:web": "npm run dev -w @cura/web",
     "dev:mobile": "npm run start -w @cura/mobile",
+    "db:pull-live": "npm run db:pull-live -w @cura/backend",
+    "db:push-live": "npm run db:push-live -w @cura/backend",
     "test:e2e": "npm run test:e2e -w @cura/web"
   }
 }
