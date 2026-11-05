@@ -2,6 +2,9 @@ import { MiddlewareConsumer, Module, type NestModule } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { RedisThrottlerStorage } from './infrastructure/adapters/redis-throttler.storage';
+import { DirectoryModule } from './modules/directory/directory.module';
+import { DirectoryAccessGuard } from './modules/directory/access/directory-access.guard';
 import { AppConfigService } from './config/app.config';
 import { InfrastructureModule } from './infrastructure/infrastructure.module';
 import { GlobalExceptionFilter } from './common/http/exception.filter';
@@ -37,8 +40,10 @@ import { EngagementModule } from './modules/engagement/engagement.module';
     // access and refresh keys distinct.
     JwtModule.register({}),
     ThrottlerModule.forRootAsync({
-      inject: [AppConfigService],
-      useFactory: (config: AppConfigService) => ({
+      inject: [AppConfigService, RedisThrottlerStorage],
+      useFactory: (config: AppConfigService, storage: RedisThrottlerStorage) => ({
+        // Shared counters, so limits hold across restarts and API instances.
+        storage,
         throttlers: [
           {
             ttl: config.throttle.ttlSeconds * 1000,
@@ -61,12 +66,14 @@ import { EngagementModule } from './modules/engagement/engagement.module';
     PatientModule,
     AccountModule,
     EngagementModule,
+    DirectoryModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: PermissionsGuard },
+    { provide: APP_GUARD, useClass: DirectoryAccessGuard },
   ],
 })
 export class AppModule implements NestModule {

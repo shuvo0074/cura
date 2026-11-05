@@ -17,6 +17,8 @@ enum UserRole {
   ADMINISTRATOR
   DOCTOR
   DESK_STAFF
+  /// A public directory account: no access to any clinic module.
+  PUBLIC_USER
 }
 
 enum Gender {
@@ -104,6 +106,12 @@ model User {
   encounters      Encounter[]
   auditLogs       AuditLog[]
   onboardingDraft OnboardingDraft?
+
+  directoryRoles       UserDirectoryRole[]
+  patientAccount       PatientAccount?
+  doctorListing        DoctorListing?
+  doctorVerifications  DoctorVerification[] @relation("VerificationApplicant")
+  reviewedVerifications DoctorVerification[] @relation("VerificationReviewer")
 
   @@index([isActive, role])
   @@index([deletedAt])
@@ -791,4 +799,348 @@ model PatientFeedback {
 
   @@index([practiceId, createdAt(sort: Desc)])
   @@map("patient_feedback")
+}
+
+// ---------------------------------------------------------------------------
+// Public directory (merged from the Cura Health directory app)
+//
+// Deliberately separate from the clinical models above. A listing is public
+// marketing data; `Patient` and `Appointment` are private clinical records, and
+// nothing here reads or writes them.
+// ---------------------------------------------------------------------------
+
+/// Roles on the public directory. Kept apart from `User.role`, which is the
+/// clinic access level: a clinic administrator is not a directory admin.
+enum DirectoryRole {
+  PATIENT
+  DOCTOR
+  ADMIN
+}
+
+enum VerificationKind {
+  CLAIM
+  NEW
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ProfileItemKind {
+  POSITION
+  QUALIFICATION
+  PUBLICATION
+  MEMBERSHIP
+  AWARD
+}
+
+enum SerialBookingStatus {
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+model UserDirectoryRole {
+  userId    String        @db.Uuid
+  role      DirectoryRole
+  grantedAt DateTime      @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, role])
+  @@map("user_directory_roles")
+}
+
+/// A member of the public who signed up. Not linked to the clinical `Patient`.
+model PatientAccount {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @unique @db.Uuid
+  name      String?  @db.VarChar(120)
+  createdAt DateTime @default(now())
+
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookings SerialBooking[]
+  reviews  DoctorReview[]
+
+  @@map("patient_accounts")
+}
+
+model Hospital {
+  id             String    @id @default(uuid()) @db.Uuid
+  name           String
+  location       String
+  division       String?
+  address        String?
+  hotline        String?
+  photo          String?
+  lat            Float?
+  lng            Float?
+  website        String?
+  doctorCount    Int       @default(0)
+  description    String?
+  type           String?
+  services       Json?
+  beds           Json?
+  tests          Json?
+  facilities     Json?
+  paymentMethods Json?
+  openingHours   String?
+  visitingHours  String?
+  sourceUrl      String?
+  verifiedOn     DateTime? @db.Date
+  hidden         Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+
+  doctors DoctorListing[]
+
+  @@index([hidden, type])
+  @@map("hospitals")
+}
+
+model DoctorListing {
+  id                String    @id @default(uuid()) @db.Uuid
+  /// Set only through an approved verification or an admin action.
+  userId            String?   @unique @db.Uuid
+  name              String
+  specialty         String
+  department        String?
+  experience        String?
+  chamber           String?
+  workplace         String?
+  fees              Int?
+  followupFees      Int?      @default(300)
+  city              String?
+  division          String?
+  hospitalId        String?   @db.Uuid
+  phone             String?
+  photo             String?
+  rating            Float?
+  about             String?
+  lat               Float?
+  lng               Float?
+  website           String?
+  gender            String?   @db.VarChar(10)
+  genderIsDemo      Boolean   @default(false)
+  /// Normalised (A-12345). Unique, so two approvals cannot create duplicates.
+  bmdcNo            String?   @unique
+  /// The verified badge. Distinct from `verifiedOn`, the source check date.
+  bmdcVerifiedAt    DateTime?
+  education         String?
+  languages         String?
+  consultingHours   String?
+  address           String?
+  clinicalExpertise String[]
+  treatments        String[]
+  weeklySchedule    Json?
+  headline          String?
+  slug              String?   @unique
+  practicingSince   Int?      @db.SmallInt
+  profileUpdatedAt  DateTime?
+  shareCount        Int       @default(0)
+  sourceUrl         String?
+  verifiedOn        DateTime? @db.Date
+  hidden            Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+
+  user          User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+  hospital      Hospital?            @relation(fields: [hospitalId], references: [id], onDelete: SetNull)
+  verifications DoctorVerification[]
+  items         DoctorProfileItem[]
+  endorsements  DoctorEndorsement[]  @relation("EndorsedDoctor")
+  endorsed      DoctorEndorsement[]  @relation("EndorserDoctor")
+  bookings      SerialBooking[]
+  reviews       DoctorReview[]
+  callLogs      CallLog[]
+  dailyStats    DoctorDailyStat[]
+
+  @@index([hidden, specialty])
+  @@index([hidden, division])
+  @@index([hospitalId])
+  @@map("doctor_listings")
+}
+
+model AmbulanceVendor {
+  id              String    @id @default(uuid()) @db.Uuid
+  slug            String    @unique
+  name            String
+  nameBn          String?
+  baseArea        String?
+  address         String?
+  addressBn       String?
+  phones          Json      @default("[]")
+  categories      Json      @default("[]")
+  features        Json      @default("[]")
+  dhakaWide       Boolean   @default(false)
+  serviceAreas    Json      @default("[]")
+  fares           Json      @default("{}")
+  sourceUrl       String?
+  sourceCheckedOn DateTime? @db.Date
+  hidden          Boolean   @default(false)
+
+  @@map("ambulance_vendors")
+}
+
+model Specialty {
+  id          String  @id @default(uuid()) @db.Uuid
+  slug        String  @unique
+  name        String  @unique
+  nameBn      String?
+  icon        String?
+  description String?
+  tags        Json    @default("[]")
+  image       String?
+  hidden      Boolean @default(false)
+
+  @@map("specialties")
+}
+
+model Symptom {
+  id          String  @id @default(uuid()) @db.Uuid
+  slug        String  @unique
+  name        String  @unique
+  nameBn      String?
+  description String?
+  tags        Json    @default("[]")
+  image       String?
+  /// Specialty names.
+  specialties Json    @default("[]")
+  hidden      Boolean @default(false)
+
+  @@map("symptoms")
+}
+
+/// Site-wide values admins edit. Per-practice settings live elsewhere.
+model SiteSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+
+  @@map("site_settings")
+}
+
+model DoctorVerification {
+  id          String             @id @default(uuid()) @db.Uuid
+  userId      String             @db.Uuid
+  doctorId    String?            @db.Uuid
+  kind        VerificationKind
+  bmdcNo      String
+  details     Json               @default("{}")
+  status      VerificationStatus @default(PENDING)
+  reviewNote  String?
+  submittedAt DateTime           @default(now())
+  reviewedAt  DateTime?
+  reviewedBy  String?            @db.Uuid
+
+  user     User           @relation("VerificationApplicant", fields: [userId], references: [id], onDelete: Cascade)
+  doctor   DoctorListing? @relation(fields: [doctorId], references: [id], onDelete: SetNull)
+  reviewer User?          @relation("VerificationReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+
+  @@index([status, submittedAt])
+  @@index([doctorId, status])
+  @@map("doctor_verifications")
+}
+
+model DoctorProfileItem {
+  id           String          @id @default(uuid()) @db.Uuid
+  doctorId     String          @db.Uuid
+  kind         ProfileItemKind
+  title        String
+  organization String?
+  location     String?
+  startYear    Int?            @db.SmallInt
+  endYear      Int?            @db.SmallInt
+  isCurrent    Boolean         @default(false)
+  url          String?
+  description  String?
+  createdAt    DateTime        @default(now())
+
+  doctor DoctorListing @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@index([doctorId, kind])
+  @@map("doctor_profile_items")
+}
+
+model DoctorEndorsement {
+  doctorId         String   @db.Uuid
+  endorserDoctorId String   @db.Uuid
+  skill            String
+  createdAt        DateTime @default(now())
+
+  doctor   DoctorListing @relation("EndorsedDoctor", fields: [doctorId], references: [id], onDelete: Cascade)
+  endorser DoctorListing @relation("EndorserDoctor", fields: [endorserDoctorId], references: [id], onDelete: Cascade)
+
+  @@id([doctorId, endorserDoctorId, skill])
+  @@map("doctor_endorsements")
+}
+
+/// A numbered place in one chamber session. Serials are never reused, and two
+/// partial unique indexes in the migration back that up.
+model SerialBooking {
+  id          String              @id @default(uuid()) @db.Uuid
+  patientId   String              @db.Uuid
+  doctorId    String              @db.Uuid
+  bookingDate DateTime            @db.Date
+  /// Session start, HH:MM, Asia/Dhaka.
+  startTime   String              @db.VarChar(5)
+  status      SerialBookingStatus @default(CONFIRMED)
+  notes       String?
+  venue       String
+  sessionTime String
+  serialNo    Int
+  createdAt   DateTime            @default(now())
+
+  patient PatientAccount @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  doctor  DoctorListing  @relation(fields: [doctorId], references: [id], onDelete: Restrict)
+  review  DoctorReview?
+
+  @@index([patientId, bookingDate(sort: Desc)])
+  @@index([doctorId, bookingDate(sort: Desc)])
+  @@map("serial_bookings")
+}
+
+model DoctorReview {
+  id        String    @id @default(uuid()) @db.Uuid
+  bookingId String    @unique @db.Uuid
+  doctorId  String    @db.Uuid
+  patientId String    @db.Uuid
+  rating    Int       @db.SmallInt
+  comment   String?
+  hiddenAt  DateTime?
+  createdAt DateTime  @default(now())
+
+  booking SerialBooking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  doctor  DoctorListing  @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  patient PatientAccount @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([doctorId, createdAt(sort: Desc)])
+  @@map("doctor_reviews")
+}
+
+/// Records the tap on a call button, not a connected call.
+model CallLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  doctorId  String   @db.Uuid
+  venue     String?
+  phone     String?
+  createdAt DateTime @default(now())
+
+  doctor DoctorListing @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@index([doctorId, createdAt])
+  @@map("call_logs")
+}
+
+model DoctorDailyStat {
+  doctorId String   @db.Uuid
+  /// A Bangladesh calendar day.
+  day      DateTime @db.Date
+  views    Int      @default(0)
+  shares   Int      @default(0)
+
+  doctor DoctorListing @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@id([doctorId, day])
+  @@map("doctor_daily_stats")
 }

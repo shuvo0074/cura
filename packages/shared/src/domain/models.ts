@@ -217,6 +217,8 @@ export interface ApiErrorBody {
   statusCode: number;
   code: string;
   message: string;
+  /** Same text as `message`, for clients built on the `{ error, code }` shape. */
+  error: string;
   /** Field-level messages keyed by dotted path. */
   details?: Record<string, string[]>;
   requestId: string;

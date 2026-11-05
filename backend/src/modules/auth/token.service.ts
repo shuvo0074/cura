@@ -115,7 +115,7 @@ export class TokenService {
     const accessTtlSeconds = this.config.rules.auth.accessTokenTtlSeconds;
 
     const accessToken = await this.jwt.signAsync(
-      { sub: userId, role, ver: tokenVersion, practices: practiceIds },
+      { sub: userId, role, ver: tokenVersion, practices: practiceIds, fid: familyId },
       {
         secret: this.config.jwt.accessSecret,
         expiresIn: accessTtlSeconds,

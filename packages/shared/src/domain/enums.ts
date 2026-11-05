@@ -16,6 +16,8 @@ export const UserRole = {
   ADMINISTRATOR: 'ADMINISTRATOR',
   DOCTOR: 'DOCTOR',
   DESK_STAFF: 'DESK_STAFF',
+  /** A public directory account. Holds no clinic permission at all. */
+  PUBLIC_USER: 'PUBLIC_USER',
 } as const;
 export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 
@@ -25,6 +27,8 @@ export type UserRole = (typeof UserRole)[keyof typeof UserRole];
  * touching a controller.
  */
 export const Permission = {
+  /** Any clinic account, as opposed to a public directory account. */
+  CLINIC_ACCESS: 'clinic:access',
   PATIENT_READ: 'patient:read',
   /** Registering a new patient. Separate from editing one that exists. */
   PATIENT_CREATE: 'patient:create',
@@ -70,6 +74,7 @@ export const rolePermissions: Record<UserRole, readonly Permission[]> = {
    * permission is separate from the booking one.
    */
   [UserRole.DOCTOR]: [
+    Permission.CLINIC_ACCESS,
     Permission.PATIENT_READ,
     Permission.PATIENT_WRITE,
     Permission.PATIENT_HISTORY_READ,
@@ -85,6 +90,7 @@ export const rolePermissions: Record<UserRole, readonly Permission[]> = {
 
   /** The front desk: registration, the diary and taking payment. */
   [UserRole.DESK_STAFF]: [
+    Permission.CLINIC_ACCESS,
     Permission.PATIENT_READ,
     Permission.PATIENT_CREATE,
     Permission.PATIENT_WRITE,
@@ -96,6 +102,8 @@ export const rolePermissions: Record<UserRole, readonly Permission[]> = {
     Permission.BILLING_READ,
     Permission.BILLING_WRITE,
   ],
+
+  [UserRole.PUBLIC_USER]: [],
 };
 
 export function permissionsForRole(role: UserRole): readonly Permission[] {

@@ -4,10 +4,14 @@ import type { Permission } from '@cura/shared';
 import type { AuthenticatedPrincipal } from './jwt-auth.guard';
 
 export const IS_PUBLIC_KEY = 'cura:isPublic';
+export const OPTIONAL_AUTH_KEY = 'cura:optionalAuth';
 export const PERMISSIONS_KEY = 'cura:permissions';
 
 /** Opts a route out of the global auth guard. Use sparingly and deliberately. */
 export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
+
+/** Open to everyone, but identifies the caller when a valid token is sent. */
+export const OptionalAuth = () => SetMetadata(OPTIONAL_AUTH_KEY, true);
 
 /** Declares the capabilities a handler needs. */
 export const RequirePermissions = (...permissions: Permission[]) =>

@@ -155,6 +155,36 @@ code is printed to the API console.
 - **103 drugs** in the catalogue, so the prescription auto-suggest has realistic
   matches from the first login. Type three letters into a drug field to see it.
 
+## Public directory
+
+The API also serves a public directory of doctors, hospitals, diagnostic centres
+and ambulances, merged from the Cura Health app. Its routes are under
+`/api/directory/*`, with accounts under `/api/auth/*`.
+
+```bash
+cd backend
+npx prisma migrate deploy        # adds new tables only; no clinical table changes
+npm run seed:directory           # real, sourced records and reference data; safe to re-run
+npm run directory:grant-admin -- someone@example.com   # an existing account
+```
+
+A directory admin runs the public site and is separate from a clinic's
+Administrator. Online serial booking is on; set `DIRECTORY_BOOKING_ENABLED=false` to turn it off.
+Public images are stored in `backend/storage-public`, which needs a persistent disk
+in production.
+
+## Backend tests
+
+The tests boot the real API against a throwaway database, whose name must contain
+`test`, and Redis database 15.
+
+```bash
+createdb -O cura --encoding=UTF8 --locale=C --template=template0 cura_merge_test
+cd backend
+DATABASE_URL=postgresql://cura:cura@localhost:5432/cura_merge_test npx prisma migrate deploy
+TEST_DATABASE_URL=postgresql://cura:cura@localhost:5432/cura_merge_test npm test
+```
+
 ## End-to-end UI tests
 
 Playwright drives the real web app against the real API (`web/e2e/`).

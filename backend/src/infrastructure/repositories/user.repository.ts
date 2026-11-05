@@ -125,10 +125,20 @@ export class PrismaUserRepository implements UserRepository {
   async setActive(userId: string, isActive: boolean): Promise<void> {
     // Deactivation also bumps the token version, which is what makes the
     // "kill-switch" immediate rather than eventual.
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: isActive ? { isActive: true } : { isActive: false, tokenVersion: { increment: 1 } },
-    });
+    if (isActive) {
+      await this.prisma.user.update({ where: { id: userId }, data: { isActive: true } });
+      return;
+    }
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: userId },
+        data: { isActive: false, tokenVersion: { increment: 1 } },
+      }),
+      this.prisma.refreshToken.updateMany({
+        where: { userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      }),
+    ]);
   }
 
   /**
@@ -139,10 +149,18 @@ export class PrismaUserRepository implements UserRepository {
    * expiry defeats the exercise.
    */
   async setPassword(userId: string, passwordHash: string): Promise<void> {
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { passwordHash, tokenVersion: { increment: 1 }, failedLoginCount: 0, lockedUntil: null },
-    });
+    // Refresh tokens go too: rotation mints with the current version, so a stolen
+    // cookie would otherwise outlive the password it was stolen under.
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: userId },
+        data: { passwordHash, tokenVersion: { increment: 1 }, failedLoginCount: 0, lockedUntil: null },
+      }),
+      this.prisma.refreshToken.updateMany({
+        where: { userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      }),
+    ]);
   }
 
   async setTwoFactorEnabled(userId: string, enabled: boolean): Promise<void> {

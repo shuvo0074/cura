@@ -13,6 +13,8 @@ export class DomainError extends Error {
     message: string,
     readonly statusCode: number = HttpStatus.BAD_REQUEST,
     readonly details?: Record<string, string[]>,
+    /** Extra top-level fields a client branches on, e.g. an existing serial. */
+    readonly extra?: Record<string, unknown>,
   ) {
     super(message);
     this.name = 'DomainError';

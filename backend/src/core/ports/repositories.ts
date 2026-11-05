@@ -122,6 +122,8 @@ export interface RefreshTokenRepository {
   /** Reuse detection: revoke every token descending from one lineage. */
   revokeFamily(familyId: string): Promise<void>;
   revokeAllForUser(userId: string): Promise<void>;
+  /** False once logout or reuse detection has ended the whole family. */
+  isFamilyActive(familyId: string): Promise<boolean>;
   deleteExpired(before: Date): Promise<number>;
 }
 

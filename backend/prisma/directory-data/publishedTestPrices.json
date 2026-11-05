@@ -1,0 +1,121 @@
+{
+  "Popular Diagnostic Centre, Dhanmondi": [
+    {
+      "match_name": "Complete Blood Count (CBC)",
+      "name": "Complete Blood Count (CBC)",
+      "category": "blood",
+      "price": 400,
+      "source_test_name": "CBC",
+      "source_url": "https://old.populardiagnostic.com/our-price-list",
+      "source_checked_on": "2026-10-09"
+    },
+    {
+      "match_name": "Random Blood Sugar (RBS)",
+      "name": "Random Blood Sugar (RBS)",
+      "category": "blood",
+      "price": 200,
+      "source_test_name": "Random Plasma glucose",
+      "source_url": "https://old.populardiagnostic.com/our-price-list",
+      "source_checked_on": "2026-10-09"
+    },
+    {
+      "match_name": "HbA1c",
+      "name": "HbA1c",
+      "category": "blood",
+      "price": 1500,
+      "source_test_name": "Hb A1c",
+      "source_url": "https://old.populardiagnostic.com/our-price-list",
+      "source_checked_on": "2026-10-09"
+    },
+    {
+      "match_name": "Lipid Profile",
+      "name": "Lipid Profile (Fasting)",
+      "category": "blood",
+      "price": 1400,
+      "source_test_name": "Lipid Profile (F)",
+      "source_url": "https://old.populardiagnostic.com/our-price-list",
+      "source_checked_on": "2026-10-09"
+    },
+    {
+      "match_name": "Serum Creatinine",
+      "name": "Serum Creatinine",
+      "category": "blood",
+      "price": 400,
+      "source_test_name": "Serum Creatinine",
+      "source_url": "https://old.populardiagnostic.com/our-price-list",
+      "source_checked_on": "2026-10-09"
+    },
+    {
+      "match_name": "Urine Routine Examination",
+      "name": "Urine Routine Examination",
+      "category": "blood",
+      "price": 400,
+      "source_test_name": "Urine Routine Examination",
+      "source_url": "https://old.populardiagnostic.com/our-price-list",
+      "source_checked_on": "2026-10-09"
+    },
+    {
+      "match_name": "Dengue NS1 Antigen",
+      "name": "Dengue NS1 Antigen",
+      "category": "blood",
+      "price": 300,
+      "source_test_name": "Dengue NS1",
+      "source_url": "https://old.populardiagnostic.com/our-price-list",
+      "source_checked_on": "2026-10-09"
+    },
+    {
+      "match_name": "X-ray Chest (PA view)",
+      "name": "X-ray Chest (PA view, digital)",
+      "category": "imaging",
+      "price": 600,
+      "source_test_name": "Digital X-Ray of Chest P/A View (100% Equal Size)",
+      "source_url": "https://old.populardiagnostic.com/our-price-list",
+      "source_checked_on": "2026-10-09"
+    },
+    {
+      "match_name": "Ultrasound Whole Abdomen",
+      "name": "Ultrasound Whole Abdomen",
+      "category": "imaging",
+      "price": 2500,
+      "source_test_name": "Ultrasonogram of Whole Abdomen",
+      "source_url": "https://old.populardiagnostic.com/our-price-list",
+      "source_checked_on": "2026-10-09"
+    },
+    {
+      "match_name": "CT Scan Brain",
+      "name": "CT Scan Brain (spiral)",
+      "category": "imaging",
+      "price": 5000,
+      "source_test_name": "Spiral CT Scan of Brain",
+      "source_url": "https://old.populardiagnostic.com/our-price-list",
+      "source_checked_on": "2026-10-09"
+    },
+    {
+      "match_name": "MRI Brain",
+      "name": "MRI Brain",
+      "category": "imaging",
+      "price": 8000,
+      "source_test_name": "MRI of Brain",
+      "source_url": "https://old.populardiagnostic.com/our-price-list",
+      "source_checked_on": "2026-10-09"
+    },
+    {
+      "match_name": "ECG",
+      "name": "ECG",
+      "category": "cardiac",
+      "price": 400,
+      "source_test_name": "ECG",
+      "source_url": "https://old.populardiagnostic.com/our-price-list",
+      "source_checked_on": "2026-10-09"
+    },
+    {
+      "match_name": "Echocardiogram",
+      "name": "Echocardiogram (2D)",
+      "category": "cardiac",
+      "price": 1600,
+      "source_test_name": "2D Echo",
+      "source_url": "https://old.populardiagnostic.com/our-price-list",
+      "source_checked_on": "2026-10-09"
+    }
+  ]
+}

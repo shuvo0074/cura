@@ -1,6 +1,7 @@
+import { Permission } from '@cura/shared';
 import { Body, Controller, Get, Param, ParseIntPipe, Post } from '@nestjs/common';
 import { z } from 'zod';
-import { CurrentUser } from '../../common/security/decorators';
+import { CurrentUser, RequirePermissions } from '../../common/security/decorators';
 import { zodBody } from '../../common/http/zod-validation.pipe';
 import { ValidationError } from '../../common/errors/domain-error';
 import type { AuthenticatedPrincipal } from '../../common/security/jwt-auth.guard';
@@ -14,11 +15,11 @@ const draftSchema = z.object({
 /**
  * Onboarding wizard endpoints.
  *
- * No `@RequirePermissions` here: every authenticated user may complete their
- * own setup, and the service scopes all writes to `principal.userId`, so there
- * is no id a caller could substitute.
+ * Open to every clinic account, because each member completes their own profile.
+ * Public directory accounts are excluded: these routes write to clinic fields.
  */
 @Controller('onboarding')
+@RequirePermissions(Permission.CLINIC_ACCESS)
 export class OnboardingController {
   constructor(private readonly onboarding: OnboardingService) {}
 

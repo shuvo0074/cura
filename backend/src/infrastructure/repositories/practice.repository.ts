@@ -292,6 +292,14 @@ export class PrismaPracticeRepository implements PracticeRepository, StaffReposi
         where: { id: userId },
         data: isActive ? { isActive: true } : { isActive: false, tokenVersion: { increment: 1 } },
       }),
+      ...(isActive
+        ? []
+        : [
+            this.prisma.refreshToken.updateMany({
+              where: { userId, revokedAt: null },
+              data: { revokedAt: new Date() },
+            }),
+          ]),
     ]);
   }
 }

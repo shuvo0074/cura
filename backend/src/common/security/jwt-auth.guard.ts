@@ -10,14 +10,21 @@ import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
 import { permissionsForRole, type Permission, type UserRole } from '@cura/shared';
 import { AppConfigService } from '../../config/app.config';
-import { IS_PUBLIC_KEY } from './decorators';
-import { USER_REPOSITORY, type UserRepository } from '../../core/ports/repositories';
+import { IS_PUBLIC_KEY, OPTIONAL_AUTH_KEY } from './decorators';
+import {
+  REFRESH_TOKEN_REPOSITORY,
+  USER_REPOSITORY,
+  type RefreshTokenRepository,
+  type UserRepository,
+} from '../../core/ports/repositories';
 
 export interface AccessTokenClaims {
   sub: string;
   role: UserRole;
   ver: number;
   practices: string[];
+  /** Refresh family this token belongs to; absent on tokens minted before it existed. */
+  fid?: string;
   iss: string;
   aud: string;
   exp: number;
@@ -52,6 +59,7 @@ export class JwtAuthGuard implements CanActivate {
     private readonly jwt: JwtService,
     private readonly config: AppConfigService,
     @Inject(USER_REPOSITORY) private readonly users: UserRepository,
+    @Inject(REFRESH_TOKEN_REPOSITORY) private readonly refreshTokens: RefreshTokenRepository,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -63,8 +71,29 @@ export class JwtAuthGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest<Request>();
     const token = this.extractBearer(request);
-    if (!token) throw new UnauthorizedException('Authentication required');
 
+    const isOptional = this.reflector.getAllAndOverride<boolean>(OPTIONAL_AUTH_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (isOptional) {
+      // Personalises a public response; a bad token simply means "anonymous".
+      if (token) {
+        try {
+          request.principal = await this.authenticate(token);
+        } catch (error) {
+          if (!(error instanceof UnauthorizedException)) throw error;
+        }
+      }
+      return true;
+    }
+
+    if (!token) throw new UnauthorizedException('Authentication required');
+    request.principal = await this.authenticate(token);
+    return true;
+  }
+
+  private async authenticate(token: string): Promise<AuthenticatedPrincipal> {
     let claims: AccessTokenClaims;
     try {
       claims = await this.jwt.verifyAsync<AccessTokenClaims>(token, {
@@ -92,13 +121,17 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException('Session has been revoked');
     }
 
-    request.principal = {
+    // Logging out one device ends its refresh family; its access token ends too.
+    if (claims.fid && !(await this.refreshTokens.isFamilyActive(claims.fid))) {
+      throw new UnauthorizedException('Session has been revoked');
+    }
+
+    return {
       userId: user.id,
       role: user.role,
       permissions: permissionsForRole(user.role),
       practiceIds: claims.practices ?? [],
     };
-    return true;
   }
 
   private extractBearer(request: Request): string | null {

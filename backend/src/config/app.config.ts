@@ -98,6 +98,10 @@ export class AppConfigService {
     } as const;
   }
 
+  get directory() {
+    return { bookingEnabled: this.env.DIRECTORY_BOOKING_ENABLED === 'true' } as const;
+  }
+
   get storage() {
     return {
       driver: this.env.STORAGE_DRIVER,

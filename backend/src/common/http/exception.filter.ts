@@ -30,7 +30,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
     const requestId = request.requestId ?? 'unknown';
 
-    const body = this.toBody(exception, requestId);
+    const built = this.toBody(exception, requestId);
+    const body: ApiErrorBody = { ...built, error: built.message };
 
     if (body.statusCode >= HttpStatus.INTERNAL_SERVER_ERROR) {
       this.logger.error(
@@ -44,7 +45,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     response.status(body.statusCode).json(body);
   }
 
-  private toBody(exception: unknown, requestId: string): ApiErrorBody {
+  private toBody(exception: unknown, requestId: string): Omit<ApiErrorBody, 'error'> {
     const timestamp = new Date().toISOString();
 
     if (exception instanceof ZodError) {
@@ -69,6 +70,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         code: exception.code,
         message: exception.message,
         ...(exception.details ? { details: exception.details } : {}),
+        ...exception.extra,
         requestId,
         timestamp,
       };

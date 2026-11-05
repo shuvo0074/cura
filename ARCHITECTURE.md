@@ -51,6 +51,19 @@ Model (@cura/shared)         →  contracts, rules, validation
 `LoginViewModel` and `CalendarViewModel` are imported unchanged by both apps.
 `useViewModel` binds one to a component through `useSyncExternalStore`.
 
+## Public directory
+
+`backend/src/modules/directory` follows the same layering: pure rules in `domain/`,
+one service per responsibility, narrow ports in `core/ports/directory.ports.ts` and
+Prisma adapters in `infrastructure/repositories/directory/`. Two boundaries matter:
+
+- **Roles.** `User.role` is the clinic access level. Directory roles are separate
+  rows, enforced by `DirectoryAccessGuard`, because `ADMINISTRATOR` automatically
+  holds every clinic `Permission` and must not gain control of the public site.
+- **Data.** Listings are public; `Patient` and `Appointment` are private clinical
+  records. The directory has its own `PatientAccount` and `SerialBooking`, and nothing
+  links them to clinical records.
+
 ## Running it
 
 ```bash

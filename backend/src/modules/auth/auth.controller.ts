@@ -12,10 +12,10 @@ import {
 import { Public } from '../../common/security/decorators';
 import { zodBody } from '../../common/http/zod-validation.pipe';
 import { UnauthenticatedError } from '../../common/errors/domain-error';
-import { AppConfigService } from '../../config/app.config';
+import { CurrentUser } from '../../common/security/decorators';
+import type { AuthenticatedPrincipal } from '../../common/security/jwt-auth.guard';
+import { RefreshCookie } from './refresh-cookie';
 import { AuthService, type RequestContext } from './auth.service';
-
-const REFRESH_COOKIE = 'cura_rt';
 
 /**
  * Authentication endpoints.
@@ -29,7 +29,7 @@ const REFRESH_COOKIE = 'cura_rt';
 export class AuthController {
   constructor(
     private readonly auth: AuthService,
-    private readonly config: AppConfigService,
+    private readonly cookie: RefreshCookie,
   ) {}
 
   @Public()
@@ -54,7 +54,7 @@ export class AuthController {
     if (result.status === 'authenticated') {
       // The refresh token leaves via the cookie only — it is stripped from the
       // JSON body so it can never be read by page scripts or logged by a proxy.
-      this.setCookie(res, result.refreshToken);
+      this.cookie.set(res, result.refreshToken);
       return { status: result.status, session: result.session };
     }
     return result;
@@ -74,7 +74,7 @@ export class AuthController {
       dto.code,
       this.contextOf(req),
     );
-    this.setCookie(res, refreshToken);
+    this.cookie.set(res, refreshToken);
     return session;
   }
 
@@ -83,11 +83,11 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 60, ttl: 900_000 } })
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    const presented = this.readRefreshCookie(req);
+    const presented = this.cookie.read(req);
     if (!presented) throw new UnauthenticatedError();
 
     const issued = await this.auth.refresh(presented, this.contextOf(req));
-    this.setCookie(res, issued.refreshToken);
+    this.cookie.set(res, issued.refreshToken);
     return {
       accessToken: issued.accessToken,
       expiresIn: issued.expiresIn,
@@ -99,9 +99,21 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<void> {
-    const presented = this.readRefreshCookie(req);
+    const presented = this.cookie.read(req);
     if (presented) await this.auth.logout(presented);
-    res.clearCookie(REFRESH_COOKIE, this.cookieOptions(0));
+    this.cookie.clear(res);
+  }
+
+  /** Ends every session on every device, including this one. */
+  @Post('logout-all')
+  @HttpCode(HttpStatus.OK)
+  async logoutAll(
+    @CurrentUser() principal: AuthenticatedPrincipal,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ ok: true }> {
+    await this.auth.logoutEverywhere(principal.userId);
+    this.cookie.clear(res);
+    return { ok: true };
   }
 
   // -------------------------------------------------------------------------
@@ -111,36 +123,6 @@ export class AuthController {
       userAgent: req.headers['user-agent'] ?? null,
       ip: req.ip ?? null,
       requestId: req.requestId ?? null,
-    };
-  }
-
-  private readRefreshCookie(req: Request): string | null {
-    const raw = req.headers.cookie;
-    if (!raw) return null;
-    for (const part of raw.split(';')) {
-      const [name, ...rest] = part.trim().split('=');
-      if (name === REFRESH_COOKIE) return decodeURIComponent(rest.join('='));
-    }
-    return null;
-  }
-
-  private setCookie(res: Response, token: string): void {
-    res.cookie(
-      REFRESH_COOKIE,
-      token,
-      this.cookieOptions(this.config.rules.auth.rememberMeDays * 86_400_000),
-    );
-  }
-
-  private cookieOptions(maxAgeMs: number) {
-    return {
-      httpOnly: true,
-      secure: this.config.isProduction,
-      sameSite: 'strict' as const,
-      // Scoped to the refresh route only, so the cookie is not attached to
-      // every API call and cannot be used as an ambient credential.
-      path: `/${this.config.apiPrefix}/auth`,
-      maxAge: maxAgeMs,
     };
   }
 }

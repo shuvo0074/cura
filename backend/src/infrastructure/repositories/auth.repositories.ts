@@ -73,6 +73,14 @@ export class PrismaRefreshTokenRepository implements RefreshTokenRepository {
     });
   }
 
+  async isFamilyActive(familyId: string): Promise<boolean> {
+    const row = await this.prisma.refreshToken.findFirst({
+      where: { familyId, revokedAt: null },
+      select: { id: true },
+    });
+    return row !== null;
+  }
+
   async deleteExpired(before: Date): Promise<number> {
     const { count } = await this.prisma.refreshToken.deleteMany({
       where: { expiresAt: { lt: before } },

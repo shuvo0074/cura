@@ -56,6 +56,33 @@ import { PrismaPrescriberRepository } from './repositories/prescriber.repository
 import { PrismaEngagementRepository } from './repositories/engagement.repository';
 import { ENGAGEMENT_REPOSITORY } from '../core/ports/engagement.ports';
 import { LocalFileStorage } from './adapters/file-storage.adapter';
+import { LocalPublicMediaStorage } from './adapters/public-media.adapter';
+import { RedisThrottlerStorage } from './adapters/redis-throttler.storage';
+import { PUBLIC_MEDIA } from '../core/ports/public-media';
+import {
+  AMBULANCE_REPOSITORY,
+  CATALOG_DIRECTORY_REPOSITORY,
+  DIRECTORY_ACCOUNT_REPOSITORY,
+  DOCTOR_LISTING_REPOSITORY,
+  DOCTOR_PROFILE_REPOSITORY,
+  DOCTOR_REACH_REPOSITORY,
+  DOCTOR_VERIFICATION_REPOSITORY,
+  HOSPITAL_REPOSITORY,
+  SERIAL_BOOKING_REPOSITORY,
+  SITE_SETTINGS_REPOSITORY,
+} from '../core/ports/directory.ports';
+import { PrismaDirectoryAccountRepository } from './repositories/directory/account.repository';
+import { PrismaDoctorListingRepository } from './repositories/directory/doctor-listing.repository';
+import { PrismaDoctorProfileRepository } from './repositories/directory/doctor-profile.repository';
+import { PrismaDoctorVerificationRepository } from './repositories/directory/verification.repository';
+import { PrismaDoctorReachRepository } from './repositories/directory/reach.repository';
+import { PrismaSerialBookingRepository } from './repositories/directory/serial-booking.repository';
+import {
+  PrismaAmbulanceRepository,
+  PrismaCatalogDirectoryRepository,
+  PrismaHospitalRepository,
+  PrismaSiteSettingsRepository,
+} from './repositories/directory/content.repositories';
 import {
   ConsoleEmailSender,
   ConsoleSmsSender,
@@ -106,6 +133,20 @@ import {
     { provide: ONBOARDING_REPOSITORY, useClass: PrismaOnboardingRepository },
     { provide: PRESCRIBER_REPOSITORY, useClass: PrismaPrescriberRepository },
 
+    // Public directory
+    RedisThrottlerStorage,
+    { provide: PUBLIC_MEDIA, useClass: LocalPublicMediaStorage },
+    { provide: DIRECTORY_ACCOUNT_REPOSITORY, useClass: PrismaDirectoryAccountRepository },
+    { provide: DOCTOR_LISTING_REPOSITORY, useClass: PrismaDoctorListingRepository },
+    { provide: DOCTOR_PROFILE_REPOSITORY, useClass: PrismaDoctorProfileRepository },
+    { provide: DOCTOR_VERIFICATION_REPOSITORY, useClass: PrismaDoctorVerificationRepository },
+    { provide: DOCTOR_REACH_REPOSITORY, useClass: PrismaDoctorReachRepository },
+    { provide: SERIAL_BOOKING_REPOSITORY, useClass: PrismaSerialBookingRepository },
+    { provide: HOSPITAL_REPOSITORY, useClass: PrismaHospitalRepository },
+    { provide: AMBULANCE_REPOSITORY, useClass: PrismaAmbulanceRepository },
+    { provide: CATALOG_DIRECTORY_REPOSITORY, useClass: PrismaCatalogDirectoryRepository },
+    { provide: SITE_SETTINGS_REPOSITORY, useClass: PrismaSiteSettingsRepository },
+
     // Adapters that implement several narrow ports are registered once and
     // aliased, so each port is a view onto one instance rather than a copy.
     PrismaCatalogRepository,
@@ -149,6 +190,18 @@ import {
     ENGAGEMENT_REPOSITORY,
     ONBOARDING_REPOSITORY,
     PRESCRIBER_REPOSITORY,
+    RedisThrottlerStorage,
+    PUBLIC_MEDIA,
+    DIRECTORY_ACCOUNT_REPOSITORY,
+    DOCTOR_LISTING_REPOSITORY,
+    DOCTOR_PROFILE_REPOSITORY,
+    DOCTOR_VERIFICATION_REPOSITORY,
+    DOCTOR_REACH_REPOSITORY,
+    SERIAL_BOOKING_REPOSITORY,
+    HOSPITAL_REPOSITORY,
+    AMBULANCE_REPOSITORY,
+    CATALOG_DIRECTORY_REPOSITORY,
+    SITE_SETTINGS_REPOSITORY,
     DRUG_CATALOG_REPOSITORY,
     CLINICAL_NOTE_CATALOG_REPOSITORY,
     PRICING_REPOSITORY,

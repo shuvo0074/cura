@@ -147,7 +147,8 @@ export class AuthService {
      * Spec 1.3.1.2: valid credentials trigger an OTP. We also apply this when
      * the account has 2FA switched on explicitly.
      */
-    const needsSecondFactor = user.twoFactorEnabled || !user.mobileVerifiedAt;
+    const isClinicAccount = user.role !== UserRole.PUBLIC_USER;
+    const needsSecondFactor = user.twoFactorEnabled || (isClinicAccount && !user.mobileVerifiedAt);
     const destination = user.mobile ?? user.email;
 
     if (needsSecondFactor && destination) {
@@ -207,6 +208,10 @@ export class AuthService {
   async refresh(refreshToken: string, ctx: RequestContext) {
     const issued = await this.tokens.rotate(refreshToken, ctx);
     return issued;
+  }
+
+  async logoutEverywhere(userId: string): Promise<void> {
+    await this.tokens.revokeAllSessions(userId);
   }
 
   async logout(refreshToken: string): Promise<void> {

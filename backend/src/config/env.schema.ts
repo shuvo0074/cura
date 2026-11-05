@@ -49,6 +49,9 @@ export const envSchema = z.object({
    *  outside development and test below. */
   THROTTLE_DISABLED: z.enum(['true', 'false']).default('false'),
 
+  /** Patients booking serials online. Set to false to go back to phone booking only. */
+  DIRECTORY_BOOKING_ENABLED: z.enum(['true', 'false']).default('true'),
+
   SMS_PROVIDER: z.enum(['console', 'ssl_wireless', 'twilio']).default('console'),
   SMS_API_KEY: z.string().optional(),
   SMS_SENDER_ID: z.string().optional(),
