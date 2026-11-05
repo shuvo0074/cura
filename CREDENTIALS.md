@@ -10,7 +10,44 @@ ends. **Works on** says where its screens are.
 
 The live and local databases hold different accounts, so check which section you need.
 
+## What each role gets on Cura Website
+
+All the live logins below can log in on Cura Website, but only super admins, doctors and patients get their own screens
+there. Nobody needs a login to browse doctors, hospitals, diagnostic centres and ambulances.
+
+| Role | Account to try | Lands on | What they can do |
+| --- | --- | --- | --- |
+| Patient | patient01@cura.local | My Appointments | Browse, join or leave clinics, view appointments and review completed visits |
+| Doctor | doctor01@cura.local | Doctor Dashboard | Browse, edit their public profile, see profile stats and get a QR card |
+| Super admin | admin@cura.local | Admin panel | Manage all website content and doctors, approve doctor sign-ups and create clinic owners |
+| Clinic owner | owner1@cura.local | Home | Browse only; their screens are on Cura Dashboard |
+| Clinic staff | desk@cura.local | Home | Browse only; their screens are on Cura Dashboard |
+
+- **Super admin:** the admin panel covers hospitals, doctors, specialties, symptoms, ambulances, sample prices, the home
+  page, site text, photo credits, appointments, verifications and owners.
+- **Patients:** joining a clinic adds them to that clinic's patient list on Cura Dashboard. To join, open My Appointments
+  and click **My clinics**.
+- **Booking:** patients can only book online if booking is switched on in the API.
+- **Ambulance and pharmacy owners:** there are no such accounts on the live database yet, and neither role has a screen
+  on Cura Website. Ambulance owners can only edit their own vendor through the API.
+
+### Login rules
+
+- **Patients:** Cura Website is the only place they can log in, because Cura Dashboard blocks them.
+- **Super admin:** a super-admin-only account is blocked on Cura Dashboard. `admin@cura.local` works there only because
+  it is also a clinic owner.
+- **New doctors:** signing up on Cura Website sends them to Cura Dashboard. They cannot finish signing up on the live
+  site yet, because Cura does not send real SMS.
+
 ## Live database
+
+### Super admin
+
+| User type | Name | Email | Mobile | Password | Works on |
+| --- | --- | --- | --- | --- | --- |
+| Super admin, also owner of Cura Demo Clinic | Shahnaz Rahman | admin@cura.local | 01700000001 | CuraAdmin123 | Cura Website for super admin, Cura Dashboard for the clinic |
+
+This password is public, so anyone can use this account. Replace it before real patients use Cura.
 
 ### Original demo accounts
 
@@ -23,10 +60,6 @@ The live and local databases hold different accounts, so check which section you
 | Clinic staff | Rekha Sultana | Cura Demo Clinic | desk@cura.local | 01700000003 | CuraDesk123 | Cura Dashboard |
 | Clinic staff | Mitu Akter | Cura Demo Clinic | desk2@cura.local | 01700000004 | CuraDesk123 | Cura Dashboard |
 | Clinic staff | Jahid Hasan | Cura Demo Clinic | desk3@cura.local | 01700000005 | CuraDesk123 | Cura Dashboard |
-
-`admin@cura.local` also has super admin access on the live database, so it can open the Cura Website admin pages.
-
-`demo.doctor@cura.local` and `demo.patient@cura.local` also exist on the live database. Their passwords are not recorded.
 
 ### Clinic owners
 
