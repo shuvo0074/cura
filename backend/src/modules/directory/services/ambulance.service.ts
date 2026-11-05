@@ -49,6 +49,18 @@ export class AmbulanceService {
     return present(row);
   }
 
+  async listOwned(ownerId: string) {
+    return (await this.vendors.listOwned(ownerId)).map(present);
+  }
+
+  /** An ambulance owner edits only their own vendor. */
+  async updateOwned(id: string, body: Row, ownerId: string) {
+    const row = await this.vendors.updateOwned(id, ownerId, ambulanceVendor(body));
+    if (!row) throw directoryNotFound('Ambulance vendor');
+    await this.audit.record(ownerId, 'ambulance_updated_by_owner', 'ambulance_vendor', id);
+    return present(row);
+  }
+
   async setHidden(id: string, hidden: boolean, adminId: string) {
     const row = await this.vendors.setHidden(id, hidden);
     if (!row) throw directoryNotFound('Ambulance vendor');

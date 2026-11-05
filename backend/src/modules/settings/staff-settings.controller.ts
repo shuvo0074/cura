@@ -25,7 +25,9 @@ const staffSchema = practiceQuery.extend({
   mobile: bdMobileSchema.nullable().default(null),
   role: z.nativeEnum(UserRole),
   bmdcNumber: z.string().trim().max(20).nullable().default(null),
-  temporaryPassword: passwordSchema,
+  specialty: z.string().trim().min(2).max(80).nullable().default(null),
+  /** Optional for a doctor, who can create their own login later. */
+  temporaryPassword: passwordSchema.nullable().default(null),
 });
 
 /**
@@ -59,6 +61,18 @@ export class StaffSettingsController {
     @CurrentUser() p: AuthenticatedPrincipal,
   ) {
     return this.settings.setStaffActive(b.practiceId, userId, b.isActive, p);
+  }
+
+  /** Gives a doctor who has no login a temporary password. */
+  @Put('staff/:userId/login')
+  @RequirePermissions(Permission.STAFF_MANAGE)
+  createStaffLogin(
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @Body(zodBody(practiceQuery.extend({ temporaryPassword: passwordSchema })))
+    b: { practiceId: string; temporaryPassword: string },
+    @CurrentUser() p: AuthenticatedPrincipal,
+  ) {
+    return this.settings.createStaffLogin(b.practiceId, userId, b.temporaryPassword, p);
   }
 
   @Patch('staff/:userId')

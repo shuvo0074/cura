@@ -42,6 +42,20 @@ On the welcome page, stay on the **Login** tab, type the email (or mobile) and p
 | Desk staff | Mitu Akter | desk2@cura.local | 01700000004 | CuraDesk123 | Same as Desk staff |
 | Desk staff | Jahid Hasan | desk3@cura.local | 01700000005 | CuraDesk123 | Same as Desk staff |
 
+The other user types, and where each one logs in:
+
+| User type | Name | Email or mobile | Password | Logs in on |
+| --- | --- | --- | --- | --- |
+| Super admin | Cura Super Admin | superadmin@cura.local | CuraSuper123 | Cura Website |
+| Clinic owner, also ambulance and pharmacy owner | Tanzila Ahmed | owner2@cura.local | CuraAdmin123 | Cura Dashboard |
+| Doctor at Cura Uttara Clinic | Dr Rumana Haque | doctor4@cura.local | CuraDoctor123 | Cura Dashboard |
+| Doctor with no login yet | Dr Farzana Ahmed | 01711111114 | Signs up with BMDC A-100203 | Cura Dashboard |
+| Ambulance owner | Rafiq Mia | ambulance@cura.local | CuraOwner123 | Cura Website |
+| Pharmacy owner | Selina Parvin | pharmacy@cura.local | CuraOwner123 | Cura Website |
+| Patient | Sadia Rahman | patient@cura.local | CuraPatient123 | Cura Website |
+
+A patient cannot log in on Cura Dashboard, but appears there as a patient at each clinic they chose on Cura Website.
+
 The calendar shows all three doctors' appointments together. Dr Nadia Karim's are in the morning and early afternoon; Dr Sajid Hasan's are in the afternoon and evening.
 
 After 10 login attempts in 15 minutes Cura says **Too many attempts**. Wait 15 minutes and try again.

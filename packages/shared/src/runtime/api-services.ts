@@ -7,7 +7,13 @@ import type {
   PatientSearchHit,
   QueueSummary,
 } from '../domain/models';
-import type { CreateAppointmentInput, LoginInput, RegisterInput } from '../validation/schemas';
+import type {
+  CreateAppointmentInput,
+  DoctorClaimCompleteInput,
+  DoctorClaimStartInput,
+  LoginInput,
+  RegisterInput,
+} from '../validation/schemas';
 import type { AppError, Result } from '../utils/result';
 import type { HttpClient } from './http-client';
 import { tokenStore } from './token-store';
@@ -20,11 +26,21 @@ import { tokenStore } from './token-store';
  * contained to one adapter.
  */
 
+export type DoctorClaimLookup =
+  | { claimable: false }
+  | { claimable: true; fullName: string; specialty: string; mobile: string };
+
 export interface AuthApi {
   login(input: LoginInput): Promise<Result<LoginResult, AppError>>;
   /** Creates a doctor account. Always answers with an OTP challenge, never a session. */
   register(input: RegisterInput): Promise<Result<{ status: 'otp_required'; challenge: OtpChallenge }, AppError>>;
   verifyOtp(challengeId: string, code: string): Promise<Result<AuthSession, AppError>>;
+  /** Finds a doctor an admin added, to pre-fill their sign-up form. */
+  lookupDoctorClaim(mobile: string): Promise<Result<DoctorClaimLookup, AppError>>;
+  startDoctorClaim(
+    input: DoctorClaimStartInput,
+  ): Promise<Result<{ status: 'otp_required'; challenge: OtpChallenge }, AppError>>;
+  completeDoctorClaim(input: DoctorClaimCompleteInput): Promise<Result<AuthSession, AppError>>;
   restoreSession(): Promise<Result<{ accessToken: string; expiresIn: number }, AppError>>;
   logout(): Promise<void>;
 }
@@ -60,6 +76,37 @@ export class HttpAuthApi implements AuthApi {
     const result = await this.http.request<AuthSession>('/auth/verify-otp', {
       method: 'POST',
       body: { challengeId, code },
+      anonymous: true,
+      retry: false,
+    });
+    if (result.ok) tokenStore.set(result.value.accessToken, result.value.expiresIn);
+    return result;
+  }
+
+  lookupDoctorClaim(mobile: string): Promise<Result<DoctorClaimLookup, AppError>> {
+    return this.http.request<DoctorClaimLookup>('/auth/doctor-claim/lookup', {
+      method: 'POST',
+      body: { mobile },
+      anonymous: true,
+      retry: false,
+    });
+  }
+
+  startDoctorClaim(
+    input: DoctorClaimStartInput,
+  ): Promise<Result<{ status: 'otp_required'; challenge: OtpChallenge }, AppError>> {
+    return this.http.request<{ status: 'otp_required'; challenge: OtpChallenge }>('/auth/doctor-claim/start', {
+      method: 'POST',
+      body: input,
+      anonymous: true,
+      retry: false,
+    });
+  }
+
+  async completeDoctorClaim(input: DoctorClaimCompleteInput): Promise<Result<AuthSession, AppError>> {
+    const result = await this.http.request<AuthSession>('/auth/doctor-claim/complete', {
+      method: 'POST',
+      body: input,
       anonymous: true,
       retry: false,
     });

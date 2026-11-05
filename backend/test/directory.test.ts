@@ -29,10 +29,10 @@ function assertNoSecrets(value: unknown): void {
 }
 
 const newDoctor = (fields: Record<string, unknown> = {}) =>
-  api.post('/directory/admin/doctors', { name: 'Dr. Listed', specialty: 'Cardiology', weeklySchedule: SCHEDULE, ...fields }, admin.token);
+  api.post('/directory/admin/doctors', { name: 'Dr. Listed', specialty: 'Cardiology', phone: nextPhone(), weeklySchedule: SCHEDULE, ...fields }, admin.token);
 
 before(async () => {
-  await db.$executeRawUnsafe(`TRUNCATE users, doctor_listings, hospitals, ambulance_vendors, specialties, symptoms, site_settings, practices, audit_logs CASCADE`);
+  await db.$executeRawUnsafe(`TRUNCATE users, doctors, hospitals, ambulance_vendors, specialties, symptoms, site_settings, practices, audit_logs CASCADE`);
   api = await TestApi.start();
   admin = await directoryAdmin(api);
 });
@@ -239,34 +239,20 @@ test('a new BMDC sign-up creates no public listing until approval', async () => 
   assert.equal((await api.get('/auth/me', doctor.token)).body.doctorId, approved.body.doctorId);
 });
 
-test('an existing listing makes it a claim, approval links it and rejects rival claims', async () => {
+test('two doctors asking for one BMDC number: the first approved wins and the rival is rejected', async () => {
   const bmdcNo = nextBmdc();
-  const listing = await newDoctor({ bmdcNo, name: 'Dr. Claimable' });
-  assert.equal(listing.status, 201, JSON.stringify(listing.body));
-  assert.equal(listing.body.bmdc_verified_at, null);
-
   const first = await registerDoctor(api, { bmdcNo });
-  const rival = await registerDoctor(api, { bmdcNo: bmdcNo.replace('-', ' ') });
-  assert.equal(first.verification.kind, 'claim');
-  assert.equal(rival.verification.kind, 'claim');
+  const rival = await registerDoctor(api, { bmdcNo: bmdcNo.replace('-', '') });
+  assert.equal(first.verification.kind, 'new');
 
-  const requests = await db.doctorVerification.findMany({ where: { doctorId: listing.body.id } });
-  const firstRequest = requests.find((r) => r.userId === first.id)!;
-  const approved = await api.post(`/directory/admin/verifications/${firstRequest.id}/approve`, {}, admin.token);
+  const request = await db.doctorVerification.findFirstOrThrow({ where: { userId: first.id } });
+  const approved = await api.post(`/directory/admin/verifications/${request.id}/approve`, {}, admin.token);
   assert.equal(approved.status, 200);
-  assert.equal(approved.body.doctorId, listing.body.id);
 
-  const after = (await api.get(`/directory/doctors/${listing.body.id}`)).body;
+  const after = (await api.get(`/directory/doctors/${approved.body.doctorId}`)).body;
   assert.ok(after.bmdc_verified_at);
   const rivalNow = (await api.get('/auth/me', rival.token)).body;
   assert.equal(rivalNow.verification.status, 'rejected');
-  assert.match(rivalNow.verification.review_note, /Another account/);
-
-  const late = await api.post('/auth/register/doctor', {
-    name: 'Late Comer', email: nextEmail(), password: PASSWORD, phone: nextPhone(), specialty: 'ENT', bmdcNo,
-  });
-  assert.equal(late.status, 409);
-  assert.equal(late.body.code, 'BMDC_CLAIMED');
 });
 
 test('two new sign-ups with one number cannot create two listings', async () => {
@@ -298,15 +284,12 @@ test('rejecting needs a reason, and a rejected doctor can apply again', async ()
   assert.equal(twice.body.code, 'VERIFICATION_PENDING');
 });
 
-test('a self-declared clinic BMDC number cannot lock the real doctor out', async () => {
+test('a sign-up waiting for approval cannot lock the real doctor out of their BMDC number', async () => {
   const bmdcNo = nextBmdc();
-  await db.user.create({ data: { fullName: 'Squatter', email: nextEmail(), passwordHash: 'x', role: 'DOCTOR', bmdcNumber: bmdcNo } });
-  const res = await api.post('/auth/register/doctor', {
-    name: 'Real Doctor', email: nextEmail(), password: PASSWORD, phone: nextPhone(), specialty: 'ENT', bmdcNo,
-  });
-  assert.equal(res.status, 201, JSON.stringify(res.body));
-  assert.equal(res.body.verification.status, 'pending');
-  assert.equal(res.body.doctorId, null);
+  await registerDoctor(api, { bmdcNo, name: 'Squatter' });
+  const real = await registerDoctor(api, { bmdcNo, name: 'Real Doctor' });
+  assert.equal(real.verification.status, 'pending');
+  assert.equal(real.doctorId, null);
 });
 
 test('bad admin input is a 400, never a database error', async () => {
@@ -971,28 +954,33 @@ test('complete, cancel rules, reviews and doctor views', async () => {
   assert.ok(row.doctor_name);
 });
 
-test('a clinic doctor can claim a listing from their existing account', async () => {
+test('a doctor a clinic adds is already a doctor on the website, with nothing to verify', async () => {
+  const clinic = await db.practice.create({ data: { name: 'Direct Clinic' } });
   const { CryptoService } = await import('../src/common/crypto/crypto.service');
-  const crypto = api.app.get(CryptoService);
   const email = nextEmail();
-  const bmdcNo = nextBmdc();
   await db.user.create({
-    data: { fullName: 'Clinic Doctor', email, mobile: `+88${nextPhone()}`, passwordHash: await crypto.hashPassword(PASSWORD), role: 'DOCTOR', bmdcNumber: bmdcNo, mobileVerifiedAt: new Date() },
+    data: {
+      fullName: 'Owner', email, mobile: `+88${nextPhone()}`, role: 'ADMINISTRATOR', mobileVerifiedAt: new Date(),
+      passwordHash: await api.app.get(CryptoService).hashPassword(PASSWORD),
+      memberships: { create: { practiceId: clinic.id, role: 'ADMINISTRATOR' } },
+    },
   });
-  const login = await api.post('/auth/login', { identifier: email, password: PASSWORD });
-  const token = login.body.session.accessToken;
-  assert.deepEqual((await api.get('/auth/me', token)).body.roles, []);
+  const owner = (await api.post('/auth/login', { identifier: email, password: PASSWORD })).body.session.accessToken;
 
-  const submitted = await api.post('/directory/verifications', { bmdcNo, specialty: 'ENT' }, token);
-  assert.equal(submitted.status, 201, JSON.stringify(submitted.body));
-  const { id } = await db.doctorVerification.findFirstOrThrow({ where: { bmdcNo } });
-  const approved = await api.post(`/directory/admin/verifications/${id}/approve`, {}, admin.token);
-  assert.equal(approved.status, 200);
+  const bmdcNo = nextBmdc();
+  const doctorEmail = nextEmail();
+  const added = await api.post('/settings/staff', {
+    practiceId: clinic.id, fullName: 'Clinic Doctor', role: 'DOCTOR', email: doctorEmail, mobile: nextPhone(),
+    specialty: 'ENT', bmdcNumber: bmdcNo, temporaryPassword: PASSWORD,
+  }, owner);
+  assert.equal(added.status, 201, JSON.stringify(added.body));
+  assert.equal(added.body.hasLogin, true);
+
+  await db.user.update({ where: { email: doctorEmail }, data: { mobileVerifiedAt: new Date() } });
+  const token = (await api.post('/auth/login', { identifier: doctorEmail, password: PASSWORD })).body.session.accessToken;
   const me = (await api.get('/auth/me', token)).body;
   assert.deepEqual(me.roles, ['doctor']);
-  assert.equal(me.doctorId, approved.body.doctorId);
-  // Their clinic access level has not changed.
-  assert.equal((await db.user.findFirstOrThrow({ where: { email } })).role, 'DOCTOR');
+  assert.ok(me.doctorId);
   assert.equal((await api.get('/directory/doctors/me/profile', token)).status, 200);
   assert.equal((await api.post('/directory/verifications', { bmdcNo, specialty: 'ENT' }, token)).body.code, 'ALREADY_LINKED');
 });

@@ -48,7 +48,7 @@ test.describe('Welcome page', () => {
     await page.getByRole('tab', { name: 'Register' }).click();
     await expect(page.getByRole('heading', { name: 'Create your account' })).toBeVisible();
 
-    for (const label of ['Mobile number or email', 'BMDC registration number', 'Full name', 'Password', 'Confirm password']) {
+    for (const label of ['Mobile number or email', 'BMDC registration number', 'Full name', 'Specialty', 'Password', 'Confirm password']) {
       await expect(page.getByLabel(label, { exact: true })).toBeVisible();
     }
     // Facebook is shown but honestly disabled — there is no OAuth on the API.
@@ -107,8 +107,9 @@ test.describe('Welcome page', () => {
     await page.goto('/');
     await page.getByRole('tab', { name: 'Register' }).click();
     await page.getByLabel('Mobile number or email').fill(mobile);
-    await page.getByLabel('BMDC registration number').fill(`E2E${tail.slice(-5)}`);
+    await page.getByLabel('BMDC registration number').fill(`A-${tail.slice(-5)}`);
     await page.getByLabel('Full name').fill('Dr. E2E Tester');
+    await page.getByLabel('Specialty').fill('Cardiology');
     await page.getByLabel('Password', { exact: true }).fill('E2eDoctor2026');
     await page.getByLabel('Confirm password').fill('E2eDoctor2026');
     await page.getByRole('button', { name: 'Register', exact: true }).click();

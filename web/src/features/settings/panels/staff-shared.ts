@@ -10,6 +10,9 @@ export interface Staff {
   role: string;
   bmdcNumber: string | null;
   isActive: boolean;
+  /** False for a doctor who was added but has not created a login yet. */
+  hasLogin: boolean;
+  specialty: string | null;
   notifyScheduleSms: boolean;
   notifyScheduleEmail: boolean;
   notifyAppointmentSms: boolean;
@@ -22,19 +25,11 @@ export type Kind = 'doctor' | 'staff';
 export const MEDICAL_ROLES: readonly string[] = [UserRole.DOCTOR];
 
 /**
- * The three access levels.
- *
- * Administrators run the practice, doctors own the clinical record, desk staff
- * run the diary. The list is identical for both personnel tabs — only the
- * default differs — because the levels are the levels.
+ * What an owner can add. Only a super admin creates owners, so an owner's own
+ * clinic has one access level per personnel tab.
  */
 export const ACCESS_OPTIONS: Record<Kind, ReadonlyArray<{ role: string; label: string; detail: string }>> = {
   doctor: [
-    {
-      role: UserRole.ADMINISTRATOR,
-      label: 'Administrator',
-      detail: 'Everything: settings, staff, catalogs, statistics and billing.',
-    },
     {
       role: UserRole.DOCTOR,
       label: 'Doctor',
@@ -42,11 +37,6 @@ export const ACCESS_OPTIONS: Record<Kind, ReadonlyArray<{ role: string; label: s
     },
   ],
   staff: [
-    {
-      role: UserRole.ADMINISTRATOR,
-      label: 'Administrator',
-      detail: 'Everything: settings, staff, catalogs, statistics and billing.',
-    },
     {
       role: UserRole.DESK_STAFF,
       label: 'Desk staff',
@@ -61,5 +51,6 @@ export const NOTIFICATION_ROWS = [
 ] as const;
 
 export function accessLabel(role: string, kind: Kind): string {
+  if (role === UserRole.ADMINISTRATOR) return 'Administrator';
   return ACCESS_OPTIONS[kind].find((o) => o.role === role)?.label ?? role.replace(/_/g, ' ').toLowerCase();
 }

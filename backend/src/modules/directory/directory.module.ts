@@ -8,6 +8,12 @@ import {
   AdminSiteController,
   AdminVerificationsController,
 } from './controllers/admin.controllers';
+import {
+  AdminOwnersController,
+  ClinicsController,
+  MyAmbulancesController,
+  MyClinicsController,
+} from './controllers/accounts.controllers';
 import { DirectoryAuthController } from './controllers/auth.controller';
 import { DoctorMeController, DoctorsController, VerificationRequestController } from './controllers/doctors.controller';
 import {
@@ -20,6 +26,8 @@ import { DirectoryAccountService } from './services/account.service';
 import { AdminDoctorService } from './services/admin-doctor.service';
 import { AmbulanceService } from './services/ambulance.service';
 import { CatalogService } from './services/catalog.service';
+import { ClinicOwnerService } from './services/clinic-owner.service';
+import { PatientClinicService } from './services/patient-clinic.service';
 import { DirectoryAudit } from './services/directory-audit.service';
 import { DoctorDirectoryService } from './services/doctor-directory.service';
 import { DoctorProfileService } from './services/doctor-profile.service';
@@ -32,7 +40,8 @@ import { DoctorVerificationService } from './services/verification.service';
 
 /**
  * The public directory: doctor, hospital and ambulance listings, doctor
- * verification and serial booking. It reads no clinical table.
+ * verification, serial booking and patients joining clinics. The only clinical
+ * table it writes is `patients`, and it never reads clinical records.
  */
 @Module({
   imports: [AuthModule],
@@ -52,12 +61,18 @@ import { DoctorVerificationService } from './services/verification.service';
     AdminAmbulancesController,
     AdminCatalogController,
     AdminSiteController,
+    AdminOwnersController,
+    ClinicsController,
+    MyClinicsController,
+    MyAmbulancesController,
   ],
   providers: [
     DirectoryAccountService,
     AdminDoctorService,
     AmbulanceService,
     CatalogService,
+    ClinicOwnerService,
+    PatientClinicService,
     DirectoryAudit,
     DoctorDirectoryService,
     DoctorProfileService,

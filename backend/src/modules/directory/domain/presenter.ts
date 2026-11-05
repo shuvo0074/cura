@@ -54,9 +54,10 @@ function degreeLine(items: DegreeItem[], education: string | null): string | nul
 
 /** A listing row with its computed fields. Never carries the owner's user id. */
 export function presentListing(row: Record<string, any>): Record<string, any> {
-  const { userId, hospital, items, ...rest } = row;
+  const { userId, user, hospital, items, ...rest } = row;
   const out = present(rest);
-  if ('userId' in row) out.is_managed = userId !== null;
+  // A doctor who proved their phone runs this profile; one an admin added does not yet.
+  if ('user' in row) out.is_managed = Boolean(user?.mobileVerifiedAt);
   if ('hospital' in row) out.hospital_name = hospital?.name ?? null;
   if ('items' in row) out.degrees = degreeLine(items as DegreeItem[], rest.education ?? null);
   return out;

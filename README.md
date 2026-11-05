@@ -116,6 +116,8 @@ Sign in with the mobile number or the email — either works.
 | Doctor | `01711111111` | `doctor@cura.local` | `CuraDoctor123` |
 | Desk staff | `01700000003` | `desk@cura.local` | `CuraDesk123` |
 
+The seed also creates one account for each other user type; `CURA_GUIDE.md` lists them.
+
 ### What each level can do
 
 There are three, and the sidebar reflects them — a module you cannot use is not
@@ -157,15 +159,16 @@ code is printed to the API console.
 
 ## Public directory
 
-The API also serves a public directory of doctors, hospitals, diagnostic centres
-and ambulances, merged from the Cura Health app. Its routes are under
-`/api/directory/*`, with accounts under `/api/auth/*`.
+The API also serves Cura Website, the public site for finding doctors, hospitals,
+diagnostic centres and ambulances. Its routes are under `/api/directory/*`, with
+accounts under `/api/auth/*`. Both front ends read one `doctors` table: every doctor
+is a user, and whether they can log in depends only on having a password.
 
 ```bash
 cd backend
-npx prisma migrate deploy        # adds new tables only; no clinical table changes
+npx prisma migrate deploy
 npm run seed:directory           # real, sourced records and reference data; safe to re-run
-npm run directory:grant-admin -- someone@example.com   # an existing account
+npm run directory:grant-admin -- someone@example.com   # makes an existing account a super admin
 ```
 
 A directory admin runs the public site and is separate from a clinic's

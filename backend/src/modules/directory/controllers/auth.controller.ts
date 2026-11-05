@@ -27,15 +27,6 @@ export class DirectoryAuthController {
     return session;
   }
 
-  @Public()
-  @RegisterLimit()
-  @Post('register/doctor')
-  async registerDoctor(@Body() body: unknown, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    const { refreshToken, body: session } = await this.accounts.registerDoctor(bodyOf(body), this.context(req));
-    this.cookie.set(res, refreshToken);
-    return session;
-  }
-
   @RequireSignedIn()
   @Get('me')
   me(@Identity() identity: DirectoryIdentity) {

@@ -8,6 +8,7 @@ import {
   type RegisterState,
 } from '@cura/shared';
 import { useServices } from '../../app/services';
+import { DoctorClaimForm } from './DoctorClaimForm';
 import { HeroIllustration } from './HeroIllustration';
 import styles from './login.module.css';
 
@@ -32,15 +33,18 @@ const TABS: ReadonlyArray<{ id: WelcomeTab; label: string }> = [
  */
 export function LoginView({ onAuthenticated }: { onAuthenticated: (s: AuthSession) => void }) {
   const { auth } = useServices();
-  const [tab, setTab] = useState<WelcomeTab>('login');
-  const [state, vm] = useViewModel(() => new LoginViewModel(auth, onAuthenticated));
+  // Cura Website links here to send a doctor to sign up.
+  const [params] = useState(() => new URLSearchParams(window.location.search));
+  const [tab, setTab] = useState<WelcomeTab>(params.get('tab') === 'register' ? 'register' : 'login');
+  const [claimMobile, setClaimMobile] = useState<string | null>(params.get('claim'));
+  const [state, vm] = useViewModel(() => new LoginViewModel(auth, onAuthenticated, 'en', setClaimMobile));
 
   // StrictMode may replace the login ViewModel after mount; the ref keeps the
   // registration hand-off pointed at the live instance.
   const loginVmRef = useRef(vm);
   loginVmRef.current = vm;
   const [reg, regVm] = useViewModel(
-    () => new RegisterViewModel(auth, (challenge) => loginVmRef.current.beginVerification(challenge)),
+    () => new RegisterViewModel(auth, (challenge) => loginVmRef.current.beginVerification(challenge), setClaimMobile),
   );
 
   const verifying = state.phase === 'otp';
@@ -100,6 +104,14 @@ export function LoginView({ onAuthenticated }: { onAuthenticated: (s: AuthSessio
 
         <section className={styles.panel}>
           <div className={styles.card}>
+            {claimMobile ? (
+              <DoctorClaimForm
+                mobile={claimMobile}
+                onAuthenticated={onAuthenticated}
+                onCancel={() => setClaimMobile(null)}
+              />
+            ) : (
+            <>
             {!verifying && (
               <div className={styles.tabs} role="tablist" aria-label="Welcome">
                 {TABS.map(({ id, label }) => (
@@ -223,6 +235,14 @@ export function LoginView({ onAuthenticated }: { onAuthenticated: (s: AuthSessio
                     autoComplete="name"
                   />
                   <RegisterField
+                    name="specialty"
+                    label="Specialty"
+                    state={reg}
+                    onChange={(v) => regVm.setField('specialty', v)}
+                    autoComplete="off"
+                    hint="Patients see you on Cura Website after an admin approves your BMDC number."
+                  />
+                  <RegisterField
                     name="password"
                     label="Password"
                     type="password"
@@ -284,6 +304,8 @@ export function LoginView({ onAuthenticated }: { onAuthenticated: (s: AuthSessio
                 )
               )}
             </form>
+            </>
+            )}
           </div>
         </section>
       </main>
@@ -331,7 +353,7 @@ function OtpStep(props: {
 
 /** One labelled registration input with its hint and error wiring. */
 function RegisterField(props: {
-  name: 'identifier' | 'bmdcNumber' | 'fullName' | 'password' | 'confirmPassword';
+  name: 'identifier' | 'bmdcNumber' | 'fullName' | 'specialty' | 'password' | 'confirmPassword';
   label: string;
   state: RegisterState;
   onChange: (value: string) => void;

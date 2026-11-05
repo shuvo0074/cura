@@ -178,6 +178,7 @@ test('a listing never exposes its owner and builds the degree line', () => {
   const out = presentListing({
     id: '1',
     userId: 'secret-user',
+    user: { mobileVerifiedAt: new Date() },
     education: 'Old text',
     hospital: { name: 'H' },
     items: [

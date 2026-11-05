@@ -227,6 +227,9 @@ export interface StaffRecord extends StaffNotificationPrefs {
   role: string;
   bmdcNumber: string | null;
   isActive: boolean;
+  /** False for a doctor who was added but has not created a login yet. */
+  hasLogin: boolean;
+  specialty: string | null;
 }
 
 export const PRACTICE_REPOSITORY = Symbol('PRACTICE_REPOSITORY');
@@ -257,8 +260,16 @@ export interface StaffRepository {
     mobile: string | null;
     role: string;
     bmdcNumber: string | null;
-    passwordHash: string;
+    passwordHash: string | null;
+    /** Required for doctors, who are also listed on Cura Website. */
+    specialty: string | null;
   }): Promise<StaffRecord>;
+  /** The member's access level at this clinic, or null if not a member. */
+  memberRole(practiceId: string, userId: string): Promise<string | null>;
+  /** Whether the member also belongs to another clinic. */
+  belongsToAnotherClinic(practiceId: string, userId: string): Promise<boolean>;
+  /** Gives a member with no login a temporary password. False if they have one. */
+  createLogin(practiceId: string, userId: string, passwordHash: string): Promise<boolean>;
   setStaffActive(practiceId: string, userId: string, isActive: boolean): Promise<void>;
   updateStaff(
     practiceId: string,

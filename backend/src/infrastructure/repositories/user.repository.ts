@@ -1,8 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import type { UserRole } from '@cura/shared';
+import { ConflictError } from '../../common/errors/domain-error';
+import { withDoctorPrefix, toNationalPhone } from '../../modules/directory/domain/account-rules';
+import { uniqueViolationFields } from './directory/prisma-errors';
 import { PrismaService } from '../prisma/prisma.service';
 import type {
+  ClaimableDoctor,
   CreateUserInput,
+  DoctorApplicantInput,
   UserProfilePatch,
   UserRecord,
   UserRepository,
@@ -86,6 +91,109 @@ export class PrismaUserRepository implements UserRepository {
       select: PrismaUserRepository.SELECT,
     });
     return this.toRecord(row);
+  }
+
+  /** The user, their doctor record and their approval request, all or nothing. */
+  async createDoctorApplicant(input: DoctorApplicantInput): Promise<UserRecord> {
+    try {
+      const row = await this.prisma.user.create({
+        data: {
+          fullName: input.fullName,
+          email: input.email,
+          mobile: input.mobile,
+          passwordHash: input.passwordHash,
+          role: 'DOCTOR',
+          directoryRoles: { create: { role: 'DOCTOR' } },
+          doctorListing: {
+            create: {
+              name: withDoctorPrefix(input.fullName),
+              specialty: input.specialty,
+              phone: toNationalPhone(input.mobile),
+              followupFees: null,
+              hidden: true,
+              pendingApproval: true,
+            },
+          },
+          doctorVerifications: {
+            create: {
+              kind: 'NEW',
+              bmdcNo: input.bmdcNo,
+              details: { name: input.fullName, specialty: input.specialty, phone: toNationalPhone(input.mobile) },
+            },
+          },
+        },
+        select: PrismaUserRepository.SELECT,
+      });
+      return this.toRecord(row);
+    } catch (error) {
+      if (uniqueViolationFields(error)) {
+        throw new ConflictError('ACCOUNT_EXISTS', 'An account already exists with those contact details.');
+      }
+      throw error;
+    }
+  }
+
+  async findClaimableDoctor(mobile: string): Promise<ClaimableDoctor | null> {
+    const row = await this.prisma.user.findFirst({
+      where: { mobile, role: 'DOCTOR', passwordHash: null, isActive: true, deletedAt: null },
+      select: {
+        id: true,
+        fullName: true,
+        mobile: true,
+        doctorListing: { select: { specialty: true, bmdcNo: true } },
+      },
+    });
+    if (!row?.mobile || !row.doctorListing) return null;
+    return {
+      userId: row.id,
+      fullName: row.fullName,
+      mobile: row.mobile,
+      specialty: row.doctorListing.specialty,
+      bmdcNo: row.doctorListing.bmdcNo,
+    };
+  }
+
+  async bmdcTakenByOther(bmdcNo: string, userId: string | null): Promise<boolean> {
+    const others = userId ? { userId: { not: userId } } : {};
+    const listing = await this.prisma.doctorListing.count({ where: { bmdcNo, ...others } });
+    if (listing) return true;
+    const account = await this.prisma.user.count({
+      where: { bmdcNumber: bmdcNo, deletedAt: null, ...(userId ? { id: { not: userId } } : {}) },
+    });
+    return account > 0;
+  }
+
+  async completeDoctorClaim(
+    userId: string,
+    input: { passwordHash: string; bmdcNo: string; email: string | null },
+  ): Promise<UserRecord | null> {
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        // Conditional, so two people finishing at once cannot both set a password.
+        const { count } = await tx.user.updateMany({
+          where: { id: userId, passwordHash: null },
+          data: {
+            passwordHash: input.passwordHash,
+            bmdcNumber: input.bmdcNo,
+            mobileVerifiedAt: new Date(),
+            onboardingComplete: true,
+            ...(input.email ? { email: input.email } : {}),
+          },
+        });
+        if (!count) return null;
+        await tx.doctorListing.update({ where: { userId }, data: { bmdcNo: input.bmdcNo } });
+        const row = await tx.user.findUniqueOrThrow({
+          where: { id: userId },
+          select: PrismaUserRepository.SELECT,
+        });
+        return this.toRecord(row);
+      });
+    } catch (error) {
+      if (uniqueViolationFields(error)) {
+        throw new ConflictError('ACCOUNT_EXISTS', 'That email or BMDC number is already in use.');
+      }
+      throw error;
+    }
   }
 
   async recordSuccessfulLogin(userId: string): Promise<void> {
@@ -176,6 +284,13 @@ export class PrismaUserRepository implements UserRepository {
       data: patch as never,
       select: PrismaUserRepository.SELECT,
     });
+    // A doctor's name is one fact, shown on both front ends.
+    if (patch.fullName) {
+      await this.prisma.doctorListing.updateMany({
+        where: { userId },
+        data: { name: withDoctorPrefix(patch.fullName) },
+      });
+    }
     return this.toRecord(row);
   }
 
@@ -192,7 +307,7 @@ export class PrismaUserRepository implements UserRepository {
     fullName: string;
     email: string | null;
     mobile: string | null;
-    passwordHash: string;
+    passwordHash: string | null;
     role: string;
     bmdcNumber: string | null;
     avatarUrl: string | null;

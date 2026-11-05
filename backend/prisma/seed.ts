@@ -83,6 +83,13 @@ const ACCOUNTS = [
   },
 ] as const;
 
+/** What patients see on Cura Website for each doctor account above. */
+const DOCTOR_DETAILS: Record<string, { specialty: string; about: string; fees: number }> = {
+  'doctor@cura.local': { specialty: 'General Physician', about: 'Adult medicine and long-term conditions.', fees: 800 },
+  'doctor2@cura.local': { specialty: 'Pediatrics', about: 'Newborn and child health.', fees: 1000 },
+  'doctor3@cura.local': { specialty: 'Cardiology', about: 'Heart disease and blood pressure.', fees: 1200 },
+};
+
 const hash = (password: string) =>
   argon2.hash(password, { type: argon2.argon2id, memoryCost: 19_456, timeCost: 2, parallelism: 1 });
 
@@ -540,6 +547,8 @@ async function main(): Promise<void> {
     colleagueLog.push(`${colleague.email}: ${own.length} patients, ${n} appointments added`);
   }
 
+  const people2 = await seedUserTypes(practice.id, practice.name, users);
+
   console.log('\nSeed complete.');
   console.log(`  Practice : ${practice.name} (${practice.id})`);
   for (const a of ACCOUNTS) {
@@ -552,7 +561,284 @@ async function main(): Promise<void> {
       : `  ${calendarAdded} past and upcoming appointments added.`,
   );
   for (const line of colleagueLog) console.log(`  ${line}.`);
+  for (const line of people2) console.log(`  ${line}`);
   console.log(`  ${SEED_DRUGS.length} drugs in the catalogue (${freshDrugs.length} added now).\n`);
+}
+
+/** Removes demo doctors from before every doctor had a user and a phone number. */
+async function removeOldDemoDirectoryData(): Promise<void> {
+  const old = await prisma.doctorListing.findMany({
+    where: { name: { startsWith: 'Dr. Demo ' } },
+    select: { id: true, userId: true },
+  });
+  const ids = old.map((row) => row.id);
+  await prisma.doctorReview.deleteMany({ where: { doctorId: { in: ids } } });
+  await prisma.serialBooking.deleteMany({ where: { doctorId: { in: ids } } });
+  await prisma.user.deleteMany({ where: { id: { in: old.map((row) => row.userId) } } });
+  await prisma.hospital.deleteMany({ where: { name: 'Cura Demo Hospital' } });
+}
+
+/** One login per user type, so each can be tried. Never run this on a real database. */
+async function account(input: {
+  email: string;
+  mobile: string;
+  fullName: string;
+  password: string;
+  role: 'ADMINISTRATOR' | 'DOCTOR' | 'PUBLIC_USER';
+}) {
+  const verified = { mobileVerifiedAt: new Date(), emailVerifiedAt: new Date(), onboardingComplete: true };
+  const passwordHash = await hash(input.password);
+  return prisma.user.upsert({
+    where: { email: input.email },
+    update: { fullName: input.fullName, mobile: input.mobile, role: input.role, passwordHash, isActive: true, ...verified },
+    create: { ...input, password: undefined, passwordHash, ...verified } as never,
+    select: { id: true },
+  });
+}
+
+async function doctorRecord(
+  userId: string,
+  data: { name: string; specialty: string; phone: string; bmdcNo: string; chamber: string; about?: string; fees?: number },
+): Promise<void> {
+  await prisma.userDirectoryRole.upsert({
+    where: { userId_role: { userId, role: 'DOCTOR' } },
+    update: {},
+    create: { userId, role: 'DOCTOR' },
+  });
+  // Re-seeding corrects what the migration filled in with a default specialty.
+  await prisma.user.update({ where: { id: userId }, data: { bmdcNumber: data.bmdcNo } });
+  const place = { city: 'Dhaka', division: 'Dhaka' };
+  await prisma.doctorListing.upsert({
+    where: { userId },
+    update: { ...data, ...place, hidden: false, pendingApproval: false, bmdcVerifiedAt: new Date() },
+    create: { ...data, ...place, userId, followupFees: null, bmdcVerifiedAt: new Date() },
+  });
+}
+
+async function seedUserTypes(
+  practiceId: string,
+  practiceName: string,
+  users: Record<string, { id: string }>,
+): Promise<string[]> {
+  await removeOldDemoDirectoryData();
+
+  // Clinic owners reach only their own clinic, so none of them is a super admin.
+  const shahnaz = users['admin@cura.local']!;
+  await prisma.userDirectoryRole.deleteMany({ where: { userId: shahnaz.id, role: 'SUPER_ADMIN' } });
+
+  const superAdmin = await account({
+    email: 'superadmin@cura.local',
+    mobile: '+8801700000009',
+    fullName: 'Cura Super Admin',
+    password: 'CuraSuper123',
+    role: 'PUBLIC_USER',
+  });
+  await prisma.userDirectoryRole.upsert({
+    where: { userId_role: { userId: superAdmin.id, role: 'SUPER_ADMIN' } },
+    update: {},
+    create: { userId: superAdmin.id, role: 'SUPER_ADMIN' },
+  });
+
+  // The doctors already in Cura Demo Clinic, now also on Cura Website.
+  for (const a of ACCOUNTS) {
+    if (a.role !== 'DOCTOR') continue;
+    await doctorRecord(users[a.email]!.id, {
+      name: a.fullName,
+      phone: a.mobile.replace(/^\+88/, ''),
+      bmdcNo: a.bmdc,
+      chamber: practiceName,
+      ...DOCTOR_DETAILS[a.email]!,
+    });
+  }
+
+  // Added by an admin with no login: log in with 01711111114 to see the sign-up.
+  const noLogin = await prisma.user.upsert({
+    where: { mobile: '+8801711111114' },
+    update: {},
+    create: {
+      fullName: 'Dr Farzana Ahmed',
+      mobile: '+8801711111114',
+      bmdcNumber: 'A-100203',
+      role: 'DOCTOR',
+      onboardingComplete: true,
+    },
+    select: { id: true },
+  });
+  await prisma.userDirectoryRole.upsert({
+    where: { userId_role: { userId: noLogin.id, role: 'DOCTOR' } },
+    update: {},
+    create: { userId: noLogin.id, role: 'DOCTOR' },
+  });
+  await prisma.doctorListing.upsert({
+    where: { userId: noLogin.id },
+    update: {},
+    create: {
+      userId: noLogin.id,
+      name: 'Dr Farzana Ahmed',
+      specialty: 'Gynecology',
+      phone: '01711111114',
+      bmdcNo: 'A-100203',
+      chamber: practiceName,
+      city: 'Dhaka',
+      division: 'Dhaka',
+      followupFees: null,
+    },
+  });
+  await prisma.practiceMembership.upsert({
+    where: { practiceId_userId: { practiceId, userId: noLogin.id } },
+    update: {},
+    create: { practiceId, userId: noLogin.id, role: 'DOCTOR' },
+  });
+
+  // A second clinic. Its owner also owns an ambulance service and a pharmacy.
+  const secondClinicId = '22222222-2222-4222-8222-222222222222';
+  const secondClinicName = 'Cura Uttara Clinic';
+  await prisma.practice.upsert({
+    where: { id: secondClinicId },
+    update: {},
+    create: {
+      id: secondClinicId,
+      name: secondClinicName,
+      specialization: 'Family Medicine',
+      contactNumber: '+8801700000010',
+      address: 'House 8, Road 3, Sector 7, Uttara, Dhaka',
+      slotMinutes: 15,
+      sessions: {
+        create: [0, 1, 2, 3, 4].map((dayOfWeek) => ({ dayOfWeek, startTime: '10:00', endTime: '20:00' })),
+      },
+    },
+  });
+  const secondOwner = await account({
+    email: 'owner2@cura.local',
+    mobile: '+8801700000011',
+    fullName: 'Tanzila Ahmed',
+    password: 'CuraAdmin123',
+    role: 'ADMINISTRATOR',
+  });
+  await prisma.practiceMembership.upsert({
+    where: { practiceId_userId: { practiceId: secondClinicId, userId: secondOwner.id } },
+    update: { role: 'ADMINISTRATOR' },
+    create: { practiceId: secondClinicId, userId: secondOwner.id, role: 'ADMINISTRATOR' },
+  });
+  for (const role of ['AMBULANCE_OWNER', 'PHARMACY_OWNER'] as const) {
+    await prisma.userDirectoryRole.upsert({
+      where: { userId_role: { userId: secondOwner.id, role } },
+      update: {},
+      create: { userId: secondOwner.id, role },
+    });
+  }
+
+  // A doctor of the second clinic, and one who works at both.
+  const secondDoctor = await account({
+    email: 'doctor4@cura.local',
+    mobile: '+8801711111115',
+    fullName: 'Dr Rumana Haque',
+    password: 'CuraDoctor123',
+    role: 'DOCTOR',
+  });
+  await doctorRecord(secondDoctor.id, {
+    name: 'Dr Rumana Haque',
+    specialty: 'Dermatology',
+    phone: '01711111115',
+    bmdcNo: 'A-100204',
+    chamber: secondClinicName,
+    about: 'Skin, hair and allergy care.',
+    fees: 900,
+  });
+  for (const userId of [secondDoctor.id, users['doctor2@cura.local']!.id]) {
+    await prisma.practiceMembership.upsert({
+      where: { practiceId_userId: { practiceId: secondClinicId, userId } },
+      update: { role: 'DOCTOR' },
+      create: { practiceId: secondClinicId, userId, role: 'DOCTOR' },
+    });
+  }
+
+  // An ambulance owner who owns nothing else.
+  const ambulanceOwner = await account({
+    email: 'ambulance@cura.local',
+    mobile: '+8801700000012',
+    fullName: 'Rafiq Mia',
+    password: 'CuraOwner123',
+    role: 'PUBLIC_USER',
+  });
+  await prisma.userDirectoryRole.upsert({
+    where: { userId_role: { userId: ambulanceOwner.id, role: 'AMBULANCE_OWNER' } },
+    update: {},
+    create: { userId: ambulanceOwner.id, role: 'AMBULANCE_OWNER' },
+  });
+  await prisma.ambulanceVendor.upsert({
+    where: { slug: 'cura-demo-ambulance' },
+    update: { ownerId: ambulanceOwner.id },
+    create: {
+      slug: 'cura-demo-ambulance',
+      name: 'Cura Demo Ambulance',
+      phones: ['01700000012'],
+      categories: ['ac'],
+      dhakaWide: true,
+      ownerId: ambulanceOwner.id,
+    },
+  });
+
+  const pharmacyOwner = await account({
+    email: 'pharmacy@cura.local',
+    mobile: '+8801700000013',
+    fullName: 'Selina Parvin',
+    password: 'CuraOwner123',
+    role: 'PUBLIC_USER',
+  });
+  await prisma.userDirectoryRole.upsert({
+    where: { userId_role: { userId: pharmacyOwner.id, role: 'PHARMACY_OWNER' } },
+    update: {},
+    create: { userId: pharmacyOwner.id, role: 'PHARMACY_OWNER' },
+  });
+
+  // A patient on Cura Website who joined both clinics.
+  const patient = await account({
+    email: 'patient@cura.local',
+    mobile: '+8801800000001',
+    fullName: 'Sadia Rahman',
+    password: 'CuraPatient123',
+    role: 'PUBLIC_USER',
+  });
+  await prisma.userDirectoryRole.upsert({
+    where: { userId_role: { userId: patient.id, role: 'PATIENT' } },
+    update: {},
+    create: { userId: patient.id, role: 'PATIENT' },
+  });
+  const patientAccount = await prisma.patientAccount.upsert({
+    where: { userId: patient.id },
+    update: {},
+    create: { userId: patient.id, name: 'Sadia Rahman' },
+    select: { id: true },
+  });
+  let joined = 0;
+  for (const clinicId of [practiceId, secondClinicId]) {
+    const existing = await prisma.patient.count({ where: { practiceId: clinicId, accountId: patientAccount.id } });
+    if (existing) continue;
+    const curaIds = await prisma.patient.count();
+    await prisma.patient.create({
+      data: {
+        practiceId: clinicId,
+        accountId: patientAccount.id,
+        curaId: `CURA-W${String(curaIds + 1).padStart(5, '0')}`,
+        fullName: 'Sadia Rahman',
+        mobile: '+8801800000001',
+        email: 'patient@cura.local',
+        searchName: 'sadia rahman',
+      },
+    });
+    joined += 1;
+  }
+
+  return [
+    'SUPER_ADMIN  : superadmin@cura.local  /  CuraSuper123',
+    'SECOND OWNER : owner2@cura.local  /  CuraAdmin123   (also ambulance and pharmacy owner)',
+    'DOCTOR       : doctor4@cura.local  /  CuraDoctor123   (Cura Uttara Clinic)',
+    'NO LOGIN YET : 01711111114, BMDC A-100203   (Dr Farzana Ahmed)',
+    'AMBULANCE    : ambulance@cura.local  /  CuraOwner123',
+    'PHARMACY     : pharmacy@cura.local  /  CuraOwner123',
+    `PATIENT      : patient@cura.local  /  CuraPatient123   (joined ${joined} clinic(s) now)`,
+  ];
 }
 
 main()

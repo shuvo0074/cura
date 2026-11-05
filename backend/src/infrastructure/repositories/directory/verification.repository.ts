@@ -2,7 +2,6 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { DoctorVerificationRepository, Row } from '../../../core/ports/directory.ports';
-import { withDoctorPrefix } from '../../../modules/directory/domain/account-rules';
 import { DirectoryError, directoryNotFound } from '../../../modules/directory/domain/errors';
 
 const TAKEN_NOTE =
@@ -58,7 +57,7 @@ export class PrismaDoctorVerificationRepository implements DoctorVerificationRep
     }));
   }
 
-  /** Links the account to its listing and stamps the badge, all or nothing. */
+  /** Publishes the doctor and stamps the badge, all or nothing. */
   approve(id: string, reviewerId: string): Promise<{ doctorId: string; userId: string }> {
     return this.prisma.$transaction(async (tx) => {
       const locked = await tx.$queryRaw<{ id: string }[]>`
@@ -66,15 +65,35 @@ export class PrismaDoctorVerificationRepository implements DoctorVerificationRep
       if (!locked[0]) throw directoryNotFound('Pending request');
       const request = await tx.doctorVerification.findUniqueOrThrow({ where: { id } });
 
-      const linked = await tx.doctorListing.findUnique({ where: { userId: request.userId }, select: { id: true } });
-      if (linked) {
+      const listing = await tx.doctorListing.findUnique({
+        where: { userId: request.userId },
+        select: { id: true, pendingApproval: true },
+      });
+      if (!listing) throw directoryNotFound('Doctor');
+      if (!listing.pendingApproval) {
         throw new DirectoryError(HttpStatus.CONFLICT, 'ALREADY_LINKED', 'This account already manages a doctor profile');
       }
+      const taken = await tx.doctorListing.findUnique({ where: { bmdcNo: request.bmdcNo }, select: { id: true } });
+      if (taken && taken.id !== listing.id) {
+        throw new DirectoryError(HttpStatus.CONFLICT, 'BMDC_CLAIMED', 'A doctor with this BMDC number already exists');
+      }
 
-      const doctorId =
-        request.kind === 'CLAIM' && request.doctorId
-          ? await this.linkClaim(tx, request.doctorId, request.userId, request.bmdcNo)
-          : await this.createListing(tx, request.userId, request.bmdcNo, request.details as Row);
+      const doctorId = listing.id;
+      const details = request.details as Row;
+      // Patients can see this doctor from here on.
+      await tx.doctorListing.update({
+        where: { id: doctorId },
+        data: {
+          hidden: false,
+          pendingApproval: false,
+          bmdcNo: request.bmdcNo,
+          bmdcVerifiedAt: new Date(),
+          ...(details.specialty ? { specialty: details.specialty } : {}),
+          ...(details.gender ? { gender: details.gender } : {}),
+          workplace: [details.designation, details.workplace].filter(Boolean).join(', ') || null,
+        },
+      });
+      await tx.user.update({ where: { id: request.userId }, data: { bmdcNumber: request.bmdcNo } });
 
       await this.copyDegrees(tx, doctorId, (request.details as Row).degrees);
 
@@ -100,43 +119,6 @@ export class PrismaDoctorVerificationRepository implements DoctorVerificationRep
       data: { status: 'REJECTED', reviewNote: note, reviewedAt: new Date(), reviewedBy: reviewerId },
     });
     return count ? row : null;
-  }
-
-  private async linkClaim(tx: Prisma.TransactionClient, doctorId: string, userId: string, bmdcNo: string) {
-    const locked = await tx.$queryRaw<{ userId: string | null }[]>`
-      SELECT "userId" FROM doctor_listings WHERE id = ${doctorId}::uuid FOR UPDATE`;
-    if (!locked[0] || locked[0].userId) {
-      throw new DirectoryError(HttpStatus.CONFLICT, 'BMDC_CLAIMED', 'Another account already manages this profile');
-    }
-    await tx.doctorListing.update({
-      where: { id: doctorId },
-      data: { userId, bmdcNo, bmdcVerifiedAt: new Date() },
-    });
-    return doctorId;
-  }
-
-  private async createListing(tx: Prisma.TransactionClient, userId: string, bmdcNo: string, details: Row) {
-    // Two sign-ups can both ask for a new listing with one number.
-    const existing = await tx.doctorListing.findUnique({ where: { bmdcNo }, select: { id: true } });
-    if (existing) {
-      throw new DirectoryError(HttpStatus.CONFLICT, 'BMDC_CLAIMED', 'A listing with this BMDC number already exists');
-    }
-    const created = await tx.doctorListing.create({
-      data: {
-        name: withDoctorPrefix(details.name),
-        specialty: details.specialty,
-        gender: details.gender ?? null,
-        workplace: [details.designation, details.workplace].filter(Boolean).join(', ') || null,
-        phone: details.phone ?? null,
-        // Unknown until the doctor enters it; never an invented price.
-        followupFees: null,
-        bmdcNo,
-        userId,
-        bmdcVerifiedAt: new Date(),
-      },
-      select: { id: true },
-    });
-    return created.id;
   }
 
   /** Degrees from sign-up become qualifications, unless a listing already has them. */

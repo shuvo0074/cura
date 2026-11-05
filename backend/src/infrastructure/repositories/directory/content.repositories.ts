@@ -91,7 +91,7 @@ export class PrismaHospitalRepository implements HospitalRepository {
 
   async dependentDoctorCount(id: string, name: string): Promise<number> {
     const rows = await this.prisma.$queryRaw<{ count: number }[]>`
-      SELECT COUNT(*)::int AS count FROM doctor_listings d
+      SELECT COUNT(*)::int AS count FROM doctors d
       WHERE d."hospitalId" = ${id}::uuid OR EXISTS (
         SELECT 1 FROM jsonb_array_elements(COALESCE(d."weeklySchedule", '[]'::jsonb)) elem
         WHERE elem->>'venue' = ${name} OR elem->>'hospital_id' = ${id})`;
@@ -139,6 +139,21 @@ export class PrismaAmbulanceRepository implements AmbulanceRepository {
 
   setHidden(id: string, hidden: boolean): Promise<Row | null> {
     return orNull(this.prisma.ambulanceVendor.update({ where: { id }, data: { hidden }, select: VISIBILITY }));
+  }
+
+  listOwned(ownerId: string): Promise<Row[]> {
+    return this.prisma.ambulanceVendor.findMany({ where: { ownerId }, orderBy: { name: 'asc' } });
+  }
+
+  updateOwned(id: string, ownerId: string, data: Row): Promise<Row | null> {
+    return orNull(
+      this.prisma.ambulanceVendor.update({ where: { id, ownerId }, data: data as Prisma.AmbulanceVendorUncheckedUpdateInput }),
+    );
+  }
+
+  async setOwner(id: string, ownerId: string | null): Promise<boolean> {
+    const { count } = await this.prisma.ambulanceVendor.updateMany({ where: { id }, data: { ownerId } });
+    return count > 0;
   }
 
   async delete(id: string): Promise<boolean> {

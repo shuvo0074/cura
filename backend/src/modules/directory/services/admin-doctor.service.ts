@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { bdMobileSchema } from '@cura/shared';
 import {
   CATALOG_DIRECTORY_REPOSITORY,
   DOCTOR_LISTING_REPOSITORY,
@@ -6,8 +7,9 @@ import {
   type DoctorListingRepository,
   type Row,
 } from '../../../core/ports/directory.ports';
+import { toNationalPhone, withDoctorPrefix } from '../domain/account-rules';
 import { adminDoctor, weeklySchedule } from '../domain/content-rules';
-import { dependantsExist, directoryNotFound } from '../domain/errors';
+import { DirectoryValidationError, dependantsExist, directoryNotFound } from '../domain/errors';
 import { presentListing } from '../domain/presenter';
 import { DirectoryAudit } from './directory-audit.service';
 import { DirectoryMediaService, type UploadedImage } from './media.service';
@@ -28,11 +30,19 @@ export class AdminDoctorService {
 
   async create(body: Row, adminId: string) {
     const { followupFees, ...data } = adminDoctor(body);
-    const row = await this.listings.create({
-      ...data,
-      followupFees: followupFees ?? 300,
-      weeklySchedule: weeklySchedule(body.weeklySchedule),
-    });
+    // The phone is how this doctor later finds their record and signs up.
+    const mobile = bdMobileSchema.safeParse(body.phone);
+    if (!mobile.success) throw new DirectoryValidationError('Enter the doctor\'s mobile number, e.g. 01712345678');
+    const row = await this.listings.createWithUser(
+      {
+        ...data,
+        name: withDoctorPrefix(data.name),
+        phone: toNationalPhone(mobile.data),
+        followupFees: followupFees ?? 300,
+        weeklySchedule: weeklySchedule(body.weeklySchedule),
+      },
+      mobile.data,
+    );
     await this.catalog.ensureSpecialty(row.specialty);
     await this.audit.record(adminId, 'doctor_created', 'doctor_listing', row.id, { name: row.name });
     return presentListing(row);

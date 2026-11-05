@@ -115,26 +115,40 @@ export async function registerPatient(api: TestApi) {
   return { ...res.body, email, token: res.body.accessToken as string, cookie: res.cookie };
 }
 
-export async function registerDoctor(api: TestApi, overrides: Record<string, unknown> = {}) {
-  const email = nextEmail();
+/** A doctor signs up on Cura Dashboard: hidden from patients until approved. */
+export async function registerDoctor(api: TestApi, overrides: Record<string, any> = {}) {
+  const email = (overrides.email as string) ?? nextEmail();
   const bmdcNo = (overrides.bmdcNo as string) ?? nextBmdc();
-  const res = await api.post('/auth/register/doctor', {
-    name: 'Test Doctor',
+  const res = await api.post('/auth/register', {
+    fullName: overrides.name ?? 'Test Doctor',
     email,
+    mobile: overrides.phone ?? nextPhone(),
+    bmdcNumber: bmdcNo,
+    specialty: overrides.specialty ?? 'Cardiology',
     password: PASSWORD,
-    phone: nextPhone(),
-    specialty: 'Cardiology',
-    degrees: ['MBBS', 'FCPS (Medicine)'],
-    ...overrides,
-    bmdcNo,
+    confirmPassword: PASSWORD,
   });
   if (res.status !== 201) throw new Error(`register doctor failed: ${JSON.stringify(res.body)}`);
-  return { ...res.body, email, bmdcNo, token: res.body.accessToken as string };
+
+  const user = await db.user.update({ where: { email }, data: { mobileVerifiedAt: new Date() } });
+  // Details the sign-up request can carry beyond the form's fields.
+  const { degrees = ['MBBS', 'FCPS (Medicine)'], gender, designation, workplace } = overrides;
+  const request = await db.doctorVerification.findFirstOrThrow({ where: { userId: user.id } });
+  await db.doctorVerification.update({
+    where: { id: request.id },
+    data: { details: { ...(request.details as object), degrees, gender, designation, workplace } },
+  });
+
+  const login = await api.post('/auth/login', { identifier: email, password: PASSWORD });
+  if (login.status !== 200) throw new Error(`doctor login failed: ${JSON.stringify(login.body)}`);
+  const token = login.body.session.accessToken as string;
+  const me = await api.get('/auth/me', token);
+  return { ...me.body, email, bmdcNo, token, cookie: login.cookie };
 }
 
 export async function directoryAdmin(api: TestApi) {
   const account = await registerPatient(api);
-  await db.userDirectoryRole.create({ data: { userId: account.id, role: 'ADMIN' } });
+  await db.userDirectoryRole.create({ data: { userId: account.id, role: 'SUPER_ADMIN' } });
   return account;
 }
 

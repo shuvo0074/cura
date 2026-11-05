@@ -8,6 +8,7 @@ export interface RegisterState {
   identifier: string;
   bmdcNumber: string;
   fullName: string;
+  specialty: string;
   password: string;
   confirmPassword: string;
   submitting: boolean;
@@ -16,7 +17,7 @@ export interface RegisterState {
   formError: string | null;
 }
 
-type RegisterField = 'identifier' | 'bmdcNumber' | 'fullName' | 'password' | 'confirmPassword';
+type RegisterField = 'identifier' | 'bmdcNumber' | 'fullName' | 'specialty' | 'password' | 'confirmPassword';
 
 /**
  * Doctor self-registration (spec 1.3.2).
@@ -30,11 +31,14 @@ export class RegisterViewModel extends ViewModel<RegisterState> {
   constructor(
     private readonly auth: AuthApi,
     private readonly onChallenge: (challenge: OtpChallenge) => void,
+    /** A clinic already added this doctor, so they finish that record instead. */
+    private readonly onDoctorSignupRequired?: (mobile: string) => void,
   ) {
     super({
       identifier: '',
       bmdcNumber: '',
       fullName: '',
+      specialty: '',
       password: '',
       confirmPassword: '',
       submitting: false,
@@ -52,7 +56,7 @@ export class RegisterViewModel extends ViewModel<RegisterState> {
   async submit(): Promise<void> {
     if (this.state.submitting) return;
 
-    const { identifier, bmdcNumber, fullName, password, confirmPassword } = this.state;
+    const { identifier, bmdcNumber, fullName, specialty, password, confirmPassword } = this.state;
     const contact = identifier.trim();
 
     /**
@@ -63,6 +67,7 @@ export class RegisterViewModel extends ViewModel<RegisterState> {
     const parsed = registerSchema.safeParse({
       fullName,
       bmdcNumber,
+      specialty,
       password,
       confirmPassword,
       ...(contact.includes('@') ? { email: contact } : contact ? { mobile: contact } : {}),
@@ -97,6 +102,10 @@ export class RegisterViewModel extends ViewModel<RegisterState> {
     this.setState({ submitting: false });
 
     if (!result.ok) {
+      if (result.error.code === 'DOCTOR_SIGNUP_REQUIRED' && this.onDoctorSignupRequired) {
+        this.onDoctorSignupRequired(contact);
+        return;
+      }
       // A duplicate BMDC number belongs to one field; pin it there.
       if (result.error.code === 'BMDC_ALREADY_REGISTERED') {
         this.setState({ fieldErrors: { bmdcNumber: result.error.message } });

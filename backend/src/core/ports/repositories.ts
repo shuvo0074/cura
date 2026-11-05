@@ -35,7 +35,8 @@ export interface UserRecord {
   fullName: string;
   email: string | null;
   mobile: string | null;
-  passwordHash: string;
+  /** Null for a doctor an admin added who has not created a login yet. */
+  passwordHash: string | null;
   role: UserRole;
   bmdcNumber: string | null;
   avatarUrl: string | null;
@@ -59,6 +60,25 @@ export interface CreateUserInput {
   role: UserRole;
 }
 
+/** A doctor signing up: hidden from patients until an admin approves them. */
+export interface DoctorApplicantInput {
+  fullName: string;
+  email: string | null;
+  mobile: string | null;
+  passwordHash: string;
+  bmdcNo: string;
+  specialty: string;
+}
+
+/** A doctor an admin added who has no login yet. Only public fields. */
+export interface ClaimableDoctor {
+  userId: string;
+  fullName: string;
+  mobile: string;
+  specialty: string;
+  bmdcNo: string | null;
+}
+
 export const USER_REPOSITORY = Symbol('USER_REPOSITORY');
 
 export interface UserRepository {
@@ -68,6 +88,15 @@ export interface UserRepository {
   existsByBmdc(bmdcNumber: string): Promise<boolean>;
   existsByEmailOrMobile(email: string | null, mobile: string | null): Promise<boolean>;
   create(input: CreateUserInput): Promise<UserRecord>;
+  createDoctorApplicant(input: DoctorApplicantInput): Promise<UserRecord>;
+  findClaimableDoctor(mobile: string): Promise<ClaimableDoctor | null>;
+  /** True when a different doctor already holds this BMDC number. */
+  bmdcTakenByOther(bmdcNo: string, userId: string | null): Promise<boolean>;
+  /** Creates the login once. Returns null if the doctor already has one. */
+  completeDoctorClaim(
+    userId: string,
+    input: { passwordHash: string; bmdcNo: string; email: string | null },
+  ): Promise<UserRecord | null>;
   recordSuccessfulLogin(userId: string): Promise<void>;
   /** Returns the resulting failure count so the caller can decide on lockout. */
   recordFailedLogin(userId: string): Promise<number>;
@@ -191,6 +220,8 @@ export interface CreatePatientInput {
   dateOfBirth?: Date | null;
   bloodGroup?: string | null;
   address?: string | null;
+  /** The website account, when the patient joined this clinic themselves. */
+  accountId?: string | null;
 }
 
 export const PATIENT_REPOSITORY = Symbol('PATIENT_REPOSITORY');

@@ -19,7 +19,8 @@ declare module 'express' {
 /** Requires a signed-in user holding one of these directory roles. */
 export const DirectoryAccess = (rule: DirectoryAccessRule) => SetMetadata(DIRECTORY_ACCESS_KEY, rule);
 
-export const RequireDirectoryAdmin = () => DirectoryAccess({ roles: ['admin'] });
+export const RequireDirectoryAdmin = () => DirectoryAccess({ roles: ['super_admin'] });
+export const RequireAmbulanceOwner = () => DirectoryAccess({ roles: ['ambulance_owner'] });
 export const RequireLinkedDoctor = () => DirectoryAccess({ roles: ['doctor'], linkedDoctor: true });
 export const RequirePatient = () => DirectoryAccess({ roles: ['patient'] });
 /** Any signed-in account, whatever its directory roles. */

@@ -53,6 +53,8 @@ const PUBLIC_SELECT = {
   practicingSince: true,
   profileUpdatedAt: true,
   userId: true,
+  // Not a credential: whether the doctor has taken over their own profile.
+  user: { select: { mobileVerifiedAt: true } },
   hospital: { select: { name: true } },
   items: DEGREE_ITEMS,
 } satisfies Prisma.DoctorListingSelect;
@@ -102,8 +104,12 @@ const HOSPITAL_DOCTOR_SELECT = {
 
 /** The client-facing form of a constraint failure on a listing write, if any. */
 function writeConflict(error: unknown): DirectoryError | DirectoryValidationError | null {
-  if (uniqueViolationFields(error)?.includes('bmdcNo')) {
+  const fields = uniqueViolationFields(error);
+  if (fields?.includes('bmdcNo') || fields?.includes('bmdcNumber')) {
     return new DirectoryError(HttpStatus.CONFLICT, 'BMDC_CLAIMED', 'Another listing already has this BMDC number');
+  }
+  if (fields?.includes('mobile')) {
+    return new DirectoryError(HttpStatus.CONFLICT, 'PHONE_TAKEN', 'This mobile number is already registered');
   }
   if (isForeignKeyViolation(error)) return new DirectoryValidationError('That hospital does not exist');
   return null;
@@ -200,7 +206,7 @@ export class PrismaDoctorListingRepository implements DoctorListingRepository {
 
   async listForHospital(hospitalId: string, hospitalName: string): Promise<Row[]> {
     const ids = await this.prisma.$queryRaw<{ id: string }[]>`
-      SELECT d.id FROM doctor_listings d
+      SELECT d.id FROM doctors d
       WHERE NOT d.hidden AND (d."hospitalId" = ${hospitalId}::uuid OR EXISTS (
         SELECT 1 FROM jsonb_array_elements(COALESCE(d."weeklySchedule", '[]'::jsonb)) elem
         WHERE elem->>'venue' = ${hospitalName} OR elem->>'hospital_id' = ${hospitalId}))`;
@@ -218,11 +224,26 @@ export class PrismaDoctorListingRepository implements DoctorListingRepository {
     });
   }
 
-  async create(data: Row): Promise<Row> {
+  /** A doctor with no clinic yet and no login: they sign up later with this phone. */
+  async createWithUser(data: Row, mobile: string): Promise<Row> {
     try {
-      return await this.prisma.doctorListing.create({
-        data: data as Prisma.DoctorListingUncheckedCreateInput,
-        select: { ...PUBLIC_SELECT, hidden: true },
+      return await this.prisma.$transaction(async (tx) => {
+        const user = await tx.user.create({
+          data: {
+            fullName: data.name,
+            mobile,
+            bmdcNumber: data.bmdcNo ?? null,
+            passwordHash: null,
+            role: 'DOCTOR',
+            onboardingComplete: true,
+            directoryRoles: { create: { role: 'DOCTOR' } },
+          },
+          select: { id: true },
+        });
+        return tx.doctorListing.create({
+          data: { ...data, userId: user.id } as Prisma.DoctorListingUncheckedCreateInput,
+          select: { ...PUBLIC_SELECT, hidden: true },
+        });
       });
     } catch (error) {
       throw writeConflict(error) ?? error;
@@ -237,7 +258,7 @@ export class PrismaDoctorListingRepository implements DoctorListingRepository {
             where: { id },
             select: { bmdcNo: true, gender: true },
           });
-          return tx.doctorListing.update({
+          const row = await tx.doctorListing.update({
             where: { id },
             data: {
               ...(data as Prisma.DoctorListingUncheckedUpdateInput),
@@ -247,6 +268,12 @@ export class PrismaDoctorListingRepository implements DoctorListingRepository {
             },
             select: { ...PUBLIC_SELECT, hidden: true },
           });
+          // A doctor's name and BMDC number are one fact, shown on both front ends.
+          await tx.user.update({
+            where: { id: row.userId },
+            data: { fullName: data.name, bmdcNumber: data.bmdcNo ?? null },
+          });
+          return row;
         }),
       );
     } catch (error) {
@@ -256,7 +283,12 @@ export class PrismaDoctorListingRepository implements DoctorListingRepository {
 
   setHidden(id: string, hidden: boolean): Promise<Row | null> {
     return orNull(
-      this.prisma.doctorListing.update({ where: { id }, data: { hidden }, select: { id: true, name: true, hidden: true } }),
+      // A doctor waiting for approval can only be published by approving them.
+      this.prisma.doctorListing.update({
+        where: { id, ...(hidden ? {} : { pendingApproval: false }) },
+        data: { hidden },
+        select: { id: true, name: true, hidden: true },
+      }),
     );
   }
 
@@ -264,10 +296,29 @@ export class PrismaDoctorListingRepository implements DoctorListingRepository {
     return this.prisma.serialBooking.count({ where: { doctorId: id } });
   }
 
-  delete(id: string) {
-    return orNull(
-      this.prisma.doctorListing.delete({ where: { id }, select: { id: true, name: true, photo: true } }),
-    );
+  /** Null if missing. Throws if the doctor has a login or works at a clinic. */
+  async delete(id: string) {
+    const row = await this.prisma.doctorListing.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        photo: true,
+        userId: true,
+        user: { select: { passwordHash: true, _count: { select: { memberships: true } } } },
+      },
+    });
+    if (!row) return null;
+    if (row.user.passwordHash !== null || row.user._count.memberships > 0) {
+      throw new DirectoryError(
+        HttpStatus.CONFLICT,
+        'DEPENDANTS_EXIST',
+        'This doctor has a login or works at a clinic, so they can\'t be deleted. Hide them instead.',
+      );
+    }
+    // The user and the doctor are one person, so both go together.
+    await this.prisma.user.delete({ where: { id: row.userId } });
+    return { id: row.id, name: row.name, photo: row.photo };
   }
 
   async setPhoto(id: string, photo: string | null): Promise<string | null | undefined> {

@@ -13,12 +13,13 @@ import {
   type Row,
 } from '../../../core/ports/directory.ports';
 import { USER_REPOSITORY, type UserRepository } from '../../../core/ports/repositories';
+import { doctorSignupRequired } from '../../auth/auth.service';
 import { TokenService } from '../../auth/token.service';
 import { normalizeBmdc, toNationalPhone } from '../domain/account-rules';
 import { DirectoryError, DirectoryValidationError } from '../domain/errors';
 import { present } from '../domain/presenter';
 
-const ROLE_PRIORITY: DirectoryRoleName[] = ['admin', 'doctor', 'patient'];
+const ROLE_PRIORITY: DirectoryRoleName[] = ['super_admin', 'doctor', 'ambulance_owner', 'pharmacy_owner', 'patient'];
 const GENDERS = ['male', 'female'];
 
 export interface SessionContext {
@@ -49,28 +50,12 @@ export class DirectoryAccountService {
     return this.session(created, ctx);
   }
 
-  /**
-   * A doctor signs up and asks to be verified. A matching unclaimed listing makes
-   * it a claim, otherwise a new listing is created on approval. Nothing is public
-   * and nothing is linked until an admin approves.
-   */
-  async registerDoctor(body: Row, ctx: SessionContext) {
-    const request = await this.verificationRequest(body);
-    if (!body.phone) throw new DirectoryValidationError('Mobile number is required for doctors');
-    const fields = await this.accountFields(body);
-    const created = await this.accounts.createDoctorApplicant(fields, {
-      ...request,
-      details: { ...request.details, name: fields.name, phone: toNationalPhone(fields.mobile) },
-    });
-    return this.session(created, ctx);
-  }
-
-  /** An existing account (a clinic doctor, or a rejected applicant) asks to be verified. */
+  /** A doctor whose request was rejected asks again. */
   async submitVerification(identity: DirectoryIdentity, body: Row): Promise<Row> {
     if (identity.doctorId) {
       throw new DirectoryError(HttpStatus.CONFLICT, 'ALREADY_LINKED', 'This account already manages a doctor profile');
     }
-    const request = await this.verificationRequest(body);
+    const request = await this.verificationRequest(body, identity.userId);
     await this.accounts.submitVerification(identity.userId, {
       ...request,
       details: { ...request.details, name: identity.name, phone: toNationalPhone(identity.mobile) },
@@ -111,13 +96,14 @@ export class DirectoryAccountService {
     if (await this.users.existsByEmailOrMobile(email, null)) {
       throw new DirectoryError(HttpStatus.CONFLICT, 'EMAIL_TAKEN', 'An account with this email already exists');
     }
+    if (mobile && (await this.users.findClaimableDoctor(mobile))) throw doctorSignupRequired();
     if (mobile && (await this.users.existsByEmailOrMobile(null, mobile))) {
       throw new DirectoryError(HttpStatus.CONFLICT, 'PHONE_TAKEN', 'This mobile number is already registered');
     }
     return { name, email, mobile, passwordHash: await this.crypto.hashPassword(password) };
   }
 
-  private async verificationRequest(body: Row): Promise<Omit<NewVerification, 'details'> & { details: Row }> {
+  private async verificationRequest(body: Row, userId: string): Promise<Omit<NewVerification, 'details'> & { details: Row }> {
     const bmdcNo = normalizeBmdc(body.bmdcNo);
     if (!bmdcNo) throw new DirectoryValidationError('Enter your BMDC registration number, e.g. A-12345');
     const specialty = typeof body.specialty === 'string' ? body.specialty.trim() : '';
@@ -136,10 +122,10 @@ export class DirectoryAccountService {
       throw new DirectoryValidationError('Add up to 10 degrees, each at most 60 characters');
     }
 
-    // Only an approved link blocks a request. `users.bmdcNumber` is self-declared in
-    // the clinic app, so trusting it would let anyone lock a real doctor out.
+    // Only an approved doctor blocks a request. `users.bmdcNumber` is self-declared
+    // in the clinic app, so trusting it would let anyone lock a real doctor out.
     const listing = await this.listings.findByBmdc(bmdcNo);
-    if (listing?.userId) {
+    if (listing && listing.userId !== userId) {
       throw new DirectoryError(
         HttpStatus.CONFLICT,
         'BMDC_CLAIMED',
@@ -148,7 +134,7 @@ export class DirectoryAccountService {
     }
     return {
       doctorId: listing?.id ?? null,
-      kind: listing ? 'CLAIM' : 'NEW',
+      kind: 'NEW',
       bmdcNo,
       details: {
         specialty,

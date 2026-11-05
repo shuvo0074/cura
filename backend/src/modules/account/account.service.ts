@@ -75,8 +75,9 @@ export class AccountService {
     const user = await this.users.findById(principal.userId);
     if (!user) throw new NotFoundError('User');
 
-    const valid = await this.crypto.verifyPassword(user.passwordHash, currentPassword);
-    if (!valid) throw new ValidationError('Your current password is incorrect.');
+    // Only an account with a password can hold a session, but the type allows null.
+    const valid = user.passwordHash !== null && (await this.crypto.verifyPassword(user.passwordHash, currentPassword));
+    if (!valid || user.passwordHash === null) throw new ValidationError('Your current password is incorrect.');
 
     if (await this.crypto.verifyPassword(user.passwordHash, newPassword)) {
       throw new ValidationError('The new password must differ from the current one.');

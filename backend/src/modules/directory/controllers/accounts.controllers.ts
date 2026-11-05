@@ -1,0 +1,93 @@
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put } from '@nestjs/common';
+import { Public } from '../../../common/security/decorators';
+import type { DirectoryIdentity } from '../../../core/ports/directory.ports';
+import {
+  Identity,
+  RequireAmbulanceOwner,
+  RequireDirectoryAdmin,
+  RequirePatient,
+} from '../access/directory-access.decorators';
+import { UuidOr404 } from '../access/uuid-or-404.pipe';
+import { AmbulanceService } from '../services/ambulance.service';
+import { ClinicOwnerService } from '../services/clinic-owner.service';
+import { PatientClinicService } from '../services/patient-clinic.service';
+import { PublicReadLimit, bodyOf } from './shared';
+
+/** The clinics a patient can choose. */
+@Controller('directory/clinics')
+export class ClinicsController {
+  constructor(private readonly clinics: PatientClinicService) {}
+
+  @Public()
+  @PublicReadLimit()
+  @Get()
+  list() {
+    return this.clinics.listClinics();
+  }
+}
+
+/** The clinics this patient has joined. */
+@Controller('directory/my-clinics')
+@RequirePatient()
+export class MyClinicsController {
+  constructor(private readonly clinics: PatientClinicService) {}
+
+  @Get()
+  mine(@Identity() identity: DirectoryIdentity) {
+    return this.clinics.mine(identity);
+  }
+
+  @Put(':practiceId')
+  join(@Param('practiceId', UuidOr404) practiceId: string, @Identity() identity: DirectoryIdentity) {
+    return this.clinics.join(identity, practiceId);
+  }
+
+  @Delete(':practiceId')
+  leave(@Param('practiceId', UuidOr404) practiceId: string, @Identity() identity: DirectoryIdentity) {
+    return this.clinics.leave(identity, practiceId);
+  }
+}
+
+/** Ambulance vendors this owner runs. */
+@Controller('directory/my-ambulances')
+@RequireAmbulanceOwner()
+export class MyAmbulancesController {
+  constructor(private readonly ambulances: AmbulanceService) {}
+
+  @Get()
+  mine(@Identity() identity: DirectoryIdentity) {
+    return this.ambulances.listOwned(identity.userId);
+  }
+
+  @Patch(':id')
+  update(@Param('id', UuidOr404) id: string, @Body() body: unknown, @Identity() identity: DirectoryIdentity) {
+    return this.ambulances.updateOwned(id, bodyOf(body), identity.userId);
+  }
+}
+
+/** Super admin only: clinic owners and the extra roles they can hold. */
+@Controller('directory/admin')
+@RequireDirectoryAdmin()
+export class AdminOwnersController {
+  constructor(private readonly owners: ClinicOwnerService) {}
+
+  @Get('owners')
+  list() {
+    return this.owners.list();
+  }
+
+  @Post('owners')
+  create(@Body() body: unknown, @Identity() admin: DirectoryIdentity) {
+    return this.owners.create(bodyOf(body), admin.userId);
+  }
+
+  @Post('roles')
+  grant(@Body() body: unknown, @Identity() admin: DirectoryIdentity) {
+    return this.owners.setRole(bodyOf(body), true, admin.userId);
+  }
+
+  @Post('roles/revoke')
+  revoke(@Body() body: unknown, @Identity() admin: DirectoryIdentity) {
+    return this.owners.setRole(bodyOf(body), false, admin.userId);
+  }
+}

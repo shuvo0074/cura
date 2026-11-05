@@ -111,6 +111,7 @@ export const registerSchema = z
     mobile: bdMobileSchema.optional(),
     email: emailSchema.optional(),
     bmdcNumber: bmdcSchema,
+    specialty: z.string().trim().min(2, 'Enter your specialty').max(80),
     password: passwordSchema,
     confirmPassword: z.string(),
   })
@@ -123,6 +124,30 @@ export const registerSchema = z
     path: ['confirmPassword'],
   });
 export type RegisterInput = z.infer<typeof registerSchema>;
+
+/** Finds a doctor an admin added, so they can finish signing up. */
+export const doctorClaimLookupSchema = z.object({ mobile: bdMobileSchema });
+export type DoctorClaimLookupInput = z.infer<typeof doctorClaimLookupSchema>;
+
+/** Checks the BMDC number, then sends a code to the doctor's phone. */
+export const doctorClaimStartSchema = z.object({ mobile: bdMobileSchema, bmdcNumber: bmdcSchema });
+export type DoctorClaimStartInput = z.infer<typeof doctorClaimStartSchema>;
+
+/** Creates the login once the code proves the phone is theirs. */
+export const doctorClaimCompleteSchema = z
+  .object({
+    challengeId: z.string().uuid(),
+    code: otpSchema,
+    bmdcNumber: bmdcSchema,
+    email: emailSchema.optional(),
+    password: passwordSchema,
+    confirmPassword: z.string(),
+  })
+  .refine((d) => d.password === d.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  });
+export type DoctorClaimCompleteInput = z.infer<typeof doctorClaimCompleteSchema>;
 
 export const verifyOtpSchema = z.object({
   challengeId: z.string().uuid(),

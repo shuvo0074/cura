@@ -4,8 +4,8 @@
  *   npm run seed:directory
  *
  * Each import runs once, recorded under an `import:*` key, so re-running never
- * overwrites what admins have edited or deleted. The source app's 500 demo doctors
- * and 64 demo hospitals are deliberately not part of this data.
+ * overwrites what admins have edited or deleted. Doctors are not imported: every
+ * doctor signs up or is added by an admin, so each one has a real phone number.
  */
 import { Prisma, PrismaClient } from '@prisma/client';
 import { readFileSync } from 'node:fs';
@@ -146,43 +146,6 @@ async function seed(tx: Tx): Promise<void> {
           verifiedOn: VERIFIED_ON,
           photo: c.photo ?? null,
         },
-      });
-    }
-  });
-
-  await once(tx, 'diagnostic_doctors', async () => {
-    for (const d of read<Row[]>('diagnosticDoctors')) {
-      const centre = await tx.hospital.findFirst({ where: { name: d.centre } });
-      if (!centre) continue;
-      await tx.doctorListing.create({
-        data: {
-          name: d.name,
-          specialty: d.specialty,
-          workplace: d.workplace ?? null,
-          chamber: centre.name,
-          hospitalId: centre.id,
-          city: centre.location,
-          division: centre.division,
-          phone: centre.hotline,
-          address: centre.address,
-          website: d.source_url,
-          sourceUrl: d.source_url,
-          verifiedOn: VERIFIED_ON,
-          gender: d.gender ?? null,
-          // A real doctor's fee is unknown until sourced, so none is invented.
-          followupFees: null,
-        },
-      });
-      // A specialty that is not on the list yet stays hidden until an admin completes it.
-      await tx.specialty.createMany({
-        data: [
-          {
-            slug: d.specialty.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
-            name: d.specialty,
-            hidden: true,
-          },
-        ],
-        skipDuplicates: true,
       });
     }
   });

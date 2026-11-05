@@ -29,6 +29,7 @@ export function StaffModal({
     mobile: existing?.mobile ?? '',
     email: existing?.email ?? '',
     role: existing?.role ?? ACCESS_OPTIONS[kind][0]!.role,
+    specialty: existing?.specialty ?? '',
     temporaryPassword: '',
     notifyScheduleSms: existing?.notifyScheduleSms ?? true,
     notifyScheduleEmail: existing?.notifyScheduleEmail ?? true,
@@ -52,12 +53,20 @@ export function StaffModal({
       notifyAppointmentEmail: form.notifyAppointmentEmail,
     };
 
+    const temporaryPassword = form.temporaryPassword || null;
     const ok = existing
       ? await save.run(`/settings/staff/${existing.userId}`, { method: 'PATCH', body: shared })
       : await save.run('/settings/staff', {
           method: 'POST',
-          body: { ...shared, temporaryPassword: form.temporaryPassword },
+          body: { ...shared, specialty: form.specialty.trim() || null, temporaryPassword },
         });
+    if (ok && existing && !existing.hasLogin && temporaryPassword) {
+      const created = await save.run(`/settings/staff/${existing.userId}/login`, {
+        method: 'PUT',
+        body: { practiceId, temporaryPassword },
+      });
+      if (!created) return;
+    }
 
     if (ok) onSaved();
   };
@@ -88,14 +97,27 @@ export function StaffModal({
           <input className={s.input} value={form.fullName} onChange={(e) => set('fullName', e.target.value)} />
         </Field>
         {kind === 'doctor' && (
-          <Field label="BMDC Registration Number" required hint="Mandatory for medical personnel.">
+          <Field
+            label="BMDC Registration Number"
+            hint="Needed if you create a login now. Otherwise the doctor gives it when they sign up."
+          >
             <input className={s.input} value={form.bmdcNumber} onChange={(e) => set('bmdcNumber', e.target.value)} />
           </Field>
         )}
       </Row>
 
+      {kind === 'doctor' && !existing && (
+        <Field label="Specialty" required hint="Patients see this doctor on Cura Website straight away.">
+          <input className={s.input} value={form.specialty} onChange={(e) => set('specialty', e.target.value)} />
+        </Field>
+      )}
+
       <Row cols={2}>
-        <Field label="Mobile Number" required={kind === 'staff'}>
+        <Field
+          label="Mobile Number"
+          required
+          {...(kind === 'doctor' ? { hint: 'The doctor signs up later with this number.' } : {})}
+        >
           <input
             className={s.input}
             value={form.mobile}
@@ -108,11 +130,15 @@ export function StaffModal({
         </Field>
       </Row>
 
-      {!existing && (
+      {(!existing || !existing.hasLogin) && (
         <Field
           label="Temporary password"
-          required
-          hint="The member is prompted to change this after their first sign-in."
+          required={kind === 'staff'}
+          hint={
+            kind === 'doctor'
+              ? 'Optional. Leave empty and the doctor creates their own login with their mobile number.'
+              : 'The member is prompted to change this after their first sign-in.'
+          }
         >
           <input
             className={s.input}

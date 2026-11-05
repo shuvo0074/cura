@@ -130,7 +130,7 @@ Then run your first-clinic script from blocker 3.
 **Never run `npm run seed` on this database.** It creates accounts whose passwords are
 published in `README.md` and `CURA_GUIDE.md`.
 
-Create the directory admin. Register a real account with a strong password, then:
+Create the super admin. Register a real account with a strong password, then:
 
 ```bash
 npm run directory:grant-admin -- <that real email>
@@ -141,9 +141,8 @@ cd ..
 Do not copy anything from the demo database. These demo records stay behind with it:
 
 - all `@cura.local` accounts
-- Cura Demo Hospital
-- Dr. Demo Physician, Dr. Demo Paediatrician, Dr. Demo Gynaecologist and Dr. Demo Doctor
-- BMDC number A-999901, and the demo bookings and review
+- Cura Demo Clinic and Cura Uttara Clinic
+- every demo doctor, patient and ambulance vendor, and the demo bookings and review
 
 ## Part 6: Deploy and verify
 

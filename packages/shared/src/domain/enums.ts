@@ -186,6 +186,7 @@ export const OtpPurpose = {
   PASSWORD_RESET: 'PASSWORD_RESET',
   STAFF_DEVICE: 'STAFF_DEVICE',
   PATIENT_CONSENT: 'PATIENT_CONSENT',
+  DOCTOR_CLAIM: 'DOCTOR_CLAIM',
 } as const;
 export type OtpPurpose = (typeof OtpPurpose)[keyof typeof OtpPurpose];
 

@@ -57,12 +57,16 @@ Model (@cura/shared)         →  contracts, rules, validation
 one service per responsibility, narrow ports in `core/ports/directory.ports.ts` and
 Prisma adapters in `infrastructure/repositories/directory/`. Two boundaries matter:
 
-- **Roles.** `User.role` is the clinic access level. Directory roles are separate
-  rows, enforced by `DirectoryAccessGuard`, because `ADMINISTRATOR` automatically
-  holds every clinic `Permission` and must not gain control of the public site.
-- **Data.** Listings are public; `Patient` and `Appointment` are private clinical
-  records. The directory has its own `PatientAccount` and `SerialBooking`, and nothing
-  links them to clinical records.
+- **Roles.** `User.role` and the practice membership hold the clinic access level.
+  Super admin, doctor, patient, ambulance owner and pharmacy owner are rows in
+  `user_directory_roles`, so one person can hold several. `DirectoryAccessGuard`
+  enforces them, because `ADMINISTRATOR` holds every clinic `Permission` and must not
+  gain control of Cura Website.
+- **Doctors.** One `doctors` table, with a required link to `users`. Every doctor is a
+  user; a doctor an admin added has a null `passwordHash` until they sign up.
+- **Data.** Doctor records are public; `Patient` and `Appointment` are private clinical
+  records. A `PatientAccount` links to a clinic's `Patient` only when the patient joins
+  that clinic, and the website never reads clinical records through that link.
 
 ## Running it
 

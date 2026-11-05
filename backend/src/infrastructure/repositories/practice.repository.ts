@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { NotFoundError } from '../../common/errors/domain-error';
+import { ConflictError, NotFoundError } from '../../common/errors/domain-error';
+import { normalizeBmdc, toNationalPhone, withDoctorPrefix } from '../../modules/directory/domain/account-rules';
 import type {
   CommunicationSettingRecord,
   CommunicationSettingsRepository,
@@ -60,6 +61,8 @@ export class PrismaPracticeRepository implements PracticeRepository, StaffReposi
         mobile: true,
         bmdcNumber: true,
         isActive: true,
+        passwordHash: true,
+        doctorListing: { select: { specialty: true } },
       },
     },
   } as const;
@@ -79,6 +82,8 @@ export class PrismaPracticeRepository implements PracticeRepository, StaffReposi
       mobile: string | null;
       bmdcNumber: string | null;
       isActive: boolean;
+      passwordHash: string | null;
+      doctorListing: { specialty: string } | null;
     };
   }): StaffRecord {
     return {
@@ -91,6 +96,8 @@ export class PrismaPracticeRepository implements PracticeRepository, StaffReposi
       bmdcNumber: row.user.bmdcNumber,
       // Effective access requires both the account and the membership active.
       isActive: row.isActive && row.user.isActive,
+      hasLogin: row.user.passwordHash !== null,
+      specialty: row.user.doctorListing?.specialty ?? null,
       notifyScheduleSms: row.notifyScheduleSms,
       notifyScheduleEmail: row.notifyScheduleEmail,
       notifyAppointmentSms: row.notifyAppointmentSms,
@@ -181,49 +188,104 @@ export class PrismaPracticeRepository implements PracticeRepository, StaffReposi
     mobile: string | null;
     role: string;
     bmdcNumber: string | null;
-    passwordHash: string;
+    passwordHash: string | null;
+    specialty: string | null;
   }): Promise<StaffRecord> {
-    const created = await this.prisma.$transaction(async (tx) => {
-      const user = await tx.user.create({
-        data: {
-          fullName: input.fullName,
-          email: input.email,
-          mobile: input.mobile,
-          bmdcNumber: input.bmdcNumber,
-          passwordHash: input.passwordHash,
-          role: input.role as never,
-          onboardingComplete: true,
-        },
-        select: { id: true, fullName: true, email: true, mobile: true, bmdcNumber: true },
-      });
+    const isDoctor = input.role === 'DOCTOR';
+    const bmdcNo = input.bmdcNumber ? (normalizeBmdc(input.bmdcNumber) ?? input.bmdcNumber) : null;
 
-      const membership = await tx.practiceMembership.create({
-        data: {
-          practiceId: input.practiceId,
-          userId: user.id,
-          role: input.role as never,
-          isActive: true,
-        },
-        select: { id: true },
-      });
+    const row = await this.prisma.$transaction(async (tx) => {
+      // A doctor working at several clinics stays one person, matched by phone.
+      const existing =
+        isDoctor && input.mobile
+          ? await tx.user.findFirst({
+              where: { mobile: input.mobile, deletedAt: null },
+              select: { id: true, role: true, bmdcNumber: true },
+            })
+          : null;
 
-      return { user, membershipId: membership.id };
+      if (existing) {
+        if (existing.role !== 'DOCTOR') {
+          throw new ConflictError('ACCOUNT_EXISTS', 'This mobile number belongs to someone who is not a doctor.');
+        }
+        if (bmdcNo && existing.bmdcNumber && existing.bmdcNumber !== bmdcNo) {
+          throw new ConflictError('BMDC_MISMATCH', 'That BMDC number does not match the doctor with this mobile number.');
+        }
+        const already = await tx.practiceMembership.findUnique({
+          where: { practiceId_userId: { practiceId: input.practiceId, userId: existing.id } },
+          select: { id: true },
+        });
+        if (already) throw new ConflictError('ALREADY_A_MEMBER', 'This doctor is already at your clinic.');
+      }
+
+      const userId =
+        existing?.id ??
+        (
+          await tx.user.create({
+            data: {
+              fullName: input.fullName,
+              email: input.email,
+              mobile: input.mobile,
+              bmdcNumber: bmdcNo,
+              passwordHash: input.passwordHash,
+              role: input.role as never,
+              onboardingComplete: true,
+              ...(isDoctor ? { directoryRoles: { create: { role: 'DOCTOR' as const } } } : {}),
+            },
+            select: { id: true },
+          })
+        ).id;
+
+      if (isDoctor && !existing) {
+        const clinic = await tx.practice.findUniqueOrThrow({
+          where: { id: input.practiceId },
+          select: { name: true, city: true },
+        });
+        // Added by an admin, so patients can see this doctor straight away.
+        await tx.doctorListing.create({
+          data: {
+            userId,
+            name: withDoctorPrefix(input.fullName),
+            specialty: input.specialty ?? 'General Physician',
+            phone: toNationalPhone(input.mobile),
+            bmdcNo,
+            chamber: clinic.name,
+            city: clinic.city,
+            followupFees: null,
+          },
+        });
+      }
+
+      return tx.practiceMembership.create({
+        data: { practiceId: input.practiceId, userId, role: input.role as never, isActive: true },
+        select: PrismaPracticeRepository.STAFF_SELECT,
+      });
     });
 
-    return {
-      membershipId: created.membershipId,
-      userId: created.user.id,
-      fullName: created.user.fullName,
-      email: created.user.email,
-      mobile: created.user.mobile,
-      role: input.role,
-      bmdcNumber: created.user.bmdcNumber,
-      isActive: true,
-      notifyScheduleSms: true,
-      notifyScheduleEmail: true,
-      notifyAppointmentSms: true,
-      notifyAppointmentEmail: true,
-    };
+    return PrismaPracticeRepository.toStaff(row);
+  }
+
+  async memberRole(practiceId: string, userId: string): Promise<string | null> {
+    const row = await this.prisma.practiceMembership.findUnique({
+      where: { practiceId_userId: { practiceId, userId } },
+      select: { role: true },
+    });
+    return row?.role ?? null;
+  }
+
+  async belongsToAnotherClinic(practiceId: string, userId: string): Promise<boolean> {
+    const count = await this.prisma.practiceMembership.count({
+      where: { userId, practiceId: { not: practiceId } },
+    });
+    return count > 0;
+  }
+
+  async createLogin(practiceId: string, userId: string, passwordHash: string): Promise<boolean> {
+    const { count } = await this.prisma.user.updateMany({
+      where: { id: userId, passwordHash: null, memberships: { some: { practiceId } } },
+      data: { passwordHash },
+    });
+    return count > 0;
   }
 
   /**
@@ -262,6 +324,16 @@ export class PrismaPracticeRepository implements PracticeRepository, StaffReposi
       if (Object.keys(userPatch).length > 0) {
         await tx.user.update({ where: { id: userId }, data: userPatch });
       }
+      // A doctor's name and BMDC number are one fact, shown on both front ends.
+      if (patch.fullName !== undefined || patch.bmdcNumber !== undefined) {
+        await tx.doctorListing.updateMany({
+          where: { userId },
+          data: {
+            ...(patch.fullName !== undefined ? { name: withDoctorPrefix(patch.fullName) } : {}),
+            ...(patch.bmdcNumber !== undefined ? { bmdcNo: patch.bmdcNumber } : {}),
+          },
+        });
+      }
       return tx.practiceMembership.update({
         where: { id: membership.id },
         data: {
@@ -283,6 +355,10 @@ export class PrismaPracticeRepository implements PracticeRepository, StaffReposi
    * step a revoked assistant would keep working until their token expired.
    */
   async setStaffActive(practiceId: string, userId: string, isActive: boolean): Promise<void> {
+    // A doctor who still works at another clinic keeps their account there.
+    const otherClinics = await this.prisma.practiceMembership.count({
+      where: { userId, isActive: true, practiceId: { not: practiceId } },
+    });
     await this.prisma.$transaction([
       this.prisma.practiceMembership.updateMany({
         where: { practiceId, userId },
@@ -290,7 +366,9 @@ export class PrismaPracticeRepository implements PracticeRepository, StaffReposi
       }),
       this.prisma.user.update({
         where: { id: userId },
-        data: isActive ? { isActive: true } : { isActive: false, tokenVersion: { increment: 1 } },
+        data: isActive
+          ? { isActive: true }
+          : { ...(otherClinics ? {} : { isActive: false }), tokenVersion: { increment: 1 } },
       }),
       ...(isActive
         ? []

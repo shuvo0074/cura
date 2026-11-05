@@ -87,7 +87,7 @@ export function StaffPanel({ practiceId }: { practiceId: string }) {
                 <td>
                   <span className={s.staffName}>{row.fullName}</span>
                   <span className={s.staffMeta}>
-                    {[row.mobile, row.email, row.bmdcNumber && `BMDC ${row.bmdcNumber}`]
+                    {[row.mobile, row.email, row.bmdcNumber && `BMDC ${row.bmdcNumber}`, !row.hasLogin && 'No login yet']
                       .filter(Boolean)
                       .join(' · ') || '—'}
                   </span>

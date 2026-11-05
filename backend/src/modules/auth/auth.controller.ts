@@ -2,9 +2,15 @@ import { Body, Controller, HttpCode, HttpStatus, Post, Req, Res } from '@nestjs/
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import {
+  doctorClaimCompleteSchema,
+  doctorClaimLookupSchema,
+  doctorClaimStartSchema,
   loginSchema,
   registerSchema,
   verifyOtpSchema,
+  type DoctorClaimCompleteInput,
+  type DoctorClaimLookupInput,
+  type DoctorClaimStartInput,
   type LoginInput,
   type RegisterInput,
   type VerifyOtpInput,
@@ -74,6 +80,36 @@ export class AuthController {
       dto.code,
       this.contextOf(req),
     );
+    this.cookie.set(res, refreshToken);
+    return session;
+  }
+
+  @Public()
+  @Post('doctor-claim/lookup')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 20, ttl: 900_000 } })
+  lookupDoctorClaim(@Body(zodBody(doctorClaimLookupSchema)) dto: DoctorClaimLookupInput) {
+    return this.auth.lookupDoctorClaim(dto.mobile);
+  }
+
+  @Public()
+  @Post('doctor-claim/start')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 5, ttl: 900_000 } })
+  startDoctorClaim(@Body(zodBody(doctorClaimStartSchema)) dto: DoctorClaimStartInput) {
+    return this.auth.startDoctorClaim(dto);
+  }
+
+  @Public()
+  @Post('doctor-claim/complete')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 10, ttl: 900_000 } })
+  async completeDoctorClaim(
+    @Body(zodBody(doctorClaimCompleteSchema)) dto: DoctorClaimCompleteInput,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { session, refreshToken } = await this.auth.completeDoctorClaim(dto, this.contextOf(req));
     this.cookie.set(res, refreshToken);
     return session;
   }

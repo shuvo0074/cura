@@ -125,6 +125,7 @@ export class PrismaPatientRepository implements PatientRepository {
         dateOfBirth: input.dateOfBirth ?? null,
         bloodGroup: input.bloodGroup ?? null,
         address: input.address ?? null,
+        accountId: input.accountId ?? null,
         searchName: this.normalise(input.fullName),
         profileComplete: this.isComplete(input),
       },

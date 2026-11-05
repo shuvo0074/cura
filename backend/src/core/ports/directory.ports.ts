@@ -5,7 +5,7 @@
  */
 export type Row = Record<string, any>;
 
-export type DirectoryRoleName = 'patient' | 'doctor' | 'admin';
+export type DirectoryRoleName = 'super_admin' | 'patient' | 'doctor' | 'ambulance_owner' | 'pharmacy_owner';
 
 export interface DirectoryIdentity {
   userId: string;
@@ -27,7 +27,7 @@ export interface NewAccount {
 
 export interface NewVerification {
   doctorId: string | null;
-  kind: 'CLAIM' | 'NEW';
+  kind: 'NEW';
   bmdcNo: string;
   details: Row;
 }
@@ -37,13 +37,29 @@ export const DIRECTORY_ACCOUNT_REPOSITORY = Symbol('DIRECTORY_ACCOUNT_REPOSITORY
 export interface DirectoryAccountRepository {
   loadIdentity(userId: string): Promise<DirectoryIdentity | null>;
   createPatient(account: NewAccount): Promise<{ userId: string; tokenVersion: number }>;
-  createDoctorApplicant(
-    account: NewAccount,
-    verification: NewVerification,
-  ): Promise<{ userId: string; tokenVersion: number }>;
-  /** Adds the doctor role and a pending request to an existing account. */
+  /** Adds a pending request to an account whose doctor record awaits approval. */
   submitVerification(userId: string, verification: NewVerification): Promise<void>;
   latestVerification(userId: string): Promise<Row | null>;
+  /** Clinics a patient can choose on Cura Website. */
+  listClinics(): Promise<Row[]>;
+  clinicExists(practiceId: string): Promise<boolean>;
+  listPatientClinics(accountId: string): Promise<Row[]>;
+  findPatientClinic(accountId: string, practiceId: string): Promise<Row | null>;
+  leaveClinic(accountId: string, practiceId: string): Promise<boolean>;
+  /** A super admin creates a clinic and its owner together. */
+  createClinicOwner(input: NewClinicOwner): Promise<Row>;
+  listClinicOwners(): Promise<Row[]>;
+  findUserIdByIdentifier(identifier: string): Promise<string | null>;
+  grantRole(userId: string, role: 'AMBULANCE_OWNER' | 'PHARMACY_OWNER'): Promise<void>;
+  revokeRole(userId: string, role: 'AMBULANCE_OWNER' | 'PHARMACY_OWNER'): Promise<void>;
+}
+
+export interface NewClinicOwner {
+  fullName: string;
+  email: string | null;
+  mobile: string;
+  passwordHash: string;
+  clinicName: string;
 }
 
 export const DOCTOR_LISTING_REPOSITORY = Symbol('DOCTOR_LISTING_REPOSITORY');
@@ -56,6 +72,8 @@ export interface DoctorSearch {
 }
 
 export interface DoctorListingRepository {
+  /** Creates the doctor and the user behind them. */
+  createWithUser(data: Row, mobile: string): Promise<Row>;
   listPublic(): Promise<Row[]>;
   searchPublic(search: DoctorSearch): Promise<{ items: Row[]; total: number }>;
   featured(limit: number): Promise<Row[]>;
@@ -67,7 +85,6 @@ export interface DoctorListingRepository {
   findByBmdc(bmdcNo: string): Promise<{ id: string; userId: string | null } | null>;
   listForHospital(hospitalId: string, hospitalName: string): Promise<Row[]>;
   listAdmin(): Promise<Row[]>;
-  create(data: Row): Promise<Row>;
   update(id: string, data: Row): Promise<Row | null>;
   setHidden(id: string, hidden: boolean): Promise<Row | null>;
   bookingCount(id: string): Promise<number>;
@@ -171,6 +188,10 @@ export interface AmbulanceRepository {
   update(id: string, data: Row): Promise<Row | null>;
   setHidden(id: string, hidden: boolean): Promise<Row | null>;
   delete(id: string): Promise<boolean>;
+  listOwned(ownerId: string): Promise<Row[]>;
+  /** Null when the vendor is missing or belongs to someone else. */
+  updateOwned(id: string, ownerId: string, data: Row): Promise<Row | null>;
+  setOwner(id: string, ownerId: string | null): Promise<boolean>;
 }
 
 export const CATALOG_DIRECTORY_REPOSITORY = Symbol('CATALOG_DIRECTORY_REPOSITORY');

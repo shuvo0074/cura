@@ -18,5 +18,13 @@ export default defineConfig({
     },
     chunkSizeWarningLimit: 600,
   },
-  server: { port: 5173, strictPort: true },
+  server: {
+    port: 5173,
+    strictPort: true,
+    // Set API_PROXY_URL with VITE_API_BASE_URL=/api to develop against a deployed
+    // API. It sends no CORS headers for localhost, so the browser must stay same-origin.
+    ...(process.env.API_PROXY_URL
+      ? { proxy: { '/api': { target: process.env.API_PROXY_URL, changeOrigin: true, xfwd: true } } }
+      : {}),
+  },
 });

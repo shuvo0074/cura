@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
-import { TestApi, dateAhead, db, directoryAdmin, nextEmail, registerPatient, PASSWORD } from './harness';
+import { TestApi, dateAhead, db, directoryAdmin, nextEmail, nextPhone, registerPatient, PASSWORD } from './harness';
 
 /** Booking switched off, and rate limits on as in a production deploy. */
 let api: TestApi;
@@ -18,7 +18,7 @@ test('booking is refused while switched off, and sessions say so', async () => {
   const admin = await directoryAdmin(api);
   const session = '08:00 AM - 11:00 AM';
   const doctor = (await api.post('/directory/admin/doctors', {
-    name: 'Dr. Call Only', specialty: 'ENT', weeklySchedule: [{ venue: 'V', time: session }],
+    name: 'Dr. Call Only', specialty: 'ENT', phone: nextPhone(), weeklySchedule: [{ venue: 'V', time: session }],
   }, admin.token)).body;
   const date = dateAhead(1, (day) => day !== 5);
   const res = await api.post('/directory/appointments', { doctorId: doctor.id, date, venue: 'V', session }, admin.token);
@@ -36,7 +36,8 @@ test('there are no OTP login or mock OTP routes', async () => {
 });
 
 test('rate limits answer 429 with Retry-After, using shared storage', async () => {
-  const doctor = await db.doctorListing.create({ data: { name: 'Dr. Limited', specialty: 'ENT' } });
+  const user = await db.user.create({ data: { fullName: 'Dr. Limited', role: 'DOCTOR' } });
+  const doctor = await db.doctorListing.create({ data: { name: 'Dr. Limited', specialty: 'ENT', userId: user.id } });
   let last = await api.call('POST', `/directory/doctors/${doctor.id}/share`);
   for (let i = 0; i < 130 && last.status !== 429; i += 1) {
     last = await api.call('POST', `/directory/doctors/${doctor.id}/share`);

@@ -4,6 +4,8 @@ import {
   UserRole,
   permissionsForRole,
   type AuthSession,
+  type DoctorClaimCompleteInput,
+  type DoctorClaimStartInput,
   type LoginInput,
   type LoginResult,
   type RegisterInput,
@@ -13,8 +15,11 @@ import { CryptoService } from '../../common/crypto/crypto.service';
 import {
   ConflictError,
   InvalidCredentialsError,
+  NotFoundError,
   RateLimitedError,
+  ValidationError,
 } from '../../common/errors/domain-error';
+import { normalizeBmdc } from '../directory/domain/account-rules';
 import {
   AUDIT_REPOSITORY,
   USER_REPOSITORY,
@@ -67,7 +72,14 @@ export class AuthService {
     const email = input.email ?? null;
     const mobile = input.mobile ?? null;
 
-    if (await this.users.existsByBmdc(input.bmdcNumber)) {
+    // An admin already added this doctor, so they finish that record instead.
+    if (mobile && (await this.users.findClaimableDoctor(mobile))) throw doctorSignupRequired();
+
+    const bmdcNo = normalizeBmdc(input.bmdcNumber);
+    if (!bmdcNo) {
+      throw new ValidationError('Enter your BMDC registration number, e.g. A-12345.');
+    }
+    if (await this.users.bmdcTakenByOther(bmdcNo, null)) {
       throw new ConflictError(
         'BMDC_ALREADY_REGISTERED',
         'An account already exists for this BMDC registration number.',
@@ -80,13 +92,14 @@ export class AuthService {
       );
     }
 
-    const user = await this.users.create({
+    // Patients see this doctor only after an admin approves the BMDC number.
+    const user = await this.users.createDoctorApplicant({
       fullName: input.fullName,
       email,
       mobile,
       passwordHash: await this.crypto.hashPassword(input.password),
-      bmdcNumber: input.bmdcNumber,
-      role: UserRole.DOCTOR,
+      bmdcNo,
+      specialty: input.specialty,
     });
 
     await this.audit.record({
@@ -129,6 +142,11 @@ export class AuthService {
       throw new RateLimitedError(
         `Too many failed attempts. Try again in ${minutes} minute${minutes === 1 ? '' : 's'}.`,
       );
+    }
+
+    if (user.passwordHash === null) {
+      if (await this.users.findClaimableDoctor(user.mobile ?? '')) throw doctorSignupRequired();
+      throw new InvalidCredentialsError();
     }
 
     const passwordOk = await this.crypto.verifyPassword(user.passwordHash, input.password);
@@ -182,6 +200,8 @@ export class AuthService {
   ): Promise<{ session: AuthSession; refreshToken: string }> {
     const result = await this.otp.verify(challengeId, code);
     if (!result.subjectId) throw new InvalidCredentialsError();
+    // This code proves a phone during sign-up. It never opens a session by itself.
+    if (result.purpose === OtpPurpose.DOCTOR_CLAIM) throw new InvalidCredentialsError();
 
     const user = await this.users.findById(result.subjectId);
     if (!user || !user.isActive) throw new InvalidCredentialsError();
@@ -203,6 +223,79 @@ export class AuthService {
     });
 
     return this.createSession(user, ctx);
+  }
+
+  /** The public facts that pre-fill the sign-up form. Never the BMDC number. */
+  async lookupDoctorClaim(mobile: string) {
+    const doctor = await this.users.findClaimableDoctor(mobile);
+    if (!doctor) return { claimable: false as const };
+    return {
+      claimable: true as const,
+      fullName: doctor.fullName,
+      specialty: doctor.specialty,
+      mobile: doctor.mobile,
+    };
+  }
+
+  /**
+   * Checks the BMDC number and sends a code to the doctor's phone.
+   *
+   * Phone and BMDC numbers can both be found publicly, so they cannot be enough
+   * to take over a doctor's record. The code proves the phone is theirs.
+   */
+  async startDoctorClaim(input: DoctorClaimStartInput) {
+    const { doctor } = await this.checkClaim(input.mobile, input.bmdcNumber);
+    const challenge = await this.otp.issue({
+      purpose: OtpPurpose.DOCTOR_CLAIM,
+      destination: doctor.mobile,
+      subjectId: doctor.userId,
+    });
+    return { status: 'otp_required' as const, challenge };
+  }
+
+  async completeDoctorClaim(
+    input: DoctorClaimCompleteInput,
+    ctx: RequestContext,
+  ): Promise<{ session: AuthSession; refreshToken: string }> {
+    const proof = await this.otp.verify(input.challengeId, input.code);
+    if (proof.purpose !== OtpPurpose.DOCTOR_CLAIM || !proof.subjectId) throw new InvalidCredentialsError();
+
+    const { doctor, bmdcNo } = await this.checkClaim(proof.destination, input.bmdcNumber);
+    if (doctor.userId !== proof.subjectId) throw new InvalidCredentialsError();
+
+    const user = await this.users.completeDoctorClaim(doctor.userId, {
+      passwordHash: await this.crypto.hashPassword(input.password),
+      bmdcNo,
+      email: input.email ?? null,
+    });
+    if (!user) throw new ConflictError('ACCOUNT_EXISTS', 'This doctor has already created a login.');
+
+    await this.audit.record({
+      actorUserId: user.id,
+      action: 'auth.doctor_claimed',
+      resourceType: 'user',
+      resourceId: user.id,
+      practiceId: null,
+      ipHash: this.crypto.hashIp(ctx.ip ?? undefined),
+      userAgent: ctx.userAgent ?? null,
+      requestId: ctx.requestId ?? null,
+    });
+    return this.createSession(user, ctx);
+  }
+
+  private async checkClaim(mobile: string, bmdcNumber: string) {
+    const doctor = await this.users.findClaimableDoctor(mobile);
+    if (!doctor) throw new NotFoundError('Doctor');
+
+    const bmdcNo = normalizeBmdc(bmdcNumber);
+    if (!bmdcNo) throw new ValidationError('Enter your BMDC registration number, e.g. A-12345.');
+    if (doctor.bmdcNo && doctor.bmdcNo !== bmdcNo) {
+      throw new ConflictError('BMDC_MISMATCH', 'That BMDC number does not match this doctor.');
+    }
+    if (await this.users.bmdcTakenByOther(bmdcNo, doctor.userId)) {
+      throw new ConflictError('BMDC_ALREADY_REGISTERED', 'Another doctor already holds this BMDC number.');
+    }
+    return { doctor, bmdcNo };
   }
 
   async refresh(refreshToken: string, ctx: RequestContext) {
@@ -270,6 +363,13 @@ export class AuthService {
     };
   }
 }
+
+/** The login does not exist yet: the client opens the pre-filled sign-up form. */
+export const doctorSignupRequired = (): ConflictError =>
+  new ConflictError(
+    'DOCTOR_SIGNUP_REQUIRED',
+    'A clinic already added you as a doctor. Finish signing up on Cura Dashboard.',
+  );
 
 /**
  * A real Argon2id hash of a random value, used only to spend comparable CPU

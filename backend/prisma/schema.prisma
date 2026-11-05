@@ -48,6 +48,7 @@ enum OtpPurpose {
   PASSWORD_RESET
   STAFF_DEVICE
   PATIENT_CONSENT
+  DOCTOR_CLAIM
 }
 
 enum DocumentCategory {
@@ -65,7 +66,8 @@ model User {
   fullName       String    @db.VarChar(120)
   email          String?   @unique @db.VarChar(160)
   mobile         String?   @unique @db.VarChar(20)
-  passwordHash   String    @db.VarChar(255)
+  /// Null only for a doctor an admin added who has not created a login yet.
+  passwordHash   String?   @db.VarChar(255)
   role           UserRole  @default(DOCTOR)
   bmdcNumber     String?   @unique @db.VarChar(20)
   gender         Gender?
@@ -107,10 +109,11 @@ model User {
   auditLogs       AuditLog[]
   onboardingDraft OnboardingDraft?
 
-  directoryRoles       UserDirectoryRole[]
-  patientAccount       PatientAccount?
-  doctorListing        DoctorListing?
-  doctorVerifications  DoctorVerification[] @relation("VerificationApplicant")
+  directoryRoles        UserDirectoryRole[]
+  ownedAmbulances       AmbulanceVendor[]
+  patientAccount        PatientAccount?
+  doctorListing         DoctorListing?
+  doctorVerifications   DoctorVerification[] @relation("VerificationApplicant")
   reviewedVerifications DoctorVerification[] @relation("VerificationReviewer")
 
   @@index([isActive, role])
@@ -162,25 +165,25 @@ model OnboardingDraft {
 }
 
 model Practice {
-  id             String    @id @default(uuid()) @db.Uuid
-  name           String    @db.VarChar(160)
-  specialization String?   @db.VarChar(120)
-  contactNumber  String?   @db.VarChar(20)
-  email          String?   @db.VarChar(160)
-  website        String?   @db.VarChar(200)
+  id             String  @id @default(uuid()) @db.Uuid
+  name           String  @db.VarChar(160)
+  specialization String? @db.VarChar(120)
+  contactNumber  String? @db.VarChar(20)
+  email          String? @db.VarChar(160)
+  website        String? @db.VarChar(200)
   /// Business Identification Number — the Bangladeshi analogue of a GSTIN.
-  binNumber      String?   @db.VarChar(40)
-  address        String?   @db.VarChar(400)
-  addressLine1   String?   @db.VarChar(200)
-  locality       String?   @db.VarChar(120)
-  city           String?   @db.VarChar(80)
-  country        String    @default("Bangladesh") @db.VarChar(80)
-  postCode       String?   @db.VarChar(12)
-  mapsUrl        String?   @db.VarChar(512)
-  logoUrl        String?   @db.VarChar(512)
-  roomNumber     String?   @db.VarChar(40)
-  slotMinutes    Int       @default(10)
-  timezone       String    @default("Asia/Dhaka") @db.VarChar(60)
+  binNumber      String? @db.VarChar(40)
+  address        String? @db.VarChar(400)
+  addressLine1   String? @db.VarChar(200)
+  locality       String? @db.VarChar(120)
+  city           String? @db.VarChar(80)
+  country        String  @default("Bangladesh") @db.VarChar(80)
+  postCode       String? @db.VarChar(12)
+  mapsUrl        String? @db.VarChar(512)
+  logoUrl        String? @db.VarChar(512)
+  roomNumber     String? @db.VarChar(40)
+  slotMinutes    Int     @default(10)
+  timezone       String  @default("Asia/Dhaka") @db.VarChar(60)
 
   /// Calendar display default (spec 6.6.c.1.4.1) — on by default.
   showTodayFirst        Boolean @default(true)
@@ -195,13 +198,13 @@ model Practice {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  memberships    PracticeMembership[]
-  sessions       PracticeSession[]
-  closures       PracticeClosure[]
-  appointments   Appointment[]
-  patients       Patient[]
-  emailSettings  EmailSetting[]
-  feedback       PatientFeedback[]
+  memberships   PracticeMembership[]
+  sessions      PracticeSession[]
+  closures      PracticeClosure[]
+  appointments  Appointment[]
+  patients      Patient[]
+  emailSettings EmailSetting[]
+  feedback      PatientFeedback[]
 
   @@index([isActive])
   @@map("practices")
@@ -275,6 +278,8 @@ model Patient {
   avatarUrl   String?   @db.VarChar(512)
   occupation  String?   @db.VarChar(120)
   referredBy  String?   @db.VarChar(120)
+  /// The patient's Cura Website account, when they joined this clinic there.
+  accountId   String?   @db.Uuid
 
   /// Lower-cased, de-punctuated name used for prefix search.
   searchName String @db.VarChar(160)
@@ -285,7 +290,8 @@ model Patient {
   updatedAt       DateTime  @updatedAt
   deletedAt       DateTime?
 
-  practice     Practice         @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+  practice     Practice          @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+  account      PatientAccount?   @relation(fields: [accountId], references: [id], onDelete: SetNull)
   appointments Appointment[]
   encounters   Encounter[]
   consents     PatientConsent[]
@@ -293,6 +299,8 @@ model Patient {
   invoices     Invoice[]
   feedback     PatientFeedback[]
 
+  /// One clinic record per website account; null for patients the clinic registered.
+  @@unique([practiceId, accountId])
   /// Family members sharing one mobile number resolve through this index.
   @@index([practiceId, mobile])
   @@index([practiceId, searchName])
@@ -811,10 +819,14 @@ model PatientFeedback {
 
 /// Roles on the public directory. Kept apart from `User.role`, which is the
 /// clinic access level: a clinic administrator is not a directory admin.
+/// A person can hold several of these. Clinic access levels stay on the
+/// practice membership, because they apply per clinic.
 enum DirectoryRole {
+  SUPER_ADMIN
   PATIENT
   DOCTOR
-  ADMIN
+  AMBULANCE_OWNER
+  PHARMACY_OWNER
 }
 
 enum VerificationKind {
@@ -853,16 +865,18 @@ model UserDirectoryRole {
   @@map("user_directory_roles")
 }
 
-/// A member of the public who signed up. Not linked to the clinical `Patient`.
+/// A patient's Cura Website account. Linked to a clinic's `Patient` record only
+/// for clinics the patient chose to join.
 model PatientAccount {
   id        String   @id @default(uuid()) @db.Uuid
   userId    String   @unique @db.Uuid
   name      String?  @db.VarChar(120)
   createdAt DateTime @default(now())
 
-  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  bookings SerialBooking[]
-  reviews  DoctorReview[]
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookings      SerialBooking[]
+  reviews       DoctorReview[]
+  clinicRecords Patient[]
 
   @@map("patient_accounts")
 }
@@ -901,8 +915,8 @@ model Hospital {
 
 model DoctorListing {
   id                String    @id @default(uuid()) @db.Uuid
-  /// Set only through an approved verification or an admin action.
-  userId            String?   @unique @db.Uuid
+  /// Every doctor is a user. Whether they can log in depends on `User.passwordHash`.
+  userId            String    @unique @db.Uuid
   name              String
   specialty         String
   department        String?
@@ -942,9 +956,11 @@ model DoctorListing {
   sourceUrl         String?
   verifiedOn        DateTime? @db.Date
   hidden            Boolean   @default(false)
+  /// A doctor who signed up, waiting for an admin. Also `hidden` while true.
+  pendingApproval   Boolean   @default(false)
   createdAt         DateTime  @default(now())
 
-  user          User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   hospital      Hospital?            @relation(fields: [hospitalId], references: [id], onDelete: SetNull)
   verifications DoctorVerification[]
   items         DoctorProfileItem[]
@@ -958,11 +974,13 @@ model DoctorListing {
   @@index([hidden, specialty])
   @@index([hidden, division])
   @@index([hospitalId])
-  @@map("doctor_listings")
+  @@map("doctors")
 }
 
 model AmbulanceVendor {
   id              String    @id @default(uuid()) @db.Uuid
+  /// The account allowed to edit this vendor, assigned by a super admin.
+  ownerId         String?   @db.Uuid
   slug            String    @unique
   name            String
   nameBn          String?
@@ -978,6 +996,8 @@ model AmbulanceVendor {
   sourceUrl       String?
   sourceCheckedOn DateTime? @db.Date
   hidden          Boolean   @default(false)
+
+  owner User? @relation(fields: [ownerId], references: [id], onDelete: SetNull)
 
   @@map("ambulance_vendors")
 }

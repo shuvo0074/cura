@@ -1,4 +1,5 @@
 import { loginSchema } from '../validation/schemas';
+import { Permission } from '../domain/enums';
 import type { AuthSession, OtpChallenge } from '../domain/models';
 import type { SupportedLocale } from '../config/app-config';
 import { ViewModel } from './view-model';
@@ -34,6 +35,8 @@ export class LoginViewModel extends ViewModel<LoginState> {
     private readonly auth: AuthApi,
     private readonly onAuthenticated: (session: AuthSession) => void,
     _locale: SupportedLocale = 'en',
+    /** A clinic added this doctor, and they have no login yet. */
+    private readonly onDoctorSignupRequired?: (mobile: string) => void,
   ) {
     super({
       phase: 'credentials',
@@ -94,6 +97,10 @@ export class LoginViewModel extends ViewModel<LoginState> {
     this.setState({ submitting: false });
 
     if (!result.ok) {
+      if (result.error.code === 'DOCTOR_SIGNUP_REQUIRED' && this.onDoctorSignupRequired) {
+        this.onDoctorSignupRequired(parsed.data.identifier);
+        return;
+      }
       this.setState({ formError: result.error.message });
       return;
     }
@@ -103,7 +110,7 @@ export class LoginViewModel extends ViewModel<LoginState> {
       return;
     }
 
-    this.onAuthenticated(result.value.session);
+    await this.finish(result.value.session);
   }
 
   async submitOtp(): Promise<void> {
@@ -125,7 +132,18 @@ export class LoginViewModel extends ViewModel<LoginState> {
       return;
     }
 
-    this.onAuthenticated(result.value);
+    await this.finish(result.value);
+  }
+
+  /** Patients use Cura Website. They hold no clinic access, so they stop here. */
+  private async finish(session: AuthSession): Promise<void> {
+    if (!session.user.permissions.includes(Permission.CLINIC_ACCESS)) {
+      await this.auth.logout();
+      this.backToCredentials();
+      this.setState({ formError: 'This account is for Cura Website. Please log in there.' });
+      return;
+    }
+    this.onAuthenticated(session);
   }
 
   backToCredentials(): void {
