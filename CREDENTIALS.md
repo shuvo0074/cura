@@ -29,7 +29,7 @@ there. Nobody needs a login to browse doctors, hospitals, diagnostic centres and
   and click **My clinics**.
 - **Booking:** patients can only book online if booking is switched on in the API.
 - **Ambulance and pharmacy owners:** their screens are on Cura Dashboard, under **My Ambulances** and **My Pharmacy**.
-  There are no such accounts on the live database yet.
+  There are no pharmacy owners on the live database yet.
 
 ### Login rules
 
@@ -72,6 +72,17 @@ Password for all: `CuraAdmin123`. Works on Cura Dashboard.
 | Mahmudul Hasan | Cura Mirpur Clinic | owner3@cura.local | 01700020003 |
 | Nasima Chowdhury | Cura Chattogram Clinic | owner4@cura.local | 01700020004 |
 | Kamrul Islam | Cura Sylhet Clinic | owner5@cura.local | 01700020005 |
+
+### Ambulance owners
+
+Password for all: `CuraOwner123`. Works on Cura Dashboard, under **My Ambulances**.
+
+| Name | Ambulance service | Email | Mobile |
+| --- | --- | --- | --- |
+| Rafiq Mia | BD Ambulance | ambulance1@cura.local | 01700030001 |
+| Jamal Uddin | Dhaka Ambulance | ambulance2@cura.local | 01700030002 |
+| Sharmin Nahar | National Ambulance Service (Mirpur) | ambulance3@cura.local | 01700030003 |
+| Abdul Karim | Shihab Ambulance | ambulance4@cura.local | 01700030004 |
 
 ### Doctors
 
@@ -169,7 +180,10 @@ Password for all: `CuraPatient123`. Works on Cura Website only. Each patient app
 
 ## Local database
 
-These come from `backend/prisma/seed.ts`. They are not on the live database, except where the same email is listed above.
+Your local `cura` database is now a copy of the live database, taken on 2026-11-06, so the live accounts above work locally.
+
+The accounts below come from `backend/prisma/seed.ts`. They exist only in a freshly seeded database, or in the old local
+database kept as `cura_local_backup_20261106`.
 
 | User type | Name | Clinic | Email | Mobile | Password | Works on |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -196,5 +210,5 @@ Dashboard and use BMDC number A-100203. The verification code is printed in the 
 
 After 10 login attempts in 15 minutes, Cura says **Too many attempts**. Wait 15 minutes and try again.
 
-If the passwords have been changed, running `npm run seed` in `backend/` resets the local accounts above, except
-Dr Farzana Ahmed. Do not run it on the live database: it would overwrite `owner2@cura.local` and reset demo passwords.
+Do not run `npm run seed` on the live database or on a copy of it: it would overwrite `owner2@cura.local` and reset demo
+passwords. Use it only on an empty database.

@@ -121,7 +121,10 @@ export function App() {
   const practiceId = session.user.practiceIds[0];
 
   // An owner with no clinic has no calendar to land on.
-  const ownerHome: RouteKey = session.user.ownerRoles.includes(OwnerRole.AMBULANCE_OWNER) ? 'ambulances' : 'pharmacy';
+  // An API deployed before owner roles existed does not send them.
+  const ownerHome: RouteKey = (session.user.ownerRoles ?? []).includes(OwnerRole.AMBULANCE_OWNER)
+    ? 'ambulances'
+    : 'pharmacy';
   const route: RouteKey =
     hasClinicAccess || ['ambulances', 'pharmacy', 'profile'].includes(location.route) ? location.route : ownerHome;
 

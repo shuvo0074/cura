@@ -137,7 +137,9 @@ export class LoginViewModel extends ViewModel<LoginState> {
 
   /** Patients use Cura Website. Only clinic accounts and business owners continue. */
   private async finish(session: AuthSession): Promise<void> {
-    const allowed = session.user.permissions.includes(Permission.CLINIC_ACCESS) || session.user.ownerRoles.length > 0;
+    // An API deployed before owner roles existed does not send them.
+    const allowed =
+      session.user.permissions.includes(Permission.CLINIC_ACCESS) || (session.user.ownerRoles ?? []).length > 0;
     if (!allowed) {
       await this.auth.logout();
       this.backToCredentials();
