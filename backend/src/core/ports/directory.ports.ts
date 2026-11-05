@@ -196,6 +196,30 @@ export interface AmbulanceRepository {
   setOwner(id: string, ownerId: string | null): Promise<boolean>;
 }
 
+export const ADMIN_USERS_REPOSITORY = Symbol('ADMIN_USERS_REPOSITORY');
+
+export type GrantableRole = 'SUPER_ADMIN' | 'PATIENT' | 'AMBULANCE_OWNER' | 'PHARMACY_OWNER';
+export type ClinicRole = 'ADMINISTRATOR' | 'DOCTOR' | 'DESK_STAFF';
+
+/** A super admin's view of every account, clinic and pharmacy. */
+export interface AdminUsersRepository {
+  listUsers(search: { q: string; role: string | null; page: number; limit: number }): Promise<{ items: Row[]; total: number }>;
+  getUser(id: string): Promise<Row | null>;
+  createUser(data: { fullName: string; email: string | null; mobile: string | null; passwordHash: string }): Promise<Row>;
+  updateUser(id: string, data: Row): Promise<boolean>;
+  setRole(id: string, role: GrantableRole, granted: boolean): Promise<void>;
+  countSuperAdmins(): Promise<number>;
+  /** Sets the clinic access level and the clinics it applies to, in one step. */
+  setClinicAccess(id: string, access: { role: ClinicRole | null; practiceIds: string[]; specialty: string | null }): Promise<void>;
+  listClinics(): Promise<Row[]>;
+  updateClinic(id: string, data: Row): Promise<Row | null>;
+  listPharmacies(): Promise<Row[]>;
+  createPharmacy(ownerId: string, data: Row): Promise<Row>;
+  updatePharmacy(id: string, data: Row): Promise<Row | null>;
+  deletePharmacy(id: string): Promise<boolean>;
+  setPharmacyOwner(id: string, ownerId: string): Promise<boolean>;
+}
+
 export const PHARMACY_REPOSITORY = Symbol('PHARMACY_REPOSITORY');
 
 export interface PharmacyRepository {

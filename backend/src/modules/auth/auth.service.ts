@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
+  CLINIC_READ_PERMISSIONS,
   OtpPurpose,
   UserRole,
   permissionsForRole,
@@ -340,9 +341,10 @@ export class AuthService {
     ctx: RequestContext,
   ): Promise<{ session: AuthSession; refreshToken: string }> {
     const issued = await this.tokens.issue(user.id, user.role, user.tokenVersion, ctx);
-    const [practiceIds, ownerRoles] = await Promise.all([
+    const [practiceIds, ownerRoles, isSuperAdmin] = await Promise.all([
       this.users.practiceIdsFor(user.id),
       this.users.ownerRolesFor(user.id),
+      this.users.isSuperAdmin(user.id),
     ]);
 
     return {
@@ -357,8 +359,9 @@ export class AuthService {
           email: user.email,
           mobile: user.mobile,
           role: user.role,
-          permissions: permissionsForRole(user.role),
+          permissions: sessionPermissions(user.role, isSuperAdmin),
           ownerRoles,
+          isSuperAdmin,
           practiceIds,
           onboardingCompleted: user.onboardingComplete,
           avatarUrl: user.avatarUrl,
@@ -366,6 +369,12 @@ export class AuthService {
       },
     };
   }
+}
+
+/** A super admin also reads any clinic, so the client shows those screens read-only. */
+export function sessionPermissions(role: UserRole, isSuperAdmin: boolean) {
+  const own = permissionsForRole(role);
+  return isSuperAdmin ? [...new Set([...own, ...CLINIC_READ_PERMISSIONS])] : own;
 }
 
 /** The login does not exist yet: the client opens the pre-filled sign-up form. */

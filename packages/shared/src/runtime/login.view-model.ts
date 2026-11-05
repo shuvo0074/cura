@@ -139,7 +139,9 @@ export class LoginViewModel extends ViewModel<LoginState> {
   private async finish(session: AuthSession): Promise<void> {
     // An API deployed before owner roles existed does not send them.
     const allowed =
-      session.user.permissions.includes(Permission.CLINIC_ACCESS) || (session.user.ownerRoles ?? []).length > 0;
+      session.user.permissions.includes(Permission.CLINIC_ACCESS) ||
+      (session.user.ownerRoles ?? []).length > 0 ||
+      session.user.isSuperAdmin === true;
     if (!allowed) {
       await this.auth.logout();
       this.backToCredentials();

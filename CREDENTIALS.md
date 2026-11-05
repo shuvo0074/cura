@@ -34,8 +34,9 @@ there. Nobody needs a login to browse doctors, hospitals, diagnostic centres and
 ### Login rules
 
 - **Patients:** Cura Website is the only place they can log in, because Cura Dashboard blocks them.
-- **Super admin:** a super-admin-only account is blocked on Cura Dashboard. `admin@cura.local` works there only because
-  it is also a clinic owner.
+- **Super admin:** works on both front ends. On Cura Dashboard, **Super Admin** has the same tools as the Cura Website
+  admin panel, plus users and roles, clinics and pharmacies. A super admin can open any clinic's records read-only from
+  **Super Admin → Clinics**, and each view is recorded in the audit log.
 - **New doctors:** signing up on Cura Website sends them to Cura Dashboard. They cannot finish signing up on the live
   site yet, because Cura does not send real SMS.
 
@@ -57,7 +58,7 @@ Dr Nadia Karim (`doctor2@cura.local`) has one role, but in a freshly seeded data
 
 | User type | Name | Email | Mobile | Password | Works on |
 | --- | --- | --- | --- | --- | --- |
-| Super admin, also owner of Cura Demo Clinic | Shahnaz Rahman | admin@cura.local | 01700000001 | CuraAdmin123 | Cura Website for super admin, Cura Dashboard for the clinic |
+| Super admin, also owner of Cura Demo Clinic | Shahnaz Rahman | admin@cura.local | 01700000001 | CuraAdmin123 | Both |
 
 This password is public, so anyone can use this account. Replace it before real patients use Cura.
 
@@ -208,7 +209,7 @@ database kept as `cura_local_backup_20261106`.
 | Clinic staff | Rekha Sultana | Cura Demo Clinic | desk@cura.local | 01700000003 | CuraDesk123 | Cura Dashboard |
 | Clinic staff | Mitu Akter | Cura Demo Clinic | desk2@cura.local | 01700000004 | CuraDesk123 | Cura Dashboard |
 | Clinic staff | Jahid Hasan | Cura Demo Clinic | desk3@cura.local | 01700000005 | CuraDesk123 | Cura Dashboard |
-| Super admin | Cura Super Admin | None | superadmin@cura.local | 01700000009 | CuraSuper123 | Cura Website |
+| Super admin | Cura Super Admin | None | superadmin@cura.local | 01700000009 | CuraSuper123 | Both |
 | Ambulance owner | Rafiq Mia | None | ambulance@cura.local | 01700000012 | CuraOwner123 | Cura Dashboard |
 | Pharmacy owner | Selina Parvin | None | pharmacy@cura.local | 01700000013 | CuraOwner123 | Cura Dashboard |
 | Patient | Sadia Rahman | Cura Demo Clinic and Cura Uttara Clinic | patient@cura.local | 01800000001 | CuraPatient123 | Cura Website |

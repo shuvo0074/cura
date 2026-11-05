@@ -26,6 +26,8 @@ export interface AuthenticatedUser {
   permissions: readonly Permission[];
   /** Ambulance or pharmacy businesses this account runs on Cura Dashboard. */
   ownerRoles: readonly OwnerRole[];
+  /** Runs the platform: users, roles, clinics and Cura Website content. */
+  isSuperAdmin: boolean;
   practiceIds: readonly string[];
   onboardingCompleted: boolean;
   avatarUrl: string | null;

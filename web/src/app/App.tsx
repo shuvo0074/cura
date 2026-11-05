@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
-import { OwnerRole, Permission, tokenStore, type AuthSession, type AuthenticatedUser } from '@cura/shared';
+import {
+  CLINIC_READ_PERMISSIONS,
+  OwnerRole,
+  Permission,
+  permissionsForRole,
+  tokenStore, type AuthSession, type AuthenticatedUser } from '@cura/shared';
 import { useServices } from './services';
 import { LoginView } from '../features/auth/LoginView';
+import { AdminView } from '../features/admin/AdminView';
+import type { ViewedClinic } from '../features/admin/sections/admin-types';
 import { AmbulanceOwnerView } from '../features/owner/AmbulanceOwnerView';
 import { PharmacyOwnerView } from '../features/owner/PharmacyOwnerView';
 import { ProfileView } from '../features/profile/ProfileView';
@@ -19,6 +26,8 @@ export function App() {
   const [session, setSession] = useState<SessionState>({ status: 'restoring' });
   const [location, setLocation] = useState<Location>({ route: 'calendar' });
   const [onboardingDone, setOnboardingDone] = useState(false);
+  /** A clinic a super admin opened from Super Admin → Clinics, read-only. */
+  const [viewedClinic, setViewedClinic] = useState<ViewedClinic | null>(null);
   const [intakeOpen, setIntakeOpen] = useState(false);
   /** Pre-filled time for the intake modal: a clicked calendar slot, else now. */
   const [intakeAt, setIntakeAt] = useState<Date | undefined>(undefined);
@@ -76,6 +85,7 @@ export function App() {
   }, []);
 
   const handleSignOut = useCallback(() => {
+    setViewedClinic(null);
     void auth.logout();
     setSession({ status: 'anonymous' });
   }, [auth]);
@@ -110,27 +120,39 @@ export function App() {
     return <LoginView onAuthenticated={handleAuthenticated} />;
   }
 
-  const hasClinicAccess = session.user.permissions.includes(Permission.CLINIC_ACCESS);
+  const user = session.user;
+  const ownPracticeIds = user.practiceIds;
+  const practiceId = viewedClinic?.id ?? ownPracticeIds[0];
+  // A super admin looking at a clinic they do not belong to can only read it.
+  const readOnlyView = Boolean(viewedClinic && !ownPracticeIds.includes(viewedClinic.id));
+  const effectivePermissions = readOnlyView
+    ? CLINIC_READ_PERMISSIONS
+    : practiceId
+      ? user.permissions
+      : permissionsForRole(user.role);
+  const shownUser = { ...user, permissions: effectivePermissions };
+  const hasClinicAccess = effectivePermissions.includes(Permission.CLINIC_ACCESS);
+  const ownsClinicAccess = permissionsForRole(user.role).includes(Permission.CLINIC_ACCESS);
 
   // Spec 3.2.6(c): the wizard is one-time and blocks the dashboard until done.
   // It sets up a doctor's practice, so it does not apply to a business owner.
-  if (!onboardingDone && hasClinicAccess) {
+  if (!onboardingDone && ownsClinicAccess) {
     return <OnboardingView onFinished={() => setOnboardingDone(true)} />;
   }
 
-  const practiceId = session.user.practiceIds[0];
-
   // An owner with no clinic has no calendar to land on.
   // An API deployed before owner roles existed does not send them.
-  const ownerHome: RouteKey = (session.user.ownerRoles ?? []).includes(OwnerRole.AMBULANCE_OWNER)
-    ? 'ambulances'
-    : 'pharmacy';
+  const ownerHome: RouteKey = user.isSuperAdmin
+    ? 'admin'
+    : (user.ownerRoles ?? []).includes(OwnerRole.AMBULANCE_OWNER)
+      ? 'ambulances'
+      : 'pharmacy';
   const route: RouteKey =
-    hasClinicAccess || ['ambulances', 'pharmacy', 'profile'].includes(location.route) ? location.route : ownerHome;
+    hasClinicAccess || ['ambulances', 'pharmacy', 'profile', 'admin'].includes(location.route) ? location.route : ownerHome;
 
   return (
     <AppShell
-      user={session.user}
+      user={shownUser}
       practiceId={practiceId}
       active={route}
       onNavigate={navigate}
@@ -148,7 +170,29 @@ export function App() {
         }
       }}
     >
-      {route === 'ambulances' && !location.patient ? (
+      {viewedClinic && (
+        <p className={styles.notice} role="status">
+          Viewing {viewedClinic.name}
+          {readOnlyView ? ', read-only. Each view is recorded.' : '.'}{' '}
+          <button
+            type="button"
+            onClick={() => {
+              setViewedClinic(null);
+              setLocation({ route: 'admin' });
+            }}
+          >
+            Stop viewing
+          </button>
+        </p>
+      )}
+      {route === 'admin' && user.isSuperAdmin && !location.patient ? (
+        <AdminView
+          onViewClinic={(clinic) => {
+            setViewedClinic(clinic);
+            setLocation({ route: 'calendar' });
+          }}
+        />
+      ) : route === 'ambulances' && !location.patient ? (
         <AmbulanceOwnerView />
       ) : route === 'pharmacy' && !location.patient ? (
         <PharmacyOwnerView />
@@ -163,8 +207,8 @@ export function App() {
           practiceId={practiceId}
           patientId={location.patient.id}
           appointmentId={location.patient.appointmentId}
-          canWrite={session.user.permissions.includes(Permission.CLINICAL_WRITE)}
-          canReadHistory={session.user.permissions.includes(Permission.PATIENT_HISTORY_READ)}
+          canWrite={effectivePermissions.includes(Permission.CLINICAL_WRITE)}
+          canReadHistory={effectivePermissions.includes(Permission.PATIENT_HISTORY_READ)}
           onClose={closePatient}
         />
       ) : (
@@ -172,7 +216,7 @@ export function App() {
           route={route}
           practiceId={practiceId}
           settingsSection={location.settingsSection}
-          permissions={session.user.permissions}
+          permissions={effectivePermissions}
           onOpenPatient={openPatient}
           onAddWalkIn={(at, doctorId) => {
             setIntakeAt(at);

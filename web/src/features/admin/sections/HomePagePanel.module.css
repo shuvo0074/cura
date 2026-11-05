@@ -1,0 +1,17 @@
+.section { margin-bottom: var(--space-xl); }
+
+.shortcuts td { vertical-align: middle; }
+.shortcuts td:last-child { width: 1%; }
+.moves { display: flex; align-items: center; gap: var(--space-xs); white-space: nowrap; }
+.moves > button:last-child { margin-left: var(--space-sm); }
+.add { margin-top: var(--space-sm); }
+
+.divisions td:first-child { width: 110px; font-weight: var(--weight-medium); color: var(--color-text-primary); }
+.divisions td:nth-child(2) { width: 150px; }
+.photoCell { display: flex; flex-direction: column; gap: var(--space-xs); min-width: 0; }
+
+@media (max-width: 720px) {
+  .shortcuts thead, .divisions thead { display: none; }
+  .shortcuts tr, .divisions tr { display: flex; flex-direction: column; gap: var(--space-xs); padding: var(--space-sm) 0; border-bottom: 1px solid var(--color-border-subtle); }
+  .shortcuts td, .divisions td { width: auto !important; padding: 0; border: none; }
+}

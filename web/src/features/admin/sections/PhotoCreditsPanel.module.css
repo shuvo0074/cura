@@ -1,0 +1,38 @@
+/* -- Site image field (also used by the Home page panel) ------------------- */
+
+.imageField { display: flex; align-items: flex-start; gap: var(--space-sm); min-width: 0; }
+.thumb {
+  flex-shrink: 0;
+  width: 64px;
+  height: 48px;
+  object-fit: cover;
+  background: var(--color-surface-sunken);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-sm);
+}
+.imageControls { display: flex; flex: 1; flex-wrap: wrap; align-items: center; gap: var(--space-sm); min-width: 0; }
+.imageControls > input { flex: 1 1 180px; min-width: 0; }
+
+/* -- Credits list ---------------------------------------------------------- */
+
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); }
+.toolbar > input { width: 240px; }
+.credits { display: flex; flex-direction: column; gap: var(--space-md); }
+.credit {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 2fr) auto;
+  gap: var(--space-md);
+  align-items: start;
+  padding: var(--space-md);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+}
+.creditFields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-sm); }
+@media (max-width: 900px) {
+  .credit { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 560px) {
+  .creditFields { grid-template-columns: minmax(0, 1fr); }
+  .toolbar > input { width: 100%; }
+}

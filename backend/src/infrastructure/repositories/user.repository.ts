@@ -302,6 +302,16 @@ export class PrismaUserRepository implements UserRepository {
     return rows.map((row) => row.role.toLowerCase() as OwnerRole);
   }
 
+  async isSuperAdmin(userId: string): Promise<boolean> {
+    const count = await this.prisma.userDirectoryRole.count({ where: { userId, role: 'SUPER_ADMIN' } });
+    return count > 0;
+  }
+
+  async allPracticeIds(): Promise<string[]> {
+    const rows = await this.prisma.practice.findMany({ where: { deletedAt: null }, select: { id: true } });
+    return rows.map((row) => row.id);
+  }
+
   async practiceIdsFor(userId: string): Promise<string[]> {
     const rows = await this.prisma.practiceMembership.findMany({
       where: { userId, isActive: true },

@@ -113,6 +113,21 @@ export const rolePermissions: Record<UserRole, readonly Permission[]> = {
   [UserRole.PUBLIC_USER]: [],
 };
 
+/**
+ * What a super admin may see in a clinic they do not belong to: records, never
+ * changes. The API grants reads only, and audits each one.
+ */
+export const CLINIC_READ_PERMISSIONS: readonly Permission[] = [
+  Permission.CLINIC_ACCESS,
+  Permission.PATIENT_READ,
+  Permission.PATIENT_HISTORY_READ,
+  Permission.APPOINTMENT_READ,
+  Permission.PRESCRIPTION_READ,
+  Permission.BILLING_READ,
+  Permission.REPORTS_READ,
+  Permission.CATALOG_READ,
+];
+
 export function permissionsForRole(role: UserRole): readonly Permission[] {
   return rolePermissions[role] ?? [];
 }

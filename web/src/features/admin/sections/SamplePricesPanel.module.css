@@ -1,0 +1,27 @@
+.card {
+  margin-bottom: var(--space-lg);
+  padding: var(--space-lg);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+}
+.card h3 { margin: 0; font-size: var(--text-lg); color: var(--color-text-primary); }
+.cardFoot { display: flex; align-items: center; gap: var(--space-md); margin-top: var(--space-md); }
+
+.fareGrid {
+  display: grid;
+  grid-template-columns: 160px repeat(2, minmax(0, 160px));
+  gap: var(--space-sm);
+  align-items: center;
+}
+.fareGrid > .head { font-size: var(--text-xs); font-weight: var(--weight-medium); color: var(--color-text-muted); }
+.fareGrid > .type { font-size: var(--text-sm); color: var(--color-text-primary); }
+
+.testRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 160px 120px auto;
+  gap: var(--space-sm);
+  align-items: center;
+  margin-bottom: var(--space-sm);
+}
+@media (max-width: 720px) { .testRow { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }

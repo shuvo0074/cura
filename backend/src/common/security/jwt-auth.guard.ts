@@ -8,15 +8,20 @@ import {
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
-import { permissionsForRole, type Permission, type UserRole } from '@cura/shared';
+import { Permission, permissionsForRole, type UserRole } from '@cura/shared';
 import { AppConfigService } from '../../config/app.config';
 import { IS_PUBLIC_KEY, OPTIONAL_AUTH_KEY } from './decorators';
 import {
+  AUDIT_REPOSITORY,
   REFRESH_TOKEN_REPOSITORY,
   USER_REPOSITORY,
+  type AuditRepository,
   type RefreshTokenRepository,
   type UserRepository,
 } from '../../core/ports/repositories';
+
+const READ_METHODS = new Set(['GET', 'HEAD']);
+const ALL_PERMISSIONS = Object.values(Permission);
 
 export interface AccessTokenClaims {
   sub: string;
@@ -36,6 +41,8 @@ export interface AuthenticatedPrincipal {
   role: UserRole;
   permissions: readonly Permission[];
   practiceIds: readonly string[];
+  /** Set on a super admin's read: `practiceIds` then holds every clinic. */
+  ownPracticeIds?: readonly string[];
 }
 
 declare module 'express' {
@@ -60,6 +67,7 @@ export class JwtAuthGuard implements CanActivate {
     private readonly config: AppConfigService,
     @Inject(USER_REPOSITORY) private readonly users: UserRepository,
     @Inject(REFRESH_TOKEN_REPOSITORY) private readonly refreshTokens: RefreshTokenRepository,
+    @Inject(AUDIT_REPOSITORY) private readonly audit: AuditRepository,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -89,8 +97,44 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     if (!token) throw new UnauthorizedException('Authentication required');
-    request.principal = await this.authenticate(token);
+    request.principal = await this.withSuperAdminReads(await this.authenticate(token), request);
     return true;
+  }
+
+  /**
+   * A super admin may read any clinic's records and change none of them. Reads
+   * get every permission and every clinic, writes keep the account's own access,
+   * and each read of a clinic they do not belong to is audited.
+   */
+  private async withSuperAdminReads(
+    principal: AuthenticatedPrincipal,
+    request: Request,
+  ): Promise<AuthenticatedPrincipal> {
+    if (!READ_METHODS.has(request.method) || !(await this.users.isSuperAdmin(principal.userId))) {
+      return principal;
+    }
+    const widened = {
+      ...principal,
+      permissions: ALL_PERMISSIONS,
+      practiceIds: await this.users.allPracticeIds(),
+      ownPracticeIds: principal.practiceIds,
+    };
+    const raw = request.query?.practiceId ?? request.params?.practiceId;
+    const practiceId = typeof raw === 'string' ? raw : null;
+    if (practiceId && !principal.practiceIds.includes(practiceId)) {
+      await this.audit.record({
+        actorUserId: principal.userId,
+        action: 'super_admin.clinic_read',
+        resourceType: 'http',
+        resourceId: null,
+        practiceId,
+        ipHash: null,
+        userAgent: request.headers['user-agent'] ?? null,
+        requestId: request.requestId ?? null,
+        metadata: { path: request.path },
+      });
+    }
+    return widened;
   }
 
   private async authenticate(token: string): Promise<AuthenticatedPrincipal> {

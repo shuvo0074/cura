@@ -1,0 +1,24 @@
+.search { width: 280px; }
+@media (max-width: 560px) { .search { width: 100%; } }
+
+.texts { width: 100%; }
+.texts td:first-child { width: 200px; }
+.key { font-size: var(--text-xs); color: var(--color-text-muted); word-break: break-all; }
+.cell { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.inputLine { display: flex; align-items: flex-start; gap: var(--space-xs); }
+.inputLine > :first-child { flex: 1; min-width: 0; }
+.inputLine > button { padding-top: var(--space-sm); }
+.edited { border-color: var(--color-brand-default) !important; }
+.problem { border-color: var(--color-feedback-danger-fg) !important; }
+
+.faq { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-xl); margin-bottom: var(--space-lg); }
+.faqHead { display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); }
+.faqItem { display: flex; align-items: flex-start; gap: var(--space-sm); margin-bottom: var(--space-sm); }
+.faqFields { display: flex; flex: 1; flex-direction: column; gap: var(--space-xs); min-width: 0; }
+
+@media (max-width: 900px) {
+  .faq { grid-template-columns: minmax(0, 1fr); }
+  .texts thead { display: none; }
+  .texts tr { display: flex; flex-direction: column; gap: var(--space-xs); padding: var(--space-sm) 0; border-bottom: 1px solid var(--color-border-subtle); }
+  .texts td { width: auto !important; padding: 0; border: none; }
+}

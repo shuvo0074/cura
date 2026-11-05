@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { permissionsForRole } from '@cura/shared';
+import { sessionPermissions } from '../auth/auth.service';
 import { CryptoService } from '../../common/crypto/crypto.service';
 import { NotFoundError, ValidationError } from '../../common/errors/domain-error';
 import {
@@ -29,6 +29,7 @@ export class AccountService {
   async getProfile(principal: AuthenticatedPrincipal) {
     const user = await this.users.findById(principal.userId);
     if (!user) throw new NotFoundError('User');
+    const isSuperAdmin = await this.users.isSuperAdmin(user.id);
 
     // passwordHash and tokenVersion are deliberately not projected — this
     // response is rendered straight into the profile screen.
@@ -48,9 +49,11 @@ export class AccountService {
       twoFactorEnabled: user.twoFactorEnabled,
       emailVerified: user.emailVerifiedAt !== null,
       mobileVerified: user.mobileVerifiedAt !== null,
-      practiceIds: principal.practiceIds,
-      permissions: permissionsForRole(user.role),
+      // Memberships, not the token: a super admin's reads reach every clinic.
+      practiceIds: await this.users.practiceIdsFor(user.id),
+      permissions: sessionPermissions(user.role, isSuperAdmin),
       ownerRoles: await this.users.ownerRolesFor(user.id),
+      isSuperAdmin,
       onboardingCompleted: user.onboardingComplete,
     };
   }

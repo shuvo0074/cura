@@ -68,7 +68,7 @@ export function AppShell({
     assistantDoctorAccess: true,
   });
 
-  const items = useMemo(() => visibleNavItems(user.permissions, user.ownerRoles ?? []), [user.permissions, user.ownerRoles]);
+  const items = useMemo(() => visibleNavItems(user.permissions, user.ownerRoles ?? [], user.isSuperAdmin === true), [user.permissions, user.ownerRoles, user.isSuperAdmin]);
   const activeLabel = NAV_ITEMS.find((i) => i.key === active)?.label ?? '';
   const canAddPatient = user.permissions.includes(Permission.APPOINTMENT_WRITE);
 

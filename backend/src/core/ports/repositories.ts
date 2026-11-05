@@ -108,6 +108,9 @@ export interface UserRepository {
   setActive(userId: string, isActive: boolean): Promise<void>;
   practiceIdsFor(userId: string): Promise<string[]>;
   ownerRolesFor(userId: string): Promise<OwnerRole[]>;
+  isSuperAdmin(userId: string): Promise<boolean>;
+  /** Every clinic, for a super admin's read-only view. */
+  allPracticeIds(): Promise<string[]>;
   /** Replaces the password hash and revokes every session in one step. */
   setPassword(userId: string, passwordHash: string): Promise<void>;
   setTwoFactorEnabled(userId: string, enabled: boolean): Promise<void>;

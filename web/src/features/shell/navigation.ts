@@ -26,6 +26,7 @@ export type RouteKey =
   | 'integrations'
   | 'ambulances'
   | 'pharmacy'
+  | 'admin'
   | 'community'
   | 'prime'
   | 'profile';
@@ -37,6 +38,8 @@ export interface NavItem {
   permission?: Permission;
   /** Shown only to accounts that own this kind of business. */
   ownerRole?: OwnerRole;
+  /** Shown only to super admins. */
+  superAdminOnly?: boolean;
   status: 'ready' | 'partial' | 'pending';
   hint?: string;
   /** Second sidebar block: the doctor's outward-facing presence and add-ons. */
@@ -108,6 +111,13 @@ export const NAV_ITEMS: readonly NavItem[] = [
     status: 'pending',
   },
   {
+    key: 'admin',
+    label: 'Super Admin',
+    icon: '★',
+    superAdminOnly: true,
+    status: 'ready',
+  },
+  {
     key: 'ambulances',
     label: 'My Ambulances',
     icon: '✚',
@@ -155,10 +165,15 @@ export const NAV_ITEMS: readonly NavItem[] = [
   },
 ];
 
-export function visibleNavItems(granted: readonly Permission[], ownerRoles: readonly OwnerRole[] = []): NavItem[] {
+export function visibleNavItems(
+  granted: readonly Permission[],
+  ownerRoles: readonly OwnerRole[] = [],
+  isSuperAdmin = false,
+): NavItem[] {
   const set = new Set(granted);
   const hasClinic = set.has(Permission.CLINIC_ACCESS);
   return NAV_ITEMS.filter((item) => {
+    if (item.superAdminOnly) return isSuperAdmin;
     if (item.ownerRole) return ownerRoles.includes(item.ownerRole);
     // An owner with no clinic sees only their businesses and their own profile.
     if (!hasClinic) return item.key === 'profile';

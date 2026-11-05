@@ -46,7 +46,7 @@ The other user types, and where each one logs in:
 
 | User type | Name | Email or mobile | Password | Logs in on |
 | --- | --- | --- | --- | --- |
-| Super admin | Cura Super Admin | superadmin@cura.local | CuraSuper123 | Cura Website |
+| Super admin | Cura Super Admin | superadmin@cura.local | CuraSuper123 | Cura Website and Cura Dashboard |
 | Clinic owner, also ambulance and pharmacy owner | Tanzila Ahmed | owner2@cura.local | CuraAdmin123 | Cura Dashboard |
 | Doctor at Cura Uttara Clinic | Dr Rumana Haque | doctor4@cura.local | CuraDoctor123 | Cura Dashboard |
 | Doctor with no login yet | Dr Farzana Ahmed | 01711111114 | Signs up with BMDC A-100203 | Cura Dashboard |

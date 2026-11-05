@@ -1,3 +1,4 @@
+import { PrismaAdminUsersRepository } from './repositories/directory/admin-users.repository';
 import { Global, Module } from '@nestjs/common';
 import { AppConfigService, ENV_TOKEN } from '../config/app.config';
 import { loadEnv } from '../config/env.schema';
@@ -62,6 +63,7 @@ import { PUBLIC_MEDIA } from '../core/ports/public-media';
 import {
   AMBULANCE_REPOSITORY,
   PHARMACY_REPOSITORY,
+  ADMIN_USERS_REPOSITORY,
   CATALOG_DIRECTORY_REPOSITORY,
   DIRECTORY_ACCOUNT_REPOSITORY,
   DOCTOR_LISTING_REPOSITORY,
@@ -147,6 +149,7 @@ import {
     { provide: HOSPITAL_REPOSITORY, useClass: PrismaHospitalRepository },
     { provide: AMBULANCE_REPOSITORY, useClass: PrismaAmbulanceRepository },
     { provide: PHARMACY_REPOSITORY, useClass: PrismaPharmacyRepository },
+    { provide: ADMIN_USERS_REPOSITORY, useClass: PrismaAdminUsersRepository },
     { provide: CATALOG_DIRECTORY_REPOSITORY, useClass: PrismaCatalogDirectoryRepository },
     { provide: SITE_SETTINGS_REPOSITORY, useClass: PrismaSiteSettingsRepository },
 
@@ -204,6 +207,7 @@ import {
     HOSPITAL_REPOSITORY,
     AMBULANCE_REPOSITORY,
   PHARMACY_REPOSITORY,
+    ADMIN_USERS_REPOSITORY,
     CATALOG_DIRECTORY_REPOSITORY,
     SITE_SETTINGS_REPOSITORY,
     DRUG_CATALOG_REPOSITORY,

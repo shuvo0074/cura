@@ -15,6 +15,7 @@ import {
   MyClinicsController,
   MyPharmaciesController,
 } from './controllers/accounts.controllers';
+import { AdminBusinessesController, AdminUsersController } from './controllers/admin-users.controllers';
 import { DirectoryAuthController } from './controllers/auth.controller';
 import { DoctorMeController, DoctorsController, VerificationRequestController } from './controllers/doctors.controller';
 import {
@@ -25,6 +26,7 @@ import {
 } from './controllers/public-content.controller';
 import { DirectoryAccountService } from './services/account.service';
 import { AdminDoctorService } from './services/admin-doctor.service';
+import { AdminUsersService } from './services/admin-users.service';
 import { AmbulanceService } from './services/ambulance.service';
 import { CatalogService } from './services/catalog.service';
 import { ClinicOwnerService } from './services/clinic-owner.service';
@@ -68,10 +70,13 @@ import { DoctorVerificationService } from './services/verification.service';
     MyClinicsController,
     MyAmbulancesController,
     MyPharmaciesController,
+    AdminUsersController,
+    AdminBusinessesController,
   ],
   providers: [
     DirectoryAccountService,
     AdminDoctorService,
+    AdminUsersService,
     AmbulanceService,
     CatalogService,
     ClinicOwnerService,
