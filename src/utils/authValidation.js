@@ -1,5 +1,4 @@
-// Instant feedback for the account forms. Mirrors server/validation.js,
-// which has the final say.
+// Instant feedback for the account forms. The API has the final say.
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -9,9 +8,9 @@ export function isValidEmail(email) {
 
 // Returns an i18n key for the first problem, or null.
 export function passwordProblemKey(password) {
-  if (password.length < 8) return 'auth_err_password_len';
-  if (new TextEncoder().encode(password).length > 72) return 'auth_err_password_long';
-  if (!/[a-z]/i.test(password) || !/\d/.test(password)) return 'auth_err_password_mix';
+  if (password.length < 10) return 'auth_err_password_len';
+  if (password.length > 128) return 'auth_err_password_long';
+  if (!/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/\d/.test(password)) return 'auth_err_password_mix';
   return null;
 }
 

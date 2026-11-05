@@ -1,25 +1,13 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
-const apiProxy = process.env.API_PROXY_URL ?? 'http://127.0.0.1:4000'
-const minioProxy = process.env.MINIO_PROXY_URL ?? 'http://192.168.100.31:9000'
+// The browser must reach the API through this same-origin proxy: it sends no
+// CORS headers for other origins, and its refresh cookie is SameSite=Strict.
+const apiProxy = process.env.API_PROXY_URL ?? 'https://cura-api-otxn.onrender.com'
+const proxy = { '/api': { target: apiProxy, changeOrigin: true, xfwd: true } }
 
 export default defineConfig({
   plugins: [react()],
-  server: {
-    host: true,
-    proxy: {
-      '/api': { target: apiProxy, changeOrigin: true, xfwd: true },
-      '/cura-media': { target: minioProxy, changeOrigin: true },
-    },
-  },
-  preview: {
-    host: true,
-    port: 5173,
-    allowedHosts: true,
-    proxy: {
-      '/api': { target: apiProxy, changeOrigin: true, xfwd: true },
-      '/cura-media': { target: minioProxy, changeOrigin: true },
-    },
-  },
+  server: { host: true, proxy },
+  preview: { host: true, port: 5173, allowedHosts: true, proxy },
 })

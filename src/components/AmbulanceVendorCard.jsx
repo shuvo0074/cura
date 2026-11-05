@@ -22,6 +22,25 @@ export default function AmbulanceVendorCard({ vendor, areaName, lang }) {
         {vendor.features.includes('24_hours') && <p className="flex items-center gap-1.5"><Clock size={14} />{t('ambulance_feature_24_hours')}</p>}
         {vendor.features.filter(f => f !== '24_hours').map(feature => <p key={feature}>{t(`ambulance_feature_${feature}`)}</p>)}
       </div>
+      {vendor.categories.some(category => vendor.fares?.[category]) && (
+        <div className="rounded-xl bg-secondary p-3 text-sm">
+          <p className="text-xs font-semibold text-gray-700 mb-1.5">{t('ambulance_fares_title')}</p>
+          <ul className="space-y-1">
+            {vendor.categories.filter(category => vendor.fares?.[category]).map(category => {
+              const fare = vendor.fares[category];
+              return (
+                <li key={category} className="flex items-center justify-between gap-3 text-gray-700">
+                  <span>{t(`ambulance_category_${category}`)}</span>
+                  <span className="font-medium whitespace-nowrap">
+                    {t('ambulance_demo_fare_range', { min: fare.min.toLocaleString('en-IN'), max: fare.max.toLocaleString('en-IN') })}
+                    {fare.kind === 'sample' && <span className="ml-1.5 text-xs font-normal text-gray-500">({t('ambulance_fare_sample')})</span>}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
       <div className="mt-auto space-y-2">
         {vendor.phones.map((phone, i) => (
           <a key={phone} href={`tel:+88${phone}`} aria-label={t('ambulance_call_vendor', { name, phone })}

@@ -5,7 +5,7 @@ import {
   SquareParking, Moon, Coffee, Banknote, ArrowUpDown, UserRound, Sofa, Accessibility,
 } from 'lucide-react';
 
-// Icons and label keys for the codes stored on a hospital (see schema.sql:
+// Icons and label keys for the codes stored on a hospital (from the API:
 // services, facilities, payment_methods). Unknown codes are skipped, so new
 // ones can be added to the data before the app learns about them.
 

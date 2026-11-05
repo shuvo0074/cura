@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { filterAmbulances, AMBULANCE_CATEGORIES, AMBULANCE_FEATURES } from './ambulanceFilters.js';
 
 const load = path => JSON.parse(readFileSync(new URL(path, import.meta.url), 'utf8'));
-const vendors = load('../../server/data/ambulanceVendors.json');
+const vendors = load('./ambulanceVendors.fixture.json');
 const areas = load('../data/dhakaAreas.json');
 
 test('pickup coverage includes citywide vendors without inventing local coverage', () => {

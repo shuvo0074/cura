@@ -250,7 +250,7 @@ function ItemSection({ kind, items, onChange }) {
         <p className="text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2 mb-4">
           {t('pe_degree_line')}:{' '}
           <span className="font-medium text-gray-900">
-            {[...items].sort((a, b) => (a.end_year ?? 9999) - (b.end_year ?? 9999) || a.id - b.id).map(i => i.title).join(', ')}
+            {[...items].sort((a, b) => (a.end_year ?? 9999) - (b.end_year ?? 9999) || String(a.id).localeCompare(String(b.id))).map(i => i.title).join(', ')}
           </span>
         </p>
       )}

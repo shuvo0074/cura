@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { api } from '../api/client';
+import { api, setAccessToken } from '../api/client';
 
 const AuthContext = createContext();
 
@@ -7,6 +7,8 @@ const AuthContext = createContext();
 export function homePathFor(user) {
   if (user?.roles?.includes('admin')) return '/admin';
   if (user?.roles?.includes('doctor')) return '/doctor-dashboard';
+  // Clinic accounts sign in with no directory role, and /appointments needs one.
+  if (!user?.roles?.length) return '/';
   return '/appointments';
 }
 
@@ -14,6 +16,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Reload: there is no token in memory, so restore it from the cookie through /auth/me's retry.
   const refresh = useCallback(
     () => api.get('/auth/me').then(setUser).catch(() => setUser(null)),
     []
@@ -24,25 +27,28 @@ export function AuthProvider({ children }) {
   }, [refresh]);
 
   async function login(email, password) {
-    const u = await api.post('/auth/login', { email, password });
-    setUser(u);
-    return u;
+    const result = await api.post('/auth/login', { identifier: email, password });
+    if (result.status !== 'authenticated') {
+      throw new Error('This account needs a verification code, which this site does not support.');
+    }
+    setAccessToken(result.session.accessToken, result.session.expiresIn);
+    const signedIn = await api.get('/auth/me');
+    setUser(signedIn);
+    return signedIn;
   }
 
-  async function register(fields) {
-    const u = await api.post('/auth/register', fields);
-    setUser(u);
-    return u;
+  function startSession({ accessToken, expiresIn, tokenType: _tokenType, ...account }) {
+    setAccessToken(accessToken, expiresIn);
+    setUser(account);
+    return account;
   }
 
-  async function registerDoctor(fields) {
-    const u = await api.post('/auth/register/doctor', fields);
-    setUser(u);
-    return u;
-  }
+  const register = async fields => startSession(await api.post('/auth/register/patient', fields));
+  const registerDoctor = async fields => startSession(await api.post('/auth/register/doctor', fields));
 
   async function logout() {
     await api.post('/auth/logout').catch(() => {});
+    setAccessToken(null);
     setUser(null);
   }
 

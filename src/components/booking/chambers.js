@@ -47,6 +47,13 @@ export function useHospitalIdByName() {
   return map;
 }
 
+// Whether a schedule entry can be booked online: it needs a chamber and a
+// session time the API can read, like "08:00 AM - 11:00 AM".
+const SESSION_TIME = /^\s*\d{1,2}:\d{2}\s*(AM|PM)\s*-\s*\d{1,2}:\d{2}\s*(AM|PM)\s*$/i;
+export function hasBookableSessions(schedule) {
+  return (schedule ?? []).some(entry => entry.venue && SESSION_TIME.test(entry.time ?? ''));
+}
+
 export function hospitalIdFor(map, venue) {
   return map[venue.trim().toLowerCase()];
 }

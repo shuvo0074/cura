@@ -23,6 +23,9 @@ function toEditableForm(d) {
     ...d,
     weeklySchedule: d.weekly_schedule ?? [],
     followupFees: d.followup_fees ?? '',
+    // The form and API body use camelCase. Without these, saving erases them.
+    bmdcNo: d.bmdc_no ?? d.bmdcNo ?? '',
+    consultingHours: d.consulting_hours ?? d.consultingHours ?? '',
     clinicalExpertise: Array.isArray(d.clinical_expertise) ? d.clinical_expertise.join(', ') : (d.clinicalExpertise ?? ''),
     treatments: Array.isArray(d.treatments) ? d.treatments.join(', ') : (d.treatments ?? ''),
   };

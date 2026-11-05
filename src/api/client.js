@@ -1,12 +1,56 @@
 const BASE = '/api';
+const EXPIRY_SKEW_MS = 30_000;
 
-async function request(path, options = {}) {
+let accessToken = null;
+let expiresAt = 0;
+let refreshing = null;
+
+export function setAccessToken(token, expiresInSeconds = 0) {
+  accessToken = token;
+  expiresAt = token ? Date.now() + expiresInSeconds * 1000 : 0;
+}
+
+// Account routes stay at /api; everything else moved to /api/directory.
+const urlFor = path =>
+  /^\/(auth|account)(\/|$)/.test(path) ? `${BASE}${path}` : `${BASE}/directory${path}`;
+
+// One refresh at a time: the refresh token rotates on every use.
+function refreshSession() {
+  refreshing ??= fetch(`${BASE}/auth/refresh`, { method: 'POST', credentials: 'include' })
+    .then(async res => {
+      if (!res.ok) {
+        setAccessToken(null);
+        return false;
+      }
+      const session = await res.json();
+      setAccessToken(session.accessToken, session.expiresIn);
+      return true;
+    })
+    .catch(() => false)
+    .finally(() => {
+      refreshing = null;
+    });
+  return refreshing;
+}
+
+async function request(path, options = {}, canRetry = true) {
+  const isSessionRoute = ['/auth/login', '/auth/logout', '/auth/refresh'].includes(path);
+  // Optional-auth routes treat an expired token as anonymous, so refresh first.
+  if (!isSessionRoute && accessToken && Date.now() >= expiresAt - EXPIRY_SKEW_MS) {
+    await refreshSession();
+  }
+
   const isFormData = options.body instanceof FormData;
-  const res = await fetch(`${BASE}${path}`, {
-    credentials: 'include',
-    headers: (options.body && !isFormData) ? { 'Content-Type': 'application/json' } : undefined,
-    ...options,
-  });
+  const headers = {};
+  if (options.body && !isFormData) headers['Content-Type'] = 'application/json';
+  if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+
+  const res = await fetch(urlFor(path), { credentials: 'include', ...options, headers });
+
+  if (res.status === 401 && canRetry && !isSessionRoute && (await refreshSession())) {
+    return request(path, options, false);
+  }
+
   const isJson = res.headers.get('content-type')?.includes('application/json');
   const data = isJson ? await res.json() : null;
   if (!res.ok) {

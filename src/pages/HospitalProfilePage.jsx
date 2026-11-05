@@ -1,14 +1,14 @@
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useMemo, useState } from 'react';
-import { Phone, Globe, Navigation, ArrowLeft, MapPin, Map as MapIcon, Star, Users, Search, DoorOpen, Building2, X, Clock, Wallet, Siren, Video } from 'lucide-react';
+import { CalendarDays, Phone, Globe, Navigation, ArrowLeft, MapPin, Map as MapIcon, Star, Users, Search, DoorOpen, Building2, X, Clock, Wallet, Siren, Video } from 'lucide-react';
 import { api } from '../api/client';
 import { getDhakaNow, parseTimeRangeToMinutes } from '../utils/dhakaTime';
 import { withDivision } from '../utils/place';
 import { formatYmd } from '../utils/dates';
 import Photo from '../components/ui/Photo';
 import CentreBanner from '../components/hospital/CentreBanner';
-import { callChamber } from '../components/booking/chambers';
+import { callChamber, hasBookableSessions } from '../components/booking/chambers';
 import { ServicesSection, TestPricesSection } from '../components/hospital/HospitalServices';
 import { is24x7 } from '../components/hospital/hospitalCatalogue';
 
@@ -92,7 +92,7 @@ function DoctorRow({ doc, hospital }) {
             {doc.rating && <span className="flex items-center gap-1"><Star size={11} className="fill-amber-500 text-amber-500" /> {doc.rating}</span>}
             <span>{t('workplace')}: {doc.workplace || doc.chamber || '—'}</span>
             {doc.source_url && <a href={doc.source_url} target="_blank" rel="noreferrer" className="text-primary underline">{t('doctor_source')}</a>}
-            {doc.fees != null && <span className="font-medium text-gray-700">৳{doc.fees}</span>}<span>{t('followup_fees')}: {doc.followup_fees != null ? `৳${doc.followup_fees}` : t('not_listed')}</span>
+            {doc.fees != null && <span className="font-medium text-gray-700">৳{doc.fees}</span>}{doc.followup_fees != null && <span>{t('followup_fees')}: ৳{doc.followup_fees}</span>}
           </div>
 
           <div className="flex flex-wrap gap-1.5 mt-2.5">
@@ -109,7 +109,12 @@ function DoctorRow({ doc, hospital }) {
       </div>
 
       <div className="flex gap-2 mt-3 sm:pl-[70px]">
-        {phone && (
+        {hasBookableSessions(doc.venue_schedule) ? (
+          <Link to={`/doctors/${doc.id}#book-serial`}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 h-9 px-4 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary/90">
+            <CalendarDays size={14} /> {t('book_serial')}
+          </Link>
+        ) : phone && (
           <button type="button" onClick={() => callChamber(doc.id, phone, hospital.name)}
             className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 h-9 px-4 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary/90">
             <Phone size={14} /> {t('call_for_booking')}

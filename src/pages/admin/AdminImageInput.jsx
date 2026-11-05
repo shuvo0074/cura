@@ -5,7 +5,7 @@ import { api } from '../../api/client';
 const INPUT = 'border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary bg-white';
 
 // An image for site content: upload a file or paste a link. `value` is the
-// image's address (an uploaded /cura-media/… path, a /landing/… file or a
+// image's address (an uploaded /api/directory/media/… path, a /landing/… file or a
 // web address).
 export default function AdminImageInput({ value, onChange, label = 'Photo' }) {
   const fileRef = useRef(null);

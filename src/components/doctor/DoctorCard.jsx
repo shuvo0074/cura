@@ -53,7 +53,7 @@ export default function DoctorCard({ doctor }) {
           </div>
 
           <p className="text-gray-600 text-xs mt-1">{t('workplace')}: {doctor.workplace || doctor.hospital_name || doctor.chamber || '—'}</p>
-          <p className="text-gray-500 text-xs mt-1">{doctor.experience} {t('experience')}</p>
+          {doctor.experience && <p className="text-gray-500 text-xs mt-1">{doctor.experience} {t('experience')}</p>}
 
           <div className="flex items-center gap-1 mt-1">
             <MapPin size={10} className="text-primary flex-shrink-0" />
@@ -63,7 +63,7 @@ export default function DoctorCard({ doctor }) {
           </div>
 
           <div className="flex items-center justify-between mt-2">
-            <span className="text-primary text-sm font-bold">৳{doctor.fees}</span><span className="ml-2 text-xs text-gray-500">{t('followup_fees')}: {doctor.followup_fees != null ? `৳${doctor.followup_fees}` : t('not_listed')}</span>
+            {doctor.fees != null && <span className="text-primary text-sm font-bold">৳{doctor.fees}</span>}{doctor.followup_fees != null && <span className="ml-2 text-xs text-gray-500">{t('followup_fees')}: ৳{doctor.followup_fees}</span>}
             {doctor.rating && (
               <span className="flex items-center gap-0.5 text-xs text-amber-500 font-medium">
                 <Star size={11} fill="currentColor" /> {Number(doctor.rating).toFixed(1)}

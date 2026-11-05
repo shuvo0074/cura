@@ -19,7 +19,7 @@ import { fromYmd } from '../utils/dates';
 import Photo from '../components/ui/Photo';
 import ProfileTabs from '../components/doctor/ProfileTabs';
 import { VerificationCard, ShareCard, ClaimCard } from '../components/doctor/ProfileAside';
-import { groupByVenue, isRemote } from '../components/booking/chambers';
+import { groupByVenue, hasBookableSessions, isRemote } from '../components/booking/chambers';
 
 const taka = n => `৳${Number(n).toLocaleString('en-IN')}`;
 
@@ -41,13 +41,9 @@ function defaultBookingDate() {
   return d;
 }
 
-// The day-by-day "Call for booking" card is hidden for now; flip this to
-// bring it back at the top of the right-hand column.
-const SHOW_BOOKING_CARD = false;
-
 // Doctor profile, ordered by what a patient needs: who the doctor is and what
-// a visit costs, then booking a serial, then the background. On phones that's
-// one column in that order; from lg the booking card sits sticky on the right.
+// a visit costs, then booking a serial, then the background. Doctors with no
+// session that can be booked online keep Call for booking instead.
 export default function DoctorProfilePage() {
   // /doctors/:id, or the shareable /dr/:slug.
   const { id, slug } = useParams();
@@ -139,6 +135,7 @@ export default function DoctorProfilePage() {
   const workplace = doctor.workplace || doctor.hospital_name || doctor.chamber;
   // Workplaces often already end in their town ("Ibn Sina Hospital, Netrokona").
   const place = [workplace, !workplace?.includes(',') && doctor.city].filter(Boolean).join(', ');
+  const canBook = hasBookableSessions(doctor.weekly_schedule);
   const chamberCount = groupByVenue(doctor.weekly_schedule ?? []).filter(v => !isRemote(v)).length;
   const hasExpertise = profile ? profile.endorsements?.length > 0 : doctor.clinical_expertise?.length > 0;
   const experienceValue = years > 0 ? t('dp_years_value', { count: years }) : doctor.experience;
@@ -158,6 +155,7 @@ export default function DoctorProfilePage() {
   ].filter(Boolean).slice(0, 4);
   const tabs = [
     { id: 'overview', label: t('pt_overview') },
+    canBook && { id: 'book-serial', label: t('book_serial') },
     chamberCount > 0 && { id: 'chambers', label: t('pt_chambers') },
     degreeRows(items?.qualification, doctor.education).length > 0 && { id: 'qualifications', label: t('pt_qualifications') },
     items?.position?.length > 0 && { id: 'experience', label: t('pt_experience') },
@@ -231,11 +229,17 @@ export default function DoctorProfilePage() {
           )}
 
           <div className="flex flex-wrap items-center gap-2 mt-6">
-            {/* Serials are booked by phone: this lists the day's chambers to call. */}
-            <button onClick={toggleCall}
-              className="flex-1 sm:flex-none sm:px-5 flex items-center justify-center gap-2 h-11 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors">
-              <Phone size={16} /> {t('call_for_booking')}
-            </button>
+            {canBook ? (
+              <button onClick={() => document.getElementById('book-serial')?.scrollIntoView({ block: 'start' })}
+                className="flex-1 sm:flex-none sm:px-5 flex items-center justify-center gap-2 h-11 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors">
+                <CalendarDays size={16} /> {t('book_serial')}
+              </button>
+            ) : (
+              <button onClick={toggleCall}
+                className="flex-1 sm:flex-none sm:px-5 flex items-center justify-center gap-2 h-11 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors">
+                <Phone size={16} /> {t('call_for_booking')}
+              </button>
+            )}
             <button onClick={toggleShare} aria-label={t('share')}
               className="flex-shrink-0 sm:px-4 w-11 sm:w-auto flex items-center justify-center gap-2 h-11 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
               <Share2 size={16} /> <span className="hidden sm:inline">{t('share')}</span>
@@ -251,6 +255,17 @@ export default function DoctorProfilePage() {
 
 
         <ProfileTabs tabs={tabs} />
+
+        {canBook && (
+          <section id="book-serial" className={`${CARD} p-5 sm:p-6 scroll-mt-[calc(var(--header-h)+3.5rem)]`}>
+            <SectionHeading icon={CalendarDays}>{t('book_serial')}</SectionHeading>
+            <p className="text-xs text-gray-500 mt-1 mb-3">{t('book_serial_hint')}</p>
+            <DateStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} />
+            <div className="mt-4">
+              <ChamberList doctor={doctor} selectedDate={selectedDate} hospitalIds={hospitalIds} />
+            </div>
+          </section>
+        )}
 
         {/* ── Where and when: what most patients came for, so it leads ── */}
         <div id="chambers" className="empty:hidden scroll-mt-[calc(var(--header-h)+3.5rem)]">
@@ -304,18 +319,6 @@ export default function DoctorProfilePage() {
       </div>
 
       <aside className="flex flex-col gap-5 lg:sticky lg:top-[calc(var(--header-h)+1rem)]">
-        {/* ── Call for booking: which chambers sit on a given day ── */}
-        {SHOW_BOOKING_CARD && (
-        <section id="book-serial"
-          className={`${CARD} p-5 sm:p-6 scroll-mt-[calc(var(--header-h)+1rem)]`}>
-          <SectionHeading icon={CalendarDays}>{t('call_for_booking')}</SectionHeading>
-          <p className="text-xs text-gray-500 mt-1 mb-3">{t('call_for_booking_hint')}</p>
-          <DateStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} />
-          <div className="mt-4">
-            <ChamberList doctor={doctor} selectedDate={selectedDate} hospitalIds={hospitalIds} />
-          </div>
-        </section>
-        )}
         <VerificationCard doctor={doctor} />
         {!doctor.is_managed && !hasRole('doctor') && <ClaimCard doctor={doctor} />}
         <ShareCard doctor={doctor} onShare={toggleShare} />

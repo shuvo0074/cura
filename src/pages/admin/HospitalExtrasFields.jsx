@@ -47,7 +47,7 @@ function HoursInput({ value, onChange, placeholder }) {
 }
 
 // Admin fields for what a hospital offers beyond doctors' chambers (see
-// schema.sql): type, hours, beds, services with their hours, facilities,
+// the API): type, hours, beds, services with their hours, facilities,
 // payment methods and the test price list. Works on the same form object as
 // the basic fields, using the API's column names.
 export default function HospitalExtrasFields({ form, setForm }) {

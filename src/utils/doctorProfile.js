@@ -32,7 +32,7 @@ export function splitDegrees(line) {
 export function degreeRows(items, fallbackLine) {
   if (items?.length) {
     return [...items]
-      .sort((a, b) => (a.end_year ?? 9999) - (b.end_year ?? 9999) || a.id - b.id)
+      .sort((a, b) => (a.end_year ?? 9999) - (b.end_year ?? 9999) || String(a.id).localeCompare(String(b.id)))
       .map(i => ({ key: i.id, title: i.title, institution: i.organization, year: i.end_year }));
   }
   return splitDegrees(fallbackLine).map((title, n) => ({ key: n, title, institution: null, year: null }));

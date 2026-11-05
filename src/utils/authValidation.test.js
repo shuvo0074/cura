@@ -5,8 +5,12 @@ import { normalizeBmdc, passwordProblemKey, safeRedirect, normalizeBdPhone } fro
 test('client validation matches the server rules', () => {
   assert.equal(normalizeBmdc('a 12345'), 'A-12345');
   assert.equal(normalizeBmdc('X-1'), null);
-  assert.equal(passwordProblemKey('abc12345'), null);
-  assert.equal(passwordProblemKey('abcdefgh'), 'auth_err_password_mix');
+  assert.equal(passwordProblemKey('Abcde12345'), null);
+  assert.equal(passwordProblemKey('Abcd1234'), 'auth_err_password_len');
+  assert.equal(passwordProblemKey(`Ab1${'x'.repeat(126)}`), 'auth_err_password_long');
+  assert.equal(passwordProblemKey('abcdefghij'), 'auth_err_password_mix');
+  assert.equal(passwordProblemKey('abcde12345'), 'auth_err_password_mix');
+  assert.equal(passwordProblemKey('ABCDE12345'), 'auth_err_password_mix');
   assert.equal(normalizeBdPhone('+8801712345678'), '01712345678');
 });
 

@@ -18,7 +18,7 @@ export default function SpecialtiesPage() {
 
   return (
     <div>
-      <PageHeader title="Explore All Specialities" count={filtered.length}>
+      <PageHeader title={t('specialties_page_title')} count={filtered.length}>
         <SearchInput value={query} onChange={setQuery} placeholder={t('search_specialities')} />
       </PageHeader>
 
