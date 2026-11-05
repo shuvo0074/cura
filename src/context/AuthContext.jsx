@@ -37,6 +37,17 @@ export function AuthProvider({ children }) {
     return signedIn;
   }
 
+  // Forgot password. Returns the signed-in account, or null when the account
+  // must log in again (it needs a second code the reset did not prove).
+  async function resetPassword({ challengeId, code, password, confirmPassword }) {
+    const result = await api.post('/auth/password-reset/confirm', { challengeId, code, password, confirmPassword });
+    if (result.status !== 'authenticated') return null;
+    setAccessToken(result.session.accessToken, result.session.expiresIn);
+    const signedIn = await api.get('/auth/me');
+    setUser(signedIn);
+    return signedIn;
+  }
+
   function startSession({ accessToken, expiresIn, tokenType: _tokenType, ...account }) {
     setAccessToken(accessToken, expiresIn);
     setUser(account);
@@ -54,7 +65,7 @@ export function AuthProvider({ children }) {
   const hasRole = role => Boolean(user?.roles?.includes(role));
 
   return (
-    <AuthContext.Provider value={{ user, loading, hasRole, login, register, logout, refresh }}>
+    <AuthContext.Provider value={{ user, loading, hasRole, login, register, resetPassword, logout, refresh }}>
       {children}
     </AuthContext.Provider>
   );

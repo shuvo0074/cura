@@ -49,6 +49,8 @@ export default function LoginPage() {
             value={email} onChange={e => setEmail(e.target.value)} />
           <PasswordField label={t('auth_password')} icon={Lock} autoComplete="current-password" required
             value={password} onChange={e => setPassword(e.target.value)} />
+          <Link to={`/forgot-password${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ''}`}
+            className="self-end -mt-2 text-sm font-semibold text-action hover:underline">{t('auth_forgot_password')}</Link>
           {error && <p role="alert" className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
           <button type="submit" disabled={busy || !email || !password}
             className="w-full bg-primary text-white py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50 hover:bg-primary/90 transition-colors">

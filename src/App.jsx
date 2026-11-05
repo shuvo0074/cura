@@ -24,6 +24,7 @@ import DiagnosticCentresPage from './pages/DiagnosticCentresPage';
 import AppointmentsPage from './pages/AppointmentsPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import { doctorRegisterUrl } from './config/dashboard';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import DoctorDashboardPage from './pages/DoctorDashboardPage';
@@ -89,6 +90,7 @@ export default function App() {
               <Route path="/appointments" element={<AppointmentsPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/register/doctor" element={<ToDashboardSignup />} />
               <Route path="/staff-login" element={<Navigate to="/login" replace />} />
               <Route path="/admin" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
