@@ -39,6 +39,18 @@ there. Nobody needs a login to browse doctors, hospitals, diagnostic centres and
 - **New doctors:** signing up on Cura Website sends them to Cura Dashboard. They cannot finish signing up on the live
   site yet, because Cura does not send real SMS.
 
+## Accounts with more than one role
+
+| Where | Name | Email | Roles |
+| --- | --- | --- | --- |
+| Live and your local copy | Shahnaz Rahman | admin@cura.local | Super admin and clinic owner of Cura Demo Clinic |
+| Freshly seeded database only | Tanzila Ahmed | owner2@cura.local | Clinic owner of Cura Uttara Clinic, ambulance owner and pharmacy owner |
+
+Every other account has one role. No account on the live database is both a clinic owner and an ambulance owner.
+`owner2@cura.local` on the live database is a clinic owner only.
+
+Dr Nadia Karim (`doctor2@cura.local`) has one role, but in a freshly seeded database works at two clinics.
+
 ## Live database
 
 ### Super admin
