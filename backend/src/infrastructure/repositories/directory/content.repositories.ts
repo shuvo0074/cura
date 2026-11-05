@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import type {
   AmbulanceRepository,
+  PharmacyRepository,
   CatalogDirectoryRepository,
   CatalogKind,
   HospitalRepository,
@@ -111,6 +112,25 @@ export class PrismaHospitalRepository implements HospitalRepository {
 }
 
 @Injectable()
+export class PrismaPharmacyRepository implements PharmacyRepository {
+  constructor(private readonly prisma: PrismaService) {}
+
+  listOwned(ownerId: string): Promise<Row[]> {
+    return this.prisma.pharmacy.findMany({ where: { ownerId }, orderBy: { name: 'asc' } });
+  }
+
+  create(ownerId: string, data: Row): Promise<Row> {
+    return this.prisma.pharmacy.create({ data: { ...data, ownerId } as Prisma.PharmacyUncheckedCreateInput });
+  }
+
+  update(id: string, ownerId: string, data: Row): Promise<Row | null> {
+    return orNull(
+      this.prisma.pharmacy.update({ where: { id, ownerId }, data: data as Prisma.PharmacyUncheckedUpdateInput }),
+    );
+  }
+}
+
+@Injectable()
 export class PrismaAmbulanceRepository implements AmbulanceRepository {
   constructor(private readonly prisma: PrismaService) {}
 
@@ -143,6 +163,10 @@ export class PrismaAmbulanceRepository implements AmbulanceRepository {
 
   listOwned(ownerId: string): Promise<Row[]> {
     return this.prisma.ambulanceVendor.findMany({ where: { ownerId }, orderBy: { name: 'asc' } });
+  }
+
+  createOwned(ownerId: string, data: Row): Promise<Row> {
+    return this.create({ ...data, ownerId, hidden: true });
   }
 
   updateOwned(id: string, ownerId: string, data: Row): Promise<Row | null> {

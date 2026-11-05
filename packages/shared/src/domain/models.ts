@@ -3,6 +3,7 @@ import type {
   BloodGroup,
   DocumentCategory,
   Gender,
+  OwnerRole,
   Permission,
   UserRole,
   VisitType,
@@ -23,6 +24,8 @@ export interface AuthenticatedUser {
   mobile: string | null;
   role: UserRole;
   permissions: readonly Permission[];
+  /** Ambulance or pharmacy businesses this account runs on Cura Dashboard. */
+  ownerRoles: readonly OwnerRole[];
   practiceIds: readonly string[];
   onboardingCompleted: boolean;
   avatarUrl: string | null;

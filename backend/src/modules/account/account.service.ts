@@ -50,6 +50,7 @@ export class AccountService {
       mobileVerified: user.mobileVerifiedAt !== null,
       practiceIds: principal.practiceIds,
       permissions: permissionsForRole(user.role),
+      ownerRoles: await this.users.ownerRolesFor(user.id),
       onboardingCompleted: user.onboardingComplete,
     };
   }

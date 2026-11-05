@@ -2,6 +2,7 @@ import type {
   AppointmentStatus,
   DocumentCategory,
   OtpPurpose,
+  OwnerRole,
   UserRole,
   VisitType,
 } from '@cura/shared';
@@ -106,6 +107,7 @@ export interface UserRepository {
   bumpTokenVersion(userId: string): Promise<void>;
   setActive(userId: string, isActive: boolean): Promise<void>;
   practiceIdsFor(userId: string): Promise<string[]>;
+  ownerRolesFor(userId: string): Promise<OwnerRole[]>;
   /** Replaces the password hash and revokes every session in one step. */
   setPassword(userId: string, passwordHash: string): Promise<void>;
   setTwoFactorEnabled(userId: string, enabled: boolean): Promise<void>;

@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Permission, tokenStore, type AuthSession, type AuthenticatedUser } from '@cura/shared';
+import { OwnerRole, Permission, tokenStore, type AuthSession, type AuthenticatedUser } from '@cura/shared';
 import { useServices } from './services';
 import { LoginView } from '../features/auth/LoginView';
+import { AmbulanceOwnerView } from '../features/owner/AmbulanceOwnerView';
+import { PharmacyOwnerView } from '../features/owner/PharmacyOwnerView';
+import { ProfileView } from '../features/profile/ProfileView';
 import { OnboardingView } from '../features/onboarding/OnboardingView';
 import { PatientDashboardView } from '../features/patient/PatientDashboardView';
 import { AppShell } from '../features/shell/AppShell';
@@ -107,18 +110,26 @@ export function App() {
     return <LoginView onAuthenticated={handleAuthenticated} />;
   }
 
+  const hasClinicAccess = session.user.permissions.includes(Permission.CLINIC_ACCESS);
+
   // Spec 3.2.6(c): the wizard is one-time and blocks the dashboard until done.
-  if (!onboardingDone) {
+  // It sets up a doctor's practice, so it does not apply to a business owner.
+  if (!onboardingDone && hasClinicAccess) {
     return <OnboardingView onFinished={() => setOnboardingDone(true)} />;
   }
 
   const practiceId = session.user.practiceIds[0];
 
+  // An owner with no clinic has no calendar to land on.
+  const ownerHome: RouteKey = session.user.ownerRoles.includes(OwnerRole.AMBULANCE_OWNER) ? 'ambulances' : 'pharmacy';
+  const route: RouteKey =
+    hasClinicAccess || ['ambulances', 'pharmacy', 'profile'].includes(location.route) ? location.route : ownerHome;
+
   return (
     <AppShell
       user={session.user}
       practiceId={practiceId}
-      active={location.route}
+      active={route}
       onNavigate={navigate}
       onOpenPatient={openPatient}
       onOpenSettings={openSettings}
@@ -134,7 +145,13 @@ export function App() {
         }
       }}
     >
-      {!practiceId ? (
+      {route === 'ambulances' && !location.patient ? (
+        <AmbulanceOwnerView />
+      ) : route === 'pharmacy' && !location.patient ? (
+        <PharmacyOwnerView />
+      ) : route === 'profile' && !practiceId ? (
+        <ProfileView />
+      ) : !practiceId ? (
         <p className={styles.notice}>
           No practice is linked to this account yet.
         </p>
@@ -149,7 +166,7 @@ export function App() {
         />
       ) : (
         <Module
-          route={location.route}
+          route={route}
           practiceId={practiceId}
           settingsSection={location.settingsSection}
           permissions={session.user.permissions}

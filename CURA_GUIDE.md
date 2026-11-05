@@ -50,8 +50,8 @@ The other user types, and where each one logs in:
 | Clinic owner, also ambulance and pharmacy owner | Tanzila Ahmed | owner2@cura.local | CuraAdmin123 | Cura Dashboard |
 | Doctor at Cura Uttara Clinic | Dr Rumana Haque | doctor4@cura.local | CuraDoctor123 | Cura Dashboard |
 | Doctor with no login yet | Dr Farzana Ahmed | 01711111114 | Signs up with BMDC A-100203 | Cura Dashboard |
-| Ambulance owner | Rafiq Mia | ambulance@cura.local | CuraOwner123 | Cura Website |
-| Pharmacy owner | Selina Parvin | pharmacy@cura.local | CuraOwner123 | Cura Website |
+| Ambulance owner | Rafiq Mia | ambulance@cura.local | CuraOwner123 | Cura Dashboard |
+| Pharmacy owner | Selina Parvin | pharmacy@cura.local | CuraOwner123 | Cura Dashboard |
 | Patient | Sadia Rahman | patient@cura.local | CuraPatient123 | Cura Website |
 
 A patient cannot log in on Cura Dashboard, but appears there as a patient at each clinic they chose on Cura Website.

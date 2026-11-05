@@ -293,6 +293,26 @@ export function ambulanceVendor(body: Body) {
   };
 }
 
+export function pharmacy(body: Body) {
+  const name = text(body.name, 120);
+  if (!name) fail('Name is required');
+  const phones = (Array.isArray(body.phones) ? body.phones : String(body.phones ?? '').split(','))
+    .map((phone: unknown) => String(phone).replace(/[\s-]/g, ''))
+    .filter(Boolean);
+  if (!phones.length) fail('At least one phone number is required');
+  const bad = phones.find((phone: string) => !/^\+?\d{3,15}$/.test(phone));
+  if (bad) fail(`"${bad}" is not a phone number`);
+  return {
+    name: name!,
+    licenseNumber: text(body.license_number, 60),
+    address: text(body.address),
+    city: text(body.city, 80),
+    phones,
+    openingHours: text(body.opening_hours, 120),
+    homeDelivery: body.home_delivery === true,
+  };
+}
+
 export function sampleTestPrices(list: unknown) {
   if (!Array.isArray(list)) fail('Sample prices must be a list');
   const seen = new Set<string>();

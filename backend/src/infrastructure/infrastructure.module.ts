@@ -61,6 +61,7 @@ import { RedisThrottlerStorage } from './adapters/redis-throttler.storage';
 import { PUBLIC_MEDIA } from '../core/ports/public-media';
 import {
   AMBULANCE_REPOSITORY,
+  PHARMACY_REPOSITORY,
   CATALOG_DIRECTORY_REPOSITORY,
   DIRECTORY_ACCOUNT_REPOSITORY,
   DOCTOR_LISTING_REPOSITORY,
@@ -79,6 +80,7 @@ import { PrismaDoctorReachRepository } from './repositories/directory/reach.repo
 import { PrismaSerialBookingRepository } from './repositories/directory/serial-booking.repository';
 import {
   PrismaAmbulanceRepository,
+  PrismaPharmacyRepository,
   PrismaCatalogDirectoryRepository,
   PrismaHospitalRepository,
   PrismaSiteSettingsRepository,
@@ -144,6 +146,7 @@ import {
     { provide: SERIAL_BOOKING_REPOSITORY, useClass: PrismaSerialBookingRepository },
     { provide: HOSPITAL_REPOSITORY, useClass: PrismaHospitalRepository },
     { provide: AMBULANCE_REPOSITORY, useClass: PrismaAmbulanceRepository },
+    { provide: PHARMACY_REPOSITORY, useClass: PrismaPharmacyRepository },
     { provide: CATALOG_DIRECTORY_REPOSITORY, useClass: PrismaCatalogDirectoryRepository },
     { provide: SITE_SETTINGS_REPOSITORY, useClass: PrismaSiteSettingsRepository },
 
@@ -200,6 +203,7 @@ import {
     SERIAL_BOOKING_REPOSITORY,
     HOSPITAL_REPOSITORY,
     AMBULANCE_REPOSITORY,
+  PHARMACY_REPOSITORY,
     CATALOG_DIRECTORY_REPOSITORY,
     SITE_SETTINGS_REPOSITORY,
     DRUG_CATALOG_REPOSITORY,

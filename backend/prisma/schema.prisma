@@ -111,6 +111,7 @@ model User {
 
   directoryRoles        UserDirectoryRole[]
   ownedAmbulances       AmbulanceVendor[]
+  ownedPharmacies       Pharmacy[]
   patientAccount        PatientAccount?
   doctorListing         DoctorListing?
   doctorVerifications   DoctorVerification[] @relation("VerificationApplicant")
@@ -975,6 +976,26 @@ model DoctorListing {
   @@index([hidden, division])
   @@index([hospitalId])
   @@map("doctors")
+}
+
+/// A pharmacy, managed by its owner on Cura Dashboard.
+model Pharmacy {
+  id            String   @id @default(uuid()) @db.Uuid
+  ownerId       String   @db.Uuid
+  name          String
+  licenseNumber String?
+  address       String?
+  city          String?
+  phones        Json     @default("[]")
+  openingHours  String?
+  homeDelivery  Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId])
+  @@map("pharmacies")
 }
 
 model AmbulanceVendor {

@@ -340,7 +340,10 @@ export class AuthService {
     ctx: RequestContext,
   ): Promise<{ session: AuthSession; refreshToken: string }> {
     const issued = await this.tokens.issue(user.id, user.role, user.tokenVersion, ctx);
-    const practiceIds = await this.users.practiceIdsFor(user.id);
+    const [practiceIds, ownerRoles] = await Promise.all([
+      this.users.practiceIdsFor(user.id),
+      this.users.ownerRolesFor(user.id),
+    ]);
 
     return {
       refreshToken: issued.refreshToken,
@@ -355,6 +358,7 @@ export class AuthService {
           mobile: user.mobile,
           role: user.role,
           permissions: permissionsForRole(user.role),
+          ownerRoles,
           practiceIds,
           onboardingCompleted: user.onboardingComplete,
           avatarUrl: user.avatarUrl,

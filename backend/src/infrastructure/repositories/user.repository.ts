@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { UserRole } from '@cura/shared';
+import type { OwnerRole, UserRole } from '@cura/shared';
 import { ConflictError } from '../../common/errors/domain-error';
 import { withDoctorPrefix, toNationalPhone } from '../../modules/directory/domain/account-rules';
 import { uniqueViolationFields } from './directory/prisma-errors';
@@ -292,6 +292,14 @@ export class PrismaUserRepository implements UserRepository {
       });
     }
     return this.toRecord(row);
+  }
+
+  async ownerRolesFor(userId: string): Promise<OwnerRole[]> {
+    const rows = await this.prisma.userDirectoryRole.findMany({
+      where: { userId, role: { in: ['AMBULANCE_OWNER', 'PHARMACY_OWNER'] } },
+      select: { role: true },
+    });
+    return rows.map((row) => row.role.toLowerCase() as OwnerRole);
   }
 
   async practiceIdsFor(userId: string): Promise<string[]> {

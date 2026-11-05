@@ -189,9 +189,20 @@ export interface AmbulanceRepository {
   setHidden(id: string, hidden: boolean): Promise<Row | null>;
   delete(id: string): Promise<boolean>;
   listOwned(ownerId: string): Promise<Row[]>;
+  /** Hidden from patients until a super admin shows it. */
+  createOwned(ownerId: string, data: Row): Promise<Row>;
   /** Null when the vendor is missing or belongs to someone else. */
   updateOwned(id: string, ownerId: string, data: Row): Promise<Row | null>;
   setOwner(id: string, ownerId: string | null): Promise<boolean>;
+}
+
+export const PHARMACY_REPOSITORY = Symbol('PHARMACY_REPOSITORY');
+
+export interface PharmacyRepository {
+  listOwned(ownerId: string): Promise<Row[]>;
+  create(ownerId: string, data: Row): Promise<Row>;
+  /** Null when the pharmacy is missing or belongs to someone else. */
+  update(id: string, ownerId: string, data: Row): Promise<Row | null>;
 }
 
 export const CATALOG_DIRECTORY_REPOSITORY = Symbol('CATALOG_DIRECTORY_REPOSITORY');

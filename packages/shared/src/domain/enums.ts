@@ -21,6 +21,13 @@ export const UserRole = {
 } as const;
 export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 
+/** Businesses an account can own, on top of any clinic access. */
+export const OwnerRole = {
+  AMBULANCE_OWNER: 'ambulance_owner',
+  PHARMACY_OWNER: 'pharmacy_owner',
+} as const;
+export type OwnerRole = (typeof OwnerRole)[keyof typeof OwnerRole];
+
 /**
  * Granular permissions. Roles map to permission sets (see `rolePermissions`),
  * and guards check permissions rather than roles — adding a role never requires

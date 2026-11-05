@@ -792,6 +792,29 @@ async function seedUserTypes(
     create: { userId: pharmacyOwner.id, role: 'PHARMACY_OWNER' },
   });
 
+  // Something to manage on Cura Dashboard for each kind of owner.
+  await prisma.ambulanceVendor.upsert({
+    where: { slug: 'uttara-demo-ambulance' },
+    update: { ownerId: secondOwner.id },
+    create: {
+      slug: 'uttara-demo-ambulance',
+      name: 'Uttara Demo Ambulance',
+      phones: ['01700000011'],
+      categories: ['non_ac'],
+      ownerId: secondOwner.id,
+    },
+  });
+  for (const [id, ownerId, name, city] of [
+    ['33333333-3333-4333-8333-333333333331', pharmacyOwner.id, 'Cura Demo Pharmacy', 'Dhaka'],
+    ['33333333-3333-4333-8333-333333333332', secondOwner.id, 'Uttara Demo Pharmacy', 'Dhaka'],
+  ] as const) {
+    await prisma.pharmacy.upsert({
+      where: { id },
+      update: { ownerId },
+      create: { id, ownerId, name, city, phones: ['01700000013'], openingHours: '9:00 AM - 10:00 PM', homeDelivery: true },
+    });
+  }
+
   // A patient on Cura Website who joined both clinics.
   const patient = await account({
     email: 'patient@cura.local',

@@ -28,8 +28,8 @@ there. Nobody needs a login to browse doctors, hospitals, diagnostic centres and
 - **Patients:** joining a clinic adds them to that clinic's patient list on Cura Dashboard. To join, open My Appointments
   and click **My clinics**.
 - **Booking:** patients can only book online if booking is switched on in the API.
-- **Ambulance and pharmacy owners:** there are no such accounts on the live database yet, and neither role has a screen
-  on Cura Website. Ambulance owners can only edit their own vendor through the API.
+- **Ambulance and pharmacy owners:** their screens are on Cura Dashboard, under **My Ambulances** and **My Pharmacy**.
+  There are no such accounts on the live database yet.
 
 ### Login rules
 
@@ -183,8 +183,8 @@ These come from `backend/prisma/seed.ts`. They are not on the live database, exc
 | Clinic staff | Mitu Akter | Cura Demo Clinic | desk2@cura.local | 01700000004 | CuraDesk123 | Cura Dashboard |
 | Clinic staff | Jahid Hasan | Cura Demo Clinic | desk3@cura.local | 01700000005 | CuraDesk123 | Cura Dashboard |
 | Super admin | Cura Super Admin | None | superadmin@cura.local | 01700000009 | CuraSuper123 | Cura Website |
-| Ambulance owner | Rafiq Mia | None | ambulance@cura.local | 01700000012 | CuraOwner123 | Cura Website |
-| Pharmacy owner | Selina Parvin | None | pharmacy@cura.local | 01700000013 | CuraOwner123 | Cura Website |
+| Ambulance owner | Rafiq Mia | None | ambulance@cura.local | 01700000012 | CuraOwner123 | Cura Dashboard |
+| Pharmacy owner | Selina Parvin | None | pharmacy@cura.local | 01700000013 | CuraOwner123 | Cura Dashboard |
 | Patient | Sadia Rahman | Cura Demo Clinic and Cura Uttara Clinic | patient@cura.local | 01800000001 | CuraPatient123 | Cura Website |
 
 ### Doctor with no login yet

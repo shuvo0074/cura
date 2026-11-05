@@ -26,7 +26,7 @@ export class AmbulanceService {
       this.vendors.listPublic(),
       this.settings.get<SampleFares>('ambulance_sample_fares', {}),
     ]);
-    return rows.map((row) => {
+    return rows.map(({ ownerId: _ownerId, ...row }) => {
       const shaped = present(row);
       return withFares({ ...shaped, slug: row.slug, categories: row.categories }, sampleFares);
     });
@@ -51,6 +51,13 @@ export class AmbulanceService {
 
   async listOwned(ownerId: string) {
     return (await this.vendors.listOwned(ownerId)).map(present);
+  }
+
+  /** A new vendor stays hidden from patients until a super admin shows it. */
+  async createOwned(body: Row, ownerId: string) {
+    const row = await this.vendors.createOwned(ownerId, ambulanceVendor(body));
+    await this.audit.record(ownerId, 'ambulance_created_by_owner', 'ambulance_vendor', row.id, { name: row.name });
+    return present(row);
   }
 
   /** An ambulance owner edits only their own vendor. */

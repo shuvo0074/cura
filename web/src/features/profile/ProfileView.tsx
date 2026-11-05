@@ -27,12 +27,14 @@ const ROLE_LABELS: Record<string, string> = {
   ADMINISTRATOR: 'Administrator',
   DOCTOR: 'Doctor',
   DESK_STAFF: 'Desk staff',
+  PUBLIC_USER: 'Business owner',
 };
 
 const ROLE_SUMMARY: Record<string, string> = {
   ADMINISTRATOR: 'Full access: settings, staff, catalogues, statistics and billing.',
   DOCTOR: 'Patient records and prescriptions. Sessions are booked by the front desk.',
   DESK_STAFF: 'Registration, the diary, the queue and taking payment.',
+  PUBLIC_USER: 'Your ambulance or pharmacy details.',
 };
 
 /**

@@ -135,9 +135,10 @@ export class LoginViewModel extends ViewModel<LoginState> {
     await this.finish(result.value);
   }
 
-  /** Patients use Cura Website. They hold no clinic access, so they stop here. */
+  /** Patients use Cura Website. Only clinic accounts and business owners continue. */
   private async finish(session: AuthSession): Promise<void> {
-    if (!session.user.permissions.includes(Permission.CLINIC_ACCESS)) {
+    const allowed = session.user.permissions.includes(Permission.CLINIC_ACCESS) || session.user.ownerRoles.length > 0;
+    if (!allowed) {
       await this.auth.logout();
       this.backToCredentials();
       this.setState({ formError: 'This account is for Cura Website. Please log in there.' });

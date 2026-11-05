@@ -1,4 +1,4 @@
-import { Permission } from '@cura/shared';
+import { OwnerRole, Permission } from '@cura/shared';
 
 /**
  * Sidebar navigation model (spec 2.2).
@@ -24,6 +24,8 @@ export type RouteKey =
   | 'documents'
   | 'feedback'
   | 'integrations'
+  | 'ambulances'
+  | 'pharmacy'
   | 'community'
   | 'prime'
   | 'profile';
@@ -33,6 +35,8 @@ export interface NavItem {
   label: string;
   icon: string;
   permission?: Permission;
+  /** Shown only to accounts that own this kind of business. */
+  ownerRole?: OwnerRole;
   status: 'ready' | 'partial' | 'pending';
   hint?: string;
   /** Second sidebar block: the doctor's outward-facing presence and add-ons. */
@@ -104,6 +108,20 @@ export const NAV_ITEMS: readonly NavItem[] = [
     status: 'pending',
   },
   {
+    key: 'ambulances',
+    label: 'My Ambulances',
+    icon: '✚',
+    ownerRole: OwnerRole.AMBULANCE_OWNER,
+    status: 'ready',
+  },
+  {
+    key: 'pharmacy',
+    label: 'My Pharmacy',
+    icon: '℞',
+    ownerRole: OwnerRole.PHARMACY_OWNER,
+    status: 'ready',
+  },
+  {
     // No permission: every account holder administers their own profile.
     key: 'profile',
     label: 'Profile',
@@ -137,7 +155,13 @@ export const NAV_ITEMS: readonly NavItem[] = [
   },
 ];
 
-export function visibleNavItems(granted: readonly Permission[]): NavItem[] {
+export function visibleNavItems(granted: readonly Permission[], ownerRoles: readonly OwnerRole[] = []): NavItem[] {
   const set = new Set(granted);
-  return NAV_ITEMS.filter((item) => !item.permission || set.has(item.permission));
+  const hasClinic = set.has(Permission.CLINIC_ACCESS);
+  return NAV_ITEMS.filter((item) => {
+    if (item.ownerRole) return ownerRoles.includes(item.ownerRole);
+    // An owner with no clinic sees only their businesses and their own profile.
+    if (!hasClinic) return item.key === 'profile';
+    return !item.permission || set.has(item.permission);
+  });
 }

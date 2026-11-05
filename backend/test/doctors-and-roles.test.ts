@@ -251,3 +251,56 @@ test('a patient joins several clinics from the website and appears at each', asy
   const refused = await api.put(`/directory/my-clinics/${first.practiceId}`, {}, noPhone.body.accessToken);
   assert.equal(refused.body.code, 'PHONE_REQUIRED');
 });
+
+test('ambulance and pharmacy owners manage only their own businesses', async () => {
+  const email = nextEmail();
+  const account = await registerPatient(api);
+  const owner = await db.user.create({ data: { fullName: 'Business Owner', email, role: 'PUBLIC_USER', passwordHash: await db.user.findUniqueOrThrow({ where: { id: account.id } }).then((u) => u.passwordHash) } });
+  const login = async () => (await api.post('/auth/login', { identifier: email, password: PASSWORD })).body.session;
+
+  let session = await login();
+  assert.deepEqual(session.user.ownerRoles, []);
+  assert.equal((await api.get('/directory/my-pharmacies', session.accessToken)).status, 403);
+  assert.equal((await api.post('/directory/my-ambulances', {}, session.accessToken)).status, 403);
+
+  for (const role of ['ambulance_owner', 'pharmacy_owner']) {
+    await api.post('/directory/admin/roles', { identifier: email, role }, superAdmin.token);
+  }
+  session = await login();
+  assert.deepEqual([...session.user.ownerRoles].sort(), ['ambulance_owner', 'pharmacy_owner']);
+  assert.deepEqual(session.user.permissions, []);
+  const token = session.accessToken;
+  assert.deepEqual((await api.get('/account/profile', token)).body.ownerRoles.sort(), ['ambulance_owner', 'pharmacy_owner']);
+
+  // A new ambulance service waits for a super admin, and never shows who owns it.
+  const van = { name: 'Owner Van', phones: '01711111199', categories: ['icu'], fares: { icu: { min: 5000, max: 9000 } } };
+  const created = await api.post('/directory/my-ambulances', van, token);
+  assert.equal(created.status, 201, JSON.stringify(created.body));
+  assert.equal(created.body.hidden, true);
+  const publicList = async () => (await api.get('/directory/ambulances')).body;
+  assert.equal((await publicList()).some((v: { name: string }) => v.name === 'Owner Van'), false);
+  await api.patch(`/directory/admin/ambulances/${created.body.id}/hidden`, { hidden: false }, superAdmin.token);
+  const shown = (await publicList()).find((v: { name: string }) => v.name === 'Owner Van');
+  assert.ok(shown);
+  assert.equal('owner_id' in shown, false);
+
+  const edited = await api.patch(`/directory/my-ambulances/${created.body.id}`, { ...created.body, name: 'Owner Van Two' }, token);
+  assert.equal(edited.status, 200, JSON.stringify(edited.body));
+  assert.equal(edited.body.fares.icu.max, 9000);
+
+  const store = await api.post('/directory/my-pharmacies', { name: 'Owner Pharmacy', phones: '01711111198', home_delivery: true }, token);
+  assert.equal(store.status, 201, JSON.stringify(store.body));
+  assert.equal(store.body.home_delivery, true);
+  assert.equal((await api.post('/directory/my-pharmacies', { name: 'No Phone' }, token)).status, 400);
+
+  // Another owner cannot touch them.
+  const otherEmail = nextEmail();
+  await db.user.create({ data: { fullName: 'Other', email: otherEmail, role: 'PUBLIC_USER', passwordHash: owner.passwordHash } });
+  await api.post('/directory/admin/roles', { identifier: otherEmail, role: 'pharmacy_owner' }, superAdmin.token);
+  const other = (await api.post('/auth/login', { identifier: otherEmail, password: PASSWORD })).body.session.accessToken;
+  assert.equal((await api.patch(`/directory/my-pharmacies/${store.body.id}`, { name: 'Taken', phones: '017' }, other)).status, 404);
+  assert.deepEqual((await api.get('/directory/my-pharmacies', other)).body, []);
+
+  // Owning a business gives no clinic access.
+  assert.equal((await api.get('/patients?practiceId=11111111-1111-4111-8111-111111111111', token)).status, 403);
+});

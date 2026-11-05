@@ -6,11 +6,13 @@ import {
   RequireAmbulanceOwner,
   RequireDirectoryAdmin,
   RequirePatient,
+  RequirePharmacyOwner,
 } from '../access/directory-access.decorators';
 import { UuidOr404 } from '../access/uuid-or-404.pipe';
 import { AmbulanceService } from '../services/ambulance.service';
 import { ClinicOwnerService } from '../services/clinic-owner.service';
 import { PatientClinicService } from '../services/patient-clinic.service';
+import { PharmacyService } from '../services/pharmacy.service';
 import { PublicReadLimit, bodyOf } from './shared';
 
 /** The clinics a patient can choose. */
@@ -59,9 +61,36 @@ export class MyAmbulancesController {
     return this.ambulances.listOwned(identity.userId);
   }
 
+  @Post()
+  create(@Body() body: unknown, @Identity() identity: DirectoryIdentity) {
+    return this.ambulances.createOwned(bodyOf(body), identity.userId);
+  }
+
   @Patch(':id')
   update(@Param('id', UuidOr404) id: string, @Body() body: unknown, @Identity() identity: DirectoryIdentity) {
     return this.ambulances.updateOwned(id, bodyOf(body), identity.userId);
+  }
+}
+
+/** Pharmacies this owner runs. */
+@Controller('directory/my-pharmacies')
+@RequirePharmacyOwner()
+export class MyPharmaciesController {
+  constructor(private readonly pharmacies: PharmacyService) {}
+
+  @Get()
+  mine(@Identity() identity: DirectoryIdentity) {
+    return this.pharmacies.listOwned(identity.userId);
+  }
+
+  @Post()
+  create(@Body() body: unknown, @Identity() identity: DirectoryIdentity) {
+    return this.pharmacies.create(bodyOf(body), identity.userId);
+  }
+
+  @Patch(':id')
+  update(@Param('id', UuidOr404) id: string, @Body() body: unknown, @Identity() identity: DirectoryIdentity) {
+    return this.pharmacies.update(id, bodyOf(body), identity.userId);
   }
 }
 

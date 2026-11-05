@@ -13,6 +13,7 @@ import {
   ClinicsController,
   MyAmbulancesController,
   MyClinicsController,
+  MyPharmaciesController,
 } from './controllers/accounts.controllers';
 import { DirectoryAuthController } from './controllers/auth.controller';
 import { DoctorMeController, DoctorsController, VerificationRequestController } from './controllers/doctors.controller';
@@ -28,6 +29,7 @@ import { AmbulanceService } from './services/ambulance.service';
 import { CatalogService } from './services/catalog.service';
 import { ClinicOwnerService } from './services/clinic-owner.service';
 import { PatientClinicService } from './services/patient-clinic.service';
+import { PharmacyService } from './services/pharmacy.service';
 import { DirectoryAudit } from './services/directory-audit.service';
 import { DoctorDirectoryService } from './services/doctor-directory.service';
 import { DoctorProfileService } from './services/doctor-profile.service';
@@ -65,6 +67,7 @@ import { DoctorVerificationService } from './services/verification.service';
     ClinicsController,
     MyClinicsController,
     MyAmbulancesController,
+    MyPharmaciesController,
   ],
   providers: [
     DirectoryAccountService,
@@ -73,6 +76,7 @@ import { DoctorVerificationService } from './services/verification.service';
     CatalogService,
     ClinicOwnerService,
     PatientClinicService,
+    PharmacyService,
     DirectoryAudit,
     DoctorDirectoryService,
     DoctorProfileService,
