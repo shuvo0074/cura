@@ -22,6 +22,7 @@ export type SettingsKey =
 
 export interface SettingsItem {
   key: SettingsKey;
+  /** English name; the screen shows `t('settings.nav.<key>')`. */
   label: string;
   /** Groups are separated by a rule in the sidebar, matching the spec's blocks. */
   group: 'practice' | 'clinical' | 'output';

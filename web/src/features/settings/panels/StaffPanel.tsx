@@ -7,6 +7,7 @@ import {
   useMutation,
   useResource,
 } from '../../../ui';
+import { useT } from '../../../i18n';
 
 import { StaffModal } from './StaffModal';
 import { Kind, MEDICAL_ROLES, NOTIFICATION_ROWS, Staff } from './staff-shared';
@@ -14,6 +15,7 @@ import { accessLabel } from './staff-shared';
 
 export function StaffPanel({ practiceId }: { practiceId: string }) {
   const { data, error, loading, reload } = useResource<Staff[]>('/settings/staff', { practiceId });
+  const { t, locale } = useT();
   const mutate = useMutation();
   const [kind, setKind] = useState<Kind>('doctor');
   const [editing, setEditing] = useState<Staff | 'new' | null>(null);
@@ -43,15 +45,15 @@ export function StaffPanel({ practiceId }: { practiceId: string }) {
 
   return (
     <Panel
-      title="Practice Staff"
-      description="Switching access off ends the member's active sessions immediately."
+      title={t('settings.nav.staff')}
+      description={t('settings.staff.description')}
       action={
         <button type="button" className={s.primary} onClick={() => setEditing('new')}>
-          Add
+          {t('common.add')}
         </button>
       }
     >
-      <div className={s.filters} role="tablist" aria-label="Personnel type">
+      <div className={s.filters} role="tablist" aria-label={t('settings.staff.personnelType')}>
         {(['doctor', 'staff'] as Kind[]).map((k) => (
           <button
             key={k}
@@ -61,7 +63,7 @@ export function StaffPanel({ practiceId }: { practiceId: string }) {
             data-active={kind === k || undefined}
             onClick={() => setKind(k)}
           >
-            {k === 'doctor' ? 'Doctors' : 'Other Staff'}
+            {k === 'doctor' ? t('settings.staff.doctors') : t('settings.staff.otherStaff')}
           </button>
         ))}
       </div>
@@ -69,15 +71,15 @@ export function StaffPanel({ practiceId }: { practiceId: string }) {
       {mutate.error && <Failed message={mutate.error} />}
 
       {rows.length === 0 ? (
-        <p className={s.muted}>No {kind === 'doctor' ? 'doctors' : 'staff'} added yet.</p>
+        <p className={s.muted}>{kind === 'doctor' ? t('settings.staff.noDoctors') : t('settings.staff.noStaff')}</p>
       ) : (
         <table className={s.table}>
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Access type</th>
-              <th>Daily schedule</th>
-              <th>Appointments</th>
+              <th>{t('settings.name')}</th>
+              <th>{t('settings.staff.accessType')}</th>
+              <th>{t('settings.staff.dailySchedule')}</th>
+              <th>{t('settings.staff.appointments')}</th>
               <th />
             </tr>
           </thead>
@@ -87,7 +89,12 @@ export function StaffPanel({ practiceId }: { practiceId: string }) {
                 <td>
                   <span className={s.staffName}>{row.fullName}</span>
                   <span className={s.staffMeta}>
-                    {[row.mobile, row.email, row.bmdcNumber && `BMDC ${row.bmdcNumber}`, !row.hasLogin && 'No login yet']
+                    {[
+                      row.mobile,
+                      row.email,
+                      row.bmdcNumber && t('settings.staff.bmdc', { number: row.bmdcNumber }),
+                      !row.hasLogin && t('settings.staff.noLogin'),
+                    ]
                       .filter(Boolean)
                       .join(' · ') || '—'}
                   </span>
@@ -99,11 +106,11 @@ export function StaffPanel({ practiceId }: { practiceId: string }) {
                     data-on={row.isActive || undefined}
                     onClick={() => void toggleAccess(row)}
                   >
-                    {row.isActive ? accessLabel(row.role, kind) : 'None'}
+                    {row.isActive ? accessLabel(row.role, kind, locale) : t('settings.staff.none')}
                   </button>
                 </td>
                 {NOTIFICATION_ROWS.map((notification) => (
-                  <td key={notification.label}>
+                  <td key={notification.key}>
                     <div className={s.channelPair}>
                       {(['sms', 'email'] as const).map((channel) => {
                         const key = notification[channel];
@@ -114,7 +121,7 @@ export function StaffPanel({ practiceId }: { practiceId: string }) {
                               checked={row[key]}
                               onChange={(e) => void toggleNotification(row, key, e.target.checked)}
                             />
-                            {channel === 'sms' ? 'SMS' : 'Email'}
+                            {channel === 'sms' ? t('settings.sms') : t('settings.email')}
                           </label>
                         );
                       })}
@@ -123,7 +130,7 @@ export function StaffPanel({ practiceId }: { practiceId: string }) {
                 ))}
                 <td>
                   <button type="button" className={s.linkButton} onClick={() => setEditing(row)}>
-                    Edit
+                    {t('common.edit')}
                   </button>
                 </td>
               </tr>

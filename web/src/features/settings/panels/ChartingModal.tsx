@@ -7,8 +7,9 @@ import {
   useMutation,
 } from '../../../ui';
 
-import { ChartingTemplate } from './catalog-shared';
+import { ChartingTemplate, asciiDigits } from './catalog-shared';
 import { ModalActions } from '../../../ui';
+import { useT } from '../../../i18n';
 
 export function ChartingModal({
   practiceId,
@@ -21,6 +22,7 @@ export function ChartingModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { t } = useT();
   const save = useMutation();
   const [name, setName] = useState(existing?.name ?? '');
   const [diagnoses, setDiagnoses] = useState((existing?.diagnoses ?? []).join('\n'));
@@ -50,28 +52,28 @@ export function ChartingModal({
 
   return (
     <Modal
-      title={existing ? 'Edit template' : 'Add template'}
+      title={existing ? t('settings.charting.edit') : t('settings.charting.add')}
       onClose={onClose}
       wide
       footer={<ModalActions error={save.error} busy={save.busy} onCancel={onClose} onSave={() => void submit()} />}
     >
-      <Field label="Template name" required>
+      <Field label={t('settings.charting.templateName')} required>
         <input className={s.input} value={name} onChange={(e) => setName(e.target.value)} />
       </Field>
       <Row cols={2}>
-        <Field label="Diagnoses" hint="One per line.">
+        <Field label={t('settings.charting.diagnoses')} hint={t('settings.charting.onePerLine')}>
           <textarea className={s.textarea} rows={5} value={diagnoses} onChange={(e) => setDiagnoses(e.target.value)} />
         </Field>
-        <Field label="Lab orders" hint="One per line.">
+        <Field label={t('settings.charting.labOrders')} hint={t('settings.charting.onePerLine')}>
           <textarea className={s.textarea} rows={5} value={labOrders} onChange={(e) => setLabOrders(e.target.value)} />
         </Field>
       </Row>
-      <Field label="Follow-up after (days)">
+      <Field label={t('settings.charting.followUpAfter')}>
         <input
           className={s.input}
           inputMode="numeric"
           value={followUp}
-          onChange={(e) => setFollowUp(e.target.value.replace(/\D/g, ''))}
+          onChange={(e) => setFollowUp(asciiDigits(e.target.value).replace(/\D/g, ''))}
         />
       </Field>
     </Modal>

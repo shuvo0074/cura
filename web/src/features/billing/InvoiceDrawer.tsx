@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useServices } from '../../app/services';
 import { Field, Modal, Row, uiStyles as s } from '../../ui';
-import { PAYMENT_METHODS, STATUS_LABELS, money, toMinor } from './billing-kit';
+import { PAYMENT_METHODS, isInvoiceStatus, isPaymentMethod, money, toMinor } from './billing-kit';
+import { useT } from '../../i18n';
 import type { InvoiceSummary } from './BillingView';
 import styles from './billing.module.css';
 
@@ -50,6 +51,9 @@ export function InvoiceDrawer({
   onOpenPatient: (patientId: string) => void;
 }) {
   const { http } = useServices();
+  const { t, tm, fmt, locale } = useT();
+  const statusLabel = (status: string) => (isInvoiceStatus(status) ? t(`billing.status.${status}`) : status);
+  const methodLabel = (m: string) => (isPaymentMethod(m) ? t(`billing.method.${m}`) : m);
   const [invoice, setInvoice] = useState<InvoiceDetail | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -80,7 +84,16 @@ export function InvoiceDrawer({
   const collect = async () => {
     const amountMinor = toMinor(amount);
     if (amountMinor <= 0) {
-      setError('Enter an amount greater than zero.');
+      setError(t('billing.amountPositive'));
+      return;
+    }
+    if (invoice && amountMinor > outstanding) {
+      // Checked here as well as on the server so the amount is shown in the reader's language.
+      setError(
+        t('billing.exceedsBalance', {
+          amount: locale === 'en' ? (outstanding / 100).toFixed(2) : money(outstanding, locale),
+        }),
+      );
       return;
     }
 
@@ -126,14 +139,14 @@ export function InvoiceDrawer({
 
   return (
     <Modal
-      title={`Invoice ${summary.number}`}
+      title={t('billing.invoiceTitle', { number: summary.number })}
       onClose={onClose}
       wide
       footer={
         <>
           {error && (
             <span className={s.error} role="alert">
-              {error}
+              {tm(error)}
             </span>
           )}
           {canWrite && invoice && !settled && (
@@ -143,11 +156,11 @@ export function InvoiceDrawer({
               onClick={() => setConfirmCancel(true)}
               disabled={busy}
             >
-              Cancel invoice
+              {t('billing.cancelInvoice')}
             </button>
           )}
           <button type="button" className={s.primary} onClick={onClose}>
-            Close
+            {t('common.close')}
           </button>
         </>
       }
@@ -155,10 +168,10 @@ export function InvoiceDrawer({
       <div className={styles.detailHead}>
         <div>
           <span className={styles.badge} data-status={(invoice?.status ?? summary.status).toLowerCase()}>
-            {STATUS_LABELS[invoice?.status ?? summary.status]}
+            {statusLabel(invoice?.status ?? summary.status)}
           </span>
           <p className={styles.muted}>
-            Raised {new Date(summary.createdAt).toLocaleString()}
+            {t('billing.raised', { date: fmt.dateTime(summary.createdAt) })}
           </p>
         </div>
         {summary.patient && (
@@ -176,59 +189,59 @@ export function InvoiceDrawer({
       </div>
 
       {!invoice ? (
-        <p className={styles.muted}>Loading…</p>
+        <p className={styles.muted}>{t('common.loading')}</p>
       ) : (
         <>
           <table className={styles.lineTable}>
             <thead>
               <tr>
-                <th>Treatment</th>
-                <th className={styles.numeric}>Qty</th>
-                <th className={styles.numeric}>Unit</th>
-                <th className={styles.numeric}>Discount</th>
-                <th className={styles.numeric}>Total</th>
+                <th>{t('billing.col.treatment')}</th>
+                <th className={styles.numeric}>{t('billing.col.qty')}</th>
+                <th className={styles.numeric}>{t('billing.col.unit')}</th>
+                <th className={styles.numeric}>{t('billing.col.discount')}</th>
+                <th className={styles.numeric}>{t('billing.col.total')}</th>
               </tr>
             </thead>
             <tbody>
               {invoice.items.map((item, i) => (
                 <tr key={i}>
                   <td>{item.description}</td>
-                  <td className={styles.numeric}>{item.quantity}</td>
-                  <td className={styles.numeric}>{money(item.unitMinor)}</td>
-                  <td className={styles.numeric}>{money(item.discountMinor)}</td>
-                  <td className={styles.numeric}>{money(item.totalMinor)}</td>
+                  <td className={styles.numeric}>{fmt.number(item.quantity)}</td>
+                  <td className={styles.numeric}>{money(item.unitMinor, locale)}</td>
+                  <td className={styles.numeric}>{money(item.discountMinor, locale)}</td>
+                  <td className={styles.numeric}>{money(item.totalMinor, locale)}</td>
                 </tr>
               ))}
             </tbody>
             <tfoot>
               <tr>
-                <td colSpan={4}>Subtotal</td>
-                <td className={styles.numeric}>{money(invoice.subtotalMinor)}</td>
+                <td colSpan={4}>{t('billing.subtotal')}</td>
+                <td className={styles.numeric}>{money(invoice.subtotalMinor, locale)}</td>
               </tr>
               {invoice.discountMinor > 0 && (
                 <tr>
-                  <td colSpan={4}>Invoice discount</td>
-                  <td className={styles.numeric}>−{money(invoice.discountMinor)}</td>
+                  <td colSpan={4}>{t('billing.invoiceDiscount')}</td>
+                  <td className={styles.numeric}>−{money(invoice.discountMinor, locale)}</td>
                 </tr>
               )}
               {invoice.taxMinor > 0 && (
                 <tr>
-                  <td colSpan={4}>Tax</td>
-                  <td className={styles.numeric}>{money(invoice.taxMinor)}</td>
+                  <td colSpan={4}>{t('billing.tax')}</td>
+                  <td className={styles.numeric}>{money(invoice.taxMinor, locale)}</td>
                 </tr>
               )}
               <tr className={styles.totalRow}>
-                <td colSpan={4}>Total</td>
-                <td className={styles.numeric}>{money(invoice.totalMinor)}</td>
+                <td colSpan={4}>{t('billing.col.total')}</td>
+                <td className={styles.numeric}>{money(invoice.totalMinor, locale)}</td>
               </tr>
               <tr>
-                <td colSpan={4}>Paid</td>
-                <td className={styles.numeric}>{money(invoice.paidMinor)}</td>
+                <td colSpan={4}>{t('billing.col.paid')}</td>
+                <td className={styles.numeric}>{money(invoice.paidMinor, locale)}</td>
               </tr>
               <tr className={styles.totalRow}>
-                <td colSpan={4}>Balance due</td>
+                <td colSpan={4}>{t('billing.balanceDue')}</td>
                 <td className={styles.numeric}>
-                  {invoice.status === 'CANCELLED' ? '—' : money(outstanding)}
+                  {invoice.status === 'CANCELLED' ? '—' : money(outstanding, locale)}
                 </td>
               </tr>
             </tfoot>
@@ -236,19 +249,19 @@ export function InvoiceDrawer({
 
           {invoice.notes && <p className={styles.notes}>{invoice.notes}</p>}
 
-          <h4 className={s.subtitle}>Payments</h4>
+          <h4 className={s.subtitle}>{t('billing.payments')}</h4>
           {payments.length === 0 ? (
-            <p className={styles.muted}>Nothing collected yet.</p>
+            <p className={styles.muted}>{t('billing.nothingCollected')}</p>
           ) : (
             <ul className={styles.payments}>
               {payments.map((p) => (
                 <li key={p.id}>
-                  <span>{money(p.amountMinor)}</span>
+                  <span>{money(p.amountMinor, locale)}</span>
                   <span className={styles.muted}>
-                    {PAYMENT_METHODS.find((m) => m.value === p.method)?.label ?? p.method}
+                    {methodLabel(p.method)}
                     {p.reference ? ` · ${p.reference}` : ''}
                   </span>
-                  <span className={styles.muted}>{new Date(p.receivedAt).toLocaleString()}</span>
+                  <span className={styles.muted}>{fmt.dateTime(p.receivedAt)}</span>
                 </li>
               ))}
             </ul>
@@ -256,27 +269,27 @@ export function InvoiceDrawer({
 
           {canWrite && outstanding > 0 && invoice.status !== 'CANCELLED' && (
             <>
-              <h4 className={s.subtitle}>Collect payment</h4>
+              <h4 className={s.subtitle}>{t('billing.collectPayment')}</h4>
               <Row>
-                <Field label="Amount (BDT)">
+                <Field label={t('billing.amountBdt')}>
                   <input
                     className={s.input}
                     inputMode="decimal"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    placeholder={money(outstanding)}
+                    placeholder={money(outstanding, locale)}
                   />
                 </Field>
-                <Field label="Method">
+                <Field label={t('billing.method')}>
                   <select className={s.input} value={method} onChange={(e) => setMethod(e.target.value)}>
                     {PAYMENT_METHODS.map((m) => (
-                      <option key={m.value} value={m.value}>
-                        {m.label}
+                      <option key={m} value={m}>
+                        {t(`billing.method.${m}`)}
                       </option>
                     ))}
                   </select>
                 </Field>
-                <Field label="Reference" hint="Transaction ID for a mobile-money payment.">
+                <Field label={t('billing.reference')} hint={t('billing.referenceHint')}>
                   <input
                     className={s.input}
                     value={reference}
@@ -290,10 +303,10 @@ export function InvoiceDrawer({
                   className={s.secondary}
                   onClick={() => setAmount((outstanding / 100).toFixed(2))}
                 >
-                  Pay in full
+                  {t('billing.payInFull')}
                 </button>
                 <button type="button" className={s.primary} onClick={() => void collect()} disabled={busy}>
-                  {busy ? 'Recording…' : 'Record payment'}
+                  {busy ? t('billing.recording') : t('billing.recordPayment')}
                 </button>
               </div>
             </>
@@ -302,17 +315,14 @@ export function InvoiceDrawer({
       )}
 
       {confirmCancel && (
-        <div className={styles.confirm} role="alertdialog" aria-label="Confirm cancellation">
-          <p>
-            Cancel invoice {summary.number}? It stays in the ledger and the audit trail, but stops
-            counting towards receivables.
-          </p>
+        <div className={styles.confirm} role="alertdialog" aria-label={t('billing.confirmCancelLabel')}>
+          <p>{t('billing.confirmCancel', { number: summary.number })}</p>
           <div className={styles.collectActions}>
             <button type="button" className={s.secondary} onClick={() => setConfirmCancel(false)}>
-              Keep it
+              {t('billing.keepIt')}
             </button>
             <button type="button" className={styles.danger} onClick={() => void cancel()} disabled={busy}>
-              Cancel invoice
+              {t('billing.cancelInvoice')}
             </button>
           </div>
         </div>

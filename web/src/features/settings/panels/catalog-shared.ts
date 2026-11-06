@@ -17,13 +17,9 @@ export const DEFAULT_TREATMENTS = ['Consultation', 'Consultation by Video Call',
 
 // -- Clinical notes catalog -------------------------------------------------
 
-export const NOTE_KINDS = [
-  { key: 'COMPLAINT', label: 'Complaints' },
-  { key: 'OBSERVATION', label: 'Observations' },
-  { key: 'DIAGNOSIS', label: 'Diagnoses' },
-  { key: 'ADVICE', label: 'Advice' },
-  { key: 'NOTE', label: 'Notes' },
-] as const;
+/** Each kind has `settings.notes.kind.*`, `.search.*`, `.searchLabel.*`, `.new.*` and `.empty.*` words. */
+export const NOTE_KINDS = ['COMPLAINT', 'OBSERVATION', 'DIAGNOSIS', 'ADVICE', 'NOTE'] as const;
+export type NoteKind = (typeof NOTE_KINDS)[number];
 
 // -- Drug catalog -----------------------------------------------------------
 
@@ -36,7 +32,21 @@ export interface Drug {
   instruction: string | null;
 }
 
-export const DRUG_FORMS = ['TABLET', 'CAPSULE', 'SYRUP', 'INJECTION', 'DROP', 'OINTMENT', 'INHALER', 'GARGLE', 'SUPPOSITORY'];
+export const DRUG_FORMS = [
+  'TABLET',
+  'CAPSULE',
+  'SYRUP',
+  'INJECTION',
+  'DROP',
+  'OINTMENT',
+  'INHALER',
+  'GARGLE',
+  'SUPPOSITORY',
+] as const;
+/** Every form a stored drug may carry (older rows include SACHET), each with a `settings.drugs.form.*` name. */
+const NAMED_FORMS = [...DRUG_FORMS, 'SACHET'] as const;
+export const isDrugForm = (value: string): value is (typeof NAMED_FORMS)[number] =>
+  (NAMED_FORMS as readonly string[]).includes(value);
 export const DRUG_UNITS = ['mg', 'ml', 'mcg', 'g', 'IU', '%'];
 
 // -- Charting templates -----------------------------------------------------
@@ -59,3 +69,7 @@ export interface ConsentForm {
 }
 
 // -- Shared -----------------------------------------------------------------
+
+/** Bangla digits typed into a number field become ASCII digits, so "১২৫০" parses. */
+export const asciiDigits = (input: string): string =>
+  input.replace(/[০-৯]/g, (d) => String(d.charCodeAt(0) - 0x09e6));

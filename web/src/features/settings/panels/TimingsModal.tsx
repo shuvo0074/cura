@@ -8,6 +8,7 @@ import {
 } from '../../../ui';
 
 import { DAYS, Session, TIME_OPTIONS, label12h } from './practice-shared';
+import { useT } from '../../../i18n';
 
 /**
  * Edit Practice Timings.
@@ -29,6 +30,7 @@ export function TimingsModal({
   onSaved: () => void;
 }) {
   const save = useMutation();
+  const { t, tm, locale } = useT();
 
   const [days, setDays] = useState<Set<number>>(() => new Set(sessions.map((x) => x.dayOfWeek)));
   const [slots, setSlots] = useState<Array<{ startTime: string; endTime: string }>>(() => {
@@ -51,16 +53,19 @@ export function TimingsModal({
     setSlots((list) => list.map((slot, index) => (index === i ? { ...slot, ...patch } : slot)));
 
   const validate = (): string | null => {
-    if (days.size === 0) return 'Tick at least one practice day.';
+    if (days.size === 0) return t('settings.timings.tickDay');
     for (const slot of slots) {
       if (slot.endTime <= slot.startTime) {
-        return `Session ${label12h(slot.startTime)} – ${label12h(slot.endTime)} ends before it starts.`;
+        return t('settings.timings.endsBefore', {
+          start: label12h(slot.startTime, locale),
+          end: label12h(slot.endTime, locale),
+        });
       }
     }
     const ordered = [...slots].sort((a, b) => a.startTime.localeCompare(b.startTime));
     for (let i = 1; i < ordered.length; i += 1) {
       if (ordered[i]!.startTime < ordered[i - 1]!.endTime) {
-        return 'Two sessions overlap. Adjust the times so they do not intersect.';
+        return t('settings.timings.overlap');
       }
     }
     return null;
@@ -83,30 +88,30 @@ export function TimingsModal({
 
   return (
     <Modal
-      title="Edit Practice Timings"
+      title={t('settings.practice.editTimings')}
       onClose={onClose}
       wide
       footer={
         <>
           {(problem ?? save.error) && (
             <span className={s.error} role="alert">
-              {problem ?? save.error}
+              {problem ?? tm(save.error)}
             </span>
           )}
           <button type="button" className={s.secondary} onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </button>
           <button type="button" className={s.primary} onClick={() => void submit()} disabled={save.busy}>
-            {save.busy ? 'Saving…' : 'Save'}
+            {save.busy ? t('common.saving') : t('common.save')}
           </button>
         </>
       }
     >
       <div className={s.dayRow}>
-        {DAYS.map((day, index) => (
+        {DAYS.map((index) => (
           <Check
-            key={day}
-            label={day}
+            key={index}
+            label={t(`settings.day.${index}`)}
             checked={days.has(index)}
             onChange={(on) =>
               setDays((set) => {
@@ -123,17 +128,17 @@ export function TimingsModal({
       <div className={s.slotList}>
         {slots.map((slot, i) => (
           <div key={i} className={s.slotRow}>
-            <Field label={`Session ${i + 1}`} required={i === 0}>
+            <Field label={t('settings.timings.session', { n: i + 1 })} required={i === 0}>
               <div className={s.slotTimes}>
                 <select
                   className={s.input}
                   value={slot.startTime}
                   onChange={(e) => setSlot(i, { startTime: e.target.value })}
-                  aria-label={`Session ${i + 1} start time`}
+                  aria-label={t('settings.timings.sessionStart', { n: i + 1 })}
                 >
-                  {TIME_OPTIONS.map((t) => (
-                    <option key={t} value={t}>
-                      {label12h(t)}
+                  {TIME_OPTIONS.map((time) => (
+                    <option key={time} value={time}>
+                      {label12h(time, locale)}
                     </option>
                   ))}
                 </select>
@@ -142,11 +147,11 @@ export function TimingsModal({
                   className={s.input}
                   value={slot.endTime}
                   onChange={(e) => setSlot(i, { endTime: e.target.value })}
-                  aria-label={`Session ${i + 1} end time`}
+                  aria-label={t('settings.timings.sessionEnd', { n: i + 1 })}
                 >
-                  {TIME_OPTIONS.map((t) => (
-                    <option key={t} value={t}>
-                      {label12h(t)}
+                  {TIME_OPTIONS.map((time) => (
+                    <option key={time} value={time}>
+                      {label12h(time, locale)}
                     </option>
                   ))}
                 </select>
@@ -155,7 +160,7 @@ export function TimingsModal({
                     type="button"
                     className={s.iconButton}
                     onClick={() => setSlots((list) => list.filter((_, index) => index !== i))}
-                    aria-label={`Remove session ${i + 1}`}
+                    aria-label={t('settings.timings.removeSession', { n: i + 1 })}
                   >
                     ×
                   </button>
@@ -171,12 +176,10 @@ export function TimingsModal({
         className={s.linkButton}
         onClick={() => setSlots((list) => [...list, { startTime: '17:00', endTime: '21:00' }])}
       >
-        add more timings
+        {t('settings.timings.addMore')}
       </button>
 
-      <p className={s.hint}>
-        These sessions apply to every ticked day. Saving rebuilds the calendar&rsquo;s bookable slots immediately.
-      </p>
+      <p className={s.hint}>{t('settings.timings.hint')}</p>
     </Modal>
   );
 }

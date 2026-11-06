@@ -7,12 +7,14 @@ import {
   useMutation,
   useResource,
 } from '../../../ui';
+import { useT } from '../../../i18n';
 
 import { ConsentModal } from './ConsentModal';
 import { ConsentForm } from './catalog-shared';
 
 export function ConsentPanel({ practiceId }: { practiceId: string }) {
   const { data, error, loading, reload } = useResource<ConsentForm[]>('/settings/consent-forms', { practiceId });
+  const { t } = useT();
   const mutate = useMutation();
   const [editing, setEditing] = useState<ConsentForm | 'new' | null>(null);
 
@@ -34,24 +36,24 @@ export function ConsentPanel({ practiceId }: { practiceId: string }) {
 
   return (
     <Panel
-      title="Consent Forms"
-      description="Templates presented to a patient for digital signature before a procedure."
+      title={t('settings.nav.consent')}
+      description={t('settings.consent.description')}
       action={
         <button type="button" className={s.primary} onClick={() => setEditing('new')}>
-          Add
+          {t('common.add')}
         </button>
       }
     >
       {mutate.error && <Failed message={mutate.error} />}
 
       {(data ?? []).length === 0 ? (
-        <p className={s.muted}>No consent forms yet.</p>
+        <p className={s.muted}>{t('settings.consent.empty')}</p>
       ) : (
         <table className={s.table}>
           <thead>
             <tr>
-              <th>Title</th>
-              <th>Status</th>
+              <th>{t('settings.titleField')}</th>
+              <th>{t('settings.status')}</th>
               <th />
             </tr>
           </thead>
@@ -66,15 +68,15 @@ export function ConsentPanel({ practiceId }: { practiceId: string }) {
                     data-on={row.isActive || undefined}
                     onClick={() => void toggle(row)}
                   >
-                    {row.isActive ? 'Active' : 'Inactive'}
+                    {row.isActive ? t('settings.consent.active') : t('settings.consent.inactive')}
                   </button>
                 </td>
                 <td className={s.actions}>
                   <button type="button" className={s.linkButton} onClick={() => setEditing(row)}>
-                    Edit
+                    {t('common.edit')}
                   </button>
                   <button type="button" className={s.linkDanger} onClick={() => void remove(row)}>
-                    Delete
+                    {t('common.delete')}
                   </button>
                 </td>
               </tr>

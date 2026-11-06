@@ -1,6 +1,7 @@
 /** Types and constants shared by the staff panel. */
 
 import { UserRole } from '@cura/shared';
+import { translate, type Locale } from '../../../i18n';
 
 export interface Staff {
   userId: string;
@@ -26,31 +27,22 @@ export const MEDICAL_ROLES: readonly string[] = [UserRole.DOCTOR];
 
 /**
  * What an owner can add. Only a super admin creates owners, so an owner's own
- * clinic has one access level per personnel tab.
+ * clinic has one access level per personnel tab. Each role has a
+ * `settings.staff.access.<role>` name and a `settings.staff.accessDetail.<role>` line.
  */
-export const ACCESS_OPTIONS: Record<Kind, ReadonlyArray<{ role: string; label: string; detail: string }>> = {
-  doctor: [
-    {
-      role: UserRole.DOCTOR,
-      label: 'Doctor',
-      detail: 'Patient records and prescriptions. Cannot book sessions or register patients.',
-    },
-  ],
-  staff: [
-    {
-      role: UserRole.DESK_STAFF,
-      label: 'Desk staff',
-      detail: 'Register patients, book sessions, run the queue and take payment.',
-    },
-  ],
-};
+export const ACCESS_OPTIONS = {
+  doctor: [UserRole.DOCTOR],
+  staff: [UserRole.DESK_STAFF],
+} as const satisfies Record<Kind, readonly string[]>;
 
+/** `key` names the row's `settings.staff.notify.*` label. */
 export const NOTIFICATION_ROWS = [
-  { label: 'Daily Schedule', sms: 'notifyScheduleSms', email: 'notifyScheduleEmail' },
-  { label: 'Appointment Confirmations', sms: 'notifyAppointmentSms', email: 'notifyAppointmentEmail' },
+  { key: 'schedule', sms: 'notifyScheduleSms', email: 'notifyScheduleEmail' },
+  { key: 'appointment', sms: 'notifyAppointmentSms', email: 'notifyAppointmentEmail' },
 ] as const;
 
-export function accessLabel(role: string, kind: Kind): string {
-  if (role === UserRole.ADMINISTRATOR) return 'Administrator';
-  return ACCESS_OPTIONS[kind].find((o) => o.role === role)?.label ?? role.replace(/_/g, ' ').toLowerCase();
+export function accessLabel(role: string, kind: Kind, locale: Locale = 'en'): string {
+  if (role === UserRole.ADMINISTRATOR) return translate(locale, 'settings.staff.access.ADMINISTRATOR');
+  const option = (ACCESS_OPTIONS[kind] as readonly string[]).includes(role) ? ACCESS_OPTIONS[kind][0] : undefined;
+  return option ? translate(locale, `settings.staff.access.${option}`) : role.replace(/_/g, ' ').toLowerCase();
 }

@@ -8,13 +8,15 @@ import {
   useMutation,
   useResource,
 } from '../../../ui';
+import { useT } from '../../../i18n';
 
-import { CATEGORY_LABEL, CommRow, PracticeSettings } from './practice-ops-shared';
+import { CommRow, PracticeSettings, isCategory } from './practice-ops-shared';
 
 export function CommunicationsPanel({ practiceId }: { practiceId: string }) {
   const { data, error, loading, reload } = useResource<CommRow[]>('/settings/communications', { practiceId });
   const practice = useResource<PracticeSettings>('/settings/practice', { practiceId });
   const mutate = useMutation();
+  const { t, tm, rich } = useT();
 
   if (loading && !data) return <Loading />;
   if (error && !data) return <Failed message={error} />;
@@ -42,25 +44,26 @@ export function CommunicationsPanel({ practiceId }: { practiceId: string }) {
   let previousCategory = '';
 
   return (
-    <Panel title="Communications" description="Which events reach patients, and over which channel.">
+    <Panel title={t('settings.nav.communications')} description={t('settings.comms.description')}>
       <div className={s.identity}>
-        <h3 className={s.subtitle}>Sender identity</h3>
+        <h3 className={s.subtitle}>{t('settings.comms.senderIdentity')}</h3>
         <p className={s.hint}>
-          Messages are sent from{' '}
-          <strong>{practice.data?.contactNumber ?? 'the practice number'}</strong> (SMS) and{' '}
-          <strong>{practice.data?.email ?? 'the practice email'}</strong> (email). Change these in Practice Details.
+          {rich('settings.comms.sentFrom', undefined, {
+            sms: <strong>{practice.data?.contactNumber ?? t('settings.comms.practiceNumber')}</strong>,
+            email: <strong>{practice.data?.email ?? t('settings.comms.practiceEmail')}</strong>,
+          })}
         </p>
       </div>
 
       <Row cols={1}>
-        <Field label="SMS language" hint="Applies to every outgoing message template.">
+        <Field label={t('settings.comms.smsLanguage')} hint={t('settings.comms.smsLanguageHint')}>
           <select
             className={s.input}
             value={practice.data?.smsLanguage ?? 'en'}
             onChange={(e) => void setLanguage(e.target.value)}
           >
-            <option value="en">English</option>
-            <option value="bn">বাংলা (Bangla)</option>
+            <option value="en">{t('settings.comms.english')}</option>
+            <option value="bn">{t('settings.comms.bangla')}</option>
           </select>
         </Field>
       </Row>
@@ -70,10 +73,10 @@ export function CommunicationsPanel({ practiceId }: { practiceId: string }) {
       <table className={s.table}>
         <thead>
           <tr>
-            <th>Category</th>
-            <th>Type</th>
-            <th>SMS</th>
-            <th>Email</th>
+            <th>{t('settings.comms.category')}</th>
+            <th>{t('settings.type')}</th>
+            <th>{t('settings.sms')}</th>
+            <th>{t('settings.email')}</th>
           </tr>
         </thead>
         <tbody>
@@ -85,17 +88,19 @@ export function CommunicationsPanel({ practiceId }: { practiceId: string }) {
             return (
               <tr key={`${row.category}-${row.type}`}>
                 <td className={showCategory ? undefined : s.mutedCell}>
-                  {showCategory ? (CATEGORY_LABEL[row.category] ?? row.category) : ''}
+                  {showCategory ? (isCategory(row.category) ? t(`settings.comms.cat.${row.category}`) : row.category) : ''}
                 </td>
                 <td>
-                  {row.label}
-                  {row.offsetDays !== null && <span className={s.staffMeta}>sent {row.offsetDays} days after</span>}
+                  {tm(row.label)}
+                  {row.offsetDays !== null && (
+                    <span className={s.staffMeta}>{t('settings.comms.sentAfter', { count: row.offsetDays })}</span>
+                  )}
                 </td>
                 <td>
                   <input
                     type="checkbox"
                     checked={row.smsEnabled}
-                    aria-label={`${row.label} over SMS`}
+                    aria-label={t('settings.comms.overSms', { label: tm(row.label) })}
                     onChange={(e) => void toggle(row, 'sms', e.target.checked)}
                   />
                 </td>
@@ -103,7 +108,7 @@ export function CommunicationsPanel({ practiceId }: { practiceId: string }) {
                   <input
                     type="checkbox"
                     checked={row.emailEnabled}
-                    aria-label={`${row.label} over email`}
+                    aria-label={t('settings.comms.overEmail', { label: tm(row.label) })}
                     onChange={(e) => void toggle(row, 'email', e.target.checked)}
                   />
                 </td>

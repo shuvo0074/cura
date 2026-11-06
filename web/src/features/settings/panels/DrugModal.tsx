@@ -6,6 +6,7 @@ import {
   uiStyles as s,
   useMutation,
 } from '../../../ui';
+import { useT } from '../../../i18n';
 
 import { DRUG_FORMS, DRUG_UNITS, Drug } from './catalog-shared';
 
@@ -22,6 +23,7 @@ export function DrugModal({
   onSaved: () => void;
   onDone: () => void;
 }) {
+  const { t, tm } = useT();
   const save = useMutation();
   const blank = { name: '', form: '', strength: '', unit: '', instruction: '' };
   const [form, setForm] = useState(
@@ -57,23 +59,23 @@ export function DrugModal({
 
   return (
     <Modal
-      title={existing ? 'Edit drug' : 'Add Drug'}
+      title={existing ? t('settings.drugs.edit') : t('settings.drugs.add')}
       onClose={onClose}
       wide
       footer={
         <>
           {save.error && (
             <span className={s.error} role="alert">
-              {save.error}
+              {tm(save.error)}
             </span>
           )}
           {added > 0 && (
             <span className={s.saved} role="status">
-              {added} saved
+              {t('settings.drugs.savedCount', { count: added })}
             </span>
           )}
           <button type="button" className={s.secondary} onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </button>
           {!existing && (
             // Spec: "Add More clears the fields while keeping the modal open,
@@ -91,7 +93,7 @@ export function DrugModal({
                 });
               }}
             >
-              Save &amp; Add More
+              {t('settings.drugs.saveAddMore')}
             </button>
           )}
           <button
@@ -100,28 +102,28 @@ export function DrugModal({
             disabled={save.busy || form.name.trim() === ''}
             onClick={() => void persist().then((ok) => ok && onDone())}
           >
-            {save.busy ? 'Saving…' : 'Save'}
+            {save.busy ? t('common.saving') : t('common.save')}
           </button>
         </>
       }
     >
       <Row cols={2}>
-        <Field label="Name" required hint="Brand or generic — e.g. Napa or Paracetamol.">
+        <Field label={t('settings.name')} required hint={t('settings.drugs.nameHint')}>
           <input className={s.input} autoFocus value={form.name} onChange={(e) => set('name', e.target.value)} />
         </Field>
-        <Field label="Type" required>
+        <Field label={t('settings.type')} required>
           <select className={s.input} value={form.form} onChange={(e) => set('form', e.target.value)}>
-            <option value="">Select…</option>
+            <option value="">{t('settings.select')}</option>
             {DRUG_FORMS.map((x) => (
               <option key={x} value={x}>
-                {x.charAt(0) + x.slice(1).toLowerCase()}
+                {t(`settings.drugs.form.${x}`)}
               </option>
             ))}
           </select>
         </Field>
       </Row>
       <Row cols={2}>
-        <Field label="Strength">
+        <Field label={t('settings.drugs.strength')}>
           <input
             className={s.input}
             value={form.strength}
@@ -129,7 +131,7 @@ export function DrugModal({
             placeholder="500"
           />
         </Field>
-        <Field label="Unit">
+        <Field label={t('settings.drugs.unit')}>
           <select className={s.input} value={form.unit} onChange={(e) => set('unit', e.target.value)}>
             <option value="">—</option>
             {DRUG_UNITS.map((x) => (
@@ -140,7 +142,7 @@ export function DrugModal({
           </select>
         </Field>
       </Row>
-      <Field label="Instruction" hint='Default intake, e.g. "1+0+1 after meal".'>
+      <Field label={t('settings.drugs.instruction')} hint={t('settings.drugs.instructionHint')}>
         <input className={s.input} value={form.instruction} onChange={(e) => set('instruction', e.target.value)} />
       </Field>
     </Modal>

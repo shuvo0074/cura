@@ -11,6 +11,7 @@ import {
   useMutation,
   useResource,
 } from '../../../ui';
+import { useT } from '../../../i18n';
 
 import { AccountProfile, PracticeSettings } from './practice-ops-shared';
 
@@ -19,7 +20,9 @@ export function SecurityPanel({ practiceId }: { practiceId: string }) {
   const account = useResource<AccountProfile>('/account/profile', {});
   const mutate = useMutation();
   const [password, setPassword] = useState({ current: '', next: '', confirm: '' });
-  const [passwordNote, setPasswordNote] = useState<string | null>(null);
+  const { t } = useT();
+  // A key, not a sentence, so the note follows a language switch.
+  const [passwordNote, setPasswordNote] = useState<'mismatch' | 'changed' | null>(null);
 
   if (practice.loading && !practice.data) return <Loading />;
   if (practice.error && !practice.data) return <Failed message={practice.error} />;
@@ -38,7 +41,7 @@ export function SecurityPanel({ practiceId }: { practiceId: string }) {
   const changePassword = async () => {
     setPasswordNote(null);
     if (password.next !== password.confirm) {
-      setPasswordNote('The two new passwords do not match.');
+      setPasswordNote('mismatch');
       return;
     }
     const ok = await mutate.run('/account/password', {
@@ -47,43 +50,43 @@ export function SecurityPanel({ practiceId }: { practiceId: string }) {
     });
     if (ok) {
       setPassword({ current: '', next: '', confirm: '' });
-      setPasswordNote('Password changed. Every other signed-in session has been ended.');
+      setPasswordNote('changed');
     }
   };
 
   const canEnable2fa = (account.data?.mobileVerified ?? false) || (account.data?.emailVerified ?? false);
 
   return (
-    <Panel title="Data Security" description="Account protection and record visibility.">
-      <h3 className={s.subtitle}>Two-factor authentication</h3>
+    <Panel title={t('settings.nav.security')} description={t('settings.security.description')}>
+      <h3 className={s.subtitle}>{t('settings.security.twoFactor')}</h3>
       <Check
-        label="Require a one-time code when signing in from a new device"
+        label={t('settings.security.twoFactorLabel')}
         description={
           canEnable2fa
-            ? 'A 6-digit code is sent to your verified mobile number or email address.'
-            : 'Verify your mobile number or email address first — otherwise this would lock you out.'
+            ? t('settings.security.twoFactorOn')
+            : t('settings.security.twoFactorOff')
         }
         checked={account.data?.twoFactorEnabled ?? false}
         disabled={!canEnable2fa}
         onChange={(v) => void setTwoFactor(v)}
       />
 
-      <h3 className={s.subtitle}>Record visibility</h3>
+      <h3 className={s.subtitle}>{t('settings.security.recordVisibility')}</h3>
       <Check
-        label="Hide cancelled invoices"
-        description="Voided invoices stay in the audit trail but drop out of listings and reports."
+        label={t('settings.security.hideInvoices')}
+        description={t('settings.security.hideInvoicesHint')}
         checked={practice.data.hideCancelledInvoices}
         onChange={(v) => void setFlag('hideCancelledInvoices', v)}
       />
       <Check
-        label="Hide cancelled payments"
+        label={t('settings.security.hidePayments')}
         checked={practice.data.hideCancelledPayments}
         onChange={(v) => void setFlag('hideCancelledPayments', v)}
       />
 
-      <h3 className={s.subtitle}>Change password</h3>
+      <h3 className={s.subtitle}>{t('settings.security.changePassword')}</h3>
       <Row>
-        <Field label="Current password">
+        <Field label={t('settings.security.currentPassword')}>
           <input
             className={s.input}
             type="password"
@@ -92,7 +95,7 @@ export function SecurityPanel({ practiceId }: { practiceId: string }) {
             onChange={(e) => setPassword((p) => ({ ...p, current: e.target.value }))}
           />
         </Field>
-        <Field label="New password" hint="At least 10 characters with a letter, a digit and a symbol.">
+        <Field label={t('settings.security.newPassword')} hint={t('settings.security.newPasswordHint')}>
           <input
             className={s.input}
             type="password"
@@ -101,7 +104,7 @@ export function SecurityPanel({ practiceId }: { practiceId: string }) {
             onChange={(e) => setPassword((p) => ({ ...p, next: e.target.value }))}
           />
         </Field>
-        <Field label="Confirm new password">
+        <Field label={t('settings.security.confirmPassword')}>
           <input
             className={s.input}
             type="password"
@@ -116,9 +119,9 @@ export function SecurityPanel({ practiceId }: { practiceId: string }) {
         onSave={() => void changePassword()}
         busy={mutate.busy}
         saved={false}
-        error={mutate.error ?? passwordNote}
+        error={mutate.error ?? (passwordNote && t(`settings.security.${passwordNote}`))}
         dirty={password.current !== '' && password.next !== ''}
-        label="Change password"
+        label={t('settings.security.changePassword')}
       />
     </Panel>
   );

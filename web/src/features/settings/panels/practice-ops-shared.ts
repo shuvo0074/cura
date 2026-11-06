@@ -1,5 +1,7 @@
 /** Types and helpers shared by the practice-operations panels. */
 
+import { formatTime, translate, type Locale } from '../../../i18n';
+
 /**
  * Calendar defaults, communications, data security and premium.
  *
@@ -7,7 +9,9 @@
  * matrix), so they share a file rather than each carrying its own module.
  */
 
-export const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const DAY_INDEXES = [0, 1, 2, 3, 4, 5, 6] as const;
+const dayShort = (locale: Locale, day: number) =>
+  translate(locale, `settings.dayShort.${DAY_INDEXES[day] ?? 0}`);
 
 export interface PracticeSettings {
   name: string;
@@ -24,12 +28,12 @@ export interface PracticeSettings {
 // -- Calendar ---------------------------------------------------------------
 
 /** "Mon to Sun: 9:00am – 7:00pm", collapsing runs of identical days. */
-export function summarise(sessions: PracticeSettings['sessions']): string {
-  if (sessions.length === 0) return 'Not configured';
+export function summarise(sessions: PracticeSettings['sessions'], locale: Locale = 'en'): string {
+  if (sessions.length === 0) return translate(locale, 'settings.calendar.notConfigured');
 
   const byDay = new Map<number, string>();
   for (const session of sessions) {
-    const text = `${session.startTime}–${session.endTime}`;
+    const text = `${hhmm(session.startTime, locale)}–${hhmm(session.endTime, locale)}`;
     byDay.set(session.dayOfWeek, byDay.has(session.dayOfWeek) ? `${byDay.get(session.dayOfWeek)}, ${text}` : text);
   }
 
@@ -43,10 +47,23 @@ export function summarise(sessions: PracticeSettings['sessions']): string {
 
   return groups
     .map((g) => {
-      const span = g.days.length === 1 ? DAYS[g.days[0]!] : `${DAYS[g.days[0]!]} to ${DAYS[g.days[g.days.length - 1]!]}`;
+      const span =
+        g.days.length === 1
+          ? dayShort(locale, g.days[0]!)
+          : translate(locale, 'settings.calendar.dayRange', {
+              from: dayShort(locale, g.days[0]!),
+              to: dayShort(locale, g.days[g.days.length - 1]!),
+            });
       return `${span}: ${g.text}`;
     })
     .join('   ');
+}
+
+/** "09:30" as written today in English; in Bangla, a clock time with Bangla digits. */
+function hhmm(value: string, locale: Locale): string {
+  if (locale === 'en') return value;
+  const [h, m] = value.split(':').map(Number);
+  return formatTime(new Date(2000, 0, 1, h ?? 0, m ?? 0), locale);
 }
 
 // -- Communications ---------------------------------------------------------
@@ -60,12 +77,10 @@ export interface CommRow {
   offsetDays: number | null;
 }
 
-export const CATEGORY_LABEL: Record<string, string> = {
-  APPOINTMENT: 'Appointments',
-  FOLLOW_UP: 'Preventive follow-up',
-  PAYMENT: 'Payment',
-  WISHES: 'Wishes',
-};
+/** Notification categories with a `settings.comms.cat.*` label. */
+export const CATEGORIES = ['APPOINTMENT', 'FOLLOW_UP', 'PAYMENT', 'WISHES'] as const;
+export const isCategory = (value: string): value is (typeof CATEGORIES)[number] =>
+  (CATEGORIES as readonly string[]).includes(value);
 
 // -- Data security ----------------------------------------------------------
 

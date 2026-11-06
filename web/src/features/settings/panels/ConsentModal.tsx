@@ -8,6 +8,7 @@ import {
 
 import { ConsentForm } from './catalog-shared';
 import { ModalActions } from '../../../ui';
+import { useT } from '../../../i18n';
 
 export function ConsentModal({
   practiceId,
@@ -20,6 +21,7 @@ export function ConsentModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { t } = useT();
   const save = useMutation();
   const [title, setTitle] = useState(existing?.title ?? '');
   const [body, setBody] = useState(existing?.bodyHtml ?? '');
@@ -40,18 +42,18 @@ export function ConsentModal({
 
   return (
     <Modal
-      title={existing ? 'Edit consent form' : 'Add consent form'}
+      title={existing ? t('settings.consent.edit') : t('settings.consent.add')}
       onClose={onClose}
       wide
       footer={<ModalActions error={save.error} busy={save.busy} onCancel={onClose} onSave={() => void submit()} />}
     >
-      <Field label="Title" required>
+      <Field label={t('settings.titleField')} required>
         <input className={s.input} value={title} onChange={(e) => setTitle(e.target.value)} />
       </Field>
       <Field
-        label="Body"
+        label={t('settings.consent.body')}
         required
-        hint="Placeholders [Patient Name], [Clinic Name] and [Date] are substituted when the form is issued."
+        hint={t('settings.consent.bodyHint')}
       >
         <textarea className={s.textarea} rows={12} value={body} onChange={(e) => setBody(e.target.value)} />
       </Field>

@@ -11,14 +11,20 @@ import {
   useMutation,
   useResource,
 } from '../../../ui';
+import { useT } from '../../../i18n';
 
-import { Printout, SECTIONS } from './output-shared';
+import { Printout, SECTIONS, isSection } from './output-shared';
 
 export function PrintoutsPanel({ practiceId }: { practiceId: string }) {
   const [documentType, setDocumentType] = useState<'EMR' | 'BILLING'>('EMR');
   const { data, error, loading, reload } = useResource<Printout>('/settings/printouts', { practiceId, documentType });
+  const { t, locale } = useT();
   const save = useMutation();
   const [draft, setDraft] = useState<Partial<Printout>>({});
+
+  const sectionLabel = (key: string) => (isSection(key) ? t(`settings.printouts.section.${key}`) : key);
+  // English keeps the section code ("Move vitals up") as it always read.
+  const moveName = (key: string) => (locale === 'en' ? key : sectionLabel(key));
 
   if (loading && !data) return <Loading />;
   if (error && !data) return <Failed message={error} />;
@@ -39,67 +45,67 @@ export function PrintoutsPanel({ practiceId }: { practiceId: string }) {
   };
 
   const move = (index: number, direction: -1 | 1) => {
-    const order = [...(value.sectionOrder.length > 0 ? value.sectionOrder : SECTIONS.map((x) => x.key))];
+    const order = [...(value.sectionOrder.length > 0 ? value.sectionOrder : [...SECTIONS])];
     const target = index + direction;
     if (target < 0 || target >= order.length) return;
     [order[index], order[target]] = [order[target]!, order[index]!];
     set('sectionOrder', order);
   };
 
-  const order = value.sectionOrder.length > 0 ? value.sectionOrder : SECTIONS.map((x) => x.key);
+  const order = value.sectionOrder.length > 0 ? value.sectionOrder : [...SECTIONS];
 
   return (
-    <Panel title="Printouts" description="Page setup and layout for generated PDFs.">
-      <div className={s.filters} role="tablist" aria-label="Document type">
-        {(['EMR', 'BILLING'] as const).map((t) => (
+    <Panel title={t('settings.nav.printouts')} description={t('settings.printouts.description')}>
+      <div className={s.filters} role="tablist" aria-label={t('settings.printouts.documentType')}>
+        {(['EMR', 'BILLING'] as const).map((type) => (
           <button
-            key={t}
+            key={type}
             type="button"
             role="tab"
-            aria-selected={documentType === t}
-            data-active={documentType === t || undefined}
+            aria-selected={documentType === type}
+            data-active={documentType === type || undefined}
             onClick={() => {
-              setDocumentType(t);
+              setDocumentType(type);
               setDraft({});
             }}
           >
-            {t === 'EMR' ? 'Prescriptions' : 'Invoices'}
+            {type === 'EMR' ? t('settings.printouts.prescriptions') : t('settings.printouts.invoices')}
           </button>
         ))}
       </div>
 
-      <h3 className={s.subtitle}>Page setup</h3>
+      <h3 className={s.subtitle}>{t('settings.printouts.pageSetup')}</h3>
       <Row>
-        <Field label="Printer type" hint="Dot matrix drops graphics and maximises contrast.">
+        <Field label={t('settings.printouts.printerType')} hint={t('settings.printouts.printerHint')}>
           <select className={s.input} value={value.printerType} onChange={(e) => set('printerType', e.target.value)}>
-            <option value="COLOUR">Colour (inkjet / laser)</option>
-            <option value="MONOCHROME">Black &amp; white</option>
-            <option value="DOT_MATRIX">Dot matrix</option>
+            <option value="COLOUR">{t('settings.printouts.printer.COLOUR')}</option>
+            <option value="MONOCHROME">{t('settings.printouts.printer.MONOCHROME')}</option>
+            <option value="DOT_MATRIX">{t('settings.printouts.printer.DOT_MATRIX')}</option>
           </select>
         </Field>
-        <Field label="Paper size">
+        <Field label={t('settings.printouts.paperSize')}>
           <select className={s.input} value={value.paperSize} onChange={(e) => set('paperSize', e.target.value)}>
             <option value="A4">A4</option>
             <option value="A5">A5</option>
-            <option value="LETTER">Letter</option>
+            <option value="LETTER">{t('settings.printouts.letter')}</option>
           </select>
         </Field>
-        <Field label="Orientation">
+        <Field label={t('settings.printouts.orientation')}>
           <select className={s.input} value={value.orientation} onChange={(e) => set('orientation', e.target.value)}>
-            <option value="PORTRAIT">Portrait</option>
-            <option value="LANDSCAPE">Landscape</option>
+            <option value="PORTRAIT">{t('settings.printouts.portrait')}</option>
+            <option value="LANDSCAPE">{t('settings.printouts.landscape')}</option>
           </select>
         </Field>
       </Row>
 
-      <h3 className={s.subtitle}>Margins (mm)</h3>
+      <h3 className={s.subtitle}>{t('settings.printouts.margins')}</h3>
       <Row>
         {(
           [
-            ['marginTopMm', 'Top'],
-            ['marginBottomMm', 'Bottom'],
-            ['marginLeftMm', 'Left'],
-            ['marginRightMm', 'Right'],
+            ['marginTopMm', t('settings.printouts.top')],
+            ['marginBottomMm', t('settings.printouts.bottom')],
+            ['marginLeftMm', t('settings.printouts.left')],
+            ['marginRightMm', t('settings.printouts.right')],
           ] as const
         ).map(([key, label]) => (
           <Field key={key} label={label}>
@@ -114,7 +120,7 @@ export function PrintoutsPanel({ practiceId }: { practiceId: string }) {
       </Row>
 
       <Row cols={1}>
-        <Field label={`Font scale — ${value.fontScale}%`}>
+        <Field label={t('settings.printouts.fontScale', { n: value.fontScale })}>
           <input
             type="range"
             min={50}
@@ -126,16 +132,16 @@ export function PrintoutsPanel({ practiceId }: { practiceId: string }) {
         </Field>
       </Row>
 
-      <h3 className={s.subtitle}>Header &amp; footer</h3>
+      <h3 className={s.subtitle}>{t('settings.printouts.headerFooter')}</h3>
       <Check
-        label="Print the system header"
-        description="Turn this off when printing onto pre-printed pads that already carry the clinic identity."
+        label={t('settings.printouts.printHeader')}
+        description={t('settings.printouts.printHeaderHint')}
         checked={value.showHeader}
         onChange={(v) => set('showHeader', v)}
       />
-      <Check label="Print the system footer" checked={value.showFooter} onChange={(v) => set('showFooter', v)} />
+      <Check label={t('settings.printouts.printFooter')} checked={value.showFooter} onChange={(v) => set('showFooter', v)} />
       <Row cols={2}>
-        <Field label="Header text">
+        <Field label={t('settings.printouts.headerText')}>
           <textarea
             className={s.textarea}
             rows={3}
@@ -143,7 +149,7 @@ export function PrintoutsPanel({ practiceId }: { practiceId: string }) {
             onChange={(e) => set('headerHtml', e.target.value || null)}
           />
         </Field>
-        <Field label="Footer text">
+        <Field label={t('settings.printouts.footerText')}>
           <textarea
             className={s.textarea}
             rows={3}
@@ -153,8 +159,8 @@ export function PrintoutsPanel({ practiceId }: { practiceId: string }) {
         </Field>
       </Row>
       <Field
-        label="Scanned pad image key"
-        hint="Uploaded pad used as a background. Pair it with the header and footer switched off."
+        label={t('settings.printouts.padKey')}
+        hint={t('settings.printouts.padHint')}
       >
         <input
           className={s.input}
@@ -163,18 +169,18 @@ export function PrintoutsPanel({ practiceId }: { practiceId: string }) {
         />
       </Field>
 
-      <h3 className={s.subtitle}>Section order</h3>
-      <p className={s.hint}>Sections print top to bottom in this order.</p>
+      <h3 className={s.subtitle}>{t('settings.printouts.sectionOrder')}</h3>
+      <p className={s.hint}>{t('settings.printouts.sectionHint')}</p>
       <ol className={s.orderList}>
         {order.map((key, index) => (
           <li key={key}>
-            <span>{SECTIONS.find((x) => x.key === key)?.label ?? key}</span>
+            <span>{sectionLabel(key)}</span>
             <button
               type="button"
               className={s.iconButton}
               onClick={() => move(index, -1)}
               disabled={index === 0}
-              aria-label={`Move ${key} up`}
+              aria-label={t('settings.printouts.moveUp', { name: moveName(key) })}
             >
               ↑
             </button>
@@ -183,7 +189,7 @@ export function PrintoutsPanel({ practiceId }: { practiceId: string }) {
               className={s.iconButton}
               onClick={() => move(index, 1)}
               disabled={index === order.length - 1}
-              aria-label={`Move ${key} down`}
+              aria-label={t('settings.printouts.moveDown', { name: moveName(key) })}
             >
               ↓
             </button>

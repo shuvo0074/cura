@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { SETTINGS_ITEMS, type SettingsKey } from './settings-nav';
 import styles from './settings.module.css';
+import { useT } from '../../i18n';
 
 import { ActivePanel } from './ActivePanel';
 
@@ -20,15 +21,16 @@ export function SettingsView({
   practiceName?: string;
   initial?: SettingsKey | undefined;
 }) {
+  const { t } = useT();
   const [active, setActive] = useState<SettingsKey>(initial ?? 'practice');
 
   let previousGroup = SETTINGS_ITEMS[0]!.group;
 
   return (
     <div className={styles.shell}>
-      <nav className={styles.subnav} aria-label="Settings sections">
+      <nav className={styles.subnav} aria-label={t('settings.sections')}>
         <header className={styles.subnavHead}>
-          <h1>Settings</h1>
+          <h1>{t('settings.title')}</h1>
           {practiceName && <p>{practiceName}</p>}
         </header>
 
@@ -43,7 +45,7 @@ export function SettingsView({
               data-group-start={startsGroup || undefined}
               onClick={() => setActive(item.key)}
             >
-              {item.label}
+              {t(`settings.nav.${item.key}`)}
             </button>
           );
         })}

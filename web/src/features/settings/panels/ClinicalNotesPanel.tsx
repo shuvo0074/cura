@@ -7,11 +7,13 @@ import {
   useMutation,
   useResource,
 } from '../../../ui';
+import { useT } from '../../../i18n';
 
-import { NOTE_KINDS } from './catalog-shared';
+import { NOTE_KINDS, type NoteKind } from './catalog-shared';
 
 export function ClinicalNotesPanel({ practiceId }: { practiceId: string }) {
-  const [kind, setKind] = useState<string>('COMPLAINT');
+  const { t } = useT();
+  const [kind, setKind] = useState<NoteKind>('COMPLAINT');
   const { data, error, loading, reload } = useResource<Array<{ id: string; value: string }>>('/settings/catalog', {
     practiceId,
     kind,
@@ -21,8 +23,6 @@ export function ClinicalNotesPanel({ practiceId }: { practiceId: string }) {
   const [draft, setDraft] = useState('');
   const [editing, setEditing] = useState<{ id: string; value: string } | null>(null);
   const [term, setTerm] = useState('');
-
-  const active = NOTE_KINDS.find((k) => k.key === kind)!;
 
   const rows = useMemo(() => {
     const needle = term.trim().toLowerCase();
@@ -61,29 +61,29 @@ export function ClinicalNotesPanel({ practiceId }: { practiceId: string }) {
 
   return (
     <Panel
-      title="Clinical Notes Catalog"
-      description="Auto-suggest source for the matching field on a prescription."
+      title={t('settings.nav.notes')}
+      description={t('settings.notes.description')}
       action={
         <button type="button" className={s.primary} onClick={() => setAdding(true)}>
-          Add
+          {t('common.add')}
         </button>
       }
     >
-      <div className={s.filters} role="tablist" aria-label="Catalog category">
+      <div className={s.filters} role="tablist" aria-label={t('settings.notes.category')}>
         {NOTE_KINDS.map((k) => (
           <button
-            key={k.key}
+            key={k}
             type="button"
             role="tab"
-            aria-selected={kind === k.key}
-            data-active={kind === k.key || undefined}
+            aria-selected={kind === k}
+            data-active={kind === k || undefined}
             onClick={() => {
-              setKind(k.key);
+              setKind(k);
               setAdding(false);
               setEditing(null);
             }}
           >
-            {k.label}
+            {t(`settings.notes.kind.${k}`)}
           </button>
         ))}
       </div>
@@ -92,8 +92,8 @@ export function ClinicalNotesPanel({ practiceId }: { practiceId: string }) {
         className={s.input}
         value={term}
         onChange={(e) => setTerm(e.target.value)}
-        placeholder={`Search ${active.label.toLowerCase()}…`}
-        aria-label={`Search ${active.label}`}
+        placeholder={t(`settings.notes.search.${kind}`)}
+        aria-label={t(`settings.notes.searchLabel.${kind}`)}
       />
 
       {mutate.error && <Failed message={mutate.error} />}
@@ -107,13 +107,13 @@ export function ClinicalNotesPanel({ practiceId }: { practiceId: string }) {
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && void add()}
-            placeholder={`New ${active.label.replace(/e?s$/, '').toLowerCase()}`}
+            placeholder={t(`settings.notes.new.${kind}`)}
           />
           <button type="button" className={s.linkButton} onClick={() => setAdding(false)}>
-            Cancel
+            {t('common.cancel')}
           </button>
           <button type="button" className={s.primary} onClick={() => void add()} disabled={mutate.busy}>
-            Save
+            {t('common.save')}
           </button>
         </div>
       )}
@@ -123,7 +123,7 @@ export function ClinicalNotesPanel({ practiceId }: { practiceId: string }) {
       ) : error && !data ? (
         <Failed message={error} />
       ) : rows.length === 0 ? (
-        <p className={s.muted}>No {active.label.toLowerCase()} added yet.</p>
+        <p className={s.muted}>{t(`settings.notes.empty.${kind}`)}</p>
       ) : (
         <ul className={s.list}>
           {rows.map((row) => (
@@ -138,20 +138,20 @@ export function ClinicalNotesPanel({ practiceId }: { practiceId: string }) {
                     onKeyDown={(e) => e.key === 'Enter' && void rename()}
                   />
                   <button type="button" className={s.linkButton} onClick={() => setEditing(null)}>
-                    Cancel
+                    {t('common.cancel')}
                   </button>
                   <button type="button" className={s.primary} onClick={() => void rename()}>
-                    Save
+                    {t('common.save')}
                   </button>
                 </>
               ) : (
                 <>
                   <span>{row.value}</span>
                   <button type="button" className={s.linkButton} onClick={() => setEditing({ ...row })}>
-                    Edit
+                    {t('common.edit')}
                   </button>
                   <button type="button" className={s.linkDanger} onClick={() => void remove(row.id)}>
-                    Delete
+                    {t('common.delete')}
                   </button>
                 </>
               )}

@@ -2,22 +2,37 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useServices } from '../../app/services';
 import styles from './reports.module.css';
 import { Metric } from '../../ui';
+import { useT } from '../../i18n';
 
 type Kind = 'income' | 'appointments' | 'procedures' | 'demographics';
 
-const KINDS: ReadonlyArray<{ key: Kind; label: string }> = [
-  { key: 'income', label: 'Income' },
-  { key: 'appointments', label: 'Appointment volume' },
-  { key: 'procedures', label: 'Top procedures' },
-  { key: 'demographics', label: 'Demographics' },
-];
+const KINDS: readonly Kind[] = ['income', 'appointments', 'procedures', 'demographics'];
+
+const RANGES = [7, 30, 90, 365] as const;
 
 interface ReportResponse {
   rows: Array<Record<string, string | number>>;
   totals?: { invoicedMinor: number; collectedMinor: number; invoiceCount: number };
 }
 
-const money = (minor: number) => (minor / 100).toLocaleString(undefined, { minimumFractionDigits: 2 });
+/** Columns Cura API returns, each with a `reports.col.*` heading. */
+const COLUMNS = [
+  'day',
+  'invoicedMinor',
+  'collectedMinor',
+  'invoiceCount',
+  'total',
+  'done',
+  'cancelled',
+  'name',
+  'count',
+  'revenueMinor',
+  'bucket',
+] as const;
+const isKnownColumn = (c: string): c is (typeof COLUMNS)[number] => (COLUMNS as readonly string[]).includes(c);
+
+/** "2026-11-06" as a local calendar date, so no time zone can shift it by a day. */
+const isoDay = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 /**
  * Statistics (spec: Reports / Statistics module).
@@ -28,6 +43,25 @@ const money = (minor: number) => (minor / 100).toLocaleString(undefined, { minim
  */
 export function ReportsView({ practiceId }: { practiceId: string }) {
   const { http } = useServices();
+  const { t, tm, fmt } = useT();
+  const money = (minor: number) => fmt.number(minor / 100, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const heading = (c: string) =>
+    isKnownColumn(c)
+      ? t(`reports.col.${c}`)
+      : c.replace(/Minor$/, ' (BDT)').replace(/([a-z])([A-Z])/g, '$1 $2');
+  const cell = (c: string, value: string | number | undefined): string => {
+    if (typeof value === 'number') return c.endsWith('Minor') ? money(value) : fmt.number(value);
+    if (value === undefined) return '';
+    const day = isoDay.exec(value);
+    if (day) return fmt.date(new Date(Number(day[1]), Number(day[2]) - 1, Number(day[3])));
+    if (c === 'bucket') {
+      // Age groups such as "18-34" and "55+", or "Unknown".
+      return value === 'Unknown'
+        ? t('reports.bucket.Unknown')
+        : value.replace(/\d+/g, (n) => fmt.number(Number(n), { useGrouping: false }));
+    }
+    return value;
+  };
   const [kind, setKind] = useState<Kind>('income');
   const [days, setDays] = useState(30);
   const [data, setData] = useState<ReportResponse | null>(null);
@@ -83,68 +117,69 @@ export function ReportsView({ practiceId }: { practiceId: string }) {
   return (
     <div className={styles.shell}>
       <header className={styles.toolbar}>
-        <div className={styles.tabs} role="tablist" aria-label="Report type">
+        <div className={styles.tabs} role="tablist" aria-label={t('reports.reportType')}>
           {KINDS.map((k) => (
             <button
-              key={k.key}
+              key={k}
               type="button"
               role="tab"
-              aria-selected={kind === k.key}
-              data-active={kind === k.key || undefined}
-              onClick={() => setKind(k.key)}
+              aria-selected={kind === k}
+              data-active={kind === k || undefined}
+              onClick={() => setKind(k)}
             >
-              {k.label}
+              {t(`reports.kind.${k}`)}
             </button>
           ))}
         </div>
         <span className={styles.spacer} />
         <label className={styles.rangeLabel}>
-          Range
+          {t('reports.range')}
           <select
             className={styles.select}
             value={days}
             onChange={(e) => setDays(Number(e.target.value))}
           >
-            <option value={7}>Last 7 days</option>
-            <option value={30}>Last 30 days</option>
-            <option value={90}>Last 90 days</option>
-            <option value={365}>Last year</option>
+            {RANGES.map((n) => (
+              <option key={n} value={n}>
+                {t(`reports.range.${n}`)}
+              </option>
+            ))}
           </select>
         </label>
       </header>
 
       {data?.totals && (
         <div className={styles.summary}>
-          <Metric label="Invoiced" value={`BDT ${money(data.totals.invoicedMinor)}`} />
-          <Metric label="Collected" value={`BDT ${money(data.totals.collectedMinor)}`} />
+          <Metric label={t('reports.invoiced')} value={t('reports.bdt', { amount: money(data.totals.invoicedMinor) })} />
+          <Metric label={t('reports.collected')} value={t('reports.bdt', { amount: money(data.totals.collectedMinor) })} />
           <Metric
-            label="Outstanding"
-            value={`BDT ${money(data.totals.invoicedMinor - data.totals.collectedMinor)}`}
+            label={t('reports.outstanding')}
+            value={t('reports.bdt', { amount: money(data.totals.invoicedMinor - data.totals.collectedMinor) })}
           />
-          <Metric label="Invoices" value={String(data.totals.invoiceCount)} />
+          <Metric label={t('reports.invoices')} value={fmt.number(data.totals.invoiceCount)} />
         </div>
       )}
 
       {error && (
         <p className={styles.error} role="alert">
-          {error}
+          {tm(error)}
         </p>
       )}
 
       {loading ? (
-        <p className={styles.muted}>Loading…</p>
+        <p className={styles.muted}>{t('common.loading')}</p>
       ) : !data || data.rows.length === 0 ? (
-        <p className={styles.muted}>No data for this range.</p>
+        <p className={styles.muted}>{t('reports.noData')}</p>
       ) : (
         <table className={styles.table}>
           <thead>
             <tr>
               {columns.map((c) => (
                 <th key={c} className={typeof data.rows[0]?.[c] === 'number' ? styles.numeric : undefined}>
-                  {c.replace(/Minor$/, ' (BDT)').replace(/([a-z])([A-Z])/g, '$1 $2')}
+                  {heading(c)}
                 </th>
               ))}
-              <th aria-label="Relative size" />
+              <th aria-label={t('reports.relativeSize')} />
             </tr>
           </thead>
           <tbody>
@@ -154,10 +189,9 @@ export function ReportsView({ practiceId }: { practiceId: string }) {
                 <tr key={i}>
                   {columns.map((c) => {
                     const value = row[c];
-                    const isMoney = c.endsWith('Minor');
                     return (
                       <td key={c} className={typeof value === 'number' ? styles.numeric : undefined}>
-                        {typeof value === 'number' && isMoney ? money(value) : String(value)}
+                        {cell(c, value)}
                       </td>
                     );
                   })}

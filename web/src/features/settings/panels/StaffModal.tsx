@@ -6,6 +6,7 @@ import {
   uiStyles as s,
   useMutation,
 } from '../../../ui';
+import { useT } from '../../../i18n';
 
 import { ACCESS_OPTIONS, Kind, NOTIFICATION_ROWS, Staff } from './staff-shared';
 
@@ -22,13 +23,14 @@ export function StaffModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { t, tm } = useT();
   const save = useMutation();
   const [form, setForm] = useState({
     fullName: existing?.fullName ?? '',
     bmdcNumber: existing?.bmdcNumber ?? '',
     mobile: existing?.mobile ?? '',
     email: existing?.email ?? '',
-    role: existing?.role ?? ACCESS_OPTIONS[kind][0]!.role,
+    role: existing?.role ?? (ACCESS_OPTIONS[kind][0] as string),
     specialty: existing?.specialty ?? '',
     temporaryPassword: '',
     notifyScheduleSms: existing?.notifyScheduleSms ?? true,
@@ -73,33 +75,39 @@ export function StaffModal({
 
   return (
     <Modal
-      title={existing ? `Edit ${form.fullName || 'member'}` : kind === 'doctor' ? 'Add Doctor' : 'Add Staff'}
+      title={
+        existing
+          ? t('settings.staff.editMember', { name: form.fullName || t('settings.staff.member') })
+          : kind === 'doctor'
+            ? t('settings.staff.addDoctor')
+            : t('settings.staff.addStaff')
+      }
       onClose={onClose}
       wide
       footer={
         <>
           {save.error && (
             <span className={s.error} role="alert">
-              {save.error}
+              {tm(save.error)}
             </span>
           )}
           <button type="button" className={s.secondary} onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </button>
           <button type="button" className={s.primary} onClick={() => void submit()} disabled={save.busy}>
-            {save.busy ? 'Saving…' : 'Save'}
+            {save.busy ? t('common.saving') : t('common.save')}
           </button>
         </>
       }
     >
       <Row cols={2}>
-        <Field label="Name" required>
+        <Field label={t('settings.name')} required>
           <input className={s.input} value={form.fullName} onChange={(e) => set('fullName', e.target.value)} />
         </Field>
         {kind === 'doctor' && (
           <Field
-            label="BMDC Registration Number"
-            hint="Needed if you create a login now. Otherwise the doctor gives it when they sign up."
+            label={t('settings.staff.bmdcLabel')}
+            hint={t('settings.staff.bmdcHint')}
           >
             <input className={s.input} value={form.bmdcNumber} onChange={(e) => set('bmdcNumber', e.target.value)} />
           </Field>
@@ -107,16 +115,16 @@ export function StaffModal({
       </Row>
 
       {kind === 'doctor' && !existing && (
-        <Field label="Specialty" required hint="Patients see this doctor on Cura Website straight away.">
+        <Field label={t('settings.staff.specialty')} required hint={t('settings.staff.specialtyHint')}>
           <input className={s.input} value={form.specialty} onChange={(e) => set('specialty', e.target.value)} />
         </Field>
       )}
 
       <Row cols={2}>
         <Field
-          label="Mobile Number"
+          label={t('settings.staff.mobile')}
           required
-          {...(kind === 'doctor' ? { hint: 'The doctor signs up later with this number.' } : {})}
+          {...(kind === 'doctor' ? { hint: t('settings.staff.mobileHint') } : {})}
         >
           <input
             className={s.input}
@@ -125,19 +133,19 @@ export function StaffModal({
             placeholder="01XXXXXXXXX"
           />
         </Field>
-        <Field label="Email ID" required={kind === 'staff'}>
+        <Field label={t('settings.staff.emailId')} required={kind === 'staff'}>
           <input className={s.input} type="email" value={form.email} onChange={(e) => set('email', e.target.value)} />
         </Field>
       </Row>
 
       {(!existing || !existing.hasLogin) && (
         <Field
-          label="Temporary password"
+          label={t('settings.staff.tempPassword')}
           required={kind === 'staff'}
           hint={
             kind === 'doctor'
-              ? 'Optional. Leave empty and the doctor creates their own login with their mobile number.'
-              : 'The member is prompted to change this after their first sign-in.'
+              ? t('settings.staff.tempHintDoctor')
+              : t('settings.staff.tempHintStaff')
           }
         >
           <input
@@ -150,36 +158,36 @@ export function StaffModal({
         </Field>
       )}
 
-      <h4 className={s.subtitle}>Cura access</h4>
+      <h4 className={s.subtitle}>{t('settings.staff.curaAccess')}</h4>
       <div className={s.radioList}>
-        {ACCESS_OPTIONS[kind].map((option) => (
-          <label key={option.role} className={s.radio}>
+        {ACCESS_OPTIONS[kind].map((role) => (
+          <label key={role} className={s.radio}>
             <input
               type="radio"
               name="staff-role"
-              checked={form.role === option.role}
-              onChange={() => set('role', option.role)}
+              checked={form.role === role}
+              onChange={() => set('role', role)}
             />
             <span>
-              <span className={s.checkLabel}>{option.label}</span>
-              <span className={s.checkHint}>{option.detail}</span>
+              <span className={s.checkLabel}>{t(`settings.staff.access.${role}`)}</span>
+              <span className={s.checkHint}>{t(`settings.staff.accessDetail.${role}`)}</span>
             </span>
           </label>
         ))}
       </div>
-      <h4 className={s.subtitle}>Notifications</h4>
+      <h4 className={s.subtitle}>{t('settings.staff.notifications')}</h4>
       <table className={s.table}>
         <thead>
           <tr>
-            <th>Type</th>
-            <th>SMS</th>
-            <th>Email</th>
+            <th>{t('settings.type')}</th>
+            <th>{t('settings.sms')}</th>
+            <th>{t('settings.email')}</th>
           </tr>
         </thead>
         <tbody>
           {NOTIFICATION_ROWS.map((row) => (
-            <tr key={row.label}>
-              <td>{row.label}</td>
+            <tr key={row.key}>
+              <td>{t(`settings.staff.notify.${row.key}`)}</td>
               <td>
                 <input type="checkbox" checked={form[row.sms]} onChange={(e) => set(row.sms, e.target.checked)} />
               </td>

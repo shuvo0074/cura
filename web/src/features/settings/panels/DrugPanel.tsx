@@ -7,11 +7,13 @@ import {
   useMutation,
   useResource,
 } from '../../../ui';
+import { useT } from '../../../i18n';
 
 import { DrugModal } from './DrugModal';
-import { Drug } from './catalog-shared';
+import { Drug, isDrugForm } from './catalog-shared';
 
 export function DrugPanel({ practiceId }: { practiceId: string }) {
+  const { t, locale } = useT();
   const [term, setTerm] = useState('');
   const [query, setQuery] = useState('');
   const { data, error, loading, reload } = useResource<Drug[]>(
@@ -27,6 +29,10 @@ export function DrugPanel({ practiceId }: { practiceId: string }) {
     return () => clearTimeout(timer);
   }, [term]);
 
+  // English keeps the stored code ("TABLET") as it always showed; Bangla gets the word.
+  const formLabel = (form: string) =>
+    locale !== 'en' && isDrugForm(form) ? t(`settings.drugs.form.${form}`) : form;
+
   const remove = async (row: Drug) => {
     await mutate.run(`/settings/drugs/${row.id}`, { method: 'DELETE', query: { practiceId } });
     await reload();
@@ -34,11 +40,11 @@ export function DrugPanel({ practiceId }: { practiceId: string }) {
 
   return (
     <Panel
-      title="Drug Catalog"
-      description="Feeds the prescription auto-suggest."
+      title={t('settings.nav.drugs')}
+      description={t('settings.drugs.description')}
       action={
         <button type="button" className={s.primary} onClick={() => setEditing('new')}>
-          Add
+          {t('common.add')}
         </button>
       }
     >
@@ -46,8 +52,8 @@ export function DrugPanel({ practiceId }: { practiceId: string }) {
         className={s.input}
         value={term}
         onChange={(e) => setTerm(e.target.value)}
-        placeholder="Search drugs…"
-        aria-label="Search drugs"
+        placeholder={t('settings.drugs.search')}
+        aria-label={t('settings.drugs.searchLabel')}
       />
 
       {mutate.error && <Failed message={mutate.error} />}
@@ -57,15 +63,15 @@ export function DrugPanel({ practiceId }: { practiceId: string }) {
       ) : error && !data ? (
         <Failed message={error} />
       ) : (data ?? []).length === 0 ? (
-        <p className={s.muted}>{query ? 'No drugs match that search.' : 'No drugs added yet.'}</p>
+        <p className={s.muted}>{query ? t('settings.drugs.noMatch') : t('settings.drugs.empty')}</p>
       ) : (
         <table className={s.table}>
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Type</th>
-              <th>Strength</th>
-              <th>Instructions</th>
+              <th>{t('settings.name')}</th>
+              <th>{t('settings.type')}</th>
+              <th>{t('settings.drugs.strength')}</th>
+              <th>{t('settings.drugs.instructions')}</th>
               <th />
             </tr>
           </thead>
@@ -73,17 +79,17 @@ export function DrugPanel({ practiceId }: { practiceId: string }) {
             {(data ?? []).map((row) => (
               <tr key={row.id}>
                 <td>{row.name}</td>
-                <td className={row.form ? undefined : s.mutedCell}>{row.form ?? '—'}</td>
+                <td className={row.form ? undefined : s.mutedCell}>{row.form ? formLabel(row.form) : '—'}</td>
                 <td className={row.strength ? undefined : s.mutedCell}>
                   {row.strength ? `${row.strength}${row.unit ?? ''}` : '—'}
                 </td>
                 <td className={row.instruction ? undefined : s.mutedCell}>{row.instruction ?? '—'}</td>
                 <td className={s.actions}>
                   <button type="button" className={s.linkButton} onClick={() => setEditing(row)}>
-                    Edit
+                    {t('common.edit')}
                   </button>
                   <button type="button" className={s.linkDanger} onClick={() => void remove(row)}>
-                    Delete
+                    {t('common.delete')}
                   </button>
                 </td>
               </tr>

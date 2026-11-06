@@ -9,12 +9,14 @@ import {
   useMutation,
   useResource,
 } from '../../../ui';
+import { useT } from '../../../i18n';
 
 export function PremiumPanel({ practiceId }: { practiceId: string }) {
   const { data, error, loading, reload } = useResource<{ plan: string; status: string; expiresAt: string | null }>(
     '/settings/subscription',
     { practiceId },
   );
+  const { t, fmt } = useT();
   const mutate = useMutation();
   const [months, setMonths] = useState(12);
 
@@ -29,20 +31,21 @@ export function PremiumPanel({ practiceId }: { practiceId: string }) {
   };
 
   return (
-    <Panel title="Premium" description="Subscription plan for this practice.">
+    <Panel title={t('settings.nav.premium')} description={t('settings.premium.description')}>
       <div className={s.planRow}>
         <div className={s.plan} data-current={!premium || undefined}>
-          <h3>Free</h3>
-          <p>Calendar, patients, prescriptions, invoicing and the full settings suite.</p>
-          {!premium && <span className={s.badge}>Current plan</span>}
+          <h3>{t('settings.premium.free')}</h3>
+          <p>{t('settings.premium.freeBody')}</p>
+          {!premium && <span className={s.badge}>{t('settings.premium.currentPlan')}</span>}
         </div>
         <div className={s.plan} data-current={premium || undefined}>
-          <h3>Premium</h3>
-          <p>Adds consent forms, charting templates, custom printout pads and priority support.</p>
+          <h3>{t('settings.nav.premium')}</h3>
+          <p>{t('settings.premium.premiumBody')}</p>
           {premium && (
             <span className={s.badge}>
-              Current plan
-              {data?.expiresAt && ` · renews ${new Date(data.expiresAt).toLocaleDateString()}`}
+              {data?.expiresAt
+                ? t('settings.premium.currentPlanRenews', { date: fmt.date(data.expiresAt) })
+                : t('settings.premium.currentPlan')}
             </span>
           )}
         </div>
@@ -51,12 +54,13 @@ export function PremiumPanel({ practiceId }: { practiceId: string }) {
       {mutate.error && <Failed message={mutate.error} />}
 
       <Row cols={2}>
-        <Field label="Term">
+        <Field label={t('settings.premium.term')}>
           <select className={s.input} value={months} onChange={(e) => setMonths(Number(e.target.value))}>
-            <option value={1}>1 month</option>
-            <option value={6}>6 months</option>
-            <option value={12}>12 months</option>
-            <option value={24}>24 months</option>
+            {[1, 6, 12, 24].map((n) => (
+              <option key={n} value={n}>
+                {t('settings.premium.months', { count: n })}
+              </option>
+            ))}
           </select>
         </Field>
       </Row>
@@ -64,11 +68,11 @@ export function PremiumPanel({ practiceId }: { practiceId: string }) {
       <div className={s.saveBar}>
         {premium ? (
           <button type="button" className={s.secondary} onClick={() => void change('FREE')} disabled={mutate.busy}>
-            Downgrade to Free
+            {t('settings.premium.downgrade')}
           </button>
         ) : (
           <button type="button" className={s.primary} onClick={() => void change('PREMIUM')} disabled={mutate.busy}>
-            {mutate.busy ? 'Working…' : 'Upgrade to Premium'}
+            {mutate.busy ? t('settings.premium.working') : t('settings.premium.upgrade')}
           </button>
         )}
       </div>

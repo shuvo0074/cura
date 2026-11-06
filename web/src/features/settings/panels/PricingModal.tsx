@@ -6,8 +6,9 @@ import {
   useMutation,
 } from '../../../ui';
 
-import { PricingItem } from './catalog-shared';
+import { PricingItem, asciiDigits } from './catalog-shared';
 import { ModalActions } from '../../../ui';
+import { useT } from '../../../i18n';
 
 export function PricingModal({
   practiceId,
@@ -20,6 +21,7 @@ export function PricingModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { t } = useT();
   const save = useMutation();
   const [name, setName] = useState(existing?.name ?? '');
   const [price, setPrice] = useState(existing ? (existing.priceMinor / 100).toFixed(2) : '');
@@ -33,7 +35,7 @@ export function PricingModal({
         ...(existing ? { id: existing.id } : {}),
         name: name.trim(),
         // Rounded into minor units so no float ever reaches a currency column.
-        priceMinor: Math.round(Number(price || 0) * 100),
+        priceMinor: Math.round(Number(asciiDigits(price) || 0) * 100),
         notes: notes.trim() || null,
       },
     });
@@ -42,17 +44,17 @@ export function PricingModal({
 
   return (
     <Modal
-      title={existing ? 'Edit treatment' : 'Add treatment'}
+      title={existing ? t('settings.pricing.edit') : t('settings.pricing.add')}
       onClose={onClose}
       footer={<ModalActions error={save.error} busy={save.busy} onCancel={onClose} onSave={() => void submit()} />}
     >
-      <Field label="Treatment name" required>
+      <Field label={t('settings.pricing.treatmentName')} required>
         <input className={s.input} value={name} onChange={(e) => setName(e.target.value)} />
       </Field>
-      <Field label="Price (BDT)" required>
+      <Field label={t('settings.pricing.priceBdt')} required>
         <input className={s.input} inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} />
       </Field>
-      <Field label="Notes" hint="Internal instructions, or a description printed on the invoice.">
+      <Field label={t('settings.notes')} hint={t('settings.pricing.notesHint')}>
         <textarea className={s.textarea} rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
       </Field>
     </Modal>

@@ -10,6 +10,7 @@ import {
   useMutation,
   useResource,
 } from '../../../ui';
+import { useT } from '../../../i18n';
 
 import { SessionSummary } from './SessionSummary';
 import { TimingsModal } from './TimingsModal';
@@ -17,6 +18,7 @@ import { Practice, SPECIALIZATIONS } from './practice-shared';
 
 export function PracticePanel({ practiceId }: { practiceId: string }) {
   const { data, error, loading, reload } = useResource<Practice>('/settings/practice', { practiceId });
+  const { t } = useT();
   const save = useMutation();
   const [draft, setDraft] = useState<Partial<Practice>>({});
   const [timingsOpen, setTimingsOpen] = useState(false);
@@ -41,12 +43,12 @@ export function PracticePanel({ practiceId }: { practiceId: string }) {
   };
 
   return (
-    <Panel title="Practice Details" description="Appears on prescriptions, invoices and patient SMS.">
+    <Panel title={t('settings.nav.practice')} description={t('settings.practice.description')}>
       <div className={s.logoRow}>
         <div className={s.logo} aria-hidden="true">
-          {value.logoUrl ? <img src={value.logoUrl} alt="" /> : <span>Add Logo</span>}
+          {value.logoUrl ? <img src={value.logoUrl} alt="" /> : <span>{t('settings.practice.addLogo')}</span>}
         </div>
-        <Field label="Logo URL" hint="Placed on the header of every printout for this clinic.">
+        <Field label={t('settings.practice.logoUrl')} hint={t('settings.practice.logoHint')}>
           <input
             className={s.input}
             value={value.logoUrl ?? ''}
@@ -57,24 +59,24 @@ export function PracticePanel({ practiceId }: { practiceId: string }) {
       </div>
 
       <Row>
-        <Field label="Clinic Name" required>
+        <Field label={t('settings.practice.clinicName')} required>
           <input className={s.input} value={value.name} onChange={(e) => set('name', e.target.value)} />
         </Field>
-        <Field label="Specialization" required>
+        <Field label={t('settings.practice.specialization')} required>
           <select
             className={s.input}
             value={value.specialization ?? ''}
             onChange={(e) => set('specialization', e.target.value || null)}
           >
-            <option value="">Select…</option>
+            <option value="">{t('settings.select')}</option>
             {SPECIALIZATIONS.map((x) => (
               <option key={x} value={x}>
-                {x}
+                {t(`settings.spec.${x}`)}
               </option>
             ))}
           </select>
         </Field>
-        <Field label="BIN" hint="Business Identification Number, printed on invoices.">
+        <Field label={t('settings.practice.bin')} hint={t('settings.practice.binHint')}>
           <input
             className={s.input}
             value={value.binNumber ?? ''}
@@ -84,7 +86,7 @@ export function PracticePanel({ practiceId }: { practiceId: string }) {
       </Row>
 
       <Row>
-        <Field label="Contact Number" required>
+        <Field label={t('settings.practice.contactNumber')} required>
           <input
             className={s.input}
             value={value.contactNumber ?? ''}
@@ -92,7 +94,7 @@ export function PracticePanel({ practiceId }: { practiceId: string }) {
             placeholder="01XXXXXXXXX"
           />
         </Field>
-        <Field label="Email">
+        <Field label={t('settings.email')}>
           <input
             className={s.input}
             type="email"
@@ -100,7 +102,7 @@ export function PracticePanel({ practiceId }: { practiceId: string }) {
             onChange={(e) => set('email', e.target.value || null)}
           />
         </Field>
-        <Field label="Website">
+        <Field label={t('settings.practice.website')}>
           <input
             className={s.input}
             value={value.website ?? ''}
@@ -110,16 +112,16 @@ export function PracticePanel({ practiceId }: { practiceId: string }) {
         </Field>
       </Row>
 
-      <h3 className={s.subtitle}>Address</h3>
+      <h3 className={s.subtitle}>{t('settings.practice.address')}</h3>
       <Row cols={2}>
-        <Field label="Address line 1" required>
+        <Field label={t('settings.practice.addressLine1')} required>
           <input
             className={s.input}
             value={value.addressLine1 ?? ''}
             onChange={(e) => set('addressLine1', e.target.value || null)}
           />
         </Field>
-        <Field label="Locality / Area">
+        <Field label={t('settings.practice.locality')}>
           <input
             className={s.input}
             value={value.locality ?? ''}
@@ -128,13 +130,13 @@ export function PracticePanel({ practiceId }: { practiceId: string }) {
         </Field>
       </Row>
       <Row>
-        <Field label="City / District">
+        <Field label={t('settings.practice.city')}>
           <input className={s.input} value={value.city ?? ''} onChange={(e) => set('city', e.target.value || null)} />
         </Field>
-        <Field label="Country">
+        <Field label={t('settings.practice.country')}>
           <input className={s.input} value={value.country} onChange={(e) => set('country', e.target.value)} />
         </Field>
-        <Field label="Post code">
+        <Field label={t('settings.practice.postCode')}>
           <input
             className={s.input}
             value={value.postCode ?? ''}
@@ -143,7 +145,7 @@ export function PracticePanel({ practiceId }: { practiceId: string }) {
         </Field>
       </Row>
       <Row cols={2}>
-        <Field label="Google Maps link" hint="Included in the appointment confirmation SMS.">
+        <Field label={t('settings.practice.mapsLink')} hint={t('settings.practice.mapsHint')}>
           <input
             className={s.input}
             value={value.mapsUrl ?? ''}
@@ -151,7 +153,7 @@ export function PracticePanel({ practiceId }: { practiceId: string }) {
             placeholder="https://maps.app.goo.gl/…"
           />
         </Field>
-        <Field label="Room number">
+        <Field label={t('settings.practice.roomNumber')}>
           <input
             className={s.input}
             value={value.roomNumber ?? ''}
@@ -161,9 +163,9 @@ export function PracticePanel({ practiceId }: { practiceId: string }) {
       </Row>
 
       <div className={s.sectionHead}>
-        <h3 className={s.subtitle}>Practice timings</h3>
+        <h3 className={s.subtitle}>{t('settings.practice.timings')}</h3>
         <button type="button" className={s.secondary} onClick={() => setTimingsOpen(true)}>
-          Edit Practice Timings
+          {t('settings.practice.editTimings')}
         </button>
       </div>
       <SessionSummary sessions={data.sessions} />

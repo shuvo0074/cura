@@ -2,9 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useServices } from '../../app/services';
 import { InvoiceDrawer } from './InvoiceDrawer';
 import { NewInvoiceDialog } from './NewInvoiceDialog';
-import { STATUS_LABELS, money } from './billing-kit';
+import { isInvoiceStatus, money } from './billing-kit';
 import styles from './billing.module.css';
 import { Metric } from '../../ui';
+import { useT } from '../../i18n';
 
 export interface InvoiceSummary {
   id: string;
@@ -45,6 +46,8 @@ export function BillingView({
   onOpenPatient: (patientId: string) => void;
 }) {
   const { http } = useServices();
+  const { t, tm, fmt, locale } = useT();
+  const statusLabel = (s: string) => (isInvoiceStatus(s) ? t(`billing.status.${s}`) : s);
 
   const [ledger, setLedger] = useState<Ledger | null>(null);
   const [rows, setRows] = useState<InvoiceSummary[]>([]);
@@ -112,18 +115,18 @@ export function BillingView({
           className={styles.search}
           value={term}
           onChange={(e) => setTerm(e.target.value)}
-          placeholder="Search by invoice number or patient…"
-          aria-label="Search invoices"
+          placeholder={t('billing.searchPlaceholder')}
+          aria-label={t('billing.searchLabel')}
         />
         <select
           className={styles.select}
           value={status}
           onChange={(e) => setStatus(e.target.value)}
-          aria-label="Filter by status"
+          aria-label={t('billing.filterStatus')}
         >
           {STATUS_FILTERS.map((s) => (
             <option key={s || 'all'} value={s}>
-              {s ? STATUS_LABELS[s] : 'All statuses'}
+              {s ? statusLabel(s) : t('billing.allStatuses')}
             </option>
           ))}
         </select>
@@ -131,50 +134,50 @@ export function BillingView({
           className={styles.select}
           value={range}
           onChange={(e) => setRange(e.target.value as Range)}
-          aria-label="Filter by date"
+          aria-label={t('billing.filterDate')}
         >
-          <option value="7">Last 7 days</option>
-          <option value="30">Last 30 days</option>
-          <option value="365">Last year</option>
-          <option value="all">All time</option>
+          <option value="7">{t('billing.range.7')}</option>
+          <option value="30">{t('billing.range.30')}</option>
+          <option value="365">{t('billing.range.365')}</option>
+          <option value="all">{t('billing.range.all')}</option>
         </select>
 
         <span className={styles.spacer} />
 
         {canWrite && (
           <button type="button" className={styles.primary} onClick={() => setCreating(true)}>
-            New invoice
+            {t('billing.newInvoice')}
           </button>
         )}
       </header>
 
       <div className={styles.summary}>
-        <Metric label="Outstanding" value={money(ledger?.outstandingMinor ?? 0)} tone="warn" />
-        <Metric label="Collected (shown)" value={money(collected)} tone="good" />
-        <Metric label="Invoices (shown)" value={String(rows.length)} />
+        <Metric label={t('billing.outstanding')} value={money(ledger?.outstandingMinor ?? 0, locale)} tone="warn" />
+        <Metric label={t('billing.collectedShown')} value={money(collected, locale)} tone="good" />
+        <Metric label={t('billing.invoicesShown')} value={fmt.number(rows.length)} />
       </div>
 
       {error && (
         <p className={styles.error} role="alert">
-          {error}
+          {tm(error)}
         </p>
       )}
 
       {loading && rows.length === 0 ? (
-        <p className={styles.muted}>Loading…</p>
+        <p className={styles.muted}>{t('common.loading')}</p>
       ) : rows.length === 0 ? (
-        <p className={styles.muted}>No invoices match these filters.</p>
+        <p className={styles.muted}>{t('billing.noMatch')}</p>
       ) : (
         <table className={styles.table}>
           <thead>
             <tr>
-              <th>Invoice</th>
-              <th>Patient</th>
-              <th>Date</th>
-              <th>Status</th>
-              <th className={styles.numeric}>Total</th>
-              <th className={styles.numeric}>Paid</th>
-              <th className={styles.numeric}>Balance</th>
+              <th>{t('billing.col.invoice')}</th>
+              <th>{t('billing.col.patient')}</th>
+              <th>{t('billing.col.date')}</th>
+              <th>{t('billing.col.status')}</th>
+              <th className={styles.numeric}>{t('billing.col.total')}</th>
+              <th className={styles.numeric}>{t('billing.col.paid')}</th>
+              <th className={styles.numeric}>{t('billing.col.balance')}</th>
             </tr>
           </thead>
           <tbody>
@@ -194,16 +197,16 @@ export function BillingView({
                       '—'
                     )}
                   </td>
-                  <td>{new Date(row.createdAt).toLocaleDateString()}</td>
+                  <td>{fmt.date(row.createdAt)}</td>
                   <td>
                     <span className={styles.badge} data-status={row.status.toLowerCase()}>
-                      {STATUS_LABELS[row.status] ?? row.status}
+                      {statusLabel(row.status)}
                     </span>
                   </td>
-                  <td className={styles.numeric}>{money(row.totalMinor)}</td>
-                  <td className={styles.numeric}>{money(row.paidMinor)}</td>
+                  <td className={styles.numeric}>{money(row.totalMinor, locale)}</td>
+                  <td className={styles.numeric}>{money(row.paidMinor, locale)}</td>
                   <td className={styles.numeric} data-due={balance > 0 && row.status !== 'CANCELLED' || undefined}>
-                    {row.status === 'CANCELLED' ? '—' : money(balance)}
+                    {row.status === 'CANCELLED' ? '—' : money(balance, locale)}
                   </td>
                 </tr>
               );
@@ -220,7 +223,7 @@ export function BillingView({
             onClick={() => void load(ledger.nextCursor)}
             disabled={loading}
           >
-            {loading ? 'Loading…' : 'Load more'}
+            {loading ? t('common.loading') : t('billing.loadMore')}
           </button>
         </div>
       )}

@@ -7,12 +7,14 @@ import {
   useMutation,
   useResource,
 } from '../../../ui';
+import { useT } from '../../../i18n';
 
 import { PricingModal } from './PricingModal';
 import { DEFAULT_TREATMENTS, PricingItem } from './catalog-shared';
 
 export function PricingPanel({ practiceId }: { practiceId: string }) {
   const { data, error, loading, reload } = useResource<PricingItem[]>('/settings/pricing', { practiceId });
+  const { t, fmt } = useT();
   const mutate = useMutation();
   const [term, setTerm] = useState('');
   const [editing, setEditing] = useState<PricingItem | 'new' | null>(null);
@@ -42,11 +44,11 @@ export function PricingPanel({ practiceId }: { practiceId: string }) {
 
   return (
     <Panel
-      title="Pricing Catalog"
-      description="Feeds the search-suggest when writing an invoice; the price is pulled automatically."
+      title={t('settings.nav.pricing')}
+      description={t('settings.pricing.description')}
       action={
         <button type="button" className={s.primary} onClick={() => setEditing('new')}>
-          Add
+          {t('common.add')}
         </button>
       }
     >
@@ -54,26 +56,26 @@ export function PricingPanel({ practiceId }: { practiceId: string }) {
         className={s.input}
         value={term}
         onChange={(e) => setTerm(e.target.value)}
-        placeholder="Search treatments…"
-        aria-label="Search the pricing catalog"
+        placeholder={t('settings.pricing.search')}
+        aria-label={t('settings.pricing.searchLabel')}
       />
 
       {mutate.error && <Failed message={mutate.error} />}
 
       {(data ?? []).length === 0 ? (
         <div className={s.empty}>
-          <p className={s.muted}>No treatments priced yet.</p>
+          <p className={s.muted}>{t('settings.pricing.empty')}</p>
           <button type="button" className={s.secondary} onClick={() => void seed()} disabled={mutate.busy}>
-            Add the standard three (Consultation, Video Call, Follow-up)
+            {t('settings.pricing.seed')}
           </button>
         </div>
       ) : (
         <table className={s.table}>
           <thead>
             <tr>
-              <th>Treatment</th>
-              <th>Notes</th>
-              <th className={s.numeric}>Price (BDT)</th>
+              <th>{t('settings.pricing.treatment')}</th>
+              <th>{t('settings.notes')}</th>
+              <th className={s.numeric}>{t('settings.pricing.priceBdt')}</th>
               <th />
             </tr>
           </thead>
@@ -82,13 +84,17 @@ export function PricingPanel({ practiceId }: { practiceId: string }) {
               <tr key={row.id}>
                 <td>{row.name}</td>
                 <td className={row.notes ? undefined : s.mutedCell}>{row.notes ?? '—'}</td>
-                <td className={s.numeric}>{(row.priceMinor / 100).toFixed(2)}</td>
+                <td className={s.numeric}>{fmt.number(row.priceMinor / 100, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                    useGrouping: false,
+                  })}</td>
                 <td className={s.actions}>
                   <button type="button" className={s.linkButton} onClick={() => setEditing(row)}>
-                    Edit
+                    {t('common.edit')}
                   </button>
                   <button type="button" className={s.linkDanger} onClick={() => void remove(row)}>
-                    Delete
+                    {t('common.delete')}
                   </button>
                 </td>
               </tr>

@@ -22,14 +22,10 @@ export interface Printout {
   sectionOrder: string[];
 }
 
-export const SECTIONS: ReadonlyArray<{ key: string; label: string }> = [
-  { key: 'vitals', label: 'Vital signs' },
-  { key: 'complaints', label: 'Chief complaints' },
-  { key: 'diagnosis', label: 'Diagnosis' },
-  { key: 'prescription', label: 'Prescription (Rx)' },
-  { key: 'investigations', label: 'Investigations' },
-  { key: 'advice', label: 'Advice' },
-];
+/** Printout sections, each named by `settings.printouts.section.<key>`. */
+export const SECTIONS = ['vitals', 'complaints', 'diagnosis', 'prescription', 'investigations', 'advice'] as const;
+export const isSection = (value: string): value is (typeof SECTIONS)[number] =>
+  (SECTIONS as readonly string[]).includes(value);
 
 // -- Emails -----------------------------------------------------------------
 

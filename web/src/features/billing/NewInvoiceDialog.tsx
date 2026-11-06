@@ -1,10 +1,10 @@
-import {  useEffect, useState } from 'react';
-import type {  } from '@cura/shared';
+import { useEffect, useState } from 'react';
 import { useServices } from '../../app/services';
 import { Field, Modal, Row, uiStyles as s } from '../../ui';
-import { money, toMinor } from './billing-kit';
+import { asciiDigits, money, toMinor } from './billing-kit';
 import styles from './billing.module.css';
 import { PatientPicker } from '../../ui';
+import { useT } from '../../i18n';
 
 interface PricingItem {
   id: string;
@@ -51,6 +51,7 @@ export function NewInvoiceDialog({
   onCreated: () => void;
 }) {
   const { http } = useServices();
+  const { t, tm, locale } = useT();
 
   const [catalog, setCatalog] = useState<PricingItem[]>([]);
   const [patient, setPatient] = useState<{ id: string; fullName: string } | null>(
@@ -91,11 +92,11 @@ export function NewInvoiceDialog({
 
   const submit = async () => {
     if (!patient) {
-      setError('Select a patient.');
+      setError(t('billing.selectPatient'));
       return;
     }
     if (usable.length === 0) {
-      setError('Add at least one line with a description and price.');
+      setError(t('billing.addLineError'));
       return;
     }
 
@@ -131,27 +132,27 @@ export function NewInvoiceDialog({
 
   return (
     <Modal
-      title="New invoice"
+      title={t('billing.newInvoice')}
       onClose={onClose}
       wide
       footer={
         <>
           {error && (
             <span className={s.error} role="alert">
-              {error}
+              {tm(error)}
             </span>
           )}
           <button type="button" className={s.secondary} onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </button>
           <button type="button" className={s.primary} onClick={() => void submit()} disabled={busy}>
-            {busy ? 'Creating…' : `Create — ${money(total)}`}
+            {busy ? t('billing.creating') : t('billing.create', { total: money(total, locale) })}
           </button>
         </>
       }
     >
       <Row cols={2}>
-        <Field label="Patient" required>
+        <Field label={t('billing.patient')} required>
           {fixedPatient ? (
             <p className={styles.muted}>{fixedPatient.fullName}</p>
           ) : (
@@ -163,12 +164,12 @@ export function NewInvoiceDialog({
       <table className={styles.lineTable}>
         <thead>
           <tr>
-            <th>Service</th>
-            <th>Description</th>
-            <th className={styles.numeric}>Qty</th>
-            <th className={styles.numeric}>Unit</th>
-            <th className={styles.numeric}>Discount</th>
-            <th className={styles.numeric}>Total</th>
+            <th>{t('billing.col.service')}</th>
+            <th>{t('billing.col.description')}</th>
+            <th className={styles.numeric}>{t('billing.col.qty')}</th>
+            <th className={styles.numeric}>{t('billing.col.unit')}</th>
+            <th className={styles.numeric}>{t('billing.col.discount')}</th>
+            <th className={styles.numeric}>{t('billing.col.total')}</th>
             <th />
           </tr>
         </thead>
@@ -180,9 +181,9 @@ export function NewInvoiceDialog({
                   className={s.input}
                   value={line.pricingItemId ?? ''}
                   onChange={(e) => chooseService(i, e.target.value)}
-                  aria-label={`Line ${i + 1} service`}
+                  aria-label={t('billing.lineService', { n: i + 1 })}
                 >
-                  <option value="">Custom…</option>
+                  <option value="">{t('billing.custom')}</option>
                   {catalog.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
@@ -195,8 +196,8 @@ export function NewInvoiceDialog({
                   className={s.input}
                   value={line.description}
                   onChange={(e) => setLine(i, { description: e.target.value, pricingItemId: null })}
-                  placeholder="Description"
-                  aria-label={`Line ${i + 1} description`}
+                  placeholder={t('billing.col.description')}
+                  aria-label={t('billing.lineDescription', { n: i + 1 })}
                 />
               </td>
               <td className={styles.narrow}>
@@ -204,8 +205,8 @@ export function NewInvoiceDialog({
                   className={s.input}
                   inputMode="numeric"
                   value={line.quantity}
-                  onChange={(e) => setLine(i, { quantity: Math.max(1, Number(e.target.value.replace(/\D/g, '')) || 1) })}
-                  aria-label={`Line ${i + 1} quantity`}
+                  onChange={(e) => setLine(i, { quantity: Math.max(1, Number(asciiDigits(e.target.value).replace(/\D/g, '')) || 1) })}
+                  aria-label={t('billing.lineQuantity', { n: i + 1 })}
                 />
               </td>
               <td className={styles.narrow}>
@@ -214,7 +215,7 @@ export function NewInvoiceDialog({
                   inputMode="decimal"
                   value={line.unit}
                   onChange={(e) => setLine(i, { unit: e.target.value })}
-                  aria-label={`Line ${i + 1} unit price`}
+                  aria-label={t('billing.lineUnit', { n: i + 1 })}
                 />
               </td>
               <td className={styles.narrow}>
@@ -223,16 +224,16 @@ export function NewInvoiceDialog({
                   inputMode="decimal"
                   value={line.discount}
                   onChange={(e) => setLine(i, { discount: e.target.value })}
-                  aria-label={`Line ${i + 1} discount`}
+                  aria-label={t('billing.lineDiscount', { n: i + 1 })}
                 />
               </td>
-              <td className={styles.numeric}>{money(lineTotal(line))}</td>
+              <td className={styles.numeric}>{money(lineTotal(line), locale)}</td>
               <td>
                 {lines.length > 1 && (
                   <button
                     type="button"
                     className={s.iconButton}
-                    aria-label={`Remove line ${i + 1}`}
+                    aria-label={t('billing.removeLine', { n: i + 1 })}
                     onClick={() => setLines((c) => c.filter((_, index) => index !== i))}
                   >
                     ×
@@ -245,22 +246,22 @@ export function NewInvoiceDialog({
       </table>
 
       <button type="button" className={s.linkButton} onClick={() => setLines((c) => [...c, blankLine()])}>
-        + Add line
+        {t('billing.addLine')}
       </button>
 
       <Row>
-        <Field label="Invoice discount (BDT)">
+        <Field label={t('billing.invoiceDiscountBdt')}>
           <input className={s.input} inputMode="decimal" value={discount} onChange={(e) => setDiscount(e.target.value)} />
         </Field>
-        <Field label="Tax (BDT)">
+        <Field label={t('billing.taxBdt')}>
           <input className={s.input} inputMode="decimal" value={tax} onChange={(e) => setTax(e.target.value)} />
         </Field>
-        <Field label="Total">
-          <p className={styles.grandTotal}>{money(total)}</p>
+        <Field label={t('billing.col.total')}>
+          <p className={styles.grandTotal}>{money(total, locale)}</p>
         </Field>
       </Row>
 
-      <Field label="Notes" hint="Printed on the invoice.">
+      <Field label={t('billing.notes')} hint={t('billing.notesHint')}>
         <textarea className={s.textarea} rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
       </Field>
     </Modal>

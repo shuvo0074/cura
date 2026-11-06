@@ -7,6 +7,7 @@ import {
   useMutation,
   useResource,
 } from '../../../ui';
+import { useT } from '../../../i18n';
 
 import { ChartingModal } from './ChartingModal';
 import { ChartingTemplate } from './catalog-shared';
@@ -15,6 +16,7 @@ export function ChartingPanel({ practiceId }: { practiceId: string }) {
   const { data, error, loading, reload } = useResource<ChartingTemplate[]>('/settings/charting-templates', {
     practiceId,
   });
+  const { t } = useT();
   const mutate = useMutation();
   const [editing, setEditing] = useState<ChartingTemplate | 'new' | null>(null);
 
@@ -28,26 +30,26 @@ export function ChartingPanel({ practiceId }: { practiceId: string }) {
 
   return (
     <Panel
-      title="Charting Templates"
-      description="Reusable bundles of diagnoses, lab orders and a follow-up interval, applied in one click while charting."
+      title={t('settings.nav.charting')}
+      description={t('settings.charting.description')}
       action={
         <button type="button" className={s.primary} onClick={() => setEditing('new')}>
-          Add
+          {t('common.add')}
         </button>
       }
     >
       {mutate.error && <Failed message={mutate.error} />}
 
       {(data ?? []).length === 0 ? (
-        <p className={s.muted}>No templates yet.</p>
+        <p className={s.muted}>{t('settings.charting.empty')}</p>
       ) : (
         <table className={s.table}>
           <thead>
             <tr>
-              <th>Template name</th>
-              <th>Diagnoses</th>
-              <th>Lab orders</th>
-              <th>Follow-up</th>
+              <th>{t('settings.charting.templateName')}</th>
+              <th>{t('settings.charting.diagnoses')}</th>
+              <th>{t('settings.charting.labOrders')}</th>
+              <th>{t('settings.charting.followUp')}</th>
               <th />
             </tr>
           </thead>
@@ -60,14 +62,14 @@ export function ChartingPanel({ practiceId }: { practiceId: string }) {
                 </td>
                 <td className={row.labOrders.length ? undefined : s.mutedCell}>{row.labOrders.join(', ') || '—'}</td>
                 <td className={row.followUpDays ? undefined : s.mutedCell}>
-                  {row.followUpDays ? `${row.followUpDays} days` : '—'}
+                  {row.followUpDays ? t('settings.charting.days', { count: row.followUpDays }) : '—'}
                 </td>
                 <td className={s.actions}>
                   <button type="button" className={s.linkButton} onClick={() => setEditing(row)}>
-                    Edit
+                    {t('common.edit')}
                   </button>
                   <button type="button" className={s.linkDanger} onClick={() => void remove(row)}>
-                    Delete
+                    {t('common.delete')}
                   </button>
                 </td>
               </tr>
