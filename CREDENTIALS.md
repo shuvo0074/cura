@@ -17,7 +17,7 @@ there. Nobody needs a login to browse doctors, hospitals, diagnostic centres and
 
 | Role | Account to try | Lands on | What they can do |
 | --- | --- | --- | --- |
-| Patient | patient01@cura.local | My Appointments | Browse, join or leave clinics, view appointments and review completed visits |
+| Patient | patient01@cura.local | My Appointments | Browse, join or leave clinics, view appointments, review completed visits, and see their own signed visits, prescriptions, vital signs, invoices and upcoming clinic appointments on **My health** |
 | Doctor | doctor01@cura.local | Doctor Dashboard | Browse, edit their public profile, see profile stats and get a QR card |
 | Super admin | admin@cura.local | Admin panel | Manage all website content and doctors, approve doctor sign-ups and create clinic owners |
 | Clinic owner | owner1@cura.local | Home | Browse only; their screens are on Cura Dashboard |
@@ -26,7 +26,8 @@ there. Nobody needs a login to browse doctors, hospitals, diagnostic centres and
 - **Super admin:** the admin panel covers hospitals, doctors, specialties, symptoms, ambulances, sample prices, the home
   page, site text, photo credits, appointments, verifications and owners.
 - **Patients:** joining a clinic adds them to that clinic's patient list on Cura Dashboard. To join, open My Appointments
-  and click **My clinics**.
+  and click **My clinics**. **My health** (next to it) shows what those clinics recorded, read-only; leaving a clinic
+  hides its records there.
 - **Booking:** patients can only book online if booking is switched on in the API. A serial at a clinic on Cura also
   goes into that clinic's calendar on Cura Dashboard, where clinic staff can cancel, check out or mark it no-show.
 - **Ambulance and pharmacy owners:** their screens are on Cura Dashboard, under **My Ambulances** and **My Pharmacy**.

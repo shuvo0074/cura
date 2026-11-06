@@ -68,6 +68,7 @@ import {
   ADMIN_USERS_REPOSITORY,
   CATALOG_DIRECTORY_REPOSITORY,
   DIRECTORY_ACCOUNT_REPOSITORY,
+  PATIENT_HEALTH_REPOSITORY,
   DOCTOR_LISTING_REPOSITORY,
   DOCTOR_PROFILE_REPOSITORY,
   DOCTOR_REACH_REPOSITORY,
@@ -82,6 +83,7 @@ import { PrismaDoctorProfileRepository } from './repositories/directory/doctor-p
 import { PrismaDoctorVerificationRepository } from './repositories/directory/verification.repository';
 import { PrismaDoctorReachRepository } from './repositories/directory/reach.repository';
 import { PrismaSerialBookingRepository } from './repositories/directory/serial-booking.repository';
+import { PrismaPatientHealthRepository } from './repositories/directory/patient-health.repository';
 import {
   PrismaAmbulanceRepository,
   PrismaPharmacyRepository,
@@ -144,6 +146,7 @@ import {
     RedisThrottlerStorage,
     { provide: PUBLIC_MEDIA, useClass: LocalPublicMediaStorage },
     { provide: DIRECTORY_ACCOUNT_REPOSITORY, useClass: PrismaDirectoryAccountRepository },
+    { provide: PATIENT_HEALTH_REPOSITORY, useClass: PrismaPatientHealthRepository },
     { provide: DOCTOR_LISTING_REPOSITORY, useClass: PrismaDoctorListingRepository },
     { provide: DOCTOR_PROFILE_REPOSITORY, useClass: PrismaDoctorProfileRepository },
     { provide: DOCTOR_VERIFICATION_REPOSITORY, useClass: PrismaDoctorVerificationRepository },
@@ -203,6 +206,7 @@ import {
     RedisThrottlerStorage,
     PUBLIC_MEDIA,
     DIRECTORY_ACCOUNT_REPOSITORY,
+    PATIENT_HEALTH_REPOSITORY,
     DOCTOR_LISTING_REPOSITORY,
     DOCTOR_PROFILE_REPOSITORY,
     DOCTOR_VERIFICATION_REPOSITORY,

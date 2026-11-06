@@ -10,8 +10,8 @@ import { present } from '../domain/presenter';
 
 /**
  * A patient on Cura Website chooses clinics. Each clinic gets its own patient
- * record, which staff then see on Cura Dashboard. The patient reads nothing from
- * that record, so joining never exposes clinical data.
+ * record, which staff then see on Cura Dashboard. Joining exposes no clinical
+ * data; the patient reads their own signed records on "My health".
  */
 @Injectable()
 export class PatientClinicService {

@@ -18,6 +18,8 @@
 - See upcoming follow-ups and birthdays
 - Record patient ratings and reply to them
 - Create invoices and take payments
+- As a patient on Cura Website, see your own visits, prescriptions, vital signs, invoices and upcoming clinic
+  appointments from the clinics you joined, on **My health**, and print a prescription
 - Upload and view patient documents
 - View statistics: income, appointments, top procedures, patient mix
 - Change clinic settings: clinic details, hours, staff, prices, drugs, note templates, printouts, messages, security
@@ -158,6 +160,25 @@ Online booking must be switched on in the Cura API (it is, unless `DIRECTORY_BOO
    **Completed**, and the patient can rate the visit. A **No show** shows it as cancelled.
 7. A doctor who is not on a clinic on Cura (or a session at a hospital) still books on Cura Website only. A patient
    with no mobile number is booked on Cura Website only, and told to add a number.
+
+### My health on Cura Website
+
+1. On Cura Dashboard, log in as owner1@cura.local. Click **+ Add Patient**, type `01812000001`, click **Mahbub Ahmed**
+   under the matching profiles, choose **Dr Rumana Haque** as the doctor, pick a time today and click **Save**.
+2. Log out and log in as doctor01@cura.local. Search `01812000001`, open Mahbub Ahmed and click **Start visit**. Fill
+   **Vital signs**, **Clinical notes** and **Prescription** (pick the drug from the list), then click
+   **Sign & complete visit**.
+3. Log in as owner1@cura.local again. Open Mahbub Ahmed, click the **Billing** tab, then **New invoice**. Add a line and
+   click **Create**. In **Billing**, click the invoice and record a part payment.
+4. On Cura Website, log in as patient01@cura.local. Click **My Appointments**, then **My health**.
+5. The visit shows under today's date with the doctor, clinic, complaints, diagnosis, vital signs, advice and the
+   prescription (dose as morning + noon + night, meal, days, tests and next visit). The doctor's **Notes** and
+   **Observations** do not show. Click **Print** next to the prescription: only that prescription prints.
+6. Under **Invoices**, the invoice shows its items, total, paid amount, amount due and **Partly paid**.
+7. A visit that is not signed yet does not show. Switch to **বাং** at the top: the page is in Bangla. On a phone,
+   **My health** is also in the menu.
+8. Use a test patient for this step, not patient01: click **My clinics** and leave a clinic. Its records disappear from
+   **My health**. Joining again makes a new clinic record, so the old visits stay hidden.
 
 ### Add a patient and search
 

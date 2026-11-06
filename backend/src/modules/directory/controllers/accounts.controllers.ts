@@ -12,6 +12,7 @@ import { UuidOr404 } from '../access/uuid-or-404.pipe';
 import { AmbulanceService } from '../services/ambulance.service';
 import { ClinicOwnerService } from '../services/clinic-owner.service';
 import { PatientClinicService } from '../services/patient-clinic.service';
+import { PatientHealthService } from '../services/patient-health.service';
 import { PharmacyService } from '../services/pharmacy.service';
 import { PublicReadLimit, bodyOf } from './shared';
 
@@ -47,6 +48,22 @@ export class MyClinicsController {
   @Delete(':practiceId')
   leave(@Param('practiceId', UuidOr404) practiceId: string, @Identity() identity: DirectoryIdentity) {
     return this.clinics.leave(identity, practiceId);
+  }
+}
+
+/**
+ * "My health": the patient's own visits, prescriptions, invoices and upcoming
+ * appointments at the clinics they joined. Read-only, and scoped by the
+ * signed-in account alone.
+ */
+@Controller('directory/my-health')
+@RequirePatient()
+export class MyHealthController {
+  constructor(private readonly health: PatientHealthService) {}
+
+  @Get()
+  mine(@Identity() identity: DirectoryIdentity) {
+    return this.health.mine(identity);
   }
 }
 

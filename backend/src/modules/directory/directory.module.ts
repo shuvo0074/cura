@@ -14,6 +14,7 @@ import {
   ClinicsController,
   MyAmbulancesController,
   MyClinicsController,
+  MyHealthController,
   MyPharmaciesController,
 } from './controllers/accounts.controllers';
 import { AdminBusinessesController, AdminUsersController } from './controllers/admin-users.controllers';
@@ -32,6 +33,7 @@ import { AmbulanceService } from './services/ambulance.service';
 import { CatalogService } from './services/catalog.service';
 import { ClinicOwnerService } from './services/clinic-owner.service';
 import { PatientClinicService } from './services/patient-clinic.service';
+import { PatientHealthService } from './services/patient-health.service';
 import { PharmacyService } from './services/pharmacy.service';
 import { DirectoryAudit } from './services/directory-audit.service';
 import { DoctorDirectoryService } from './services/doctor-directory.service';
@@ -46,7 +48,8 @@ import { DoctorVerificationService } from './services/verification.service';
 /**
  * The public directory: doctor, hospital and ambulance listings, doctor
  * verification, serial booking and patients joining clinics. The only clinical
- * table it writes is `patients`, and it never reads clinical records.
+ * table it writes is `patients`. It reads clinical records only for "My health",
+ * through a read-only port that returns a patient's own records.
  */
 @Module({
   imports: [AuthModule, AppointmentModule],
@@ -69,6 +72,7 @@ import { DoctorVerificationService } from './services/verification.service';
     AdminOwnersController,
     ClinicsController,
     MyClinicsController,
+    MyHealthController,
     MyAmbulancesController,
     MyPharmaciesController,
     AdminUsersController,
@@ -82,6 +86,7 @@ import { DoctorVerificationService } from './services/verification.service';
     CatalogService,
     ClinicOwnerService,
     PatientClinicService,
+    PatientHealthService,
     PharmacyService,
     DirectoryAudit,
     DoctorDirectoryService,

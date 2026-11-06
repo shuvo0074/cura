@@ -250,6 +250,73 @@ export interface CatalogDirectoryRepository {
   slugs(kind: CatalogKind): Promise<string[]>;
 }
 
+export const PATIENT_HEALTH_REPOSITORY = Symbol('PATIENT_HEALTH_REPOSITORY');
+
+/** A signed visit as the patient sees it. No staff-only notes or observations. */
+export interface HealthVisit {
+  id: string;
+  occurredAt: Date;
+  clinicName: string;
+  doctorName: string;
+  complaints: string[];
+  diagnoses: string[];
+  advice: string[];
+  vitals: {
+    weightKg: number | null;
+    systolic: number | null;
+    diastolic: number | null;
+    pulseBpm: number | null;
+    temperatureC: number | null;
+  } | null;
+  prescription: {
+    investigations: string[];
+    followUpDate: Date | null;
+    items: {
+      drugName: string;
+      form: string | null;
+      strength: string | null;
+      morning: number;
+      noon: number;
+      night: number;
+      mealRelation: string;
+      durationDays: number | null;
+      instruction: string | null;
+    }[];
+  } | null;
+}
+
+export interface HealthInvoice {
+  id: string;
+  number: string;
+  date: Date;
+  clinicName: string;
+  status: string;
+  totalMinor: number;
+  paidMinor: number;
+  items: { description: string; quantity: number; totalMinor: number }[];
+}
+
+export interface HealthAppointment {
+  id: string;
+  scheduledAt: Date;
+  clinicName: string;
+  doctorName: string;
+  status: string;
+}
+
+/**
+ * Read-only: a patient's own records at the clinics they joined on Cura Website.
+ * Every query is scoped by the website account, never by an id the client sends.
+ */
+export interface PatientHealthRepository {
+  /** Signed visits only, newest first. Drafts never leave the database. */
+  signedVisits(accountId: string, limit: number): Promise<HealthVisit[]>;
+  /** Issued invoices, newest first; cancelled ones only where the clinic shows them. */
+  invoices(accountId: string, limit: number): Promise<HealthInvoice[]>;
+  /** Calendar appointments that are not cancelled and have not ended yet, soonest first. */
+  upcomingAppointments(accountId: string, now: Date, limit: number): Promise<HealthAppointment[]>;
+}
+
 export const SITE_SETTINGS_REPOSITORY = Symbol('SITE_SETTINGS_REPOSITORY');
 
 export interface SiteSettingsRepository {
