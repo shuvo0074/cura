@@ -4,6 +4,7 @@ import { minuteOfDay } from './calendar-shared';
 import { DayColumn, type GridGeometry } from './DayColumn';
 import { useAppointmentDrag } from './use-appointment-drag';
 import type { Closure, GridConfig } from './use-calendar-settings';
+import { useT } from '../../i18n';
 import styles from './grid.module.css';
 
 /** Smallest legible slot row; a 5–10 minute slot would otherwise be a sliver. */
@@ -50,6 +51,7 @@ export function TimeGrid({
   /** Present only for users who may reschedule; asks for confirmation. */
   onMove?: ((id: string, at: Date) => void) | undefined;
 }) {
+  const { t, fmt } = useT();
   const scroller = useRef<HTMLDivElement>(null);
   const now = useNow();
   const todayKey = toDateKey(now);
@@ -119,9 +121,9 @@ export function TimeGrid({
     () =>
       Array.from({ length: geometry.rows }, (_, row) => {
         const minute = geometry.start + row * geometry.slot;
-        return new Date(2000, 0, 1, 0, minute).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        return fmt.time(new Date(2000, 0, 1, 0, minute));
       }),
-    [geometry],
+    [geometry, fmt],
   );
 
   return (
@@ -137,9 +139,9 @@ export function TimeGrid({
           const closed = config.hasSessions && (config.sessionsByDay[day.getDay()]?.length ?? 0) === 0;
           return (
             <div key={lane.date} className={styles.dayHead} data-today={lane.date === todayKey || undefined}>
-              <span className={styles.dayName}>{day.toLocaleDateString([], { weekday: 'short' })}</span>
-              <span className={styles.dayNumber}>{day.getDate()}</span>
-              {closed && <span className={styles.dayClosed}>Closed</span>}
+              <span className={styles.dayName}>{fmt.date(day, { weekday: 'short' })}</span>
+              <span className={styles.dayNumber}>{fmt.number(day.getDate())}</span>
+              {closed && <span className={styles.dayClosed}>{t('calendar.closed')}</span>}
             </div>
           );
         })}

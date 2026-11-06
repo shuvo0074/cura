@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ageFromDateOfBirth, businessRules, initials, type Patient } from '@cura/shared';
 import { useServices } from '../../../app/services';
+import { useT } from '../../../i18n';
 import styles from './header.module.css';
 
 /**
@@ -20,6 +21,7 @@ export function UniversalSearch({
   onOpenPatient: (patientId: string) => void;
 }) {
   const { http } = useServices();
+  const { t } = useT();
   const [term, setTerm] = useState('');
   const [hits, setHits] = useState<Patient[]>([]);
   const [open, setOpen] = useState(false);
@@ -95,10 +97,10 @@ export function UniversalSearch({
   };
 
   const status = useMemo(() => {
-    if (!ready) return `Type at least ${minLength} characters.`;
-    if (busy) return 'Searching…';
-    return hits.length === 0 ? 'No patients found.' : null;
-  }, [ready, busy, hits.length, minLength]);
+    if (!ready) return t('shell.search.typeMore', { count: minLength });
+    if (busy) return t('shell.search.searching');
+    return hits.length === 0 ? t('shell.search.none') : null;
+  }, [ready, busy, hits.length, minLength, t]);
 
   return (
     <div className={styles.search} ref={boxRef}>
@@ -111,8 +113,8 @@ export function UniversalSearch({
         onChange={(e) => setTerm(e.target.value)}
         onFocus={() => term.trim().length >= minLength && setOpen(true)}
         onKeyDown={onKeyDown}
-        placeholder="Search by Phone Number, Name, or ID…"
-        aria-label="Search patients"
+        placeholder={t('shell.search.placeholder')}
+        aria-label={t('shell.search.label')}
         aria-expanded={open}
         aria-autocomplete="list"
         role="combobox"
@@ -146,7 +148,7 @@ export function UniversalSearch({
                           number returns several profiles, and this is what the
                           doctor verifies before opening the wrong record. */}
                       <span className={styles.resultMeta}>
-                        {[patient.curaId, patient.mobile, age !== null ? `${age} yrs` : null, patient.gender]
+                        {[patient.curaId, patient.mobile, age !== null ? t('shell.search.years', { age }) : null, patient.gender && t(`common.gender.${patient.gender}`)]
                           .filter(Boolean)
                           .join(' · ')}
                       </span>

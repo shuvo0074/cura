@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AppointmentStatus, type Appointment } from '@cura/shared';
 import { useServices } from '../../../app/services';
+import { useT } from '../../../i18n';
 import styles from './header.module.css';
 
-import { Alert, clockTime, useDismiss } from './header-shared';
+import { Alert, useDismiss } from './header-shared';
 
 /**
  * Notification Center (spec 2.1.3).
@@ -15,6 +16,7 @@ import { Alert, clockTime, useDismiss } from './header-shared';
  */
 export function NotificationBell({ practiceId }: { practiceId: string }) {
   const { http } = useServices();
+  const { t, fmt } = useT();
   const [open, setOpen] = useState(false);
   const [rows, setRows] = useState<Appointment[]>([]);
   const [seenAt, setSeenAt] = useState<number>(() => Number(localStorage.getItem('cura.alerts.seen') ?? 0));
@@ -56,8 +58,8 @@ export function NotificationBell({ practiceId }: { practiceId: string }) {
           return [
             {
               id: `arrival-${row.id}`,
-              text: `${row.patient.fullName} has checked in`,
-              detail: `Waiting since ${clockTime(row.checkedInAt)}`,
+              text: t('shell.alerts.checkedIn', { name: row.patient.fullName }),
+              detail: t('shell.alerts.waitingSince', { time: fmt.time(row.checkedInAt) }),
               tone: 'arrival',
             },
           ];
@@ -67,8 +69,11 @@ export function NotificationBell({ practiceId }: { practiceId: string }) {
           return [
             {
               id: `upcoming-${row.id}`,
-              text: `${row.patient.fullName} at ${clockTime(row.scheduledAt)}`,
-              detail: `${row.durationMinutes} min · ${row.visitType.replace('_', ' ').toLowerCase()}`,
+              text: t('shell.alerts.upcoming', { name: row.patient.fullName, time: fmt.time(row.scheduledAt) }),
+              detail: t('shell.alerts.upcomingDetail', {
+                minutes: row.durationMinutes,
+                visit: t(`common.visitType.${row.visitType}`).toLowerCase(),
+              }),
               tone: 'upcoming',
             },
           ];
@@ -76,7 +81,7 @@ export function NotificationBell({ practiceId }: { practiceId: string }) {
         return [];
       })
       .slice(0, 12);
-  }, [rows]);
+  }, [rows, t, fmt]);
 
   // Unread is time-based: anything newer than the last time the tray was
   // opened. Storing per-alert read state would need ids that survive a poll.
@@ -99,22 +104,22 @@ export function NotificationBell({ practiceId }: { practiceId: string }) {
         type="button"
         className={styles.iconButton}
         onClick={toggle}
-        aria-label={`Notifications${unread > 0 ? `, ${unread} unread` : ''}`}
+        aria-label={unread > 0 ? t('shell.alerts.labelUnread', { count: unread }) : t('shell.alerts.label')}
         aria-expanded={open}
       >
         <span aria-hidden="true">🔔</span>
         {unread > 0 && (
           <span className={styles.badge} aria-hidden="true">
-            {unread > 9 ? '9+' : unread}
+            {unread > 9 ? `${fmt.number(9)}+` : fmt.number(unread)}
           </span>
         )}
       </button>
 
       {open && (
-        <div className={styles.popover} role="dialog" aria-label="Notifications">
-          <header className={styles.popoverHead}>Notifications</header>
+        <div className={styles.popover} role="dialog" aria-label={t('shell.alerts.label')}>
+          <header className={styles.popoverHead}>{t('shell.alerts.title')}</header>
           {alerts.length === 0 ? (
-            <p className={styles.popoverEmpty}>Nothing needs your attention right now.</p>
+            <p className={styles.popoverEmpty}>{t('shell.alerts.empty')}</p>
           ) : (
             <ul className={styles.alertList}>
               {alerts.map((alert) => (

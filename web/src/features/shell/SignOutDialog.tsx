@@ -1,23 +1,25 @@
 import { Modal, uiStyles as s } from '../../ui';
+import { useT } from '../../i18n';
 
 /** Confirmation before ending the session. */
 export function SignOutDialog({ onCancel, onConfirm }: { onCancel: () => void; onConfirm: () => void }) {
+  const { t } = useT();
   return (
     <Modal
-      title="Log out?"
+      title={t('shell.signOut.title')}
       onClose={onCancel}
       footer={
         <>
           <button type="button" className={s.secondary} onClick={onCancel}>
-            Stay signed in
+            {t('shell.signOut.stay')}
           </button>
           <button type="button" className={s.primary} onClick={onConfirm}>
-            Log out
+            {t('shell.signOut.confirm')}
           </button>
         </>
       }
     >
-      <p className={s.muted}>You will need your password (and a code, if two-factor is on) to sign back in.</p>
+      <p className={s.muted}>{t('shell.signOut.body')}</p>
     </Modal>
   );
 }

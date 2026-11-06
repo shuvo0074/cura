@@ -204,6 +204,15 @@
 @media (max-width: 720px) { .userName { display: none; } }
 
 .switches { padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--color-border-subtle); }
+.languageRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--color-border-subtle);
+  font-size: var(--text-sm);
+}
 .switch {
   display: flex;
   align-items: center;

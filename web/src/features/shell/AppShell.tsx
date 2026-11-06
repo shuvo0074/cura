@@ -5,6 +5,7 @@ import { NAV_ITEMS, visibleNavItems, type RouteKey } from './navigation';
 import { UniversalSearch } from './header/UniversalSearch';
 import { PatientIntakeModal } from './header/PatientIntakeModal';
 import { HelpMenu, NotificationBell, ProfileMenu, type WorkspaceToggles } from './header/HeaderMenus';
+import { useT } from '../../i18n';
 import styles from './shell.module.css';
 
 import { NavButton } from './NavButton';
@@ -62,6 +63,7 @@ export function AppShell({
   const [confirmingSignOut, setConfirmingSignOut] = useState(false);
   const requestSignOut = useCallback(() => setConfirmingSignOut(true), []);
   const { mode, setMode } = useTheme();
+  const { t } = useT();
 
   const [toggles, setToggles] = useState<WorkspaceToggles>({
     available: true,
@@ -72,7 +74,8 @@ export function AppShell({
   });
 
   const items = useMemo(() => visibleNavItems(user.permissions, user.ownerRoles ?? [], user.isSuperAdmin === true), [user.permissions, user.ownerRoles, user.isSuperAdmin]);
-  const activeLabel = NAV_ITEMS.find((i) => i.key === active)?.label ?? '';
+  const activeItem = NAV_ITEMS.find((i) => i.key === active);
+  const activeLabel = activeItem ? t(activeItem.label) : '';
   const canAddPatient = user.permissions.includes(Permission.APPOINTMENT_WRITE);
 
   const setToggle = useCallback(
@@ -95,7 +98,7 @@ export function AppShell({
           type="button"
           className={styles.hamburger}
           onClick={() => setCollapsed((c) => !c)}
-          aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
+          aria-label={collapsed ? t('shell.nav.expand') : t('shell.nav.collapse')}
         >
           ☰
         </button>
@@ -108,7 +111,7 @@ export function AppShell({
 
         {practiceId && canAddPatient && (
           <button type="button" className={styles.cta} onClick={() => onIntakeOpenChange(true)}>
-            + Add Patient
+            {t('shell.addPatient')}
           </button>
         )}
 
@@ -116,8 +119,8 @@ export function AppShell({
           type="button"
           className={styles.iconButton}
           onClick={() => setMode(mode === 'dark' ? 'light' : 'dark')}
-          aria-label="Toggle colour theme"
-          title="Toggle light / dark"
+          aria-label={t('shell.toggleTheme')}
+          title={t('shell.toggleThemeTitle')}
         >
           {mode === 'dark' ? '☀' : '☾'}
         </button>
@@ -152,7 +155,7 @@ export function AppShell({
         />
       )}
 
-      <nav className={styles.sidebar} aria-label="Modules">
+      <nav className={styles.sidebar} aria-label={t('shell.nav.modules')}>
         <ul className={styles.navList}>
           {items.map((item, i) => (
             <Fragment key={item.key}>
@@ -173,12 +176,12 @@ export function AppShell({
               type="button"
               className={styles.navItem}
               onClick={requestSignOut}
-              title={collapsed ? 'Log out' : undefined}
+              title={collapsed ? t('shell.nav.logOut') : undefined}
             >
               <span className={styles.navIcon} aria-hidden="true">
                 ⏻
               </span>
-              {!collapsed && <span className={styles.navLabel}>Log out</span>}
+              {!collapsed && <span className={styles.navLabel}>{t('shell.nav.logOut')}</span>}
             </button>
           </li>
         </ul>

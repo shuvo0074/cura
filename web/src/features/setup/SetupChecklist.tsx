@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useResource, uiStyles as s } from '../../ui';
 import type { SettingsKey } from '../settings/settings-nav';
 import { readSetupMemory, writeSetupMemory } from './setup-storage';
+import { useT } from '../../i18n';
 import styles from './setup.module.css';
 
 type StepKey = 'details' | 'hours' | 'doctor' | 'pricing' | 'deskStaff' | 'firstPatient';
@@ -15,13 +16,14 @@ interface SetupProgress {
 
 type Action = { settings: SettingsKey } | 'addPatient';
 
-const STEPS: Record<StepKey, { label: string; hint: string; button: string; action: Action }> = {
-  details: { label: 'Clinic details', hint: 'Name, phone number and address', button: 'Add details', action: { settings: 'practice' } },
-  hours: { label: 'Opening hours', hint: 'The days and times you see patients', button: 'Set hours', action: { settings: 'practice' } },
-  doctor: { label: 'Add a doctor', hint: 'Who sees patients here', button: 'Add doctor', action: { settings: 'staff' } },
-  pricing: { label: 'Set prices', hint: 'Consultation and other fees', button: 'Set prices', action: { settings: 'pricing' } },
-  deskStaff: { label: 'Add front desk staff', hint: 'Someone to book and check in patients', button: 'Add staff', action: { settings: 'staff' } },
-  firstPatient: { label: 'Book a first patient', hint: 'Add a patient and give them a time', button: 'Book patient', action: 'addPatient' },
+/** Each step's words are `setup.<key>.label`, `.hint` and `.button` in i18n/areas/setup.ts. */
+const STEPS: Record<StepKey, { action: Action }> = {
+  details: { action: { settings: 'practice' } },
+  hours: { action: { settings: 'practice' } },
+  doctor: { action: { settings: 'staff' } },
+  pricing: { action: { settings: 'pricing' } },
+  deskStaff: { action: { settings: 'staff' } },
+  firstPatient: { action: 'addPatient' },
 };
 
 /**
@@ -39,6 +41,7 @@ export function SetupChecklist({
   onOpenSettings: (section: SettingsKey) => void;
   onAddPatient?: (() => void) | undefined;
 }) {
+  const { t } = useT();
   const { data } = useResource<SetupProgress>('/settings/setup-progress', { practiceId });
   // Read once: marking the ready message as shown must not hide it straight away.
   const [memory] = useState(() => readSetupMemory(practiceId));
@@ -61,14 +64,14 @@ export function SetupChecklist({
 
   if (data.complete) {
     return (
-      <section className={styles.card} data-ready aria-label="Your clinic is ready">
+      <section className={styles.card} data-ready aria-label={t('setup.ready')}>
         <span className={styles.readyMark} aria-hidden="true">✓</span>
         <div className={styles.readyText}>
-          <h2 className={styles.title}>Your clinic is ready</h2>
-          <p className={styles.lead}>Everything is set up. Patients can now be booked and seen.</p>
+          <h2 className={styles.title}>{t('setup.ready')}</h2>
+          <p className={styles.lead}>{t('setup.readyLead')}</p>
         </div>
         <button type="button" className={s.secondary} onClick={() => setClosed(true)}>
-          Close
+          {t('setup.close')}
         </button>
       </section>
     );
@@ -80,17 +83,17 @@ export function SetupChecklist({
     <section className={styles.card} aria-labelledby="setup-title">
       <header className={styles.head}>
         <div>
-          <h2 id="setup-title" className={styles.title}>Get your clinic ready</h2>
-          <p className={styles.lead}>A few steps and you are ready to see patients.</p>
+          <h2 id="setup-title" className={styles.title}>{t('setup.title')}</h2>
+          <p className={styles.lead}>{t('setup.lead')}</p>
         </div>
         <div className={styles.progress}>
           <span className={styles.count}>
-            {data.done} of {data.total} done
+            {t('setup.progress', { done: data.done, total: data.total })}
           </span>
           <span
             className={styles.bar}
             role="progressbar"
-            aria-label="Setup progress"
+            aria-label={t('setup.progressLabel')}
             aria-valuemin={0}
             aria-valuemax={data.total}
             aria-valuenow={data.done}
@@ -99,7 +102,7 @@ export function SetupChecklist({
           </span>
         </div>
         <button type="button" className={s.linkButton} onClick={hide}>
-          Hide for now
+          {t('setup.hide')}
         </button>
       </header>
 
@@ -117,17 +120,17 @@ export function SetupChecklist({
               </span>
               <span className={styles.stepText}>
                 <strong>
-                  {meta.label}
-                  {step.optional && <span className={styles.optional}>Optional</span>}
+                  {t(`setup.${step.key}.label`)}
+                  {step.optional && <span className={styles.optional}>{t('setup.optional')}</span>}
                 </strong>
-                <span>{meta.hint}</span>
+                <span>{t(`setup.${step.key}.hint`)}</span>
               </span>
               {step.done ? (
-                <span className={styles.doneLabel}>Done</span>
+                <span className={styles.doneLabel}>{t('setup.done')}</span>
               ) : (
                 open && (
                   <button type="button" className={styles.action} onClick={open}>
-                    {meta.button}
+                    {t(`setup.${step.key}.button`)}
                   </button>
                 )
               )}

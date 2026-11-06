@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useT } from '../i18n';
 import styles from './ui.module.css';
 
 export function SaveBar({
@@ -7,7 +8,7 @@ export function SaveBar({
   saved,
   error,
   dirty,
-  label = 'Save',
+  label,
   children,
 }: {
   onSave: () => void;
@@ -18,17 +19,18 @@ export function SaveBar({
   label?: string;
   children?: ReactNode;
 }) {
+  const { t, tm } = useT();
   return (
     <footer className={styles.saveBar}>
       {children}
       {error && (
         <span className={styles.error} role="alert">
-          {error}
+          {tm(error)}
         </span>
       )}
       {saved && !error && (
         <span className={styles.saved} role="status">
-          Saved
+          {t('common.saved')}
         </span>
       )}
       <button
@@ -39,7 +41,7 @@ export function SaveBar({
         // it, re-clicking Save flashes the same confirmation for a no-op write.
         disabled={busy || !dirty}
       >
-        {busy ? 'Saving…' : label}
+        {busy ? t('common.saving') : (label ?? t('common.save'))}
       </button>
     </footer>
   );

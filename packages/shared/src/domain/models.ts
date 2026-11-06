@@ -31,6 +31,8 @@ export interface AuthenticatedUser {
   practiceIds: readonly string[];
   onboardingCompleted: boolean;
   avatarUrl: string | null;
+  /** Cura Dashboard language. Optional: an older Cura API does not send it. */
+  locale?: 'en' | 'bn';
 }
 
 export interface AuthTokens {

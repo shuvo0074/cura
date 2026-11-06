@@ -112,7 +112,7 @@ test.describe('Calendar', () => {
 
     const target = new Date();
     target.setMonth(target.getMonth() + 1, 15);
-    const label = target.toLocaleDateString([], { dateStyle: 'long' });
+    const label = target.toLocaleDateString('en-GB', { dateStyle: 'long' });
     await nav.getByRole('grid', { name: 'Pick a date' }).getByRole('button', { name: new RegExp(`^${label}`) }).click();
     await expect.poll(() => range.innerText()).not.toBe(before);
   });
@@ -165,8 +165,11 @@ test.describe('Calendar', () => {
     await page.getByRole('button', { name: 'Next period' }).click();
     await expect(page.getByRole('region', { name: 'Schedule' })).not.toHaveAttribute('data-loading', /.*/);
 
+    // The app writes dates in en-GB. Node and the browser may disagree on the comma after the weekday.
     const cell = (d: Date) =>
-      page.getByRole('button', { name: new RegExp(`^${d.toLocaleDateString([], { dateStyle: 'full' })},`) });
+      page.getByRole('button', {
+        name: new RegExp(`^${d.toLocaleDateString('en-GB', { dateStyle: 'full' }).replace(', ', ',? ')},`),
+      });
     const chip = cell(from).getByText(name);
     await expect(chip).toBeVisible();
 

@@ -2,15 +2,16 @@ import { useCallback, useState } from 'react';
 import { UserRole, initials } from '@cura/shared';
 import { useDismiss } from './calendar-shared';
 import type { StaffMember } from './use-calendar-settings';
+import { useT, type TranslationKey } from '../../i18n';
 import styles from './panes.module.css';
 
 /** Doctors are anyone with the clinical role or a BMDC registration. */
 const isDoctor = (m: StaffMember) => m.role === UserRole.DOCTOR || !!m.bmdcNumber;
 
-const ROLE_LABELS: Record<string, string> = {
-  [UserRole.ADMINISTRATOR]: 'Administrator',
-  [UserRole.DESK_STAFF]: 'Front desk',
-  [UserRole.DOCTOR]: 'Doctor',
+const ROLE_LABELS: Record<string, TranslationKey> = {
+  [UserRole.ADMINISTRATOR]: 'calendar.role.ADMINISTRATOR',
+  [UserRole.DESK_STAFF]: 'calendar.role.DESK_STAFF',
+  [UserRole.DOCTOR]: 'calendar.role.DOCTOR',
 };
 
 /**
@@ -27,6 +28,7 @@ export function TeamDirectory({
   staff: readonly StaffMember[];
   specialization: string | null;
 }) {
+  const { t } = useT();
   const [open, setOpen] = useState<string | null>(null);
   const close = useCallback(() => setOpen(null), []);
   const ref = useDismiss(open !== null, close);
@@ -48,14 +50,14 @@ export function TeamDirectory({
         </span>
         <span className={styles.personText}>
           <span className={styles.personName}>{m.fullName}</span>
-          <span className={styles.personRole}>{detail ?? ROLE_LABELS[m.role] ?? m.role}</span>
+          <span className={styles.personRole}>{detail ?? (ROLE_LABELS[m.role] ? t(ROLE_LABELS[m.role]!) : m.role)}</span>
         </span>
       </button>
       {open === m.userId && (
-        <div className={styles.contactCard} role="dialog" aria-label={`Contact ${m.fullName}`}>
+        <div className={styles.contactCard} role="dialog" aria-label={t('calendar.contact', { name: m.fullName })}>
           <strong>{m.fullName}</strong>
-          {m.mobile ? <a href={`tel:${m.mobile}`}>☎ {m.mobile}</a> : <span>☎ Not available</span>}
-          {m.email ? <a href={`mailto:${m.email}`}>✉ {m.email}</a> : <span>✉ Not available</span>}
+          {m.mobile ? <a href={`tel:${m.mobile}`}>☎ {m.mobile}</a> : <span>☎ {t('calendar.notAvailable')}</span>}
+          {m.email ? <a href={`mailto:${m.email}`}>✉ {m.email}</a> : <span>✉ {t('calendar.notAvailable')}</span>}
         </div>
       )}
     </li>
@@ -65,19 +67,19 @@ export function TeamDirectory({
     <div className={styles.team} ref={ref}>
       {lead && (
         <section>
-          <h3 className={styles.groupTitle}>Doctor</h3>
-          <ul className={styles.people}>{person(lead, specialization ?? 'Lead consultant')}</ul>
+          <h3 className={styles.groupTitle}>{t('calendar.leadDoctor')}</h3>
+          <ul className={styles.people}>{person(lead, specialization ?? t('calendar.leadConsultant'))}</ul>
         </section>
       )}
       {assistants.length > 0 && (
         <section>
-          <h3 className={styles.groupTitle}>Assistant doctors</h3>
-          <ul className={styles.people}>{assistants.map((m) => person(m, 'Assistant doctor'))}</ul>
+          <h3 className={styles.groupTitle}>{t('calendar.assistantDoctors')}</h3>
+          <ul className={styles.people}>{assistants.map((m) => person(m, t('calendar.assistantDoctor')))}</ul>
         </section>
       )}
       {support.length > 0 && (
         <section>
-          <h3 className={styles.groupTitle}>Staff &amp; front desk</h3>
+          <h3 className={styles.groupTitle}>{t('calendar.staffAndDesk')}</h3>
           <ul className={styles.people}>{support.map((m) => person(m))}</ul>
         </section>
       )}

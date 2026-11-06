@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { isCancelled, visitTypePrefix, type Appointment, type QueueSummary } from '@cura/shared';
+import { useT } from '../../i18n';
 import { clockTime } from './calendar-shared';
 import { DoctorDot } from './doctors';
 import { Counter } from './QueueCounter';
@@ -26,32 +27,33 @@ export function TodayPane({
   onSelect: (id: string) => void;
   onAddWalkIn?: (() => void) | undefined;
 }) {
+  const { t, locale } = useT();
   const visible = showCancelled ? today : today.filter((a) => !isCancelled(a.status));
 
   return (
-    <aside className={styles.right} aria-label="Today's schedule">
-      <h2 className={styles.paneTitle}>Today&rsquo;s Schedule</h2>
+    <aside className={styles.right} aria-label={t('calendar.todayPane')}>
+      <h2 className={styles.paneTitle}>{t('calendar.todayTitle')}</h2>
 
       {onAddWalkIn && (
         <button type="button" className={styles.walkIn} onClick={onAddWalkIn}>
-          + Add Walk-in Appointment
+          {t('calendar.addWalkIn')}
         </button>
       )}
 
       {queue && (
         <div className={styles.counters}>
-          <Counter label="Waiting" value={queue.waiting} tone="waiting" />
-          <Counter label="Engaged" value={queue.engaged} tone="engaged" />
-          <Counter label="Done" value={queue.done} tone="done" />
-          <Counter label="Cancelled" value={queue.cancelled} tone="cancelled" />
+          <Counter label={t('calendar.counter.waiting')} value={queue.waiting} tone="waiting" />
+          <Counter label={t('calendar.counter.engaged')} value={queue.engaged} tone="engaged" />
+          <Counter label={t('calendar.counter.done')} value={queue.done} tone="done" />
+          <Counter label={t('calendar.counter.cancelled')} value={queue.cancelled} tone="cancelled" />
         </div>
       )}
 
       {details ?? (
         <>
-          <p className={styles.placeholder}>Select a patient slot to view details.</p>
+          <p className={styles.placeholder}>{t('calendar.selectSlot')}</p>
           {visible.length === 0 ? (
-            <p className={styles.placeholder}>No appointments today.</p>
+            <p className={styles.placeholder}>{t('calendar.noneToday')}</p>
           ) : (
             <ul className={styles.todayList}>
               {visible.map((a) => (
@@ -62,7 +64,7 @@ export function TodayPane({
                     data-status={a.status.toLowerCase()}
                     onClick={() => onSelect(a.id)}
                   >
-                    <span className={styles.todayTime}>{clockTime(new Date(a.scheduledAt))}</span>
+                    <span className={styles.todayTime}>{clockTime(new Date(a.scheduledAt), locale)}</span>
                     <span className={styles.todayName}>
                       <span className={styles.prefix} data-visit={a.visitType.toLowerCase()}>
                         {visitTypePrefix[a.visitType]}
@@ -71,7 +73,7 @@ export function TodayPane({
                       <DoctorDot doctorId={a.doctorId} className={styles.todayDoctor} />
                     </span>
                     <span className={styles.todayReason}>
-                      {a.plannedProcedures[0] ?? 'Visit reason not specified'}
+                      {a.plannedProcedures[0] ?? t('calendar.reasonMissing')}
                     </span>
                   </button>
                 </li>

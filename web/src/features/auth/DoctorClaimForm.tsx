@@ -1,6 +1,7 @@
 import { useEffect, type FormEvent } from 'react';
 import { businessRules, DoctorClaimViewModel, useViewModel, type AuthSession } from '@cura/shared';
 import { useServices } from '../../app/services';
+import { useT } from '../../i18n';
 import styles from './login.module.css';
 
 /**
@@ -17,6 +18,7 @@ export function DoctorClaimForm({
   onCancel: () => void;
 }) {
   const { auth } = useServices();
+  const { t, tm, rich } = useT();
   const [state, vm] = useViewModel(() => new DoctorClaimViewModel(auth, onAuthenticated));
 
   useEffect(() => {
@@ -29,15 +31,15 @@ export function DoctorClaimForm({
     else void vm.submitDetails();
   };
 
-  if (state.phase === 'loading') return <p className={styles.hint}>Finding your details…</p>;
+  if (state.phase === 'loading') return <p className={styles.hint}>{t('auth.findingDetails')}</p>;
 
   if (state.phase === 'notFound') {
     return (
       <div className={styles.form}>
-        <h1 className={styles.title}>No record to finish</h1>
-        <p className={styles.hint}>This number has no doctor waiting to sign up. Log in or register instead.</p>
+        <h1 className={styles.title}>{t('auth.noRecord')}</h1>
+        <p className={styles.hint}>{t('auth.noRecordHint')}</p>
         <button className={styles.submit} type="button" onClick={onCancel}>
-          Back
+          {t('auth.back')}
         </button>
       </div>
     );
@@ -65,7 +67,7 @@ export function DoctorClaimForm({
       {options.hint && <span className={styles.hint}>{options.hint}</span>}
       {state.fieldErrors[name] && (
         <span className={styles.error} role="alert">
-          {state.fieldErrors[name]}
+          {tm(state.fieldErrors[name])}
         </span>
       )}
     </label>
@@ -75,12 +77,14 @@ export function DoctorClaimForm({
     <form className={styles.form} onSubmit={handleSubmit} noValidate>
       {state.phase === 'otp' ? (
         <>
-          <h1 className={styles.title}>Confirm your phone</h1>
+          <h1 className={styles.title}>{t('auth.confirmPhone')}</h1>
           <p className={styles.hint}>
-            We sent a {businessRules.auth.otpLength}-digit code to <strong>{state.challenge?.maskedDestination}</strong>.
+            {rich('auth.codeSent', { length: businessRules.auth.otpLength }, {
+              to: <strong>{state.challenge?.maskedDestination}</strong>,
+            })}
           </p>
           <label className={styles.field}>
-            <span className={styles.label}>Verification code</span>
+            <span className={styles.label}>{t('auth.verificationCode')}</span>
             <input
               className={`${styles.input} ${styles.otp}`}
               value={state.otpCode}
@@ -95,48 +99,48 @@ export function DoctorClaimForm({
         </>
       ) : (
         <>
-          <h1 className={styles.title}>Finish signing up</h1>
-          <p className={styles.hint}>A clinic already added you as a doctor. Check your details and create your login.</p>
+          <h1 className={styles.title}>{t('auth.finishSignup')}</h1>
+          <p className={styles.hint}>{t('auth.finishSignupHint')}</p>
 
           <label className={styles.field}>
-            <span className={styles.label}>Full name</span>
+            <span className={styles.label}>{t('auth.fullName')}</span>
             <input className={styles.input} value={state.fullName} readOnly />
           </label>
           <label className={styles.field}>
-            <span className={styles.label}>Specialty</span>
+            <span className={styles.label}>{t('auth.specialty')}</span>
             <input className={styles.input} value={state.specialty} readOnly />
           </label>
           <label className={styles.field}>
-            <span className={styles.label}>Mobile number</span>
+            <span className={styles.label}>{t('auth.mobile')}</span>
             <input className={styles.input} value={state.mobile} readOnly />
           </label>
 
-          {field('bmdcNumber', 'BMDC registration number', { autoComplete: 'off' })}
-          {field('email', 'Email (optional)', { type: 'email', autoComplete: 'email' })}
-          {field('password', 'Password', {
+          {field('bmdcNumber', t('auth.bmdc'), { autoComplete: 'off' })}
+          {field('email', t('auth.emailOptional'), { type: 'email', autoComplete: 'email' })}
+          {field('password', t('auth.password'), {
             type: 'password',
             autoComplete: 'new-password',
-            hint: `At least ${businessRules.auth.passwordMinLength} characters, with upper- and lowercase letters and a number.`,
+            hint: t('auth.passwordHint', { min: businessRules.auth.passwordMinLength }),
           })}
-          {field('confirmPassword', 'Confirm password', { type: 'password', autoComplete: 'new-password' })}
+          {field('confirmPassword', t('auth.confirmPassword'), { type: 'password', autoComplete: 'new-password' })}
         </>
       )}
 
       {state.formError && (
         <p className={styles.formError} role="alert">
-          {state.formError}
+          {tm(state.formError)}
         </p>
       )}
 
       <button className={styles.submit} type="submit" disabled={state.submitting}>
-        {state.submitting ? 'Please wait…' : state.phase === 'otp' ? 'Verify and finish' : 'Continue'}
+        {state.submitting ? t('auth.pleaseWait') : state.phase === 'otp' ? t('auth.verifyAndFinish') : t('auth.continue')}
       </button>
       <button
         className={styles.secondary}
         type="button"
         onClick={() => (state.phase === 'otp' ? vm.backToDetails() : onCancel())}
       >
-        Back
+        {t('auth.back')}
       </button>
     </form>
   );

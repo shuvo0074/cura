@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import { CalendarViewModel, isCancelled, useViewModel, type Appointment } from '@cura/shared';
 import { useServices } from '../../app/services';
 import { Modal, uiStyles as s } from '../../ui';
+import { useT } from '../../i18n';
 import { AppointmentDetails } from './AppointmentDetails';
 import { BlockCalendarDialog } from './BlockCalendarDialog';
 import { CalendarToolbar } from './CalendarToolbar';
@@ -63,6 +64,7 @@ export function CalendarView({
   banner?: ReactNode;
 }) {
   const { appointments } = useServices();
+  const { t, tm, rich, locale } = useT();
   const [blocking, setBlocking] = useState(false);
   const [pendingMove, setPendingMove] = useState<{ appointment: Appointment; at: Date } | null>(null);
   const [state, vm] = useViewModel(() => new CalendarViewModel(appointments, practiceId, doctorId));
@@ -121,7 +123,7 @@ export function CalendarView({
           clinicName={settings.practiceName}
           view={state.view}
           anchorDate={state.anchorDate}
-          label={rangeLabel(state.view, state.anchorDate, range.days)}
+          label={rangeLabel(state.view, state.anchorDate, range.days, locale)}
           showCancelled={state.showCancelled}
           onShift={(d) => vm.shift(d)}
           onToday={() => vm.goToToday()}
@@ -134,11 +136,11 @@ export function CalendarView({
         {banner}
 
         <div className={styles.body}>
-          <aside className={panes.left} aria-label="Navigator and team">
+          <aside className={panes.left} aria-label={t('calendar.navigatorPane')}>
             {/* Closures are a practice setting; others would only see it fail. */}
             {canManageSettings && (
               <button type="button" className={panes.blockButton} onClick={() => setBlocking(true)}>
-                ▦ Block Calendar
+                {t('calendar.blockCalendar')}
               </button>
             )}
             <MiniMonth
@@ -156,12 +158,12 @@ export function CalendarView({
             )}
           </aside>
 
-          <section className={styles.main} data-loading={state.loading || undefined} aria-label="Schedule">
+          <section className={styles.main} data-loading={state.loading || undefined} aria-label={t('calendar.schedulePane')}>
             {state.error && (
               <p className={styles.error} role="alert">
-                {state.error}
+                {tm(state.error)}
                 <button type="button" className={s.linkButton} onClick={() => vm.dismissError()}>
-                  Dismiss
+                  {t('calendar.dismiss')}
                 </button>
               </p>
             )}
@@ -215,12 +217,12 @@ export function CalendarView({
 
         {pendingMove && (
           <Modal
-            title="Move appointment"
+            title={t('calendar.move.title')}
             onClose={() => setPendingMove(null)}
             footer={
               <>
                 <button type="button" className={s.secondary} onClick={() => setPendingMove(null)}>
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="button"
@@ -231,14 +233,20 @@ export function CalendarView({
                     setPendingMove(null);
                   }}
                 >
-                  Move
+                  {t('calendar.move.confirm')}
                 </button>
               </>
             }
           >
             <p>
-              Move <strong>{pendingMove.appointment.patient.fullName}</strong> from{' '}
-              {slotLabel(new Date(pendingMove.appointment.scheduledAt))} to <strong>{slotLabel(pendingMove.at)}</strong>?
+              {rich(
+                'calendar.move.question',
+                { from: slotLabel(new Date(pendingMove.appointment.scheduledAt), locale) },
+                {
+                  name: <strong>{pendingMove.appointment.patient.fullName}</strong>,
+                  to: <strong>{slotLabel(pendingMove.at, locale)}</strong>,
+                },
+              )}
             </p>
           </Modal>
         )}

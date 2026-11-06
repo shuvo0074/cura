@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Field, Panel, Row, SaveBar, uiStyles as s, useMutation } from '../../ui';
+import { useT } from '../../i18n';
 
 /**
  * Password change.
@@ -10,13 +11,14 @@ import { Field, Panel, Row, SaveBar, uiStyles as s, useMutation } from '../../ui
  */
 export function ChangePasswordCard() {
   const mutate = useMutation();
+  const { t } = useT();
   const [form, setForm] = useState({ current: '', next: '', confirm: '' });
   const [note, setNote] = useState<string | null>(null);
 
   const submit = async () => {
     setNote(null);
     if (form.next !== form.confirm) {
-      setNote('The two new passwords do not match.');
+      setNote(t('profile.passwordsDiffer'));
       return;
     }
     const ok = await mutate.run('/account/password', {
@@ -25,14 +27,14 @@ export function ChangePasswordCard() {
     });
     if (ok) {
       setForm({ current: '', next: '', confirm: '' });
-      setNote('Password changed. Every other signed-in session has been ended.');
+      setNote(t('profile.passwordChanged'));
     }
   };
 
   return (
-    <Panel title="Change password" description="At least 10 characters with a letter, a digit and a symbol.">
+    <Panel title={t('profile.changePassword')} description={t('profile.changePasswordHint')}>
       <Row>
-        <Field label="Current password">
+        <Field label={t('profile.currentPassword')}>
           <input
             className={s.input}
             type="password"
@@ -41,7 +43,7 @@ export function ChangePasswordCard() {
             onChange={(e) => setForm((f) => ({ ...f, current: e.target.value }))}
           />
         </Field>
-        <Field label="New password">
+        <Field label={t('profile.newPassword')}>
           <input
             className={s.input}
             type="password"
@@ -50,7 +52,7 @@ export function ChangePasswordCard() {
             onChange={(e) => setForm((f) => ({ ...f, next: e.target.value }))}
           />
         </Field>
-        <Field label="Confirm new password">
+        <Field label={t('profile.confirmNewPassword')}>
           <input
             className={s.input}
             type="password"
@@ -67,7 +69,7 @@ export function ChangePasswordCard() {
         saved={false}
         error={mutate.error ?? note}
         dirty={form.current !== '' && form.next !== ''}
-        label="Change password"
+        label={t('profile.changePassword')}
       />
     </Panel>
   );

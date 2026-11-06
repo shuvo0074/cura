@@ -41,6 +41,8 @@ export interface UserRecord {
   role: UserRole;
   bmdcNumber: string | null;
   avatarUrl: string | null;
+  /** Interface language on Cura Dashboard: 'en' or 'bn'. */
+  locale: string;
   isActive: boolean;
   twoFactorEnabled: boolean;
   emailVerifiedAt: Date | null;

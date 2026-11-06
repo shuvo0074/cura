@@ -115,3 +115,17 @@ test('directory sign-up and booking never write to clinical tables', async () =>
   assert.equal(clinical.fullName, 'Same Phone');
   assert.equal((await api.get(`/patients/${clinical.id}?practiceId=${practiceId}`, res.body.accessToken)).status, 403);
 });
+
+test('the Cura Dashboard language is saved to the account and comes back at login', async () => {
+  const me = await api.get('/account/profile', token);
+  assert.equal(me.body.locale, 'en');
+
+  assert.equal((await api.patch('/account/profile', { locale: 'fr' }, token)).status, 422);
+  const saved = await api.patch('/account/profile', { locale: 'bn' }, token);
+  assert.equal(saved.status, 200, JSON.stringify(saved.body));
+  assert.equal(saved.body.locale, 'bn');
+
+  const login = await api.post('/auth/login', { identifier: me.body.email, password: PASSWORD });
+  assert.equal(login.body.session.user.locale, 'bn');
+  await api.patch('/account/profile', { locale: 'en' }, login.body.session.accessToken);
+});

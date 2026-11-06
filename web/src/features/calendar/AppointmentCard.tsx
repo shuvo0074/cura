@@ -1,5 +1,6 @@
 import { memo, type CSSProperties, type PointerEvent } from 'react';
 import { visitTypePrefix, type Appointment } from '@cura/shared';
+import { useT } from '../../i18n';
 import { clockTime } from './calendar-shared';
 import { useDoctorMarker } from './doctors';
 import styles from './calendar.module.css';
@@ -37,6 +38,7 @@ export const AppointmentCard = memo(function AppointmentCard({
   moving?: boolean;
   onPressMove?: (id: string, e: PointerEvent<HTMLElement>) => void;
 }) {
+  const { t, locale } = useT();
   const start = new Date(appointment.scheduledAt);
   const doctor = useDoctorMarker(appointment.doctorId);
 
@@ -55,8 +57,8 @@ export const AppointmentCard = memo(function AppointmentCard({
       aria-pressed={selected}
       // The only cue for what can move: done visits are history and the server
       // refuses to reschedule them, so say so instead of silently not dragging.
-      title={`${clockTime(start)} · ${appointment.patient.fullName}${doctor ? ` · ${doctor.fullName}` : ''}${
-        movable ? ' — drag to move' : appointment.status === 'DONE' ? ' — finished visits can’t be moved' : ''
+      title={`${clockTime(start, locale)} · ${appointment.patient.fullName}${doctor ? ` · ${doctor.fullName}` : ''}${
+        movable ? t('calendar.dragToMove') : appointment.status === 'DONE' ? t('calendar.cannotMoveDone') : ''
       }`}
       data-movable={movable || undefined}
       data-moving={moving || undefined}
@@ -67,7 +69,7 @@ export const AppointmentCard = memo(function AppointmentCard({
         {visitTypePrefix[appointment.visitType]}
       </span>
       <span className={styles.cardName}>{appointment.patient.fullName}</span>
-      {!compact && !hideTime && <span className={styles.cardTime}>{clockTime(start)}</span>}
+      {!compact && !hideTime && <span className={styles.cardTime}>{clockTime(start, locale)}</span>}
     </button>
   );
 });

@@ -31,6 +31,7 @@ export class PrismaUserRepository implements UserRepository {
     role: true,
     bmdcNumber: true,
     avatarUrl: true,
+    locale: true,
     isActive: true,
     twoFactorEnabled: true,
     emailVerifiedAt: true,
@@ -329,6 +330,7 @@ export class PrismaUserRepository implements UserRepository {
     role: string;
     bmdcNumber: string | null;
     avatarUrl: string | null;
+    locale: string;
     isActive: boolean;
     twoFactorEnabled: boolean;
     emailVerifiedAt: Date | null;

@@ -1,6 +1,7 @@
 import type { FormEvent } from 'react';
 import { businessRules, PasswordResetViewModel, useViewModel, type AuthSession } from '@cura/shared';
 import { useServices } from '../../app/services';
+import { useT } from '../../i18n';
 import styles from './login.module.css';
 
 /**
@@ -19,6 +20,7 @@ export function PasswordResetForm({
   onCancel: () => void;
 }) {
   const { auth } = useServices();
+  const { t, tm, rich } = useT();
   const [state, vm] = useViewModel(() => {
     const model = new PasswordResetViewModel(auth, onAuthenticated, onDoctorSignupRequired);
     model.setField('identifier', initialIdentifier);
@@ -34,12 +36,12 @@ export function PasswordResetForm({
   if (state.phase === 'done') {
     return (
       <div className={styles.form}>
-        <h1 className={styles.title}>Password changed</h1>
+        <h1 className={styles.title}>{t('auth.passwordChanged')}</h1>
         <p className={styles.hint} role="status">
-          {state.doneMessage}
+          {tm(state.doneMessage)}
         </p>
         <button className={styles.submit} type="button" onClick={onCancel}>
-          Back to login
+          {t('auth.backToLogin')}
         </button>
       </div>
     );
@@ -63,7 +65,7 @@ export function PasswordResetForm({
       />
       {state.fieldErrors[name] ? (
         <span id={`reset-${name}-error`} className={styles.error} role="alert">
-          {state.fieldErrors[name]}
+          {tm(state.fieldErrors[name])}
         </span>
       ) : (
         hint && (
@@ -79,13 +81,14 @@ export function PasswordResetForm({
     <form className={styles.form} onSubmit={handleSubmit} noValidate>
       {state.phase === 'code' ? (
         <>
-          <h1 className={styles.title}>Choose a new password</h1>
+          <h1 className={styles.title}>{t('auth.newPasswordTitle')}</h1>
           <p className={styles.hint}>
-            If an account uses that address, we sent a {businessRules.auth.otpLength}-digit code to{' '}
-            <strong>{state.challenge?.maskedDestination}</strong>.
+            {rich('auth.resetCodeSent', { length: businessRules.auth.otpLength }, {
+              to: <strong>{state.challenge?.maskedDestination}</strong>,
+            })}
           </p>
           <label className={styles.field}>
-            <span className={styles.label}>Code</span>
+            <span className={styles.label}>{t('auth.code')}</span>
             <input
               className={`${styles.input} ${styles.otp}`}
               value={state.otpCode}
@@ -99,22 +102,22 @@ export function PasswordResetForm({
           </label>
           {passwordField(
             'password',
-            'New password',
-            `At least ${businessRules.auth.passwordMinLength} characters, with upper- and lowercase letters and a number.`,
+            t('auth.newPassword'),
+            t('auth.passwordHint', { min: businessRules.auth.passwordMinLength }),
           )}
-          {passwordField('confirmPassword', 'Confirm new password')}
+          {passwordField('confirmPassword', t('auth.confirmNewPassword'))}
           {state.notice && (
             <p className={styles.hint} role="status">
-              {state.notice}
+              {tm(state.notice)}
             </p>
           )}
         </>
       ) : (
         <>
-          <h1 className={styles.title}>Reset your password</h1>
-          <p className={styles.hint}>Enter the mobile number or email you log in with. We’ll send you a code.</p>
+          <h1 className={styles.title}>{t('auth.resetTitle')}</h1>
+          <p className={styles.hint}>{t('auth.resetHint')}</p>
           <label className={styles.field}>
-            <span className={styles.label}>Mobile number or email</span>
+            <span className={styles.label}>{t('auth.identifier')}</span>
             <input
               className={styles.input}
               value={state.identifier}
@@ -127,7 +130,7 @@ export function PasswordResetForm({
             />
             {state.fieldErrors.identifier && (
               <span className={styles.error} role="alert">
-                {state.fieldErrors.identifier}
+                {tm(state.fieldErrors.identifier)}
               </span>
             )}
           </label>
@@ -136,16 +139,16 @@ export function PasswordResetForm({
 
       {state.formError && (
         <p className={styles.formError} role="alert">
-          {state.formError}
+          {tm(state.formError)}
         </p>
       )}
 
       <button className={styles.submit} type="submit" disabled={state.submitting}>
-        {state.submitting ? 'Please wait…' : state.phase === 'code' ? 'Change password' : 'Send code'}
+        {state.submitting ? t('auth.pleaseWait') : state.phase === 'code' ? t('auth.changePassword') : t('auth.sendCode')}
       </button>
       {state.phase === 'code' && (
         <button className={styles.secondary} type="button" onClick={() => void vm.requestCode()} disabled={state.submitting}>
-          Send a new code
+          {t('auth.sendNewCode')}
         </button>
       )}
       <button
@@ -154,7 +157,7 @@ export function PasswordResetForm({
         onClick={() => (state.phase === 'code' ? vm.backToIdentifier() : onCancel())}
         disabled={state.submitting}
       >
-        {state.phase === 'code' ? 'Use a different address' : 'Back to login'}
+        {state.phase === 'code' ? t('auth.differentAddress') : t('auth.backToLogin')}
       </button>
     </form>
   );

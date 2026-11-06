@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {  type AuthenticatedUser } from '@cura/shared';
 import { useServices } from '../../../app/services';
 import { openWebsite } from '../../../app/handoff';
+import { LanguageSwitch, useT } from '../../../i18n';
 import styles from './header.module.css';
 
 import { Switch } from './ToggleSwitch';
@@ -32,6 +33,7 @@ export function ProfileMenu({
   onShowSetupChecklist?: () => void;
 }) {
   const { auth } = useServices();
+  const { t } = useT();
   const [open, setOpen] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const ref = useDismiss(open, () => setOpen(false));
@@ -55,7 +57,7 @@ export function ProfileMenu({
         className={styles.profileButton}
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        aria-label="Account menu"
+        aria-label={t('shell.menu.accountMenu')}
       >
         <span className={styles.avatar} aria-hidden="true">
           {user.avatarUrl ? <img src={user.avatarUrl} alt="" /> : user.fullName.slice(0, 1)}
@@ -66,7 +68,7 @@ export function ProfileMenu({
       </button>
 
       {open && (
-        <div className={styles.popover} data-wide role="dialog" aria-label="Account">
+        <div className={styles.popover} data-wide role="dialog" aria-label={t('shell.menu.account')}>
           <header className={styles.popoverHead}>
             {user.fullName}
             <span>{user.email ?? user.mobile ?? ''}</span>
@@ -74,31 +76,34 @@ export function ProfileMenu({
 
           <div className={styles.switches}>
             <Switch
-              label="Available"
-              hint="Signals the front desk that you are seeing patients."
+              label={t('shell.menu.available')}
+              hint={t('shell.menu.availableHint')}
               checked={toggles.available}
               onChange={(v) => onToggle('available', v)}
             />
             <Switch
-              label="Notification sound"
+              label={t('shell.menu.sound')}
               checked={toggles.soundOn}
               onChange={(v) => onToggle('soundOn', v)}
             />
           </div>
 
+          <div className={styles.languageRow}>
+            <span>{t('shell.menu.language')}</span>
+            <LanguageSwitch signedIn />
+          </div>
+
           <ul className={styles.menuList}>
             <li>
               <button type="button" className={styles.menuItem} onClick={() => go('profile')}>
-                <strong>Profile management</strong>
-                <span>Name, contact details, qualifications.</span>
+                <strong>{t('shell.menu.profile')}</strong>
+                <span>{t('shell.menu.profileHint')}</span>
               </button>
             </li>
             <li>
               <button type="button" className={styles.menuItem} onClick={() => go('staff')}>
-                <strong>Staff &amp; assistant access</strong>
-                <span>
-                  {toggles.staffAccess ? 'Enabled' : 'Restricted'} · revoking ends their sessions immediately.
-                </span>
+                <strong>{t('shell.menu.staff')}</strong>
+                <span>{toggles.staffAccess ? t('shell.menu.staffEnabled') : t('shell.menu.staffRestricted')}</span>
               </button>
             </li>
             {onShowSetupChecklist && (
@@ -111,15 +116,15 @@ export function ProfileMenu({
                     onShowSetupChecklist();
                   }}
                 >
-                  <strong>Setup checklist</strong>
-                  <span>Steps to get your clinic ready.</span>
+                  <strong>{t('shell.menu.setup')}</strong>
+                  <span>{t('shell.menu.setupHint')}</span>
                 </button>
               </li>
             )}
             <li>
               <button type="button" className={styles.menuItem} onClick={() => go('security')}>
-                <strong>Account settings</strong>
-                <span>Password and two-factor authentication.</span>
+                <strong>{t('shell.menu.security')}</strong>
+                <span>{t('shell.menu.securityHint')}</span>
               </button>
             </li>
             <li>
@@ -132,13 +137,13 @@ export function ProfileMenu({
                   void openWebsite(auth);
                 }}
               >
-                <strong>{leaving ? 'Opening Cura Website…' : 'Open Cura Website'}</strong>
-                <span>Go to Cura Website, already logged in.</span>
+                <strong>{leaving ? t('shell.menu.websiteOpening') : t('shell.menu.website')}</strong>
+                <span>{t('shell.menu.websiteHint')}</span>
               </button>
             </li>
             <li>
               <button type="button" className={styles.menuItem} data-danger onClick={onSignOut}>
-                <strong>Log out</strong>
+                <strong>{t('shell.menu.logOut')}</strong>
               </button>
             </li>
           </ul>

@@ -32,6 +32,9 @@
 - Change clinic settings: clinic details, hours, staff, prices, drugs, note templates, printouts, messages, security
 - Edit your own profile and password
 - Switch between light and dark mode
+- Use Cura Dashboard in Bangla: switch **English / বাংলা** on the login page, in the menu under your name, or on
+  **Profile**; the choice is saved to your account (so far the menu, login, new-doctor setup, Calendar, setup checklist and
+  Profile are in Bangla; other screens are being translated)
 
 Not available yet: Community, Integrations (Practo and others), Facebook sign-up, login with a code instead of a
 password, and text messages to patients.
@@ -127,6 +130,20 @@ Use an account you made for testing, so the demo passwords above keep working.
 6. On Cura Website, click **Login**, then **Forgot password?**, and repeat steps 2–4. Switch to **বাং** at the top: the page is in Bangla.
 
 A patient who resets on Cura Dashboard is told to log in on Cura Website. A doctor a clinic added who has no password yet is sent to finish signing up instead.
+
+### Bangla on Cura Dashboard
+
+1. On the welcome page, click **বাংলা** at the top right. The page turns to Bangla. Click **লগ ইন** with the boxes
+   empty: the red messages are in Bangla too.
+2. Log in as owner1@cura.local. The left menu, top bar, Calendar and the **Get your clinic ready** card are in
+   Bangla, with Bangla digits in dates and times.
+3. Reload the page. It stays in Bangla.
+4. Open the menu under your name: **ভাষা** shows **English / বাংলা**. Click **প্রোফাইল** in the left menu: the
+   same switch is under **ভাষা**.
+5. Open Cura Dashboard in a private window and log in as owner1@cura.local again. It opens in Bangla, because the
+   choice is saved to the account.
+6. Open the menu under your name and click **English**. Everything turns back to English, and the next login is in
+   English too.
 
 ### Switch between Cura Website and Cura Dashboard
 

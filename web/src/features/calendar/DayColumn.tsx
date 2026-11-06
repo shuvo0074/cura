@@ -3,6 +3,7 @@ import { AppointmentStatus, fromDateKey, type Appointment } from '@cura/shared';
 import { AppointmentCard } from './AppointmentCard';
 import { layoutOverlaps, minuteOfDay } from './calendar-shared';
 import type { Closure, GridConfig } from './use-calendar-settings';
+import { useT } from '../../i18n';
 import styles from './grid.module.css';
 
 export interface GridGeometry {
@@ -52,6 +53,7 @@ export const DayColumn = memo(function DayColumn({
   /** Present only for users who may reschedule. */
   onPressMove?: ((id: string, e: PointerEvent<HTMLElement>) => void) | undefined;
 }) {
+  const { t } = useT();
   const { start, rows, slot, rowHeight } = geometry;
   const day = useMemo(() => fromDateKey(date), [date]);
 
@@ -102,7 +104,7 @@ export const DayColumn = memo(function DayColumn({
           data-closed={s.closed || undefined}
           data-blocked={s.blocked ? true : undefined}
           data-drop={dropRow === row || undefined}
-          title={s.blocked ? (s.blocked.reason ?? 'Blocked') : undefined}
+          title={s.blocked ? (s.blocked.reason ?? t('calendar.blocked')) : undefined}
         />
       ))}
 

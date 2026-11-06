@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useServices } from '../../app/services';
 import { Field, Modal, Row, uiStyles as s } from '../../ui';
+import { useT } from '../../i18n';
 import styles from './calendar.module.css';
 
 interface Closure {
@@ -30,6 +31,7 @@ export function BlockCalendarDialog({
   onChanged: () => void;
 }) {
   const { http } = useServices();
+  const { t, tm, fmt } = useT();
 
   const [closures, setClosures] = useState<Closure[]>([]);
   const [allDay, setAllDay] = useState(true);
@@ -61,7 +63,7 @@ export function BlockCalendarDialog({
 
   const submit = async () => {
     if (!reason.trim()) {
-      setError('Enter a reason — it appears on the blocked slot.');
+      setError(t('calendar.block.needReason'));
       return;
     }
 
@@ -73,7 +75,7 @@ export function BlockCalendarDialog({
       : new Date(`${from}T${endTime}:00`);
 
     if (endsAt <= startsAt) {
-      setError('The block must end after it starts.');
+      setError(t('calendar.block.endAfterStart'));
       return;
     }
 
@@ -117,86 +119,85 @@ export function BlockCalendarDialog({
 
   return (
     <Modal
-      title="Block Calendar"
+      title={t('calendar.block.title')}
       onClose={onClose}
       wide
       footer={
         <>
           {error && (
             <span className={s.error} role="alert">
-              {error}
+              {tm(error)}
             </span>
           )}
           <button type="button" className={s.secondary} onClick={onClose}>
-            Close
+            {t('common.close')}
           </button>
           <button type="button" className={s.primary} onClick={() => void submit()} disabled={busy}>
-            {busy ? 'Blocking…' : 'Block'}
+            {busy ? t('calendar.block.blocking') : t('calendar.block.block')}
           </button>
         </>
       }
     >
       <p className={s.hint}>
-        Block the calendar for leave or personal reasons. Patients cannot be booked into a blocked
-        period, and existing appointments are left untouched so nothing disappears silently.
+        {t('calendar.block.intro')}
       </p>
 
-      <Field label="Leave details" required>
+      <Field label={t('calendar.block.details')} required>
         <input
           className={s.input}
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          placeholder="e.g. Eid holiday, conference, personal leave"
+          placeholder={t('calendar.block.placeholder')}
         />
       </Field>
 
-      <div className={styles.blockModes} role="radiogroup" aria-label="Block type">
+      <div className={styles.blockModes} role="radiogroup" aria-label={t('calendar.block.type')}>
         <label>
           <input type="radio" checked={allDay} onChange={() => setAllDay(true)} />
-          All day
+          {t('calendar.block.allDay')}
         </label>
         <label>
           <input type="radio" checked={!allDay} onChange={() => setAllDay(false)} />
-          Time slot
+          {t('calendar.block.timeSlot')}
         </label>
       </div>
 
       {allDay ? (
         <Row cols={2}>
-          <Field label="From" required>
+          <Field label={t('calendar.block.from')} required>
             <input className={s.input} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
           </Field>
-          <Field label="To" required>
+          <Field label={t('calendar.block.to')} required>
             <input className={s.input} type="date" value={to} min={from} onChange={(e) => setTo(e.target.value)} />
           </Field>
         </Row>
       ) : (
         <Row>
-          <Field label="Date" required>
+          <Field label={t('calendar.block.date')} required>
             <input className={s.input} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
           </Field>
-          <Field label="Start" required>
+          <Field label={t('calendar.block.start')} required>
             <input className={s.input} type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
           </Field>
-          <Field label="End" required>
+          <Field label={t('calendar.block.end')} required>
             <input className={s.input} type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
           </Field>
         </Row>
       )}
 
-      <h4 className={s.subtitle}>Existing blocks</h4>
+      <h4 className={s.subtitle}>{t('calendar.block.existing')}</h4>
       {closures.length === 0 ? (
-        <p className={s.muted}>Nothing blocked.</p>
+        <p className={s.muted}>{t('calendar.block.none')}</p>
       ) : (
         <ul className={styles.blockList}>
           {closures.map((c) => (
             <li key={c.id}>
-              <span>{c.reason ?? 'Blocked'}</span>
+              <span>{c.reason ?? t('calendar.blocked')}</span>
               <span className={styles.blockDates}>
-                {new Date(c.startsAt).toLocaleString()} → {new Date(c.endsAt).toLocaleString()}
+                {fmt.dateTime(c.startsAt)} → {fmt.dateTime(c.endsAt)}
               </span>
               <button type="button" className={s.linkDanger} onClick={() => void remove(c.id)}>
-                Unblock
+                {t('calendar.block.unblock')}
               </button>
             </li>
           ))}

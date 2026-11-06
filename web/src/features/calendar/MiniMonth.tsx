@@ -1,5 +1,6 @@
 import { memo, useMemo } from 'react';
 import { CalendarViewModel, fromDateKey, toDateKey } from '@cura/shared';
+import { useT } from '../../i18n';
 import styles from './panes.module.css';
 
 /**
@@ -22,6 +23,7 @@ export const MiniMonth = memo(function MiniMonth({
   onBrowse: (direction: -1 | 1) => void;
   onPick: (date: Date) => void;
 }) {
+  const { t, fmt } = useT();
   const first = fromDateKey(`${month}-01`);
   const todayKey = toDateKey(new Date());
 
@@ -37,19 +39,19 @@ export const MiniMonth = memo(function MiniMonth({
   return (
     <div className={styles.mini}>
       <div className={styles.miniHead}>
-        <button type="button" onClick={() => onBrowse(-1)} aria-label="Previous month">
+        <button type="button" onClick={() => onBrowse(-1)} aria-label={t('calendar.previousMonth')}>
           ‹
         </button>
-        <span>{first.toLocaleDateString([], { month: 'long', year: 'numeric' })}</span>
-        <button type="button" onClick={() => onBrowse(1)} aria-label="Next month">
+        <span>{fmt.date(first, { month: 'long', year: 'numeric' })}</span>
+        <button type="button" onClick={() => onBrowse(1)} aria-label={t('calendar.nextMonth')}>
           ›
         </button>
       </div>
 
-      <div className={styles.miniGrid} role="grid" aria-label="Pick a date">
+      <div className={styles.miniGrid} role="grid" aria-label={t('calendar.pickDate')}>
         {days.slice(0, 7).map((d) => (
           <span key={`h${d.getDay()}`} className={styles.miniWeekday}>
-            {d.toLocaleDateString([], { weekday: 'narrow' })}
+            {fmt.date(d, { weekday: 'narrow' })}
           </span>
         ))}
         {days.map((d) => {
@@ -67,9 +69,9 @@ export const MiniMonth = memo(function MiniMonth({
                 count >= CalendarViewModel.HEAVY_DAY_THRESHOLD ? 'heavy' : count > 0 ? 'some' : undefined
               }
               onClick={() => onPick(d)}
-              aria-label={`${d.toLocaleDateString([], { dateStyle: 'long' })}${count ? `, ${count} bookings` : ''}`}
+              aria-label={count ? t('calendar.dayBookings', { date: fmt.date(d, 'long'), count }) : fmt.date(d, 'long')}
             >
-              {d.getDate()}
+              {fmt.number(d.getDate())}
             </button>
           );
         })}

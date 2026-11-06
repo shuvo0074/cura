@@ -543,6 +543,7 @@ export class AuthService {
           practiceIds,
           onboardingCompleted: user.onboardingComplete,
           avatarUrl: user.avatarUrl,
+          locale: user.locale === 'bn' ? 'bn' : 'en',
         },
       },
     };

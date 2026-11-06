@@ -20,6 +20,20 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/*
+ * Bangla. The Latin fonts above have no Bengali letters, so each Bangla
+ * character falls through to the first font here the device has: macOS and
+ * iOS (Kohinoor Bangla, Bangla Sangam MN), Android and Linux (Noto Sans
+ * Bengali), Windows (Nirmala UI, Vrinda). Nothing is downloaded, so the
+ * Content Security Policy in index.html stays as it is. Bangla letters sit
+ * taller, so lines get a little more room.
+ */
+html[lang='bn'] body {
+  font-family: var(--font-sans), 'Noto Sans Bengali', 'Kohinoor Bangla', 'Bangla Sangam MN', 'Nirmala UI',
+    'Hind Siliguri', 'SolaimanLipi', Vrinda, sans-serif;
+  line-height: calc(var(--leading-normal) + 0.1);
+}
+
 button,
 input,
 select,

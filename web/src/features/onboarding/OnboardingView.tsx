@@ -3,14 +3,10 @@ import { BloodGroup, Gender, OnboardingViewModel, useViewModel } from '@cura/sha
 import { useServices } from '../../app/services';
 import { QualificationsEditor } from './QualificationsEditor';
 import { OnboardingField as Field } from './OnboardingField';
+import { useT } from '../../i18n';
 import styles from './onboarding.module.css';
 
-const STEP_TITLES = [
-  'Personal details',
-  'Professional details',
-  'Academic information',
-  'Identification & documents',
-] as const;
+const STEP_TITLES = ['onboarding.step.1', 'onboarding.step.2', 'onboarding.step.3', 'onboarding.step.4'] as const;
 
 /**
  * Account-creation wizard (View).
@@ -21,6 +17,7 @@ const STEP_TITLES = [
  */
 export function OnboardingView({ onFinished }: { onFinished: () => void }) {
   const { onboarding } = useServices();
+  const { t, tm, fmt } = useT();
   const [state, vm] = useViewModel(() => new OnboardingViewModel(onboarding, onFinished));
 
   useEffect(() => {
@@ -39,32 +36,37 @@ export function OnboardingView({ onFinished }: { onFinished: () => void }) {
   );
 
   const savedLabel = useMemo(() => {
-    if (state.saving) return 'Saving…';
+    if (state.saving) return t('common.saving');
     if (!state.lastSavedAt) return null;
-    return `Saved ${new Date(state.lastSavedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-  }, [state.saving, state.lastSavedAt]);
+    return t('onboarding.savedAt', { time: fmt.time(state.lastSavedAt) });
+  }, [state.saving, state.lastSavedAt, t, fmt]);
 
   if (state.loading) {
-    return <div className={styles.splash}>Loading your setup…</div>;
+    return <div className={styles.splash}>{t('onboarding.loading')}</div>;
   }
 
   return (
     <main className={styles.shell}>
       <div className={styles.card}>
         <header className={styles.header}>
-          <h1 className={styles.title}>Complete your account</h1>
+          <h1 className={styles.title}>{t('onboarding.title')}</h1>
           <p className={styles.subtitle}>
-            Step {state.step} of {vm.totalSteps} — {STEP_TITLES[state.step - 1]}
+            {t('onboarding.stepOf', {
+              step: state.step,
+              total: vm.totalSteps,
+              title: t(STEP_TITLES[state.step - 1] ?? STEP_TITLES[0]),
+            })}
           </p>
           {savedLabel && <span className={styles.saved}>{savedLabel}</span>}
         </header>
 
         <ol className={styles.stepper}>
-          {STEP_TITLES.map((label, index) => {
+          {STEP_TITLES.map((key, index) => {
+            const label = t(key);
             const step = index + 1;
             const done = state.completedSteps.includes(step);
             return (
-              <li key={label}>
+              <li key={key}>
                 <button
                   type="button"
                   className={styles.stepDot}
@@ -85,34 +87,34 @@ export function OnboardingView({ onFinished }: { onFinished: () => void }) {
         <section className={styles.body}>
           {state.step === 1 && (
             <>
-              <Field label="Full name" error={state.fieldErrors.fullName}>
+              <Field label={t('onboarding.fullName')} error={tm(state.fieldErrors.fullName)}>
                 <input className={styles.input} value={value('fullName')} onChange={set('fullName')} />
               </Field>
-              <Field label="Mobile number *" error={state.fieldErrors.mobile}>
+              <Field label={t('onboarding.mobile')} error={tm(state.fieldErrors.mobile)}>
                 <input className={styles.input} value={value('mobile')} onChange={set('mobile')} inputMode="tel" />
               </Field>
-              <Field label="Email *" error={state.fieldErrors.email}>
+              <Field label={t('onboarding.email')} error={tm(state.fieldErrors.email)}>
                 <input className={styles.input} value={value('email')} onChange={set('email')} inputMode="email" />
               </Field>
-              <Field label="Gender *" error={state.fieldErrors.gender}>
+              <Field label={t('onboarding.gender')} error={tm(state.fieldErrors.gender)}>
                 <select className={styles.input} value={value('gender')} onChange={set('gender')}>
-                  <option value="">Select…</option>
+                  <option value="">{t('onboarding.select')}</option>
                   {Object.values(Gender).map((g) => (
                     <option key={g} value={g}>
-                      {g.charAt(0) + g.slice(1).toLowerCase()}
+                      {t(`common.gender.${g}`)}
                     </option>
                   ))}
                 </select>
               </Field>
-              <Field label="Date of birth" error={state.fieldErrors.dateOfBirth}>
+              <Field label={t('onboarding.dateOfBirth')} error={tm(state.fieldErrors.dateOfBirth)}>
                 <input className={styles.input} type="date" value={value('dateOfBirth')} onChange={set('dateOfBirth')} />
               </Field>
-              <Field label="NID / birth registration" error={state.fieldErrors.nid}>
+              <Field label={t('onboarding.nid')} error={tm(state.fieldErrors.nid)}>
                 <input className={styles.input} value={value('nid')} onChange={set('nid')} inputMode="numeric" />
               </Field>
-              <Field label="Blood group" error={state.fieldErrors.bloodGroup}>
+              <Field label={t('onboarding.bloodGroup')} error={tm(state.fieldErrors.bloodGroup)}>
                 <select className={styles.input} value={value('bloodGroup')} onChange={set('bloodGroup')}>
-                  <option value="">Select…</option>
+                  <option value="">{t('onboarding.select')}</option>
                   {Object.values(BloodGroup).map((b) => (
                     <option key={b} value={b}>
                       {b}
@@ -125,13 +127,13 @@ export function OnboardingView({ onFinished }: { onFinished: () => void }) {
 
           {state.step === 2 && (
             <>
-              <Field label="BMDC number *" error={state.fieldErrors.bmdcNumber}>
+              <Field label={t('onboarding.bmdc')} error={tm(state.fieldErrors.bmdcNumber)}>
                 <input className={styles.input} value={value('bmdcNumber')} onChange={set('bmdcNumber')} />
               </Field>
-              <Field label="Specialization *" error={state.fieldErrors.specializations}>
+              <Field label={t('onboarding.specialization')} error={tm(state.fieldErrors.specializations)}>
                 <input
                   className={styles.input}
-                  placeholder="Cardiology, Cardiovascular Surgery…"
+                  placeholder={t('onboarding.specializationPlaceholder')}
                   value={((vm.field(2, 'specializations') as string[] | undefined) ?? []).join(', ')}
                   onChange={(e) =>
                     vm.setField(
@@ -142,7 +144,7 @@ export function OnboardingView({ onFinished }: { onFinished: () => void }) {
                   }
                 />
               </Field>
-              <Field label="Years of experience" error={state.fieldErrors.yearsOfExperience}>
+              <Field label={t('onboarding.experience')} error={tm(state.fieldErrors.yearsOfExperience)}>
                 <input
                   className={styles.input}
                   type="number"
@@ -153,7 +155,7 @@ export function OnboardingView({ onFinished }: { onFinished: () => void }) {
                   }
                 />
               </Field>
-              <Field label="Workplace" error={state.fieldErrors.workplace}>
+              <Field label={t('onboarding.workplace')} error={tm(state.fieldErrors.workplace)}>
                 <input className={styles.input} value={value('workplace')} onChange={set('workplace')} />
               </Field>
             </>
@@ -163,35 +165,34 @@ export function OnboardingView({ onFinished }: { onFinished: () => void }) {
 
           {state.step === 4 && (
             <p className={styles.hint}>
-              Upload your NID, medical certificates and digital signature from the Documents
-              section after finishing. You can complete this later.
+              {t('onboarding.documentsHint')}
             </p>
           )}
         </section>
 
         {state.formError && (
           <p className={styles.formError} role="alert">
-            {state.formError}
+            {tm(state.formError)}
           </p>
         )}
 
         <footer className={styles.footer}>
           <button type="button" className={styles.ghost} onClick={() => vm.back()} disabled={state.step === 1}>
-            Previous
+            {t('onboarding.previous')}
           </button>
           <span className={styles.spacer} />
           {vm.canSkip(state.step) && (
             <button type="button" className={styles.ghost} onClick={() => void vm.skipCurrentStep()} disabled={state.submitting}>
-              Skip
+              {t('onboarding.skip')}
             </button>
           )}
           {state.step < vm.totalSteps ? (
             <button type="button" className={styles.primary} onClick={() => void vm.submitCurrentStep()} disabled={state.submitting}>
-              {state.submitting ? 'Saving…' : 'Save & continue'}
+              {state.submitting ? t('common.saving') : t('onboarding.saveContinue')}
             </button>
           ) : (
             <button type="button" className={styles.primary} onClick={() => void vm.finish()} disabled={state.submitting}>
-              {state.submitting ? 'Finishing…' : 'Finish'}
+              {state.submitting ? t('onboarding.finishing') : t('onboarding.finish')}
             </button>
           )}
         </footer>

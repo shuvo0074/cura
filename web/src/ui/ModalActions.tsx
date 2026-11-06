@@ -1,3 +1,4 @@
+import { useT } from '../i18n';
 import styles from './ui.module.css';
 
 /** Standard Cancel / Save pair for a dialog footer. */
@@ -6,7 +7,7 @@ export function ModalActions({
   busy,
   onCancel,
   onSave,
-  saveLabel = 'Save',
+  saveLabel,
 }: {
   error: string | null;
   busy: boolean;
@@ -14,18 +15,19 @@ export function ModalActions({
   onSave: () => void;
   saveLabel?: string;
 }) {
+  const { t, tm } = useT();
   return (
     <>
       {error && (
         <span className={styles.error} role="alert">
-          {error}
+          {tm(error)}
         </span>
       )}
       <button type="button" className={styles.secondary} onClick={onCancel}>
-        Cancel
+        {t('common.cancel')}
       </button>
       <button type="button" className={styles.primary} onClick={onSave} disabled={busy}>
-        {busy ? 'Saving…' : saveLabel}
+        {busy ? t('common.saving') : (saveLabel ?? t('common.save'))}
       </button>
     </>
   );

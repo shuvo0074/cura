@@ -8,21 +8,20 @@ import {
   type Patient,
 } from '@cura/shared';
 import { useResource } from '../../ui';
-import { clockTime } from './calendar-shared';
+import { useT, type TranslationKey } from '../../i18n';
 import styles from './panes.module.css';
 
-const VISIT_LABELS: Record<string, string> = { NEW: 'New visit', FOLLOW_UP: 'Follow-up', OLD: 'Old patient' };
 
 /** The four attendance actions, in queue order. Enablement follows `canTransition`. */
-const ACTIONS = [
-  { label: 'Check in', to: AppointmentStatus.WAITING },
-  { label: 'Engage', to: AppointmentStatus.ENGAGED },
-  { label: 'Check out', to: AppointmentStatus.DONE },
-  { label: 'No show', to: AppointmentStatus.NO_SHOW },
-  { label: 'Cancel visit', to: AppointmentStatus.CANCELLED },
-] as const;
+const ACTIONS: ReadonlyArray<{ label: TranslationKey; to: AppointmentStatus }> = [
+  { label: 'calendar.action.checkIn', to: AppointmentStatus.WAITING },
+  { label: 'calendar.action.engage', to: AppointmentStatus.ENGAGED },
+  { label: 'calendar.action.checkOut', to: AppointmentStatus.DONE },
+  { label: 'calendar.action.noShow', to: AppointmentStatus.NO_SHOW },
+  { label: 'calendar.action.cancel', to: AppointmentStatus.CANCELLED },
+];
 
-/** The API starts the notes of a visit booked by the patient online with this. */
+/** The API starts the notes of a visit booked by the patient online with this (English, from Cura API). */
 const WEBSITE_NOTE = 'Booked on Cura Website';
 
 /** `datetime-local` wants wall-clock text, not UTC. */
@@ -62,6 +61,7 @@ export function AppointmentDetails({
   onOpenPatient?: ((patientId: string, appointmentId?: string) => void) | undefined;
   onBack: () => void;
 }) {
+  const { t, fmt } = useT();
   const { data: patient } = useResource<Patient>(`/patients/${appointment.patient.id}`, { practiceId });
   const [editing, setEditing] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -81,7 +81,7 @@ export function AppointmentDetails({
   return (
     <div className={styles.details}>
       <button type="button" className={styles.back} onClick={onBack}>
-        ‹ Today&rsquo;s list
+        {t('calendar.backToList')}
       </button>
 
       <div className={styles.identity}>
@@ -97,20 +97,20 @@ export function AppointmentDetails({
           </h2>
           <p className={styles.detailsMeta}>
             {appointment.patient.curaId}
-            {appointment.tokenNumber !== null && ` · Token #${appointment.tokenNumber}`}
+            {appointment.tokenNumber !== null && t('calendar.token', { number: appointment.tokenNumber })}
           </p>
           {patient && (
             <span className={styles.profileFlag} data-complete={patient.profileComplete || undefined}>
-              {patient.profileComplete ? '✓ Profile complete' : '⚠ Profile incomplete'}
+              {patient.profileComplete ? t('calendar.profileComplete') : t('calendar.profileIncomplete')}
             </span>
           )}
         </div>
       </div>
 
       <span className={styles.statusPill} data-status={status.toLowerCase()}>
-        {status.replace('_', ' ').toLowerCase()}
+        {t(`calendar.pill.${status.toLowerCase() as Lowercase<AppointmentStatus>}`)}
       </span>
-      {fromWebsite && <span className={styles.sourceTag}>{WEBSITE_NOTE}</span>}
+      {fromWebsite && <span className={styles.sourceTag}>{t('calendar.bookedOnWebsite')}</span>}
 
       {canChangeStatus && (
         <div className={styles.actions}>
@@ -121,18 +121,18 @@ export function AppointmentDetails({
               onClick={() => onChangeStatus(action.to)}
               disabled={!canTransition(status, action.to)}
             >
-              {action.label}
+              {t(action.label)}
             </button>
           ))}
         </div>
       )}
 
       <dl className={styles.facts}>
-        <dt>Phone</dt>
-        <dd>{appointment.patient.mobile || 'Not available'}</dd>
-        <dt>Email</dt>
-        <dd>{patient?.email ?? 'Not available'}</dd>
-        <dt>Appointed</dt>
+        <dt>{t('calendar.phone')}</dt>
+        <dd>{appointment.patient.mobile || t('calendar.notAvailable')}</dd>
+        <dt>{t('calendar.email')}</dt>
+        <dd>{patient?.email ?? t('calendar.notAvailable')}</dd>
+        <dt>{t('calendar.appointed')}</dt>
         <dd>
           {editing !== null ? (
             <span className={styles.editTime}>
@@ -140,26 +140,29 @@ export function AppointmentDetails({
                 type="datetime-local"
                 value={editing}
                 onChange={(e) => setEditing(e.target.value)}
-                aria-label="New appointment time"
+                aria-label={t('calendar.newTime')}
               />
               <button type="button" onClick={() => void saveTime()} disabled={saving || !editing}>
-                {saving ? 'Saving…' : 'Save'}
+                {saving ? t('common.saving') : t('common.save')}
               </button>
               <button type="button" onClick={() => setEditing(null)}>
-                Cancel
+                {t('common.cancel')}
               </button>
             </span>
           ) : (
             <>
-              {start.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' })},{' '}
-              {clockTime(start)} for {appointment.durationMinutes} mins
+              {t('calendar.appointedAt', {
+                date: fmt.date(start, { weekday: 'short', day: 'numeric', month: 'short' }),
+                time: fmt.time(start),
+                minutes: appointment.durationMinutes,
+              })}
               {canReschedule && status !== AppointmentStatus.DONE && (
                 <button
                   type="button"
                   className={styles.inlineLink}
                   onClick={() => setEditing(toLocalInput(appointment.scheduledAt))}
                 >
-                  Edit
+                  {t('common.edit')}
                 </button>
               )}
             </>
@@ -167,17 +170,17 @@ export function AppointmentDetails({
         </dd>
         {doctorName && (
           <>
-            <dt>Doctor</dt>
+            <dt>{t('calendar.doctor')}</dt>
             <dd>{doctorName}</dd>
           </>
         )}
-        <dt>Visit</dt>
-        <dd>{VISIT_LABELS[appointment.visitType] ?? appointment.visitType}</dd>
-        <dt>Planned procedures</dt>
-        <dd>{appointment.plannedProcedures.length ? appointment.plannedProcedures.join(', ') : 'Not specified'}</dd>
+        <dt>{t('calendar.visit')}</dt>
+        <dd>{t(`common.visitType.${appointment.visitType}`)}</dd>
+        <dt>{t('calendar.planned')}</dt>
+        <dd>{appointment.plannedProcedures.length ? appointment.plannedProcedures.join(', ') : t('calendar.notSpecified')}</dd>
         {appointment.notes && (
           <>
-            <dt>Notes</dt>
+            <dt>{t('calendar.notes')}</dt>
             <dd>{appointment.notes}</dd>
           </>
         )}
@@ -189,7 +192,7 @@ export function AppointmentDetails({
           className={styles.primaryAction}
           onClick={() => onOpenPatient(appointment.patient.id, appointment.id)}
         >
-          Open patient record / Write prescription
+          {t('calendar.openRecord')}
         </button>
       )}
     </div>

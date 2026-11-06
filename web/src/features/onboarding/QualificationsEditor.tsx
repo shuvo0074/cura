@@ -1,4 +1,5 @@
 import type { OnboardingViewModel } from '@cura/shared';
+import { useT } from '../../i18n';
 import styles from './onboarding.module.css';
 
 /** Repeater for degrees and awards (spec: "Add More" dynamic rows). */
@@ -9,6 +10,7 @@ export function QualificationsEditor({
   vm: OnboardingViewModel;
   state: { fieldErrors: Record<string, string> };
 }) {
+  const { t, tm } = useT();
   const rows = (vm.field(3, 'qualifications') as Array<Record<string, unknown>> | undefined) ?? [];
 
   const update = (index: number, key: string, value: unknown) => {
@@ -22,20 +24,20 @@ export function QualificationsEditor({
         <div className={styles.repeaterRow} key={index}>
           <input
             className={styles.input}
-            placeholder="Degree (MBBS, FCPS…)"
+            placeholder={t('onboarding.degreePlaceholder')}
             value={(row.degreeName as string) ?? ''}
             onChange={(e) => update(index, 'degreeName', e.target.value)}
           />
           <input
             className={styles.input}
-            placeholder="Institute"
+            placeholder={t('onboarding.institutePlaceholder')}
             value={(row.instituteName as string) ?? ''}
             onChange={(e) => update(index, 'instituteName', e.target.value)}
           />
           <input
             className={styles.inputSmall}
             type="number"
-            placeholder="Year"
+            placeholder={t('onboarding.yearPlaceholder')}
             value={(row.passingYear as number | undefined) ?? ''}
             onChange={(e) =>
               update(index, 'passingYear', e.target.value === '' ? undefined : Number(e.target.value))
@@ -45,7 +47,7 @@ export function QualificationsEditor({
             type="button"
             className={styles.ghost}
             onClick={() => vm.setField(3, 'qualifications', rows.filter((_, i) => i !== index))}
-            aria-label="Remove qualification"
+            aria-label={t('onboarding.removeQualification')}
           >
             ×
           </button>
@@ -53,7 +55,7 @@ export function QualificationsEditor({
       ))}
 
       {state.fieldErrors.qualifications && (
-        <p className={styles.error}>{state.fieldErrors.qualifications}</p>
+        <p className={styles.error}>{tm(state.fieldErrors.qualifications)}</p>
       )}
 
       <button
@@ -61,7 +63,7 @@ export function QualificationsEditor({
         className={styles.ghost}
         onClick={() => vm.setField(3, 'qualifications', [...rows, {}])}
       >
-        + Add qualification
+        {t('onboarding.addQualification')}
       </button>
     </>
   );

@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { businessRules, fromDateKey, type CalendarView as CalendarViewMode } from '@cura/shared';
 import { Check } from '../../ui';
+import { useT } from '../../i18n';
 import { VIEW_LABELS, useDismiss } from './calendar-shared';
 import styles from './calendar.module.css';
 
@@ -36,6 +37,7 @@ export function CalendarToolbar({
   onShowCancelled: (show: boolean) => void;
   onOpenCalendarSettings?: (() => void) | undefined;
 }) {
+  const { t } = useT();
   const picker = useRef<HTMLInputElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const closeMenu = useCallback(() => setMenuOpen(false), []);
@@ -56,18 +58,18 @@ export function CalendarToolbar({
   return (
     <header className={styles.toolbar}>
       <h1 className={styles.title}>
-        Calendar
+        {t('calendar.title')}
         {clinicName && <span className={styles.clinic}>{clinicName}</span>}
       </h1>
 
       <span className={styles.toolbarSpacer} />
 
       <div className={styles.navGroup}>
-        <button type="button" onClick={() => onShift(-1)} aria-label="Previous period">
+        <button type="button" onClick={() => onShift(-1)} aria-label={t('calendar.previousPeriod')}>
           ‹
         </button>
         <span className={styles.rangeWrap}>
-          <button type="button" className={styles.anchor} onClick={openPicker} title="Jump to a date">
+          <button type="button" className={styles.anchor} onClick={openPicker} title={t('calendar.jumpToDateTitle')}>
             <svg className={styles.anchorIcon} viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <rect x="1.75" y="3" width="12.5" height="11" rx="2" stroke="currentColor" strokeWidth="1.5" />
               <path d="M1.75 6.5h12.5M5 1.5v3M11 1.5v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -80,20 +82,20 @@ export function CalendarToolbar({
             className={styles.hiddenPicker}
             value={anchorDate}
             tabIndex={-1}
-            aria-label="Jump to date"
+            aria-label={t('calendar.jumpToDate')}
             onChange={(e) => e.target.value && onJump(fromDateKey(e.target.value))}
           />
         </span>
-        <button type="button" onClick={() => onShift(1)} aria-label="Next period">
+        <button type="button" onClick={() => onShift(1)} aria-label={t('calendar.nextPeriod')}>
           ›
         </button>
       </div>
 
       <button type="button" className={styles.todayButton} onClick={onToday}>
-        Today
+        {t('calendar.today')}
       </button>
 
-      <div className={styles.viewGroup} role="tablist" aria-label="Calendar view">
+      <div className={styles.viewGroup} role="tablist" aria-label={t('calendar.viewLabel')}>
         {(businessRules.calendar.views as readonly CalendarViewMode[]).map((mode) => (
           <button
             key={mode}
@@ -103,7 +105,7 @@ export function CalendarToolbar({
             data-active={view === mode || undefined}
             onClick={() => onView(mode)}
           >
-            {VIEW_LABELS[mode]}
+            {t(VIEW_LABELS[mode])}
           </button>
         ))}
       </div>
@@ -116,13 +118,13 @@ export function CalendarToolbar({
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((o) => !o)}
         >
-          Settings ▾
+          {t('calendar.settingsMenu')}
         </button>
         {menuOpen && (
           <div className={styles.menu} role="menu">
             <Check
-              label="Show cancelled appointments"
-              description="Struck through, so the free slot is easy to spot for a walk-in."
+              label={t('calendar.showCancelled')}
+              description={t('calendar.showCancelledHint')}
               checked={showCancelled}
               onChange={onShowCancelled}
             />
@@ -136,7 +138,7 @@ export function CalendarToolbar({
                   onOpenCalendarSettings();
                 }}
               >
-                Calendar settings…
+                {t('calendar.calendarSettings')}
               </button>
             )}
           </div>

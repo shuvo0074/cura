@@ -2,9 +2,6 @@
 
 import { useEffect, useRef } from 'react';
 
-export const clockTime = (iso: string) =>
-  new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
 /** Closes a popover on outside click or Escape. */
 export function useDismiss(open: boolean, close: () => void) {
   const ref = useRef<HTMLDivElement>(null);

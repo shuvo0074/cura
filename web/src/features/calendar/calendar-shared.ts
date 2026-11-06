@@ -2,32 +2,34 @@
 
 import { useEffect, useRef } from 'react';
 import { fromDateKey, type Appointment, type CalendarView } from '@cura/shared';
+import { formatDate, formatDateRange, formatTime, type Locale, type TranslationKey } from '../../i18n';
 
-export const VIEW_LABELS: Record<CalendarView, string> = {
-  day: 'Day',
-  threeDay: '3 Day',
-  week: 'Week',
-  month: 'Month',
+/** Words for each view; show with `t(VIEW_LABELS[view])`. */
+export const VIEW_LABELS: Record<CalendarView, TranslationKey> = {
+  day: 'calendar.view.day',
+  threeDay: 'calendar.view.threeDay',
+  week: 'calendar.view.week',
+  month: 'calendar.view.month',
 };
 
-export const clockTime = (date: Date) => date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+export const clockTime = (date: Date, locale: Locale) => formatTime(date, locale);
 
-/** "Tue 3 Nov, 14:30" — used by the move confirmation. */
-export const slotLabel = (date: Date) =>
-  `${date.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' })}, ${clockTime(date)}`;
+/** "Tue 3 Nov, 2:30 pm" — used by the move confirmation. */
+export const slotLabel = (date: Date, locale: Locale) =>
+  `${formatDate(date, locale, { weekday: 'short', day: 'numeric', month: 'short' })}, ${clockTime(date, locale)}`;
 
 /** Toolbar label for the visible range: a day, a span, or a month. */
-export function rangeLabel(view: CalendarView, anchor: string, days: readonly string[]): string {
+export function rangeLabel(view: CalendarView, anchor: string, days: readonly string[], locale: Locale): string {
   if (view === 'month') {
-    return fromDateKey(anchor).toLocaleDateString([], { month: 'long', year: 'numeric' });
+    return formatDate(fromDateKey(anchor), locale, { month: 'long', year: 'numeric' });
   }
   const first = fromDateKey(days[0]!);
   if (days.length === 1) {
-    return first.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+    return formatDate(first, locale, 'medium');
   }
   const last = fromDateKey(days[days.length - 1]!);
-  // formatRange collapses the shared parts: "Oct 25 – 31, 2026".
-  return new Intl.DateTimeFormat([], { day: 'numeric', month: 'short', year: 'numeric' }).formatRange(first, last);
+  // formatRange collapses the shared parts: "25 – 31 Oct 2026".
+  return formatDateRange(first, last, locale);
 }
 
 /** Minutes since local midnight. */

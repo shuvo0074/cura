@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { Patient } from '@cura/shared';
 import { useServices } from '../app/services';
+import { useT } from '../i18n';
 import styles from './ui.module.css';
 
 export interface PickedPatient {
@@ -18,7 +19,7 @@ export function PatientPicker({
   practiceId,
   value,
   onChange,
-  placeholder = 'Search patients…',
+  placeholder,
 }: {
   practiceId: string;
   value: PickedPatient | null;
@@ -26,6 +27,7 @@ export function PatientPicker({
   placeholder?: string;
 }) {
   const { http } = useServices();
+  const { t } = useT();
   const [term, setTerm] = useState('');
   const [hits, setHits] = useState<Patient[]>([]);
 
@@ -58,7 +60,7 @@ export function PatientPicker({
       <div className={styles.chosen}>
         <span>{value.fullName}</span>
         <button type="button" className={styles.linkButton} onClick={() => onChange(null)}>
-          Change
+          {t('common.change')}
         </button>
       </div>
     );
@@ -70,8 +72,8 @@ export function PatientPicker({
         className={styles.input}
         value={term}
         onChange={(e) => setTerm(e.target.value)}
-        placeholder={placeholder}
-        aria-label="Search patients"
+        placeholder={placeholder ?? t('common.searchPatientsPlaceholder')}
+        aria-label={t('common.searchPatients')}
       />
       {hits.length > 0 && (
         <ul className={styles.pickerResults}>

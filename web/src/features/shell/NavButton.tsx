@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import {  type NavItem, type RouteKey } from './navigation';
+import { useT } from '../../i18n';
 import styles from './shell.module.css';
 
 export const NavButton = memo(function NavButton({
@@ -13,6 +14,8 @@ export const NavButton = memo(function NavButton({
   collapsed: boolean;
   onSelect: (key: RouteKey) => void;
 }) {
+  const { t } = useT();
+  const label = t(item.label);
   return (
     <li>
       <button
@@ -21,17 +24,17 @@ export const NavButton = memo(function NavButton({
         data-active={active || undefined}
         onClick={() => onSelect(item.key)}
         aria-current={active ? 'page' : undefined}
-        title={collapsed ? item.label : undefined}
+        title={collapsed ? label : undefined}
       >
         <span className={styles.navIcon} aria-hidden="true">
           {item.icon}
         </span>
         {!collapsed && (
           <>
-            <span className={styles.navLabel}>{item.label}</span>
+            <span className={styles.navLabel}>{label}</span>
             {item.status !== 'ready' && (
               <span className={styles.navBadge} data-status={item.status}>
-                {item.status === 'partial' ? 'part' : 'soon'}
+                {item.status === 'partial' ? t('shell.nav.badgePartial') : t('shell.nav.badgePending')}
               </span>
             )}
           </>

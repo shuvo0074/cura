@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react';
+import { useT } from '../i18n';
 import styles from './ui.module.css';
 
 /** Dialog. Escape closes; focus enters on open and returns to the opener. */
@@ -15,6 +16,7 @@ export function Modal({
   wide?: boolean;
   children: ReactNode;
 }) {
+  const { t } = useT();
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -46,7 +48,7 @@ export function Modal({
       >
         <header className={styles.modalHead}>
           <h3>{title}</h3>
-          <button type="button" className={styles.iconButton} onClick={onClose} aria-label="Close">
+          <button type="button" className={styles.iconButton} onClick={onClose} aria-label={t('common.close')}>
             ×
           </button>
         </header>

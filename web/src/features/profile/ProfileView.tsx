@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { BloodGroup, Gender } from '@cura/shared';
 import { Check, Failed, Field, Loading, Panel, Row, SaveBar, uiStyles as s, useMutation, useResource } from '../../ui';
 import { ChangePasswordCard } from './ChangePasswordCard';
+import { LanguageSwitch, useT } from '../../i18n';
 import styles from './profile.module.css';
 
 export interface AccountProfile {
@@ -23,19 +24,8 @@ export interface AccountProfile {
   locale?: string;
 }
 
-const ROLE_LABELS: Record<string, string> = {
-  ADMINISTRATOR: 'Administrator',
-  DOCTOR: 'Doctor',
-  DESK_STAFF: 'Desk staff',
-  PUBLIC_USER: 'Business owner',
-};
-
-const ROLE_SUMMARY: Record<string, string> = {
-  ADMINISTRATOR: 'Full access: settings, staff, catalogues, statistics and billing.',
-  DOCTOR: 'Patient records and prescriptions. Sessions are booked by the front desk.',
-  DESK_STAFF: 'Registration, the diary, the queue and taking payment.',
-  PUBLIC_USER: 'Your ambulance or pharmacy details.',
-};
+const ROLES = ['ADMINISTRATOR', 'DOCTOR', 'DESK_STAFF', 'PUBLIC_USER'] as const;
+const isKnownRole = (role: string): role is (typeof ROLES)[number] => (ROLES as readonly string[]).includes(role);
 
 /**
  * Profile Management (spec: Profile Management / Account Settings).
@@ -49,6 +39,7 @@ export function ProfileView() {
   const { data, error, loading, reload } = useResource<AccountProfile>('/account/profile', {});
   const save = useMutation();
   const [draft, setDraft] = useState<Partial<AccountProfile>>({});
+  const { t } = useT();
 
   if (loading && !data) return <Loading />;
   if (error && !data) return <Failed message={error} />;
@@ -76,53 +67,54 @@ export function ProfileView() {
 
   return (
     <div className={styles.shell}>
-      <Panel title="Profile" description="Your own account details and sign-in security.">
+      <Panel title={t('profile.title')} description={t('profile.description')}>
         <div className={styles.identity}>
           <span className={styles.avatar} aria-hidden="true">
             {value.avatarUrl ? <img src={value.avatarUrl} alt="" /> : value.fullName.slice(0, 1)}
           </span>
           <div>
             <h3 className={styles.name}>{value.fullName}</h3>
-            <span className={styles.roleBadge}>{ROLE_LABELS[data.role] ?? data.role}</span>
-            <p className={styles.roleSummary}>{ROLE_SUMMARY[data.role] ?? ''}</p>
+            <span className={styles.roleBadge}>
+              {isKnownRole(data.role) ? t(`profile.role.${data.role}`) : data.role}
+            </span>
+            <p className={styles.roleSummary}>
+              {isKnownRole(data.role) ? t(`profile.roleSummary.${data.role}`) : ''}
+            </p>
           </div>
         </div>
 
-        <h3 className={s.subtitle}>Sign-in identity</h3>
-        <p className={s.hint}>
-          These identify you to the system. Changing them requires re-verification, so they are
-          managed by an administrator rather than edited here.
-        </p>
+        <h3 className={s.subtitle}>{t('profile.identity')}</h3>
+        <p className={s.hint}>{t('profile.identityHint')}</p>
         <Row>
-          <Field label="Mobile number">
+          <Field label={t('profile.mobile')}>
             <input className={s.input} value={value.mobile ?? '—'} readOnly />
             <span className={styles.verified} data-ok={data.mobileVerified || undefined}>
-              {data.mobileVerified ? 'Verified' : 'Not verified'}
+              {data.mobileVerified ? t('profile.verified') : t('profile.notVerified')}
             </span>
           </Field>
-          <Field label="Email address">
+          <Field label={t('profile.email')}>
             <input className={s.input} value={value.email ?? '—'} readOnly />
             <span className={styles.verified} data-ok={data.emailVerified || undefined}>
-              {data.emailVerified ? 'Verified' : 'Not verified'}
+              {data.emailVerified ? t('profile.verified') : t('profile.notVerified')}
             </span>
           </Field>
           {data.role === 'DOCTOR' && (
-            <Field label="BMDC registration">
+            <Field label={t('profile.bmdc')}>
               <input className={s.input} value={value.bmdcNumber ?? '—'} readOnly />
             </Field>
           )}
         </Row>
 
-        <h3 className={s.subtitle}>Personal details</h3>
+        <h3 className={s.subtitle}>{t('profile.personal')}</h3>
         <Row cols={2}>
-          <Field label="Full name" required>
+          <Field label={t('profile.fullName')} required>
             <input
               className={s.input}
               value={value.fullName}
               onChange={(e) => set('fullName', e.target.value)}
             />
           </Field>
-          <Field label="Secondary phone">
+          <Field label={t('profile.secondaryPhone')}>
             <input
               className={s.input}
               value={value.secondaryPhone ?? ''}
@@ -131,7 +123,7 @@ export function ProfileView() {
           </Field>
         </Row>
         <Row>
-          <Field label="Gender">
+          <Field label={t('profile.gender')}>
             <select
               className={s.input}
               value={value.gender ?? ''}
@@ -140,12 +132,12 @@ export function ProfileView() {
               <option value="">—</option>
               {Object.values(Gender).map((g) => (
                 <option key={g} value={g}>
-                  {g.charAt(0) + g.slice(1).toLowerCase()}
+                  {t(`common.gender.${g}`)}
                 </option>
               ))}
             </select>
           </Field>
-          <Field label="Date of birth">
+          <Field label={t('profile.dateOfBirth')}>
             <input
               className={s.input}
               type="date"
@@ -153,7 +145,7 @@ export function ProfileView() {
               onChange={(e) => set('dateOfBirth', e.target.value || null)}
             />
           </Field>
-          <Field label="Blood group">
+          <Field label={t('profile.bloodGroup')}>
             <select
               className={s.input}
               value={value.bloodGroup ?? ''}
@@ -169,17 +161,13 @@ export function ProfileView() {
           </Field>
         </Row>
         <Row cols={2}>
-          <Field label="Language">
-            <select
-              className={s.input}
-              value={value.locale ?? 'en'}
-              onChange={(e) => set('locale', e.target.value)}
-            >
-              <option value="en">English</option>
-              <option value="bn">বাংলা (Bangla)</option>
-            </select>
-          </Field>
-          <Field label="Profile photo URL">
+          {/* Not a <Field>: that is a <label>, and clicking its text would press the first button. */}
+          <div className={s.field}>
+            <span className={s.fieldLabel}>{t('profile.language')}</span>
+            <LanguageSwitch signedIn />
+            <span className={s.fieldHint}>{t('profile.languageHint')}</span>
+          </div>
+          <Field label={t('profile.photo')}>
             <input
               className={s.input}
               value={value.avatarUrl ?? ''}
@@ -197,13 +185,13 @@ export function ProfileView() {
           dirty={dirty}
         />
 
-        <h3 className={s.subtitle}>Two-factor authentication</h3>
+        <h3 className={s.subtitle}>{t('profile.twoFactor')}</h3>
         <Check
-          label="Require a one-time code when signing in from a new device"
+          label={t('profile.twoFactorLabel')}
           description={
             canEnable2fa
-              ? 'A 6-digit code is sent to your verified mobile number or email address.'
-              : 'Verify your mobile number or email address first — otherwise this would lock you out.'
+              ? t('profile.twoFactorOn')
+              : t('profile.twoFactorBlocked')
           }
           checked={data.twoFactorEnabled}
           disabled={!canEnable2fa}

@@ -46,6 +46,7 @@ export class AccountService {
       role: user.role,
       bmdcNumber: user.bmdcNumber,
       avatarUrl: user.avatarUrl,
+      locale: user.locale === 'bn' ? 'bn' : 'en',
       twoFactorEnabled: user.twoFactorEnabled,
       emailVerified: user.emailVerifiedAt !== null,
       mobileVerified: user.mobileVerifiedAt !== null,

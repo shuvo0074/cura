@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import type { BookableDoctor } from '@cura/shared';
 import { useServices } from '../../app/services';
 import { useDismiss } from './calendar-shared';
+import { useT } from '../../i18n';
 import styles from './panes.module.css';
 
 /** Theme slots for doctor colours (`--color-doctor-*`), assigned in roster order. */
@@ -74,6 +75,7 @@ export function DoctorFilter({
   selected: string | undefined;
   onSelect: (doctorId: string | undefined) => void;
 }) {
+  const { t } = useT();
   const [open, setOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
   const ref = useDismiss(open, close);
@@ -103,7 +105,7 @@ export function DoctorFilter({
   return (
     <section className={styles.doctorFilter} ref={ref}>
       <h3 className={styles.groupTitle} id="doctor-filter-title">
-        Show schedule for
+        {t('calendar.showScheduleFor')}
       </h3>
       <button
         type="button"
@@ -115,7 +117,7 @@ export function DoctorFilter({
       >
         {swatch(current?.color)}
         <span className={styles.doctorName} id="doctor-filter-value">
-          {current?.fullName ?? 'All doctors'}
+          {current?.fullName ?? t('calendar.allDoctors')}
         </span>
         <span className={styles.doctorChevron} aria-hidden="true">
           ▾
@@ -123,7 +125,7 @@ export function DoctorFilter({
       </button>
       {open && (
         <div role="radiogroup" aria-labelledby="doctor-filter-title" className={styles.doctorMenu}>
-          {option(undefined, 'All doctors')}
+          {option(undefined, t('calendar.allDoctors'))}
           {doctors.map((d) => option(d.id, d.fullName, d.color))}
         </div>
       )}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   CLINIC_READ_PERMISSIONS,
   OwnerRole,
@@ -7,6 +7,7 @@ import {
   permissionsForRole,
   tokenStore, type AuthSession, type AuthenticatedUser } from '@cura/shared';
 import { useServices } from './services';
+import { useLanguage, useT } from '../i18n';
 import { redeemHandoffFromAddress } from './handoff';
 import { LoginView } from '../features/auth/LoginView';
 import { AdminView } from '../features/admin/AdminView';
@@ -27,6 +28,11 @@ import styles from './app.module.css';
 
 export function App() {
   const { auth, http } = useServices();
+  const { t, tm } = useT();
+  const { adoptAccountLanguage } = useLanguage();
+  // Read through a ref so the restore effect below runs once, not on every language change.
+  const adoptRef = useRef(adoptAccountLanguage);
+  adoptRef.current = adoptAccountLanguage;
   const [session, setSession] = useState<SessionState>({ status: 'restoring' });
   const [location, setLocation] = useState<Location>({ route: 'calendar' });
   const [onboardingDone, setOnboardingDone] = useState(false);
@@ -61,6 +67,7 @@ export function App() {
         const redeemed = await handoff;
         if (cancelled) return;
         if (redeemed.ok && canUseDashboard(redeemed.value)) {
+          adoptRef.current(redeemed.value.user, false);
           setOnboardingDone(redeemed.value.user.onboardingCompleted);
           setSession({ status: 'authenticated', user: redeemed.value.user });
           return;
@@ -84,6 +91,7 @@ export function App() {
         if (cancelled) return;
 
         if (me.ok) {
+          adoptRef.current(me.value, false);
           setLoginNotice(null);
           setOnboardingDone(me.value.onboardingCompleted);
           setSession({ status: 'authenticated', user: me.value });
@@ -109,6 +117,7 @@ export function App() {
   );
 
   const handleAuthenticated = useCallback((next: AuthSession) => {
+    adoptRef.current(next.user, true);
     setLoginNotice(null);
     setOnboardingDone(next.user.onboardingCompleted);
     setSession({ status: 'authenticated', user: next.user });
@@ -142,13 +151,13 @@ export function App() {
   if (session.status === 'restoring') {
     return (
       <div className={styles.splash} role="status" aria-live="polite">
-        Loading…
+        {t('common.loading')}
       </div>
     );
   }
 
   if (session.status === 'anonymous') {
-    return <LoginView onAuthenticated={handleAuthenticated} notice={loginNotice} />;
+    return <LoginView onAuthenticated={handleAuthenticated} notice={tm(loginNotice)} />;
   }
 
   const user = session.user;
@@ -220,8 +229,7 @@ export function App() {
     >
       {viewedClinic && (
         <p className={styles.notice} role="status">
-          Viewing {viewedClinic.name}
-          {readOnlyView ? ', read-only. Each view is recorded.' : '.'}{' '}
+          {t(readOnlyView ? 'shell.viewingReadOnly' : 'shell.viewing', { name: viewedClinic.name })}{' '}
           <button
             type="button"
             onClick={() => {
@@ -229,7 +237,7 @@ export function App() {
               setLocation({ route: 'admin' });
             }}
           >
-            Stop viewing
+            {t('shell.stopViewing')}
           </button>
         </p>
       )}
@@ -250,7 +258,7 @@ export function App() {
         <ProfileView />
       ) : !practiceId ? (
         <p className={styles.notice}>
-          No practice is linked to this account yet.
+          {t('shell.noPractice')}
         </p>
       ) : location.patient ? (
         <PatientDashboardView

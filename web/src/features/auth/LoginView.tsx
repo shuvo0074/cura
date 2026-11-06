@@ -11,13 +11,14 @@ import { useServices } from '../../app/services';
 import { DoctorClaimForm } from './DoctorClaimForm';
 import { PasswordResetForm } from './PasswordResetForm';
 import { HeroIllustration } from './HeroIllustration';
+import { LanguageSwitch, useT, type TranslationKey } from '../../i18n';
 import styles from './login.module.css';
 
 type WelcomeTab = 'login' | 'register';
 
-const TABS: ReadonlyArray<{ id: WelcomeTab; label: string }> = [
-  { id: 'login', label: 'Login' },
-  { id: 'register', label: 'Register' },
+const TABS: ReadonlyArray<{ id: WelcomeTab; label: TranslationKey }> = [
+  { id: 'login', label: 'auth.tabLogin' },
+  { id: 'register', label: 'auth.tabRegister' },
 ];
 
 /**
@@ -41,6 +42,7 @@ export function LoginView({
   notice?: string | null;
 }) {
   const { auth } = useServices();
+  const { t, tm } = useT();
   // Cura Website links here to send a doctor to sign up.
   const [params] = useState(() => new URLSearchParams(window.location.search));
   const [tab, setTab] = useState<WelcomeTab>(params.get('tab') === 'register' ? 'register' : 'login');
@@ -58,7 +60,7 @@ export function LoginView({
 
   const verifying = state.phase === 'otp';
   const formError =
-    verifying || tab === 'login' ? (state.formError ?? (verifying ? null : notice)) : reg.formError;
+    tm(verifying || tab === 'login' ? (state.formError ?? (verifying ? null : notice)) : reg.formError);
   const submitting = state.submitting || reg.submitting;
 
   const handleSubmit = useCallback(
@@ -94,15 +96,16 @@ export function LoginView({
           </svg>
           Cura
         </span>
-        <nav className={styles.subBarLinks} aria-label="Help and legal">
+        <nav className={styles.subBarLinks} aria-label={t('auth.helpAndLegal')}>
+          <LanguageSwitch signedIn={false} />
           <a className={styles.subBarLink} href="/help">
-            Help
+            {t('auth.help')}
           </a>
           <a className={styles.subBarLink} href="/privacy">
-            Privacy
+            {t('auth.privacy')}
           </a>
           <a className={styles.subBarLink} href="/terms">
-            Terms
+            {t('auth.terms')}
           </a>
         </nav>
       </header>
@@ -110,7 +113,7 @@ export function LoginView({
       <main className={styles.main}>
         <section className={styles.hero} aria-hidden="true">
           <HeroIllustration className={styles.heroArt} />
-          <p className={styles.heroCaption}>Practice management, built around the consultation.</p>
+          <p className={styles.heroCaption}>{t('auth.heroCaption')}</p>
         </section>
 
         <section className={styles.panel}>
@@ -134,7 +137,7 @@ export function LoginView({
             ) : (
             <>
             {!verifying && (
-              <div className={styles.tabs} role="tablist" aria-label="Welcome">
+              <div className={styles.tabs} role="tablist" aria-label={t('auth.welcome')}>
                 {TABS.map(({ id, label }) => (
                   <button
                     key={id}
@@ -149,7 +152,7 @@ export function LoginView({
                     onKeyDown={handleTabKey}
                     disabled={submitting}
                   >
-                    {label}
+                    {t(label)}
                   </button>
                 ))}
               </div>
@@ -164,7 +167,7 @@ export function LoginView({
             >
               {verifying ? (
                 <OtpStep
-                  title={tab === 'register' ? 'Confirm your account' : 'Verify it’s you'}
+                  title={tab === 'register' ? t('auth.confirmAccount') : t('auth.verifyItsYou')}
                   maskedDestination={state.challenge?.maskedDestination}
                   code={state.otpCode}
                   onCode={(value) => vm.setOtpCode(value)}
@@ -173,10 +176,10 @@ export function LoginView({
                 />
               ) : tab === 'login' ? (
                 <>
-                  <h1 className={styles.title}>Welcome back</h1>
+                  <h1 className={styles.title}>{t('auth.welcomeBack')}</h1>
 
                   <label className={styles.field}>
-                    <span className={styles.label}>Mobile number or email</span>
+                    <span className={styles.label}>{t('auth.identifier')}</span>
                     <input
                       className={styles.input}
                       value={state.identifier}
@@ -189,13 +192,13 @@ export function LoginView({
                     />
                     {state.fieldErrors.identifier && (
                       <span id="identifier-error" className={styles.error} role="alert">
-                        {state.fieldErrors.identifier}
+                        {tm(state.fieldErrors.identifier)}
                       </span>
                     )}
                   </label>
 
                   <label className={styles.field}>
-                    <span className={styles.label}>Password</span>
+                    <span className={styles.label}>{t('auth.password')}</span>
                     <input
                       className={styles.input}
                       type="password"
@@ -208,7 +211,7 @@ export function LoginView({
                     />
                     {state.fieldErrors.password && (
                       <span id="password-error" className={styles.error} role="alert">
-                        {state.fieldErrors.password}
+                        {tm(state.fieldErrors.password)}
                       </span>
                     )}
                   </label>
@@ -221,7 +224,7 @@ export function LoginView({
                         onChange={(e) => vm.setRememberMe(e.target.checked)}
                         disabled={state.submitting}
                       />
-                      <span>Remember me for {businessRules.auth.rememberMeDays} days</span>
+                      <span>{t('auth.rememberMe', { days: businessRules.auth.rememberMeDays })}</span>
                     </label>
                     <button
                       className={styles.link}
@@ -229,57 +232,57 @@ export function LoginView({
                       onClick={() => setResetting(true)}
                       disabled={state.submitting}
                     >
-                      Forgot password?
+                      {t('auth.forgotPassword')}
                     </button>
                   </div>
                 </>
               ) : (
                 <>
-                  <h1 className={styles.title}>Create your account</h1>
+                  <h1 className={styles.title}>{t('auth.createAccount')}</h1>
 
                   <RegisterField
                     name="identifier"
-                    label="Mobile number or email"
+                    label={t('auth.identifier')}
                     state={reg}
                     onChange={(v) => regVm.setField('identifier', v)}
                     autoComplete="username"
                     inputMode="email"
-                    hint="We’ll send a verification code here."
+                    hint={t('auth.identifierHint')}
                   />
                   <RegisterField
                     name="bmdcNumber"
-                    label="BMDC registration number"
+                    label={t('auth.bmdc')}
                     state={reg}
                     onChange={(v) => regVm.setField('bmdcNumber', v)}
                     autoComplete="off"
                   />
                   <RegisterField
                     name="fullName"
-                    label="Full name"
+                    label={t('auth.fullName')}
                     state={reg}
                     onChange={(v) => regVm.setField('fullName', v)}
                     autoComplete="name"
                   />
                   <RegisterField
                     name="specialty"
-                    label="Specialty"
+                    label={t('auth.specialty')}
                     state={reg}
                     onChange={(v) => regVm.setField('specialty', v)}
                     autoComplete="off"
-                    hint="Patients see you on Cura Website after an admin approves your BMDC number."
+                    hint={t('auth.specialtyHint')}
                   />
                   <RegisterField
                     name="password"
-                    label="Password"
+                    label={t('auth.password')}
                     type="password"
                     state={reg}
                     onChange={(v) => regVm.setField('password', v)}
                     autoComplete="new-password"
-                    hint={`At least ${businessRules.auth.passwordMinLength} characters, with upper- and lowercase letters and a number.`}
+                    hint={t('auth.passwordHint', { min: businessRules.auth.passwordMinLength })}
                   />
                   <RegisterField
                     name="confirmPassword"
-                    label="Confirm password"
+                    label={t('auth.confirmPassword')}
                     type="password"
                     state={reg}
                     onChange={(v) => regVm.setField('confirmPassword', v)}
@@ -296,23 +299,23 @@ export function LoginView({
 
               <button className={styles.submit} type="submit" disabled={submitting}>
                 {submitting
-                  ? 'Please wait…'
+                  ? t('auth.pleaseWait')
                   : verifying
-                    ? 'Verify'
+                    ? t('auth.verify')
                     : tab === 'login'
-                      ? 'Login'
-                      : 'Register'}
+                      ? t('auth.login')
+                      : t('auth.register')}
               </button>
 
               {verifying ? (
                 <button className={styles.secondary} type="button" onClick={() => vm.backToCredentials()}>
-                  {tab === 'register' ? 'Edit registration details' : 'Use a different account'}
+                  {tab === 'register' ? t('auth.editRegistration') : t('auth.differentAccount')}
                 </button>
               ) : (
                 tab === 'register' && (
                   <>
                     <div className={styles.divider}>
-                      <span>or</span>
+                      <span>{t('auth.or')}</span>
                     </div>
                     {/* No Facebook OAuth exists on the API yet — shown, not faked. */}
                     <button
@@ -321,10 +324,10 @@ export function LoginView({
                       disabled
                       aria-describedby="facebook-soon"
                     >
-                      Continue with Facebook
+                      {t('auth.facebook')}
                     </button>
                     <p id="facebook-soon" className={styles.socialNote}>
-                      Facebook sign-up is coming soon.
+                      {t('auth.facebookSoon')}
                     </p>
                   </>
                 )
@@ -347,15 +350,18 @@ function OtpStep(props: {
   resendIn: number;
   submitting: boolean;
 }) {
+  const { t, rich } = useT();
   return (
     <>
       <h1 className={styles.title}>{props.title}</h1>
       <p className={styles.hint}>
-        We sent a {businessRules.auth.otpLength}-digit code to <strong>{props.maskedDestination}</strong>.
+        {rich('auth.codeSent', { length: businessRules.auth.otpLength }, {
+          to: <strong>{props.maskedDestination}</strong>,
+        })}
       </p>
 
       <label className={styles.field}>
-        <span className={styles.label}>Verification code</span>
+        <span className={styles.label}>{t('auth.verificationCode')}</span>
         <input
           className={`${styles.input} ${styles.otp}`}
           value={props.code}
@@ -370,8 +376,8 @@ function OtpStep(props: {
 
       <p className={styles.hint}>
         {props.resendIn > 0
-          ? `You can request a new code in ${props.resendIn}s.`
-          : 'You can request a new code now.'}
+          ? t('auth.resendIn', { seconds: props.resendIn })
+          : t('auth.resendNow')}
       </p>
     </>
   );
@@ -389,7 +395,8 @@ function RegisterField(props: {
   hint?: string;
 }) {
   const { name, state } = props;
-  const error = state.fieldErrors[name];
+  const { tm } = useT();
+  const error = tm(state.fieldErrors[name]);
   const errorId = `reg-${name}-error`;
   const hintId = `reg-${name}-hint`;
   // The hint gives way to the error, so only one of them is ever described.

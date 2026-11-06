@@ -2,14 +2,14 @@ import { memo, useCallback } from 'react';
 import { AppointmentStatus, fromDateKey, toDateKey, type CalendarLane } from '@cura/shared';
 import { AppointmentCard } from './AppointmentCard';
 import { useAppointmentDrag } from './use-appointment-drag';
+import { useT } from '../../i18n';
 import styles from './grid.module.css';
 
 /** Chips shown per day before collapsing the rest into "+N more". */
 const MAX_CHIPS = 3;
 
-const WEEKDAYS = Array.from({ length: 7 }, (_, i) =>
-  new Date(2023, 0, 1 + i).toLocaleDateString([], { weekday: 'short' }),
-);
+/** Sunday to Saturday (1 Jan 2023 was a Sunday). */
+const WEEK = Array.from({ length: 7 }, (_, i) => new Date(2023, 0, 1 + i));
 
 /**
  * Month view: a wall-calendar grid of whole weeks.
@@ -35,6 +35,7 @@ export const MonthGrid = memo(function MonthGrid({
   /** Present only for users who may reschedule; asks for confirmation. */
   onMove?: ((id: string, at: Date) => void) | undefined;
 }) {
+  const { t, fmt } = useT();
   const month = fromDateKey(anchorDate).getMonth();
   const todayKey = toDateKey(new Date());
   // Drop key is the day cell's date under the pointer.
@@ -59,9 +60,9 @@ export const MonthGrid = memo(function MonthGrid({
   return (
     <div className={styles.scroller}>
       <div className={styles.month} style={{ gridTemplateRows: `auto repeat(${lanes.length / 7}, minmax(110px, 1fr))` }}>
-        {WEEKDAYS.map((name) => (
-          <div key={name} className={styles.monthHead}>
-            {name}
+        {WEEK.map((day) => (
+          <div key={day.getDay()} className={styles.monthHead}>
+            {fmt.date(day, { weekday: 'short' })}
           </div>
         ))}
 
@@ -80,9 +81,9 @@ export const MonthGrid = memo(function MonthGrid({
               data-drop={drag?.target === lane.date || undefined}
               onClick={() => onOpenDay(day)}
               onKeyDown={(e) => e.key === 'Enter' && onOpenDay(day)}
-              aria-label={`${day.toLocaleDateString([], { dateStyle: 'full' })}, ${lane.appointments.length} appointments`}
+              aria-label={t('calendar.dayAppointments', { date: fmt.date(day, 'full'), count: lane.appointments.length })}
             >
-              <span className={styles.monthDate}>{day.getDate()}</span>
+              <span className={styles.monthDate}>{fmt.number(day.getDate())}</span>
               {lane.appointments.slice(0, MAX_CHIPS).map((a) => (
                 <AppointmentCard
                   key={a.id}
@@ -96,7 +97,7 @@ export const MonthGrid = memo(function MonthGrid({
                   onPressMove={pressMove}
                 />
               ))}
-              {extra > 0 && <span className={styles.more}>+{extra} more</span>}
+              {extra > 0 && <span className={styles.more}>{t('calendar.more', { count: extra })}</span>}
             </div>
           );
         })}
