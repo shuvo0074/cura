@@ -193,3 +193,11 @@ test('a listing never exposes its owner and builds the degree line', () => {
   assert.equal(out.degrees, 'MBBS, FCPS, Course');
   assert.equal(presentListing({ education: 'MBBS', items: [] }).degrees, 'MBBS');
 });
+
+test('a prescription row with empty optional fields is valid', async () => {
+  const { prescriptionSchema } = await import('@cura/shared');
+  const parsed = prescriptionSchema.safeParse({
+    items: [{ drugName: 'Typed by hand', strength: null, form: null, durationDays: null, morning: 1, noon: 0, night: 1, mealRelation: 'AFTER', instruction: null }],
+  });
+  assert.equal(parsed.success, true, JSON.stringify(parsed.error?.issues));
+});

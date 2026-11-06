@@ -331,14 +331,15 @@ export type ClinicalNoteInput = z.infer<typeof clinicalNoteSchema>;
 
 export const prescriptionItemSchema = z.object({
   drugName: z.string().trim().min(1, 'Drug name is required').max(160),
-  strength: z.string().trim().max(40).optional(),
-  form: z.string().trim().max(40).optional(),
-  durationDays: z.number().int().min(1).max(365).optional(),
+  // Empty fields arrive as null from the prescription writer, so null means "not given".
+  strength: z.string().trim().max(40).nullish(),
+  form: z.string().trim().max(40).nullish(),
+  durationDays: z.number().int().min(1).max(365).nullish(),
   morning: z.number().min(0).max(10).default(0),
   noon: z.number().min(0).max(10).default(0),
   night: z.number().min(0).max(10).default(0),
   mealRelation: z.enum(['BEFORE', 'AFTER', 'ANY']).default('ANY'),
-  instruction: z.string().trim().max(300).optional(),
+  instruction: z.string().trim().max(300).nullish(),
 });
 
 export const prescriptionSchema = z.object({
