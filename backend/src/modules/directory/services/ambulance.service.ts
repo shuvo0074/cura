@@ -26,9 +26,10 @@ export class AmbulanceService {
       this.vendors.listPublic(),
       this.settings.get<SampleFares>('ambulance_sample_fares', {}),
     ]);
-    return rows.map(({ ownerId: _ownerId, ...row }) => {
+    // Who owns a service stays private; patients only learn whether someone answers requests on Cura.
+    return rows.map(({ ownerId, ...row }) => {
       const shaped = present(row);
-      return withFares({ ...shaped, slug: row.slug, categories: row.categories }, sampleFares);
+      return withFares({ ...shaped, slug: row.slug, categories: row.categories, requestable: Boolean(ownerId) }, sampleFares);
     });
   }
 

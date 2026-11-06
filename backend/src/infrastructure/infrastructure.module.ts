@@ -66,6 +66,7 @@ import {
   AMBULANCE_REPOSITORY,
   PHARMACY_REPOSITORY,
   PHARMACY_SHOP_REPOSITORY,
+  AMBULANCE_REQUEST_REPOSITORY,
   ADMIN_USERS_REPOSITORY,
   CATALOG_DIRECTORY_REPOSITORY,
   DIRECTORY_ACCOUNT_REPOSITORY,
@@ -86,6 +87,7 @@ import { PrismaDoctorReachRepository } from './repositories/directory/reach.repo
 import { PrismaSerialBookingRepository } from './repositories/directory/serial-booking.repository';
 import { PrismaPatientHealthRepository } from './repositories/directory/patient-health.repository';
 import { PrismaPharmacyShopRepository } from './repositories/directory/pharmacy-shop.repository';
+import { PrismaAmbulanceRequestRepository } from './repositories/directory/ambulance-request.repository';
 import {
   PrismaAmbulanceRepository,
   PrismaPharmacyRepository,
@@ -158,6 +160,7 @@ import {
     { provide: AMBULANCE_REPOSITORY, useClass: PrismaAmbulanceRepository },
     { provide: PHARMACY_REPOSITORY, useClass: PrismaPharmacyRepository },
     { provide: PHARMACY_SHOP_REPOSITORY, useClass: PrismaPharmacyShopRepository },
+    { provide: AMBULANCE_REQUEST_REPOSITORY, useClass: PrismaAmbulanceRequestRepository },
     { provide: ADMIN_USERS_REPOSITORY, useClass: PrismaAdminUsersRepository },
     { provide: CATALOG_DIRECTORY_REPOSITORY, useClass: PrismaCatalogDirectoryRepository },
     { provide: SITE_SETTINGS_REPOSITORY, useClass: PrismaSiteSettingsRepository },
@@ -219,6 +222,7 @@ import {
     AMBULANCE_REPOSITORY,
     PHARMACY_REPOSITORY,
     PHARMACY_SHOP_REPOSITORY,
+    AMBULANCE_REQUEST_REPOSITORY,
     ADMIN_USERS_REPOSITORY,
     CATALOG_DIRECTORY_REPOSITORY,
     SITE_SETTINGS_REPOSITORY,

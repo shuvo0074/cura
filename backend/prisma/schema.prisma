@@ -879,11 +879,12 @@ model PatientAccount {
   name      String?  @db.VarChar(120)
   createdAt DateTime @default(now())
 
-  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  bookings       SerialBooking[]
-  reviews        DoctorReview[]
-  clinicRecords  Patient[]
-  pharmacyOrders PharmacyOrder[]
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookings          SerialBooking[]
+  reviews           DoctorReview[]
+  clinicRecords     Patient[]
+  pharmacyOrders    PharmacyOrder[]
+  ambulanceRequests AmbulanceRequest[]
 
   @@map("patient_accounts")
 }
@@ -1091,9 +1092,47 @@ model AmbulanceVendor {
   sourceCheckedOn DateTime? @db.Date
   hidden          Boolean   @default(false)
 
-  owner User? @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  owner    User?              @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  requests AmbulanceRequest[]
 
   @@map("ambulance_vendors")
+}
+
+enum AmbulanceRequestStatus {
+  NEW
+  ACCEPTED
+  COMPLETED
+  DECLINED
+  CANCELLED
+}
+
+/// A patient asks an ambulance service with an owner to come, through Cura Website.
+/// The owner reads only what the patient typed here, never any clinic record.
+model AmbulanceRequest {
+  id            String                 @id @default(uuid()) @db.Uuid
+  vendorId      String                 @db.Uuid
+  /// The requester's Cura Website account (`patient_accounts`).
+  accountId     String                 @db.Uuid
+  status        AmbulanceRequestStatus @default(NEW)
+  patientName   String                 @db.VarChar(120)
+  /// The number the ambulance should call, as `+8801…`.
+  contactPhone  String                 @db.VarChar(20)
+  pickupAddress String                 @db.VarChar(300)
+  destination   String?                @db.VarChar(200)
+  note          String?                @db.VarChar(500)
+  /// When the patient wants the ambulance. Null means as soon as possible.
+  pickupAt      DateTime?
+  /// The owner's message to the patient: an arrival time when accepting, or why they declined.
+  ownerMessage  String?                @db.VarChar(300)
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+
+  vendor  AmbulanceVendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  account PatientAccount  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([vendorId, createdAt])
+  @@index([accountId, createdAt])
+  @@map("ambulance_requests")
 }
 
 model Specialty {

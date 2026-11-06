@@ -324,6 +324,61 @@ export interface PharmacyShopRepository {
   moveOrder(scope: OrderScope, from: PharmacyOrderStatus[], to: PharmacyOrderStatus, reason: string | null): Promise<boolean>;
 }
 
+export const AMBULANCE_REQUEST_REPOSITORY = Symbol('AMBULANCE_REQUEST_REPOSITORY');
+
+export type AmbulanceRequestStatus = 'NEW' | 'ACCEPTED' | 'COMPLETED' | 'DECLINED' | 'CANCELLED';
+
+/** What a patient fills in to request an ambulance. */
+export interface AmbulanceRequestInput {
+  contactPhone: string;
+  pickupAddress: string;
+  destination: string | null;
+  note: string | null;
+  /** Null means as soon as possible. */
+  pickupAt: Date | null;
+}
+
+export interface NewAmbulanceRequest extends AmbulanceRequestInput {
+  vendorId: string;
+  accountId: string;
+  patientName: string;
+}
+
+/** Who may touch a request: its ambulance service's owner, or the patient who sent it. */
+export type AmbulanceRequestScope = { id: string; vendorId: string; ownerId: string } | { id: string; accountId: string };
+
+/**
+ * Ambulance requests. Every owner call is scoped by the owner's user id, and
+ * every patient call by their website account, so nobody reaches another
+ * service's or patient's requests.
+ */
+export interface AmbulanceRequestRepository {
+  /** A visible ambulance service that has an owner to answer, by its public slug, or null. */
+  requestableVendor(slug: string): Promise<{ id: string; name: string } | null>;
+  /** True when the service exists and this user owns it. */
+  isOwner(vendorId: string, ownerId: string): Promise<boolean>;
+  countOpen(accountId: string): Promise<number>;
+  hasOpenFor(accountId: string, vendorId: string): Promise<boolean>;
+  countSince(accountId: string, since: Date): Promise<number>;
+  create(data: NewAmbulanceRequest): Promise<Row>;
+  /** The patient's own requests, newest first, with the service's public details. */
+  patientRequests(accountId: string, limit: number): Promise<Row[]>;
+  /** Requests to this owner's services (or one of them), newest first. */
+  ownerRequests(ownerId: string, vendorId: string | null, limit: number): Promise<Row[]>;
+  /** The request's current status, or null when it is missing or outside the scope. */
+  status(scope: AmbulanceRequestScope): Promise<AmbulanceRequestStatus | null>;
+  /**
+   * Moves the request only while it is in one of `from`. A string or null
+   * message replaces the owner's message; undefined keeps it. False when it was not moved.
+   */
+  move(
+    scope: AmbulanceRequestScope,
+    from: AmbulanceRequestStatus[],
+    to: AmbulanceRequestStatus,
+    message: string | null | undefined,
+  ): Promise<boolean>;
+}
+
 export const CATALOG_DIRECTORY_REPOSITORY = Symbol('CATALOG_DIRECTORY_REPOSITORY');
 
 export type CatalogKind = 'specialties' | 'symptoms';

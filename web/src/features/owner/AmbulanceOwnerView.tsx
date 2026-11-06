@@ -18,6 +18,7 @@ import {
   ambulanceServiceLabel,
   ambulanceTypeLabel,
   toggled, type AmbulanceVendor, type FareRange } from './owner-shared';
+import { AmbulanceRequests } from './AmbulanceRequests';
 
 const EMPTY: Omit<AmbulanceVendor, 'id' | 'hidden'> = {
   name: '',
@@ -29,7 +30,10 @@ const EMPTY: Omit<AmbulanceVendor, 'id' | 'hidden'> = {
   fares: {},
 };
 
-/** An ambulance owner's own vendors. New ones wait for a super admin to publish them. */
+/**
+ * An ambulance owner's own vendors, and the requests patients send them. New
+ * vendors wait for a super admin to publish them.
+ */
 export function AmbulanceOwnerView() {
   const { data, error, loading, reload } = useResource<AmbulanceVendor[]>('/directory/my-ambulances', {});
   const [editing, setEditing] = useState<AmbulanceVendor | 'new' | null>(null);
@@ -40,61 +44,64 @@ export function AmbulanceOwnerView() {
 
   const vendors = data ?? [];
   return (
-    <Panel
-      title={t('owner.ambulances.title')}
-      description={t('owner.ambulances.description')}
-      action={
-        <button type="button" className={s.primary} onClick={() => setEditing('new')}>
-          {t('common.add')}
-        </button>
-      }
-    >
-      {vendors.length === 0 ? (
-        <p className={s.muted}>{t('owner.ambulances.empty')}</p>
-      ) : (
-        <table className={s.table}>
-          <thead>
-            <tr>
-              <th>{t('owner.col.name')}</th>
-              <th>{t('owner.col.phones')}</th>
-              <th>{t('owner.ambulances.col.types')}</th>
-              <th>{t('owner.col.onWebsite')}</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {vendors.map((vendor) => (
-              <tr key={vendor.id}>
-                <td>{vendor.name}</td>
-                <td>{vendor.phones.join(', ')}</td>
-                <td>
-                  {AMBULANCE_TYPES.filter((type) => vendor.categories.includes(type.key))
-                    .map((type) => ambulanceTypeLabel(t, type.key))
-                    .join(', ')}
-                </td>
-                <td>{vendor.hidden ? t('owner.waitingForAdmin') : t('owner.visible')}</td>
-                <td>
-                  <button type="button" className={s.linkButton} onClick={() => setEditing(vendor)}>
-                    {t('common.edit')}
-                  </button>
-                </td>
+    <>
+      {vendors.length > 0 && <AmbulanceRequests vendors={vendors} />}
+      <Panel
+        title={t('owner.ambulances.title')}
+        description={t('owner.ambulances.description')}
+        action={
+          <button type="button" className={s.primary} onClick={() => setEditing('new')}>
+            {t('common.add')}
+          </button>
+        }
+      >
+        {vendors.length === 0 ? (
+          <p className={s.muted}>{t('owner.ambulances.empty')}</p>
+        ) : (
+          <table className={s.table}>
+            <thead>
+              <tr>
+                <th>{t('owner.col.name')}</th>
+                <th>{t('owner.col.phones')}</th>
+                <th>{t('owner.ambulances.col.types')}</th>
+                <th>{t('owner.col.onWebsite')}</th>
+                <th />
               </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+            </thead>
+            <tbody>
+              {vendors.map((vendor) => (
+                <tr key={vendor.id}>
+                  <td>{vendor.name}</td>
+                  <td>{vendor.phones.join(', ')}</td>
+                  <td>
+                    {AMBULANCE_TYPES.filter((type) => vendor.categories.includes(type.key))
+                      .map((type) => ambulanceTypeLabel(t, type.key))
+                      .join(', ')}
+                  </td>
+                  <td>{vendor.hidden ? t('owner.waitingForAdmin') : t('owner.visible')}</td>
+                  <td>
+                    <button type="button" className={s.linkButton} onClick={() => setEditing(vendor)}>
+                      {t('common.edit')}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
 
-      {editing && (
-        <AmbulanceModal
-          existing={editing === 'new' ? null : editing}
-          onClose={() => setEditing(null)}
-          onSaved={() => {
-            setEditing(null);
-            void reload();
-          }}
-        />
-      )}
-    </Panel>
+        {editing && (
+          <AmbulanceModal
+            existing={editing === 'new' ? null : editing}
+            onClose={() => setEditing(null)}
+            onSaved={() => {
+              setEditing(null);
+              void reload();
+            }}
+          />
+        )}
+      </Panel>
+    </>
   );
 }
 

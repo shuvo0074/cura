@@ -17,7 +17,7 @@ there. Nobody needs a login to browse doctors, hospitals, diagnostic centres, am
 
 | Role | Account to try | Lands on | What they can do |
 | --- | --- | --- | --- |
-| Patient | patient01@cura.local | My Appointments | Browse, join or leave clinics, view appointments, review completed visits, see their own signed visits, prescriptions, vital signs, invoices and upcoming clinic appointments on **My health**, and send a prescription to a pharmacy to collect |
+| Patient | patient01@cura.local | My Appointments | Browse, join or leave clinics, view appointments, review completed visits, see their own signed visits, prescriptions, vital signs, invoices and upcoming clinic appointments on **My health**, send a prescription to a pharmacy to collect, and request an ambulance on **Find Ambulance** |
 | Doctor | doctor01@cura.local | Doctor Dashboard | Browse, edit their public profile, see profile stats and get a QR card |
 | Super admin | admin@cura.local | Admin panel | Manage all website content and doctors, approve doctor sign-ups and create clinic owners |
 | Clinic owner | owner1@cura.local | Home | Browse only; their screens are on Cura Dashboard |
@@ -35,7 +35,9 @@ there. Nobody needs a login to browse doctors, hospitals, diagnostic centres, am
   **Waiting for an admin** or **Visible**. A pharmacy owner also keeps the pharmacy's medicine stock list and handles
   the prescriptions patients send it (**Ready for pickup**, **Collected** or **Cannot fill**) on **My Pharmacy**. A
   pharmacy sees only the patient's name and phone and the prescribed medicines, never other records. There are no
-  pharmacy owners on the live database yet.
+  pharmacy owners on the live database yet. An ambulance owner answers the requests patients send on **My
+  Ambulances** (**Accept** with a message, **Completed** or **Decline**), and sees only the patient's name, the phone
+  to call and what they typed. Only a service with an owner can be requested on Cura Website.
 - **Hospital owners:** a super admin links a hospital or diagnostic centre to an account on Cura Dashboard (**Super
   Admin → Users and roles**, open the account, **Businesses**), which gives it the hospital owner role. The owner edits
   that place's public details under **My Hospital** on Cura Dashboard: name, address, hotline, website, description,
@@ -103,7 +105,8 @@ Password for all: `CuraAdmin123`. Works on Cura Dashboard.
 
 ### Ambulance owners
 
-Password for all: `CuraOwner123`. Works on Cura Dashboard, under **My Ambulances**.
+Password for all: `CuraOwner123`. Works on Cura Dashboard, under **My Ambulances**, where each owner also answers
+ambulance requests patients send to their service.
 
 | Name | Ambulance service | Email | Mobile |
 | --- | --- | --- | --- |

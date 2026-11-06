@@ -11,6 +11,7 @@ import {
 } from '../access/directory-access.decorators';
 import { UuidOr404 } from '../access/uuid-or-404.pipe';
 import { AmbulanceService } from '../services/ambulance.service';
+import { AmbulanceRequestService } from '../services/ambulance-request.service';
 import { ClinicOwnerService } from '../services/clinic-owner.service';
 import { HospitalService } from '../services/hospital.service';
 import { PatientClinicService } from '../services/patient-clinic.service';
@@ -74,7 +75,31 @@ export class MyHealthController {
 @Controller('directory/my-ambulances')
 @RequireAmbulanceOwner()
 export class MyAmbulancesController {
-  constructor(private readonly ambulances: AmbulanceService) {}
+  constructor(
+    private readonly ambulances: AmbulanceService,
+    private readonly requests: AmbulanceRequestService,
+  ) {}
+
+  /** Requests patients sent to any of this owner's services. */
+  @Get('requests')
+  allRequests(@Identity() identity: DirectoryIdentity) {
+    return this.requests.ownerRequests(identity.userId);
+  }
+
+  @Get(':id/requests')
+  requestsFor(@Param('id', UuidOr404) id: string, @Identity() identity: DirectoryIdentity) {
+    return this.requests.ownerRequests(identity.userId, id);
+  }
+
+  @Patch(':id/requests/:requestId')
+  moveRequest(
+    @Param('id', UuidOr404) id: string,
+    @Param('requestId', UuidOr404) requestId: string,
+    @Body() body: unknown,
+    @Identity() identity: DirectoryIdentity,
+  ) {
+    return this.requests.move(id, requestId, bodyOf(body), identity.userId);
+  }
 
   @Get()
   mine(@Identity() identity: DirectoryIdentity) {
@@ -89,6 +114,32 @@ export class MyAmbulancesController {
   @Patch(':id')
   update(@Param('id', UuidOr404) id: string, @Body() body: unknown, @Identity() identity: DirectoryIdentity) {
     return this.ambulances.updateOwned(id, bodyOf(body), identity.userId);
+  }
+}
+
+/**
+ * Ambulances a patient asked for through Cura Website. Scoped by the signed-in
+ * account alone: a patient sees and cancels only their own.
+ */
+@Controller('directory/my-ambulance-requests')
+@RequirePatient()
+export class MyAmbulanceRequestsController {
+  constructor(private readonly requests: AmbulanceRequestService) {}
+
+  @Get()
+  mine(@Identity() identity: DirectoryIdentity) {
+    return this.requests.patientRequests(identity);
+  }
+
+  @Post()
+  send(@Body() body: unknown, @Identity() identity: DirectoryIdentity) {
+    return this.requests.send(identity, bodyOf(body));
+  }
+
+  @Post(':id/cancel')
+  @HttpCode(200)
+  cancel(@Param('id', UuidOr404) id: string, @Identity() identity: DirectoryIdentity) {
+    return this.requests.cancel(identity, id);
   }
 }
 

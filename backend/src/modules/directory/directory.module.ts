@@ -13,6 +13,7 @@ import {
   AdminOwnersController,
   ClinicsController,
   MyAmbulancesController,
+  MyAmbulanceRequestsController,
   MyClinicsController,
   MyHealthController,
   MyPharmaciesController,
@@ -38,6 +39,7 @@ import { PatientClinicService } from './services/patient-clinic.service';
 import { PatientHealthService } from './services/patient-health.service';
 import { PharmacyService } from './services/pharmacy.service';
 import { PharmacyShopService } from './services/pharmacy-shop.service';
+import { AmbulanceRequestService } from './services/ambulance-request.service';
 import { DirectoryAudit } from './services/directory-audit.service';
 import { DoctorDirectoryService } from './services/doctor-directory.service';
 import { DoctorProfileService } from './services/doctor-profile.service';
@@ -78,6 +80,7 @@ import { DoctorVerificationService } from './services/verification.service';
     MyClinicsController,
     MyHealthController,
     MyAmbulancesController,
+    MyAmbulanceRequestsController,
     MyPharmaciesController,
     MyPharmacyOrdersController,
     MyHospitalsController,
@@ -95,6 +98,7 @@ import { DoctorVerificationService } from './services/verification.service';
     PatientHealthService,
     PharmacyService,
     PharmacyShopService,
+    AmbulanceRequestService,
     DirectoryAudit,
     DoctorDirectoryService,
     DoctorProfileService,

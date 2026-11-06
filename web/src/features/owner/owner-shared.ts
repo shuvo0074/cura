@@ -90,3 +90,22 @@ export interface PharmacyOrder {
   reason: string | null;
   created_at: string;
 }
+
+export type AmbulanceRequestStatus = 'new' | 'accepted' | 'completed' | 'declined' | 'cancelled';
+
+/** A request a patient sent to one of this owner's ambulance services. */
+export interface AmbulanceRequest {
+  id: string;
+  status: AmbulanceRequestStatus;
+  patient_name: string;
+  /** `+8801…`. */
+  contact_phone: string;
+  pickup_address: string;
+  destination: string | null;
+  note: string | null;
+  /** Null means as soon as possible. */
+  pickup_at: string | null;
+  owner_message: string | null;
+  created_at: string;
+  ambulance: { id: string; name: string };
+}

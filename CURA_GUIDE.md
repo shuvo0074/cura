@@ -26,6 +26,11 @@
   and call them
 - As a patient, send a prescription from **My health** to a pharmacy, follow its status (waiting, ready for pickup,
   collected, cannot fill) and cancel it while the pharmacy has not started
+- As a patient on Cura Website, request an ambulance from **Find Ambulance** (pickup address, destination, phone,
+  now or a later time, and a note), follow it under **My ambulance requests** with the service's message, and cancel
+  it while it is new or accepted. Calling stays on every card, because in an emergency calling is faster
+- As an ambulance owner, see the requests for your services on **My Ambulances** and accept them (with a message such
+  as when you will arrive), mark them completed or decline them
 - As a pharmacy owner, see whether patients can see your pharmacy yet; a super admin shows or hides it
 - As a pharmacy owner, keep your medicine stock list (name, strength, form, price, in stock) and handle the
   prescriptions patients send you, on **My Pharmacy**
@@ -267,6 +272,31 @@ which patients can see. Mahbub Ahmed (patient01@cura.local) already has signed p
 7. Send one more and click **Cancel order** on Cura Website: Cura Dashboard shows **Cancelled by patient** under
    **All**, with no buttons.
 8. Switch to **বাং** on both: the new screens are in Bangla.
+
+### Ambulance requests
+
+Only services with an owner show **Request this ambulance**. On your local copy, ambulance1@cura.local (password
+`CuraOwner123`) owns **BD Ambulance**.
+
+1. On Cura Website, logged out, click **Find Ambulance**. On **BD Ambulance**, the call buttons are still there, with
+   **In an emergency, call: it is faster.** under **Request this ambulance**. Click it: the form asks you to log in and
+   shows **Call now**. Click **Log in** and log in as patient01@cura.local (`CuraPatient123`); you come back to the
+   form.
+2. The phone is filled in from the account. Click **Send request** with no pickup address: it says **Enter the pickup
+   address.** Type `House 7, Road 2, Dhanmondi`, destination `Square Hospital`, a note, leave **Now** and click
+   **Send request**. **My ambulance requests** appears at the top with **Waiting** and **Cancel request**. Try
+   **Later**: the time picker allows up to 7 days ahead.
+3. On Cura Dashboard, log in as ambulance1@cura.local and click **My Ambulances**. Under **Ambulance requests**, the
+   request shows the time, Mahbub Ahmed with a phone link, **As soon as possible**, the pickup, destination and note.
+   Click **Accept**, type `Arriving in 15 minutes` and click **Accept**: it says **Accepted** and **Your message: …**.
+4. Reload **Find Ambulance** on Cura Website (it also refreshes itself every 30 seconds): the request says
+   **Accepted** and **The ambulance service says: Arriving in 15 minutes**.
+5. On Cura Dashboard click **Completed**: the request leaves **Open** and shows under **All**. On Cura Website it says
+   **Completed** with no cancel button.
+6. Send another request and click **Decline** on Cura Dashboard with a reason: the patient sees **Declined** and the
+   reason. Send one more and click **Cancel request** on Cura Website: Cura Dashboard shows **Cancelled by patient**.
+7. A patient can have 3 open requests at a time and one per service; a fourth says to cancel one first.
+8. Switch to **বাং** on Cura Website and **বাংলা** on Cura Dashboard: the new screens are in Bangla.
 
 ### My Hospital
 
