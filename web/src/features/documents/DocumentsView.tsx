@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { DocumentCategory, businessRules } from '@cura/shared';
+import { DocumentCategory } from '@cura/shared';
 import { useServices } from '../../app/services';
 import { UploadDialog } from './UploadDialog';
 import { DocumentPreview } from './DocumentPreview';
-import { CATEGORY_LABELS, formatBytes, isImage, isPdf } from './document-kit';
+import { MAX_UPLOAD_MB, categoryLabel, formatBytes, isImage, isPdf } from './document-kit';
+import { useT } from '../../i18n';
 import styles from './documents.module.css';
 
 export interface DocumentRow {
@@ -25,12 +26,7 @@ interface Page {
 
 type Range = 'all' | '7' | '30' | '365';
 
-const RANGES: ReadonlyArray<{ key: Range; label: string }> = [
-  { key: 'all', label: 'All time' },
-  { key: '7', label: 'Last 7 days' },
-  { key: '30', label: 'Last 30 days' },
-  { key: '365', label: 'Last year' },
-];
+const RANGES: readonly Range[] = ['all', '7', '30', '365'];
 
 /**
  * Documents module.
@@ -51,6 +47,7 @@ export function DocumentsView({
   onOpenPatient: (patientId: string) => void;
 }) {
   const { http } = useServices();
+  const { t, tm, fmt } = useT();
 
   const [rows, setRows] = useState<DocumentRow[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
@@ -168,20 +165,20 @@ export function DocumentsView({
           className={styles.search}
           value={term}
           onChange={(e) => setTerm(e.target.value)}
-          placeholder="Search by file name or patient…"
-          aria-label="Search documents"
+          placeholder={t('patients.doc.searchPlaceholder')}
+          aria-label={t('patients.doc.searchLabel')}
         />
 
         <select
           className={styles.select}
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          aria-label="Filter by category"
+          aria-label={t('patients.doc.filterCategory')}
         >
-          <option value="">All categories</option>
+          <option value="">{t('patients.doc.allCategories')}</option>
           {Object.values(DocumentCategory).map((c) => (
             <option key={c} value={c}>
-              {CATEGORY_LABELS[c] ?? c}
+              {t(`patients.doc.cat.${c}`)}
             </option>
           ))}
         </select>
@@ -190,11 +187,11 @@ export function DocumentsView({
           className={styles.select}
           value={range}
           onChange={(e) => setRange(e.target.value as Range)}
-          aria-label="Filter by date"
+          aria-label={t('patients.doc.filterDate')}
         >
           {RANGES.map((r) => (
-            <option key={r.key} value={r.key}>
-              {r.label}
+            <option key={r} value={r}>
+              {t(`patients.doc.range.${r}`)}
             </option>
           ))}
         </select>
@@ -210,26 +207,25 @@ export function DocumentsView({
               setUploading(true);
             }}
           >
-            Upload files
+            {t('patients.doc.uploadFiles')}
           </button>
         )}
       </header>
 
       {error && (
         <p className={styles.error} role="alert">
-          {error}
+          {tm(error)}
         </p>
       )}
 
       {loading && rows.length === 0 ? (
-        <p className={styles.muted}>Loading…</p>
+        <p className={styles.muted}>{t('common.loading')}</p>
       ) : rows.length === 0 ? (
         <div className={styles.empty}>
-          <p>{query || category || range !== 'all' ? 'No documents match these filters.' : 'No documents yet.'}</p>
+          <p>{query || category || range !== 'all' ? t('patients.doc.noMatch') : t('patients.doc.empty')}</p>
           {canWrite && (
             <p className={styles.mutedSmall}>
-              Drag files anywhere on this pane, or use Upload files. JPEG, PNG, WebP and PDF up to{' '}
-              {Math.round(businessRules.uploads.maxFileBytes / 1024 / 1024)} MB.
+              {t('patients.doc.dropHint', { mb: MAX_UPLOAD_MB })}
             </p>
           )}
         </div>
@@ -247,11 +243,10 @@ export function DocumentsView({
                       {row.fileName}
                     </span>
                     <span className={styles.meta}>
-                      {CATEGORY_LABELS[row.category] ?? row.category} · {formatBytes(row.sizeBytes)}
+                      {categoryLabel(row.category, t)} · {formatBytes(row.sizeBytes, fmt)}
                     </span>
                     <span className={styles.meta}>
-                      {row.patient ? row.patient.fullName : 'My profile'} ·{' '}
-                      {new Date(row.createdAt).toLocaleDateString()}
+                      {row.patient ? row.patient.fullName : t('patients.doc.myProfile')} · {fmt.date(row.createdAt)}
                     </span>
                   </span>
                 </button>
@@ -267,7 +262,7 @@ export function DocumentsView({
                 onClick={() => void load(cursor)}
                 disabled={loading}
               >
-                {loading ? 'Loading…' : 'Load more'}
+                {loading ? t('common.loading') : t('patients.doc.loadMore')}
               </button>
             </div>
           )}
@@ -276,7 +271,7 @@ export function DocumentsView({
 
       {dropping && (
         <div className={styles.dropOverlay} aria-hidden="true">
-          Drop files to upload
+          {t('patients.doc.dropOverlay')}
         </div>
       )}
 

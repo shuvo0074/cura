@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { PatientDashboardViewModel, useViewModel, type Patient } from '@cura/shared';
 import { useServices } from '../../app/services';
+import { useT, type TranslationKey } from '../../i18n';
 import { ConsentPanel } from './ConsentGate';
 import { PatientHeader } from './PatientHeader';
 import { PatientFiles } from './PatientFiles';
@@ -15,10 +16,10 @@ import styles from './patient.module.css';
 
 type Tab = 'charting' | 'files' | 'billing';
 
-const TABS: ReadonlyArray<{ key: Tab; label: string }> = [
-  { key: 'charting', label: 'Charting' },
-  { key: 'files', label: 'Files' },
-  { key: 'billing', label: 'Billing' },
+const TABS: ReadonlyArray<{ key: Tab; label: TranslationKey }> = [
+  { key: 'charting', label: 'patients.tab.charting' },
+  { key: 'files', label: 'patients.tab.files' },
+  { key: 'billing', label: 'patients.tab.billing' },
 ];
 
 /**
@@ -45,6 +46,7 @@ export function PatientDashboardView({
   onClose: () => void;
 }) {
   const { clinical, settings, http } = useServices();
+  const { t } = useT();
   const [state, vm] = useViewModel(
     () => new PatientDashboardViewModel(clinical, settings, practiceId, patientId),
   );
@@ -79,31 +81,31 @@ export function PatientDashboardView({
     <div className={styles.shell}>
       <header className={styles.header}>
         <button type="button" className={styles.back} onClick={onClose}>
-          ← Back
+          {t('patients.record.back')}
         </button>
-        {state.saving && <span className={styles.busy}>Saving…</span>}
+        {state.saving && <span className={styles.busy}>{t('common.saving')}</span>}
       </header>
 
       <PatientHeader patient={patient} onEditProfile={() => setEditing(true)} />
 
-      <nav className={styles.tabs} role="tablist" aria-label="Record sections">
-        {TABS.map((t) => (
+      <nav className={styles.tabs} role="tablist" aria-label={t('patients.record.sections')}>
+        {TABS.map((item) => (
           <button
-            key={t.key}
+            key={item.key}
             type="button"
             role="tab"
-            aria-selected={tab === t.key}
-            data-active={tab === t.key || undefined}
-            onClick={() => setTab(t.key)}
+            aria-selected={tab === item.key}
+            data-active={tab === item.key || undefined}
+            onClick={() => setTab(item.key)}
           >
-            {t.label}
+            {t(item.label)}
           </button>
         ))}
       </nav>
 
       <div className={styles.columns}>
-        <section className={styles.timeline} aria-label="Clinical timeline">
-          <h2 className={styles.sectionTitle}>Timeline</h2>
+        <section className={styles.timeline} aria-label={t('patients.timeline.label')}>
+          <h2 className={styles.sectionTitle}>{t('patients.timeline.title')}</h2>
 
           {state.hasLockedHistory && (
             <ConsentPanel
@@ -116,12 +118,12 @@ export function PatientDashboardView({
           )}
 
           {!canReadHistory && (
-            <p className={styles.muted}>Clinical history is visible to doctors and administrators.</p>
+            <p className={styles.muted}>{t('patients.timeline.staffOnly')}</p>
           )}
-          {canReadHistory && state.loading && <p className={styles.muted}>Loading history…</p>}
+          {canReadHistory && state.loading && <p className={styles.muted}>{t('patients.timeline.loading')}</p>}
           {canReadHistory && !state.loading && state.entries.length === 0 && (
             <p className={styles.muted}>
-              No visits recorded in the last {state.privacyWindowDays} days.
+              {t('patients.timeline.empty', { days: state.privacyWindowDays })}
             </p>
           )}
 
@@ -130,7 +132,7 @@ export function PatientDashboardView({
           ))}
         </section>
 
-        <section className={styles.editor} aria-label={TABS.find((t) => t.key === tab)?.label}>
+        <section className={styles.editor} aria-label={t(TABS.find((item) => item.key === tab)!.label)}>
           {tab === 'charting' &&
             (!state.activeEncounter ? (
               <StartVisit
@@ -141,7 +143,7 @@ export function PatientDashboardView({
               />
             ) : (
               <>
-                {signed && <span className={styles.signedBadge}>Signed — read only</span>}
+                {signed && <span className={styles.signedBadge}>{t('patients.record.signedReadOnly')}</span>}
 
                 <VitalsEditor
                   vm={vm}

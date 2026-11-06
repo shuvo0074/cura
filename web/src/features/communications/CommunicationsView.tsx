@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CommunicationsPanel } from '../settings/panels/CommunicationsPanel';
 import { uiStyles as s } from '../../ui';
+import { useT } from '../../i18n';
 import { UpcomingOutreach } from './UpcomingOutreach';
 import styles from './communications.module.css';
 
@@ -23,17 +24,18 @@ export function CommunicationsView({
   canManage: boolean;
   onOpenPatient: (patientId: string) => void;
 }) {
+  const { t } = useT();
   const [tab, setTab] = useState<Tab>('upcoming');
 
   return (
     <div className={styles.shell}>
       <header>
-        <h1 className={s.title}>Communications</h1>
-        <p className={s.hint}>Upcoming follow-ups and birthday wishes, and the messages Cura sends for you.</p>
+        <h1 className={s.title}>{t('patients.comms.title')}</h1>
+        <p className={s.hint}>{t('patients.comms.hint')}</p>
       </header>
 
       {canManage && (
-        <div className={s.filters} role="tablist" aria-label="Communications section">
+        <div className={s.filters} role="tablist" aria-label={t('patients.comms.section')}>
           <button
             type="button"
             role="tab"
@@ -41,7 +43,7 @@ export function CommunicationsView({
             data-active={tab === 'upcoming' || undefined}
             onClick={() => setTab('upcoming')}
           >
-            Upcoming follow-ups &amp; wishes
+            {t('patients.comms.tabUpcoming')}
           </button>
           <button
             type="button"
@@ -50,7 +52,7 @@ export function CommunicationsView({
             data-active={tab === 'channels' || undefined}
             onClick={() => setTab('channels')}
           >
-            SMS &amp; email settings
+            {t('patients.comms.tabChannels')}
           </button>
         </div>
       )}

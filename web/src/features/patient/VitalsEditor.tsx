@@ -1,18 +1,20 @@
 import type { PatientDashboardViewModel, VitalsDraft } from '@cura/shared';
+import { useT, type TranslationKey } from '../../i18n';
 import styles from './patient.module.css';
 
 const FIELDS: ReadonlyArray<{
   key: keyof VitalsDraft;
-  label: string;
-  unit: string;
+  label: TranslationKey;
+  /** A unit read the same in both languages, or a key for one that is translated. */
+  unit: string | { key: TranslationKey };
   placeholder?: string;
 }> = [
-  { key: 'weightKg', label: 'Weight', unit: 'kg' },
-  { key: 'systolic', label: 'BP systolic', unit: 'mmHg', placeholder: '120' },
-  { key: 'diastolic', label: 'BP diastolic', unit: 'mmHg', placeholder: '80' },
-  { key: 'pulseBpm', label: 'Pulse', unit: 'beats/min' },
-  { key: 'temperatureC', label: 'Temperature', unit: '°C' },
-  { key: 'respiratoryRate', label: 'Resp. rate', unit: 'breaths/min' },
+  { key: 'weightKg', label: 'patients.vitals.weight', unit: 'kg' },
+  { key: 'systolic', label: 'patients.vitals.systolic', unit: 'mmHg', placeholder: '120' },
+  { key: 'diastolic', label: 'patients.vitals.diastolic', unit: 'mmHg', placeholder: '80' },
+  { key: 'pulseBpm', label: 'patients.vitals.pulse', unit: { key: 'patients.vitals.beatsPerMin' } },
+  { key: 'temperatureC', label: 'patients.vitals.temperature', unit: '°C' },
+  { key: 'respiratoryRate', label: 'patients.vitals.respiratoryRate', unit: { key: 'patients.vitals.breathsPerMin' } },
 ];
 
 /**
@@ -35,10 +37,11 @@ export function VitalsEditor({
   saving: boolean;
   fieldErrors: Record<string, string>;
 }) {
+  const { t, tm } = useT();
   return (
-    <section className={styles.card} aria-label="Vital signs">
+    <section className={styles.card} aria-label={t('patients.vitals.title')}>
       <div className={styles.cardHead}>
-        <h3 className={styles.sectionTitle}>Vital signs</h3>
+        <h3 className={styles.sectionTitle}>{t('patients.vitals.title')}</h3>
         {!disabled && (
           <button
             type="button"
@@ -46,7 +49,7 @@ export function VitalsEditor({
             onClick={() => void vm.saveVitals()}
             disabled={saving}
           >
-            {saving ? 'Saving…' : 'Save vitals'}
+            {saving ? t('common.saving') : t('patients.vitals.save')}
           </button>
         )}
       </div>
@@ -55,18 +58,19 @@ export function VitalsEditor({
         {FIELDS.map((field) => (
           <label key={field.key} className={styles.vital}>
             <span className={styles.label}>
-              {field.label} <span className={styles.unit}>({field.unit})</span>
+              {t(field.label)}{' '}
+              <span className={styles.unit}>({typeof field.unit === 'string' ? field.unit : t(field.unit.key)})</span>
             </span>
             <input
               className={styles.input}
               inputMode="decimal"
               disabled={disabled}
               value={vitals[field.key]}
-              placeholder={field.placeholder ?? 'Enter reading'}
+              placeholder={field.placeholder ?? t('patients.vitals.placeholder')}
               onChange={(e) => vm.setVital(field.key, e.target.value)}
             />
             {fieldErrors[field.key] && (
-              <span className={styles.error}>{fieldErrors[field.key]}</span>
+              <span className={styles.error}>{tm(fieldErrors[field.key])}</span>
             )}
           </label>
         ))}

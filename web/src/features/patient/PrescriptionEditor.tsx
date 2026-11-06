@@ -1,4 +1,5 @@
 import type { PatientDashboardState, PatientDashboardViewModel } from '@cura/shared';
+import { useT } from '../../i18n';
 import { PrescriptionRowEditor } from './PrescriptionRowEditor';
 import styles from './patient.module.css';
 
@@ -17,19 +18,20 @@ export function PrescriptionEditor({
   state: PatientDashboardState;
   disabled: boolean;
 }) {
+  const { t, tm } = useT();
   return (
-    <section className={styles.card} aria-label="Prescription">
+    <section className={styles.card} aria-label={t('patients.rx.title')}>
       <div className={styles.cardHead}>
-        <h3 className={styles.sectionTitle}>Prescription</h3>
+        <h3 className={styles.sectionTitle}>{t('patients.rx.title')}</h3>
       </div>
 
       <div className={styles.grid} role="table">
         <div className={styles.gridHead} role="row">
-          <span>Drug</span>
-          <span>Strength</span>
-          <span>Duration</span>
-          <span>M / N / E</span>
-          <span>Meal</span>
+          <span>{t('patients.rx.drug')}</span>
+          <span>{t('patients.rx.strength')}</span>
+          <span>{t('patients.rx.duration')}</span>
+          <span>{t('patients.rx.dose')}</span>
+          <span>{t('patients.rx.meal')}</span>
           <span />
         </div>
 
@@ -49,12 +51,12 @@ export function PrescriptionEditor({
       </div>
 
       <label className={styles.field}>
-        <span className={styles.label}>Investigations</span>
+        <span className={styles.label}>{t('patients.rx.investigations')}</span>
         <input
           className={styles.input}
           disabled={disabled}
           value={state.investigations.join(', ')}
-          placeholder="CBC, CRP…"
+          placeholder={t('patients.rx.investigationsPlaceholder')}
           onChange={(e) =>
             vm.setInvestigations(e.target.value.split(',').map((s) => s.trim()).filter(Boolean))
           }
@@ -62,7 +64,7 @@ export function PrescriptionEditor({
       </label>
 
       <label className={styles.field}>
-        <span className={styles.label}>Follow-up date</span>
+        <span className={styles.label}>{t('patients.rx.followUp')}</span>
         <input
           className={styles.input}
           type="date"
@@ -74,12 +76,12 @@ export function PrescriptionEditor({
 
       {Object.entries(state.fieldErrors).map(([key, message]) => (
         <p className={styles.error} key={key} role="alert">
-          {message}
+          {tm(message)}
         </p>
       ))}
       {state.error && (
         <p className={styles.error} role="alert">
-          {state.error}
+          {tm(state.error)}
         </p>
       )}
 
@@ -91,7 +93,7 @@ export function PrescriptionEditor({
             disabled={state.saving}
             onClick={() => void vm.savePrescription()}
           >
-            Save draft
+            {t('patients.rx.saveDraft')}
           </button>
           <button
             type="button"
@@ -99,7 +101,7 @@ export function PrescriptionEditor({
             disabled={state.saving}
             onClick={() => void vm.signEncounter()}
           >
-            Sign &amp; complete visit
+            {t('patients.rx.sign')}
           </button>
         </div>
       )}

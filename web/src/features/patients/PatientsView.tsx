@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ageFromDateOfBirth, initials, type Patient } from '@cura/shared';
 import { useServices } from '../../app/services';
+import { useT } from '../../i18n';
 import styles from './patients.module.css';
 
 type Filter = 'all' | 'recent';
@@ -20,6 +21,7 @@ export function PatientsView({
   onOpenPatient: (patientId: string) => void;
 }) {
   const { http } = useServices();
+  const { t, tm } = useT();
   const [rows, setRows] = useState<Patient[]>([]);
   const [term, setTerm] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
@@ -80,10 +82,10 @@ export function PatientsView({
           className={styles.search}
           value={term}
           onChange={(e) => setTerm(e.target.value)}
-          placeholder="Search by phone number, name, or ID…"
-          aria-label="Search patients"
+          placeholder={t('patients.list.searchPlaceholder')}
+          aria-label={t('common.searchPatients')}
         />
-        <div className={styles.filters} role="tablist" aria-label="Filter">
+        <div className={styles.filters} role="tablist" aria-label={t('patients.list.filter')}>
           {(['all', 'recent'] as Filter[]).map((f) => (
             <button
               key={f}
@@ -93,24 +95,24 @@ export function PatientsView({
               data-active={filter === f || undefined}
               onClick={() => setFilter(f)}
             >
-              {f === 'all' ? 'All' : 'Recent (7d)'}
+              {f === 'all' ? t('patients.list.all') : t('patients.list.recent')}
             </button>
           ))}
         </div>
-        <span className={styles.count}>{visible.length} patients</span>
+        <span className={styles.count}>{t('patients.list.count', { count: visible.length })}</span>
       </header>
 
       {error && (
         <p className={styles.error} role="alert">
-          {error}
+          {tm(error)}
         </p>
       )}
 
       {loading && rows.length === 0 ? (
-        <p className={styles.muted}>Loading…</p>
+        <p className={styles.muted}>{t('common.loading')}</p>
       ) : visible.length === 0 ? (
         <p className={styles.muted}>
-          {term.trim().length >= 3 ? 'No patients match that search.' : 'No patients yet.'}
+          {term.trim().length >= 3 ? t('patients.list.noMatch') : t('patients.list.empty')}
         </p>
       ) : (
         <ul className={styles.list}>
@@ -133,19 +135,17 @@ export function PatientsView({
                 <span className={styles.demo}>
                   {[
                     ageFromDateOfBirth(patient.dateOfBirth) !== null
-                      ? `${ageFromDateOfBirth(patient.dateOfBirth)} yrs`
+                      ? t('patients.ageYrs', { age: ageFromDateOfBirth(patient.dateOfBirth)! })
                       : null,
-                    patient.gender
-                      ? patient.gender.charAt(0) + patient.gender.slice(1).toLowerCase()
-                      : null,
+                    patient.gender ? t(`common.gender.${patient.gender}`) : null,
                     patient.bloodGroup,
                   ]
                     .filter(Boolean)
                     .join(' · ')}
                 </span>
                 {!patient.profileComplete && (
-                  <span className={styles.incomplete} title="Profile incomplete">
-                    incomplete
+                  <span className={styles.incomplete} title={t('patients.profileIncomplete')}>
+                    {t('patients.list.incomplete')}
                   </span>
                 )}
                 <span className={styles.chevron} aria-hidden="true">

@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { Modal } from '../../ui';
 import { useDocumentFile } from './use-document-file';
-import { CATEGORY_LABELS, formatBytes, isImage, isPdf } from './document-kit';
+import { categoryLabel, formatBytes, isImage, isPdf } from './document-kit';
+import { useT } from '../../i18n';
 import type { DocumentRow } from './DocumentsView';
 import styles from './documents.module.css';
 
@@ -34,6 +35,7 @@ export function DocumentPreview({
   onDelete: () => void;
   onOpenPatient: (patientId: string) => void;
 }) {
+  const { t, tm, fmt } = useT();
   const { file, loading, error, load, download } = useDocumentFile(practiceId);
 
   const renderable = isImage(document.mimeType) || isPdf(document.mimeType);
@@ -51,12 +53,12 @@ export function DocumentPreview({
         <>
           {error && (
             <span className={styles.error} role="alert">
-              {error}
+              {tm(error)}
             </span>
           )}
           {canWrite && (
             <button type="button" className={styles.danger} onClick={onDelete}>
-              Delete
+              {t('common.delete')}
             </button>
           )}
           <button
@@ -64,18 +66,18 @@ export function DocumentPreview({
             className={styles.secondary}
             onClick={() => void download(document.id, document.fileName)}
           >
-            Download
+            {t('patients.doc.download')}
           </button>
           <button type="button" className={styles.primary} onClick={onClose}>
-            Close
+            {t('common.close')}
           </button>
         </>
       }
     >
       <dl className={styles.details}>
-        <dt>Category</dt>
-        <dd>{CATEGORY_LABELS[document.category] ?? document.category}</dd>
-        <dt>Patient</dt>
+        <dt>{t('patients.doc.category')}</dt>
+        <dd>{categoryLabel(document.category, t)}</dd>
+        <dt>{t('patients.field.patient')}</dt>
         <dd>
           {document.patient ? (
             <button
@@ -89,26 +91,26 @@ export function DocumentPreview({
               {document.patient.fullName} ({document.patient.curaId})
             </button>
           ) : (
-            'My profile'
+            t('patients.doc.myProfile')
           )}
         </dd>
-        <dt>Size</dt>
+        <dt>{t('patients.doc.size')}</dt>
         <dd>
-          {formatBytes(document.sizeBytes)} · {document.mimeType}
+          {formatBytes(document.sizeBytes, fmt)} · {document.mimeType}
         </dd>
-        <dt>Uploaded</dt>
-        <dd>{new Date(document.createdAt).toLocaleString()}</dd>
+        <dt>{t('patients.doc.uploaded')}</dt>
+        <dd>{fmt.dateTime(document.createdAt)}</dd>
       </dl>
 
       <div className={styles.viewer}>
         {!renderable ? (
           <p className={styles.muted}>
-            This file type cannot be previewed in the browser. Use Download to open it.
+            {t('patients.doc.noPreview')}
           </p>
         ) : loading ? (
-          <p className={styles.muted}>Loading preview…</p>
+          <p className={styles.muted}>{t('patients.doc.loadingPreview')}</p>
         ) : !file ? (
-          <p className={styles.muted}>{error ?? 'Preview unavailable.'}</p>
+          <p className={styles.muted}>{tm(error) ?? t('patients.doc.previewUnavailable')}</p>
         ) : isImage(document.mimeType) ? (
           <img className={styles.image} src={file.objectUrl} alt={document.fileName} />
         ) : (

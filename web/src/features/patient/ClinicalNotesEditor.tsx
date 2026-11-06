@@ -1,12 +1,18 @@
 import type { NoteDraft, NoteListField, PatientDashboardViewModel } from '@cura/shared';
+import { useT, type TranslationKey } from '../../i18n';
 import { TagListInput } from './TagListInput';
 import styles from './patient.module.css';
 
-const SECTIONS: ReadonlyArray<{ key: NoteListField; label: string; kind: string; placeholder: string }> = [
-  { key: 'complaints', label: 'Chief complaints', kind: 'COMPLAINT', placeholder: 'Fever for 3 days' },
-  { key: 'observations', label: 'Observations', kind: 'OBSERVATION', placeholder: 'Chest clear' },
-  { key: 'diagnoses', label: 'Diagnoses', kind: 'DIAGNOSIS', placeholder: 'Viral fever' },
-  { key: 'advice', label: 'Advice', kind: 'ADVICE', placeholder: 'Rest, plenty of fluids' },
+const SECTIONS: ReadonlyArray<{
+  key: NoteListField;
+  label: TranslationKey;
+  kind: string;
+  placeholder: TranslationKey;
+}> = [
+  { key: 'complaints', label: 'patients.notes.complaints', kind: 'COMPLAINT', placeholder: 'patients.notes.complaintsPlaceholder' },
+  { key: 'observations', label: 'patients.notes.observations', kind: 'OBSERVATION', placeholder: 'patients.notes.observationsPlaceholder' },
+  { key: 'diagnoses', label: 'patients.notes.diagnoses', kind: 'DIAGNOSIS', placeholder: 'patients.notes.diagnosesPlaceholder' },
+  { key: 'advice', label: 'patients.notes.advice', kind: 'ADVICE', placeholder: 'patients.notes.advicePlaceholder' },
 ];
 
 /**
@@ -28,10 +34,11 @@ export function ClinicalNotesEditor({
   disabled: boolean;
   saving: boolean;
 }) {
+  const { t } = useT();
   return (
-    <section className={styles.card} aria-label="Clinical notes">
+    <section className={styles.card} aria-label={t('patients.notes.title')}>
       <div className={styles.cardHead}>
-        <h3 className={styles.sectionTitle}>Clinical notes</h3>
+        <h3 className={styles.sectionTitle}>{t('patients.notes.title')}</h3>
         {!disabled && (
           <button
             type="button"
@@ -39,7 +46,7 @@ export function ClinicalNotesEditor({
             onClick={() => void vm.saveNote()}
             disabled={saving}
           >
-            {saving ? 'Saving…' : 'Save notes'}
+            {saving ? t('common.saving') : t('patients.notes.save')}
           </button>
         )}
       </div>
@@ -47,10 +54,10 @@ export function ClinicalNotesEditor({
       {SECTIONS.map((section) => (
         <TagListInput
           key={section.key}
-          label={section.label}
+          label={t(section.label)}
           practiceId={practiceId}
           catalogKind={section.kind}
-          placeholder={section.placeholder}
+          placeholder={t(section.placeholder)}
           disabled={disabled}
           values={note[section.key]}
           onChange={(values) => vm.setNoteList(section.key, values)}
@@ -58,13 +65,13 @@ export function ClinicalNotesEditor({
       ))}
 
       <label className={styles.field}>
-        <span className={styles.label}>Notes</span>
+        <span className={styles.label}>{t('patients.notes.notes')}</span>
         <textarea
           className={styles.textarea}
           rows={3}
           disabled={disabled}
           value={note.notes}
-          placeholder="General remarks or internal documentation"
+          placeholder={t('patients.notes.notesPlaceholder')}
           onChange={(e) => vm.setNoteText(e.target.value)}
         />
       </label>

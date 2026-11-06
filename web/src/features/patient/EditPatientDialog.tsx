@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { BloodGroup, Gender, type Patient } from '@cura/shared';
 import { Field, Modal, ModalActions, Row, uiStyles as s } from '../../ui';
 import { useServices } from '../../app/services';
+import { useT } from '../../i18n';
 
 /** Profile Management for a patient (spec: "Edit Profile"). */
 export function EditPatientDialog({
@@ -16,6 +17,7 @@ export function EditPatientDialog({
   onSaved: () => void;
 }) {
   const { http } = useServices();
+  const { t } = useT();
   const [form, setForm] = useState({
     fullName: patient.fullName,
     mobile: patient.mobile,
@@ -60,32 +62,32 @@ export function EditPatientDialog({
 
   return (
     <Modal
-      title="Edit profile"
+      title={t('patients.record.editProfile')}
       onClose={onClose}
       wide
       footer={<ModalActions error={error} busy={busy} onCancel={onClose} onSave={() => void submit()} />}
     >
       <Row cols={2}>
-        <Field label="Patient name" required>
+        <Field label={t('patients.field.patientName')} required>
           <input className={s.input} value={form.fullName} onChange={(e) => set('fullName', e.target.value)} />
         </Field>
-        <Field label="Mobile number" required>
+        <Field label={t('patients.field.mobileNumber')} required>
           <input className={s.input} value={form.mobile} onChange={(e) => set('mobile', e.target.value)} />
         </Field>
       </Row>
 
       <Row>
-        <Field label="Gender">
+        <Field label={t('patients.field.gender')}>
           <select className={s.input} value={form.gender} onChange={(e) => set('gender', e.target.value)}>
             <option value="">—</option>
             {Object.values(Gender).map((g) => (
               <option key={g} value={g}>
-                {g.charAt(0) + g.slice(1).toLowerCase()}
+                {t(`common.gender.${g}`)}
               </option>
             ))}
           </select>
         </Field>
-        <Field label="Date of birth">
+        <Field label={t('patients.field.dateOfBirth')}>
           <input
             className={s.input}
             type="date"
@@ -93,7 +95,7 @@ export function EditPatientDialog({
             onChange={(e) => set('dateOfBirth', e.target.value)}
           />
         </Field>
-        <Field label="Blood group">
+        <Field label={t('patients.field.bloodGroup')}>
           <select className={s.input} value={form.bloodGroup} onChange={(e) => set('bloodGroup', e.target.value)}>
             <option value="">—</option>
             {Object.values(BloodGroup).map((b) => (
@@ -105,10 +107,10 @@ export function EditPatientDialog({
         </Field>
       </Row>
 
-      <Field label="Email">
+      <Field label={t('patients.field.email')}>
         <input className={s.input} type="email" value={form.email} onChange={(e) => set('email', e.target.value)} />
       </Field>
-      <Field label="Address">
+      <Field label={t('patients.field.address')}>
         <input className={s.input} value={form.address} onChange={(e) => set('address', e.target.value)} />
       </Field>
     </Modal>

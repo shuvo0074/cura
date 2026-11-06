@@ -1,19 +1,12 @@
 import { useState } from 'react';
 import { Failed, Loading, uiStyles as s, useResource } from '../../ui';
+import { useT } from '../../i18n';
 import { FeedbackCard } from './FeedbackCard';
 import { RecordFeedbackDialog } from './RecordFeedbackDialog';
 import { stars, type FeedbackFilter, type FeedbackResponse } from './feedback-shared';
 import styles from './feedback.module.css';
 
-const FILTERS: ReadonlyArray<{ key: FeedbackFilter; label: string }> = [
-  { key: 'all', label: 'All' },
-  { key: 'unanswered', label: 'Awaiting reply' },
-  { key: 5, label: '5 ★' },
-  { key: 4, label: '4 ★' },
-  { key: 3, label: '3 ★' },
-  { key: 2, label: '2 ★' },
-  { key: 1, label: '1 ★' },
-];
+const FILTERS: readonly FeedbackFilter[] = ['all', 'unanswered', 5, 4, 3, 2, 1];
 
 /**
  * Feedback Management (spec 2.2): patient ratings of their visits and the
@@ -23,6 +16,7 @@ const FILTERS: ReadonlyArray<{ key: FeedbackFilter; label: string }> = [
  * so a "1 ★" view never makes the practice average look worse than it is.
  */
 export function FeedbackView({ practiceId, canWrite }: { practiceId: string; canWrite: boolean }) {
+  const { t, fmt } = useT();
   const [filter, setFilter] = useState<FeedbackFilter>('all');
   const [recording, setRecording] = useState(false);
   const { data, error, loading, reload } = useResource<FeedbackResponse>('/engagement/feedback', {
@@ -38,25 +32,27 @@ export function FeedbackView({ practiceId, canWrite }: { practiceId: string; can
     <div className={styles.shell}>
       <header className={styles.head}>
         <div>
-          <h1 className={s.title}>Feedback</h1>
-          <p className={s.hint}>What patients said about their visits, and your replies.</p>
+          <h1 className={s.title}>{t('patients.fb.title')}</h1>
+          <p className={s.hint}>{t('patients.fb.hint')}</p>
         </div>
         {canWrite && (
           <button type="button" className={s.primary} onClick={() => setRecording(true)}>
-            + Record feedback
+            {t('patients.fb.record')}
           </button>
         )}
       </header>
 
       {summary && (
-        <section className={styles.summary} aria-label="Rating summary">
+        <section className={styles.summary} aria-label={t('patients.fb.summary')}>
           <div className={styles.average}>
-            <span className={styles.averageValue}>{summary.average?.toFixed(1) ?? '–'}</span>
+            <span className={styles.averageValue}>{summary.average !== null
+                ? fmt.number(summary.average, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+                : '–'}</span>
             <span className={styles.averageStars} aria-hidden="true">
               {stars(Math.round(summary.average ?? 0))}
             </span>
             <span className={s.muted}>
-              {summary.count} {summary.count === 1 ? 'rating' : 'ratings'}
+              {t('patients.fbRatings', { count: summary.count })}
             </span>
           </div>
           <ul className={styles.distribution}>
@@ -64,11 +60,11 @@ export function FeedbackView({ practiceId, canWrite }: { practiceId: string; can
               const n = summary.distribution[star - 1] ?? 0;
               return (
                 <li key={star}>
-                  <span className={styles.distLabel}>{star} ★</span>
+                  <span className={styles.distLabel}>{t('patients.fb.stars', { n: star })}</span>
                   <span className={styles.distTrack}>
                     <span className={styles.distBar} style={{ width: `${(n / peak) * 100}%` }} />
                   </span>
-                  <span className={styles.distCount}>{n}</span>
+                  <span className={styles.distCount}>{fmt.number(n)}</span>
                 </li>
               );
             })}
@@ -76,17 +72,17 @@ export function FeedbackView({ practiceId, canWrite }: { practiceId: string; can
         </section>
       )}
 
-      <div className={s.filters} role="tablist" aria-label="Filter feedback">
+      <div className={s.filters} role="tablist" aria-label={t('patients.fb.filterLabel')}>
         {FILTERS.map((f) => (
           <button
-            key={String(f.key)}
+            key={String(f)}
             type="button"
             role="tab"
-            aria-selected={filter === f.key}
-            data-active={filter === f.key || undefined}
-            onClick={() => setFilter(f.key)}
+            aria-selected={filter === f}
+            data-active={filter === f || undefined}
+            onClick={() => setFilter(f)}
           >
-            {f.label}
+            {typeof f === 'number' ? t('patients.fb.stars', { n: f }) : t(`patients.fb.filter.${f}`)}
           </button>
         ))}
       </div>
@@ -97,7 +93,7 @@ export function FeedbackView({ practiceId, canWrite }: { practiceId: string; can
         <Failed message={error} />
       ) : data && data.items.length === 0 ? (
         <p className={styles.empty}>
-          {filter === 'all' ? 'No feedback recorded yet.' : 'Nothing matches this filter.'}
+          {filter === 'all' ? t('patients.fb.empty') : t('patients.fb.noMatch')}
         </p>
       ) : (
         <ul className={styles.list}>

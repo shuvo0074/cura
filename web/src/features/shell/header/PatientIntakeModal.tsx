@@ -10,6 +10,7 @@ import {
 } from '@cura/shared';
 import { useServices } from '../../../app/services';
 import { Field, Modal, Row, uiStyles as s } from '../../../ui';
+import { useT } from '../../../i18n';
 import styles from './header.module.css';
 
 /**
@@ -37,6 +38,7 @@ export function PatientIntakeModal({
   onCreated: (patientId: string, appointmentId: string) => void;
 }) {
   const { http, appointments } = useServices();
+  const { t, tm, rich } = useT();
   const [doctors, setDoctors] = useState<BookableDoctor[] | null>(null);
   const [doctorId, setDoctorId] = useState(defaultDoctorId ?? '');
 
@@ -176,18 +178,18 @@ export function PatientIntakeModal({
 
   return (
     <Modal
-      title={linked ? `New appointment — ${linked.fullName}` : 'New Patient Registration'}
+      title={linked ? t('patients.intake.titleExisting', { name: linked.fullName }) : t('patients.intake.titleNew')}
       onClose={onClose}
       wide
       footer={
         <>
           {error && (
             <span className={s.error} role="alert">
-              {error}
+              {tm(error)}
             </span>
           )}
           <button type="button" className={s.secondary} onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             type="button"
@@ -195,14 +197,14 @@ export function PatientIntakeModal({
             onClick={() => void submit()}
             disabled={busy || !doctorId || form.fullName.trim() === '' || form.mobile.trim() === ''}
           >
-            {busy ? 'Saving…' : 'Save'}
+            {busy ? t('common.saving') : t('common.save')}
           </button>
         </>
       }
     >
       {linked && (
         <div className={styles.linked}>
-          Booking for existing patient <strong>{linked.fullName}</strong> ({linked.curaId}).
+          {rich('patients.intake.bookingFor', { id: linked.curaId }, { name: <strong>{linked.fullName}</strong> })}
           <button
             type="button"
             className={s.linkButton}
@@ -211,13 +213,13 @@ export function PatientIntakeModal({
               setForm((f) => ({ ...f, visitType: VisitType.NEW }));
             }}
           >
-            Register a new patient instead
+            {t('patients.intake.registerNew')}
           </button>
         </div>
       )}
 
       <Row cols={2}>
-        <Field label="Mobile Number" required hint="Checked against the database to prevent duplicate profiles.">
+        <Field label={t('patients.intake.mobile')} required hint={t('patients.intake.mobileHint')}>
           <input
             className={s.input}
             value={form.mobile}
@@ -225,14 +227,14 @@ export function PatientIntakeModal({
             placeholder="01XXXXXXXXX"
           />
         </Field>
-        <Field label="Patient Name" required>
+        <Field label={t('patients.intake.name')} required>
           <input className={s.input} value={form.fullName} onChange={(e) => set('fullName', e.target.value)} />
         </Field>
       </Row>
 
       {!linked && matches.length > 0 && (
         <div className={styles.matches}>
-          <p>Existing profiles match — select one to auto-fill, or keep typing to register a new patient.</p>
+          <p>{t('patients.intake.matches')}</p>
           <ul>
             {matches.map((patient) => (
               <li key={patient.id}>
@@ -249,17 +251,17 @@ export function PatientIntakeModal({
       )}
 
       <Row>
-        <Field label="Gender">
+        <Field label={t('patients.field.gender')}>
           <select className={s.input} value={form.gender} onChange={(e) => set('gender', e.target.value)}>
             <option value="">—</option>
             {Object.values(Gender).map((g) => (
               <option key={g} value={g}>
-                {g.charAt(0) + g.slice(1).toLowerCase()}
+                {t(`common.gender.${g}`)}
               </option>
             ))}
           </select>
         </Field>
-        <Field label="Date of birth">
+        <Field label={t('patients.field.dateOfBirth')}>
           <input
             className={s.input}
             type="date"
@@ -267,7 +269,7 @@ export function PatientIntakeModal({
             onChange={(e) => set('dateOfBirth', e.target.value)}
           />
         </Field>
-        <Field label="or Age (years)">
+        <Field label={t('patients.intake.age')}>
           <input
             className={s.input}
             inputMode="numeric"
@@ -278,7 +280,7 @@ export function PatientIntakeModal({
       </Row>
 
       <Row>
-        <Field label="Blood group">
+        <Field label={t('patients.field.bloodGroup')}>
           <select className={s.input} value={form.bloodGroup} onChange={(e) => set('bloodGroup', e.target.value)}>
             <option value="">—</option>
             {Object.values(BloodGroup).map((b) => (
@@ -288,27 +290,27 @@ export function PatientIntakeModal({
             ))}
           </select>
         </Field>
-        <Field label="Email">
+        <Field label={t('patients.field.email')}>
           <input className={s.input} type="email" value={form.email} onChange={(e) => set('email', e.target.value)} />
         </Field>
-        <Field label="Appointment type">
+        <Field label={t('patients.intake.visitType')}>
           <select className={s.input} value={form.visitType} onChange={(e) => set('visitType', e.target.value)}>
-            <option value={VisitType.NEW}>New visit</option>
-            <option value={VisitType.FOLLOW_UP}>Follow-up</option>
-            <option value={VisitType.OLD}>Report show</option>
+            <option value={VisitType.NEW}>{t('common.visitType.NEW')}</option>
+            <option value={VisitType.FOLLOW_UP}>{t('common.visitType.FOLLOW_UP')}</option>
+            <option value={VisitType.OLD}>{t('patients.intake.reportShow')}</option>
           </select>
         </Field>
       </Row>
 
       <Row>
-        <Field label="Doctor" required>
+        <Field label={t('patients.intake.doctor')} required>
           <select
             className={s.input}
             value={doctorId}
             onChange={(e) => setDoctorId(e.target.value)}
             disabled={!doctors}
           >
-            {!doctors && <option value="">Loading…</option>}
+            {!doctors && <option value="">{t('common.loading')}</option>}
             {doctors?.map((d) => (
               <option key={d.id} value={d.id}>
                 {d.fullName}
@@ -316,7 +318,7 @@ export function PatientIntakeModal({
             ))}
           </select>
         </Field>
-        <Field label="Scheduled on" required>
+        <Field label={t('patients.intake.scheduledOn')} required>
           <input
             className={s.input}
             type="datetime-local"
@@ -324,7 +326,7 @@ export function PatientIntakeModal({
             onChange={(e) => set('scheduledAt', e.target.value)}
           />
         </Field>
-        <Field label="Duration">
+        <Field label={t('patients.intake.duration')}>
           <select
             className={s.input}
             value={form.durationMinutes}
@@ -332,24 +334,24 @@ export function PatientIntakeModal({
           >
             {businessRules.calendar.allowedSlotMinutes.map((n) => (
               <option key={n} value={n}>
-                {n} min
+                {t('common.minutes', { count: n })}
               </option>
             ))}
           </select>
         </Field>
       </Row>
 
-      <Field label="Street address">
+      <Field label={t('patients.intake.address')}>
         <input className={s.input} value={form.address} onChange={(e) => set('address', e.target.value)} />
       </Field>
 
-      <Field label="Note / remarks" hint="Shown on the appointment card and the patient dashboard.">
+      <Field label={t('patients.intake.notes')} hint={t('patients.intake.notesHint')}>
         <textarea
           className={s.textarea}
           rows={2}
           value={form.notes}
           onChange={(e) => set('notes', e.target.value)}
-          placeholder="e.g. high fever, travelling from out of town"
+          placeholder={t('patients.intake.notesPlaceholder')}
         />
       </Field>
     </Modal>

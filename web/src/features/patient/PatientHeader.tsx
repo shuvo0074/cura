@@ -1,4 +1,5 @@
 import { ageFromDateOfBirth, initials, type Patient } from '@cura/shared';
+import { useT } from '../../i18n';
 import styles from './patient.module.css';
 
 /** Identity strip: who this record belongs to, and how to reach them. */
@@ -9,6 +10,7 @@ export function PatientHeader({
   patient: Patient | null;
   onEditProfile: () => void;
 }) {
+  const { t } = useT();
   if (!patient) return <div className={styles.identity} aria-busy="true" />;
 
   const age = ageFromDateOfBirth(patient.dateOfBirth);
@@ -25,22 +27,22 @@ export function PatientHeader({
         </h1>
         <p className={styles.biometrics}>
           {[
-            patient.gender ? patient.gender.charAt(0) + patient.gender.slice(1).toLowerCase() : null,
-            age !== null ? `${age} years` : null,
+            patient.gender ? t(`common.gender.${patient.gender}`) : null,
+            age !== null ? t('patients.ageYears', { age }) : null,
             patient.bloodGroup,
           ]
             .filter(Boolean)
-            .join(' · ') || 'Profile incomplete'}
+            .join(' · ') || t('patients.profileIncomplete')}
         </p>
       </div>
 
       <div className={styles.contact}>
         <span>{patient.mobile}</span>
-        <span className={styles.muted}>{patient.email ?? 'No email on file'}</span>
+        <span className={styles.muted}>{patient.email ?? t('patients.record.noEmail')}</span>
       </div>
 
       <button type="button" className={styles.ghost} onClick={onEditProfile}>
-        Edit profile
+        {t('patients.record.editProfile')}
       </button>
     </div>
   );

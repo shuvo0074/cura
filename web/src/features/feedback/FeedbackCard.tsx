@@ -1,10 +1,8 @@
 import { memo, useState } from 'react';
 import { uiStyles as s, useMutation } from '../../ui';
+import { useT } from '../../i18n';
 import { stars, type FeedbackItem } from './feedback-shared';
 import styles from './feedback.module.css';
-
-const when = (iso: string) =>
-  new Date(iso).toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' });
 
 /** One rating with its reply, or an inline reply box when there is none. */
 export const FeedbackCard = memo(function FeedbackCard({
@@ -18,6 +16,7 @@ export const FeedbackCard = memo(function FeedbackCard({
   canReply: boolean;
   onReplied: () => void;
 }) {
+  const { t, tm, fmt } = useT();
   const [draft, setDraft] = useState<string | null>(null);
   const mutate = useMutation();
 
@@ -35,26 +34,26 @@ export const FeedbackCard = memo(function FeedbackCard({
   return (
     <li className={styles.card} data-low={item.rating <= 2 || undefined}>
       <header className={styles.cardHead}>
-        <span className={styles.cardStars} aria-label={`${item.rating} out of 5`}>
+        <span className={styles.cardStars} aria-label={t('patients.fb.outOf5', { n: item.rating })}>
           {stars(item.rating)}
         </span>
         <span className={styles.cardWho}>
           {item.patient.fullName} <span className={s.muted}>· {item.patient.curaId}</span>
         </span>
-        <span className={s.muted}>{when(item.createdAt)}</span>
+        <span className={s.muted}>{fmt.date(item.createdAt)}</span>
       </header>
 
-      {item.comment ? <p className={styles.comment}>{item.comment}</p> : <p className={s.muted}>No comment left.</p>}
+      {item.comment ? <p className={styles.comment}>{item.comment}</p> : <p className={s.muted}>{t('patients.fb.noComment')}</p>}
 
       {item.reply ? (
         <blockquote className={styles.reply}>
-          <strong>Your reply</strong>
-          {item.repliedAt && <span className={s.muted}> · {when(item.repliedAt)}</span>}
+          <strong>{t('patients.fb.yourReply')}</strong>
+          {item.repliedAt && <span className={s.muted}> · {fmt.date(item.repliedAt)}</span>}
           <p>{item.reply}</p>
         </blockquote>
       ) : canReply && draft === null ? (
         <button type="button" className={s.linkButton} onClick={() => setDraft('')}>
-          Reply
+          {t('patients.fb.reply')}
         </button>
       ) : canReply ? (
         <div className={styles.replyBox}>
@@ -64,17 +63,17 @@ export const FeedbackCard = memo(function FeedbackCard({
             value={draft ?? ''}
             maxLength={1000}
             onChange={(e) => setDraft(e.target.value)}
-            aria-label={`Reply to ${item.patient.fullName}`}
+            aria-label={t('patients.fb.replyTo', { name: item.patient.fullName })}
             autoFocus
           />
           <div className={styles.replyActions}>
             {mutate.error && (
               <span className={s.error} role="alert">
-                {mutate.error}
+                {tm(mutate.error)}
               </span>
             )}
             <button type="button" className={s.secondary} onClick={() => setDraft(null)}>
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="button"
@@ -82,7 +81,7 @@ export const FeedbackCard = memo(function FeedbackCard({
               onClick={() => void send()}
               disabled={mutate.busy || !draft?.trim()}
             >
-              {mutate.busy ? 'Sending…' : 'Send reply'}
+              {mutate.busy ? t('patients.fb.sending') : t('patients.fb.sendReply')}
             </button>
           </div>
         </div>

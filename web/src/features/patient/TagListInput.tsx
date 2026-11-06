@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useServices } from '../../app/services';
+import { useT } from '../../i18n';
 import styles from './patient.module.css';
 
 /**
@@ -27,6 +28,7 @@ export function TagListInput({
   onChange: (next: string[]) => void;
 }) {
   const { http } = useServices();
+  const { t } = useT();
   const [term, setTerm] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
@@ -89,7 +91,7 @@ export function TagListInput({
               {!disabled && (
                 <button
                   type="button"
-                  aria-label={`Remove ${value}`}
+                  aria-label={t('patients.removeItem', { value })}
                   onClick={() => onChange(values.filter((v) => v !== value))}
                 >
                   ×

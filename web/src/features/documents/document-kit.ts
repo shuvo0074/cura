@@ -1,14 +1,15 @@
 import { DocumentCategory, businessRules } from '@cura/shared';
+import type { Formatters, TranslationKey } from '../../i18n';
 
-export const CATEGORY_LABELS: Record<string, string> = {
-  [DocumentCategory.NID_FRONT]: 'NID — front',
-  [DocumentCategory.NID_BACK]: 'NID — back',
-  [DocumentCategory.MEDICAL_CERTIFICATE]: 'Medical certificate',
-  [DocumentCategory.DIGITAL_SIGNATURE]: 'Digital signature',
-  [DocumentCategory.LAB_REPORT]: 'Lab report',
-  [DocumentCategory.EXTERNAL_PRESCRIPTION]: 'External prescription',
-  [DocumentCategory.OTHER]: 'Other',
-};
+const CATEGORIES: readonly string[] = Object.values(DocumentCategory);
+
+/** The words for a category, or the raw value for one this build does not know. */
+export function categoryLabel(category: string, t: (key: TranslationKey) => string): string {
+  return CATEGORIES.includes(category) ? t(`patients.doc.cat.${category as DocumentCategory}`) : category;
+}
+
+/** The upload size limit in MB, as people read it. */
+export const MAX_UPLOAD_MB = Math.round(businessRules.uploads.maxFileBytes / 1024 / 1024);
 
 /**
  * Categories that describe the doctor rather than a patient.
@@ -34,10 +35,10 @@ export const ACCEPT_ATTRIBUTE = ACCEPTED_TYPES.join(',');
 export const isImage = (mimeType: string): boolean => mimeType.startsWith('image/');
 export const isPdf = (mimeType: string): boolean => mimeType === 'application/pdf';
 
-export function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+export function formatBytes(bytes: number, fmt: Formatters): string {
+  if (bytes < 1024) return `${fmt.number(bytes)} B`;
+  if (bytes < 1024 * 1024) return `${fmt.number(Math.round(bytes / 1024))} KB`;
+  return `${fmt.number(bytes / 1024 / 1024, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} MB`;
 }
 
 /**
@@ -45,12 +46,12 @@ export function formatBytes(bytes: number): string {
  *
  * Purely a courtesy: the server re-validates size, runs magic-byte detection
  * and rejects a declared type that disagrees with the bytes. This only spares
- * the doctor a 10 MB round trip to be told no.
+ * the doctor a 10 MB round trip to be told no. Returns an English sentence; show it through `tm()`.
  */
 export function rejectionReason(file: File): string | null {
   if (file.size === 0) return 'The file is empty.';
   if (file.size > businessRules.uploads.maxFileBytes) {
-    return `Larger than the ${Math.round(businessRules.uploads.maxFileBytes / 1024 / 1024)} MB limit.`;
+    return `Larger than the ${MAX_UPLOAD_MB} MB limit.`;
   }
   // An empty type means the OS could not label it; let the server's magic-byte
   // check make the call rather than guessing from the extension.

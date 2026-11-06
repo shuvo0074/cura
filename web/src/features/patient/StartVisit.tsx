@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AppointmentStatus, type Appointment } from '@cura/shared';
 import { useServices } from '../../app/services';
+import { useT } from '../../i18n';
 import styles from './patient.module.css';
 
 /** Statuses a visit can still be recorded against. */
@@ -9,8 +10,6 @@ const OPEN: ReadonlySet<AppointmentStatus> = new Set([
   AppointmentStatus.WAITING,
   AppointmentStatus.ENGAGED,
 ]);
-
-const clock = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
 /**
  * Shown in the Charting tab when the record was opened without an appointment
@@ -29,6 +28,7 @@ export function StartVisit({
   onStart: (appointmentId: string) => void;
 }) {
   const { appointments } = useServices();
+  const { t, fmt } = useT();
   const [today, setToday] = useState<Appointment[] | null>(null);
 
   useEffect(() => {
@@ -50,23 +50,23 @@ export function StartVisit({
   }, [appointments, practiceId, patientId]);
 
   if (!canWrite) {
-    return <p className={styles.muted}>Only a doctor or administrator can record a visit.</p>;
+    return <p className={styles.muted}>{t('patients.visit.onlyClinicians')}</p>;
   }
-  if (today === null) return <p className={styles.muted}>Checking today’s appointments…</p>;
+  if (today === null) return <p className={styles.muted}>{t('patients.visit.checking')}</p>;
   if (today.length === 0) {
     return (
       <p className={styles.muted}>
-        No open appointment today for this patient. Book one with + Add Patient, then start the visit here.
+        {t('patients.visit.none')}
       </p>
     );
   }
 
   return (
     <div className={styles.startVisit}>
-      <p className={styles.muted}>Start the visit to write vitals, notes and the prescription.</p>
+      <p className={styles.muted}>{t('patients.visit.prompt')}</p>
       {today.map((a) => (
         <button key={a.id} type="button" className={styles.primary} onClick={() => onStart(a.id)}>
-          Start visit — {clock(a.scheduledAt)} appointment
+          {t('patients.visit.start', { time: fmt.time(a.scheduledAt) })}
         </button>
       ))}
     </div>

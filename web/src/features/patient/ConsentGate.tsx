@@ -1,4 +1,5 @@
-import {  useState } from 'react';
+import { useState } from 'react';
+import { useT } from '../../i18n';
 import styles from './patient.module.css';
 
 /**
@@ -20,30 +21,31 @@ export function ConsentPanel({
   onRequest: () => void;
   onConfirm: (code: string) => void;
 }) {
+  const { t } = useT();
   const [code, setCode] = useState('');
 
   return (
     <div className={styles.consent}>
       <p className={styles.consentText}>
-        Records older than {windowDays} days are locked. Ask the patient to approve access.
+        {t('patients.consent.locked', { days: windowDays })}
       </p>
       {!challengeOpen ? (
         <button type="button" className={styles.ghost} onClick={onRequest}>
-          Request patient consent
+          {t('patients.consent.request')}
         </button>
       ) : (
         <div className={styles.consentRow}>
-          <span className={styles.muted}>Code sent to {maskedTarget}</span>
+          <span className={styles.muted}>{t('patients.consent.codeSent', { to: maskedTarget ?? '' })}</span>
           <input
             className={styles.codeInput}
             value={code}
             inputMode="numeric"
             maxLength={6}
             onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-            aria-label="Consent code"
+            aria-label={t('patients.consent.codeLabel')}
           />
           <button type="button" className={styles.primary} onClick={() => onConfirm(code)}>
-            Unlock
+            {t('patients.consent.unlock')}
           </button>
         </div>
       )}

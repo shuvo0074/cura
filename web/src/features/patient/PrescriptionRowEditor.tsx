@@ -1,9 +1,6 @@
 import { memo } from 'react';
-import {
-  
-  
-  type PrescriptionRow,
-} from '@cura/shared';
+import type { PrescriptionRow } from '@cura/shared';
+import { useT } from '../../i18n';
 import styles from './patient.module.css';
 
 export const PrescriptionRowEditor = memo(function PrescriptionRowEditor({
@@ -25,6 +22,7 @@ export const PrescriptionRowEditor = memo(function PrescriptionRowEditor({
   onPick: (s: { id: string; name: string; strength: string | null; form: string | null; instruction: string | null }) => void;
   onRemove: () => void;
 }) {
+  const { t } = useT();
   return (
     <div className={styles.gridRow} role="row">
       <div className={styles.suggestWrap}>
@@ -32,7 +30,7 @@ export const PrescriptionRowEditor = memo(function PrescriptionRowEditor({
           className={styles.input}
           value={row.drugName}
           disabled={disabled}
-          placeholder="Start typing…"
+          placeholder={t('patients.rx.drugPlaceholder')}
           onChange={(e) => onField('drugName', e.target.value as never)}
         />
         {suggestionsOpen && suggestions.length > 0 && (
@@ -72,7 +70,7 @@ export const PrescriptionRowEditor = memo(function PrescriptionRowEditor({
             type="number"
             min={0}
             step={0.5}
-            aria-label={slot}
+            aria-label={t(`patients.rx.slot.${slot}`)}
             value={row[slot]}
             disabled={disabled}
             onChange={(e) => onField(slot, Number(e.target.value) as never)}
@@ -85,11 +83,11 @@ export const PrescriptionRowEditor = memo(function PrescriptionRowEditor({
         disabled={disabled}
         onChange={(e) => onField('mealRelation', e.target.value as never)}
       >
-        <option value="ANY">Any</option>
-        <option value="BEFORE">Before</option>
-        <option value="AFTER">After</option>
+        <option value="ANY">{t('patients.rx.meal.ANY')}</option>
+        <option value="BEFORE">{t('patients.rx.meal.BEFORE')}</option>
+        <option value="AFTER">{t('patients.rx.meal.AFTER')}</option>
       </select>
-      <button type="button" className={styles.remove} onClick={onRemove} disabled={disabled} aria-label="Remove row">
+      <button type="button" className={styles.remove} onClick={onRemove} disabled={disabled} aria-label={t('patients.rx.removeRow')}>
         ×
       </button>
     </div>

@@ -2,16 +2,17 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AppointmentStatus, type Appointment } from '@cura/shared';
 import { useServices } from '../../app/services';
 import { Failed, Loading, uiStyles as s } from '../../ui';
+import { useT } from '../../i18n';
 import { QueueCard } from './QueueCard';
 import styles from './queue.module.css';
 
 /** Board columns, in the order a patient moves through the clinic. */
-const COLUMNS: ReadonlyArray<{ status: AppointmentStatus; label: string; hint: string }> = [
-  { status: AppointmentStatus.SCHEDULED, label: 'Booked', hint: 'Not arrived yet' },
-  { status: AppointmentStatus.WAITING, label: 'Waiting', hint: 'Checked in at the desk' },
-  { status: AppointmentStatus.ENGAGED, label: 'With doctor', hint: 'In consultation' },
-  { status: AppointmentStatus.DONE, label: 'Done', hint: 'Visit complete' },
-];
+const COLUMNS = [
+  AppointmentStatus.SCHEDULED,
+  AppointmentStatus.WAITING,
+  AppointmentStatus.ENGAGED,
+  AppointmentStatus.DONE,
+] as const;
 
 /** No websocket client on the web yet, so the board refreshes on a timer. */
 const REFRESH_MS = 30_000;
@@ -33,6 +34,7 @@ export function QueueView({
   onOpenPatient: (patientId: string, appointmentId?: string) => void;
 }) {
   const { appointments } = useServices();
+  const { t, fmt } = useT();
   const [items, setItems] = useState<Appointment[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -100,30 +102,31 @@ export function QueueView({
     <div className={styles.shell}>
       <header className={styles.head}>
         <div>
-          <h1 className={s.title}>Patient Management</h1>
+          <h1 className={s.title}>{t('patients.queue.title')}</h1>
           <p className={s.hint}>
-            Today&rsquo;s queue —{' '}
-            {new Date().toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}.
-            {missed > 0 && ` ${missed} cancelled or no-show.`}
+            {t('patients.queue.today', {
+              date: fmt.date(new Date(), { weekday: 'long', day: 'numeric', month: 'long' }),
+            })}
+            {missed > 0 && ` ${t('patients.queue.missed', { count: missed })}`}
           </p>
         </div>
         <button type="button" className={s.secondary} onClick={() => void load()}>
-          Refresh
+          {t('patients.queue.refresh')}
         </button>
       </header>
 
       {error && <Failed message={error} />}
 
       <div className={styles.board}>
-        {COLUMNS.map((col) => {
-          const list = byStatus.get(col.status) ?? [];
+        {COLUMNS.map((status) => {
+          const list = byStatus.get(status) ?? [];
           return (
-            <section key={col.status} className={styles.column} data-status={col.status.toLowerCase()}>
+            <section key={status} className={styles.column} data-status={status.toLowerCase()}>
               <header className={styles.columnHead}>
-                <span>{col.label}</span>
-                <span className={styles.count}>{list.length}</span>
+                <span>{t(`patients.queue.col.${status}`)}</span>
+                <span className={styles.count}>{fmt.number(list.length)}</span>
               </header>
-              <p className={styles.columnHint}>{col.hint}</p>
+              <p className={styles.columnHint}>{t(`patients.queue.hint.${status}`)}</p>
               {list.length === 0 ? (
                 <p className={styles.empty}>—</p>
               ) : (

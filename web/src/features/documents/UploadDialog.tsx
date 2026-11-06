@@ -1,16 +1,17 @@
-import {   useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { DocumentCategory } from '@cura/shared';
 import { useServices } from '../../app/services';
 import { Field, Modal, Row } from '../../ui';
 import {
   ACCEPT_ATTRIBUTE,
-  CATEGORY_LABELS,
+  MAX_UPLOAD_MB,
   PROFILE_CATEGORIES,
   formatBytes,
   rejectionReason,
 } from './document-kit';
 import styles from './documents.module.css';
 import { PatientPicker } from '../../ui';
+import { useT } from '../../i18n';
 
 type Status = 'ready' | 'rejected' | 'uploading' | 'done' | 'failed';
 
@@ -39,6 +40,7 @@ export function UploadDialog({
   onUploaded: () => void;
 }) {
   const { http } = useServices();
+  const { t, tm, fmt } = useT();
 
   const [queue, setQueue] = useState<Queued[]>(() => initialFiles.map(describe));
   const [category, setCategory] = useState<string>(DocumentCategory.LAB_REPORT);
@@ -106,18 +108,18 @@ export function UploadDialog({
 
   return (
     <Modal
-      title="Upload documents"
+      title={t('patients.upload.title')}
       onClose={onClose}
       wide
       footer={
         <>
-          {(fatal ?? (blocked && pendingCount > 0 ? 'Select a patient for this category.' : null)) && (
+          {(fatal ?? (blocked && pendingCount > 0 ? t('patients.upload.selectPatient') : null)) && (
             <span className={styles.error} role="alert">
-              {fatal ?? 'Select a patient for this category.'}
+              {tm(fatal) ?? t('patients.upload.selectPatient')}
             </span>
           )}
           <button type="button" className={styles.secondary} onClick={onClose}>
-            {queue.some((q) => q.status === 'done') ? 'Done' : 'Cancel'}
+            {queue.some((q) => q.status === 'done') ? t('common.done') : t('common.cancel')}
           </button>
           <button
             type="button"
@@ -125,13 +127,17 @@ export function UploadDialog({
             onClick={() => void upload()}
             disabled={busy || pendingCount === 0 || blocked}
           >
-            {busy ? 'Uploading…' : `Upload ${pendingCount || ''}`.trim()}
+            {busy
+              ? t('patients.upload.uploading')
+              : pendingCount
+                ? t('patients.upload.uploadCount', { count: pendingCount })
+                : t('patients.upload.upload')}
           </button>
         </>
       }
     >
       <Row cols={2}>
-        <Field label="Category" required>
+        <Field label={t('patients.doc.category')} required>
           <select
             className={styles.select}
             value={category}
@@ -139,20 +145,20 @@ export function UploadDialog({
           >
             {Object.values(DocumentCategory).map((c) => (
               <option key={c} value={c}>
-                {CATEGORY_LABELS[c] ?? c}
+                {t(`patients.doc.cat.${c}`)}
               </option>
             ))}
           </select>
         </Field>
 
         {needsPatient ? (
-          <Field label="Patient" required hint="Search by name, mobile or Cura ID.">
+          <Field label={t('patients.field.patient')} required hint={t('patients.upload.patientHint')}>
             <PatientPicker practiceId={practiceId} value={patient} onChange={setPatient} />
           </Field>
         ) : (
-          <Field label="Attached to">
+          <Field label={t('patients.upload.attachedTo')}>
             <p className={styles.muted}>
-              Your own profile — this category is not linked to a patient.
+              {t('patients.upload.ownProfile')}
             </p>
           </Field>
         )}
@@ -172,13 +178,13 @@ export function UploadDialog({
           }}
         />
         <button type="button" className={styles.secondary} onClick={() => inputRef.current?.click()}>
-          Choose files
+          {t('patients.upload.choose')}
         </button>
-        <span className={styles.mutedSmall}>JPEG, PNG, WebP or PDF · up to 10 MB each</span>
+        <span className={styles.mutedSmall}>{t('patients.upload.types', { mb: MAX_UPLOAD_MB })}</span>
       </div>
 
       {queue.length === 0 ? (
-        <p className={styles.muted}>No files selected yet.</p>
+        <p className={styles.muted}>{t('patients.upload.none')}</p>
       ) : (
         <ul className={styles.queue}>
           {queue.map((entry, i) => (
@@ -186,18 +192,18 @@ export function UploadDialog({
               <span className={styles.queueName} title={entry.file.name}>
                 {entry.file.name}
               </span>
-              <span className={styles.queueMeta}>{formatBytes(entry.file.size)}</span>
+              <span className={styles.queueMeta}>{formatBytes(entry.file.size, fmt)}</span>
               <span className={styles.queueStatus}>
-                {entry.status === 'ready' && 'Ready'}
-                {entry.status === 'uploading' && 'Uploading…'}
-                {entry.status === 'done' && 'Uploaded'}
-                {(entry.status === 'failed' || entry.status === 'rejected') && entry.message}
+                {entry.status === 'ready' && t('patients.upload.ready')}
+                {entry.status === 'uploading' && t('patients.upload.uploading')}
+                {entry.status === 'done' && t('patients.upload.done')}
+                {(entry.status === 'failed' || entry.status === 'rejected') && tm(entry.message)}
               </span>
               {entry.status === 'ready' && (
                 <button
                   type="button"
                   className={styles.iconButton}
-                  aria-label={`Remove ${entry.file.name}`}
+                  aria-label={t('patients.removeItem', { value: entry.file.name })}
                   onClick={() => setQueue((c) => c.filter((_, index) => index !== i))}
                 >
                   ×
