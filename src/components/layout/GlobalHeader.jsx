@@ -92,7 +92,9 @@ export default function GlobalHeader() {
     setMenuOpen(false);
   }
 
-  let accountLink = { label: 'Login', path: '/login' };
+  // Logged-in accounts with no screens here (clinic accounts, business owners)
+  // get no account link: Open Cura Dashboard and Logout are enough.
+  let accountLink = user ? null : { label: 'Login', path: '/login' };
   if (hasRole('patient')) accountLink = { label: 'My Appointments', path: '/appointments' };
   if (hasRole('doctor')) accountLink = { label: 'Doctor Dashboard', path: '/doctor-dashboard' };
   if (hasRole('super_admin')) accountLink = null;

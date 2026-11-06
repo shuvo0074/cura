@@ -9,9 +9,10 @@ const AuthContext = createContext();
 export function homePathFor(user) {
   if (user?.roles?.includes('super_admin')) return '/admin';
   if (user?.roles?.includes('doctor')) return '/doctor-dashboard';
-  // Clinic accounts sign in with no directory role, and /appointments needs one.
-  if (!user?.roles?.length) return '/';
-  return '/appointments';
+  // Only patients have appointments here. Clinic accounts and ambulance, pharmacy
+  // and hospital owners work on Cura Dashboard, so they land on the home page.
+  if (user?.roles?.includes('patient')) return '/appointments';
+  return '/';
 }
 
 // Cura Dashboard sends people here logged in with a single-use code in the
