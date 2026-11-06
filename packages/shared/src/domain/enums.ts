@@ -25,6 +25,7 @@ export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 export const OwnerRole = {
   AMBULANCE_OWNER: 'ambulance_owner',
   PHARMACY_OWNER: 'pharmacy_owner',
+  HOSPITAL_OWNER: 'hospital_owner',
 } as const;
 export type OwnerRole = (typeof OwnerRole)[keyof typeof OwnerRole];
 

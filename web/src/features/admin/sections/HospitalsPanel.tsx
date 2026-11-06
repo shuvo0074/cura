@@ -40,7 +40,7 @@ interface TestPrice {
 }
 
 /** A hospital or diagnostic centre as the admin API returns it (the list leaves out test prices). */
-interface HospitalRecord {
+export interface HospitalRecord {
   id: string;
   name: string;
   location: string;
@@ -78,7 +78,7 @@ interface TestRow {
 }
 
 /** The form uses the API's field names, so it is sent as the request body. */
-interface HospitalForm {
+export interface HospitalForm {
   name: string;
   location: string;
   division: string;
@@ -124,7 +124,7 @@ const BLANK: HospitalForm = {
   tests: [],
 };
 
-function toForm(record: HospitalRecord): HospitalForm {
+export function toForm(record: HospitalRecord): HospitalForm {
   return {
     name: record.name ?? '',
     location: record.location ?? '',
@@ -794,7 +794,19 @@ const BED_KINDS: readonly { key: keyof Beds; label: string }[] = [
   { key: 'icu', label: 'ICU' },
 ];
 
-function ExtrasFields({ form, set }: { form: HospitalForm; set: (patch: Partial<HospitalForm>) => void }) {
+/**
+ * Hours, beds, services, facilities, payment and test prices. Also used by a
+ * hospital owner's My Hospital screen (`forOwner`), which cannot change the type.
+ */
+export function ExtrasFields({
+  form,
+  set,
+  forOwner = false,
+}: {
+  form: HospitalForm;
+  set: (patch: Partial<HospitalForm>) => void;
+  forOwner?: boolean;
+}) {
   const offered = new Map(form.services.map((service) => [service.key, service]));
   const beds: Beds = form.beds ?? { general: null, cabin: null, icu: null };
 
@@ -813,18 +825,20 @@ function ExtrasFields({ form, set }: { form: HospitalForm; set: (patch: Partial<
 
   return (
     <>
-      <Section title="Type and hours">
+      <Section title={forOwner ? 'Hours' : 'Type and hours'}>
         <Row cols={2}>
-          <Field label="Type">
-            <select className={s.input} value={form.type} onChange={(e) => set({ type: e.target.value })}>
-              <option value="">Not set</option>
-              {HOSPITAL_TYPES.map((option) => (
-                <option key={option.key} value={option.key}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </Field>
+          {!forOwner && (
+            <Field label="Type">
+              <select className={s.input} value={form.type} onChange={(e) => set({ type: e.target.value })}>
+                <option value="">Not set</option>
+                {HOSPITAL_TYPES.map((option) => (
+                  <option key={option.key} value={option.key}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
           <div className={s.field}>
             <span className={s.fieldLabel}>Opening hours</span>
             <HoursInput
@@ -917,9 +931,12 @@ function ExtrasFields({ form, set }: { form: HospitalForm; set: (patch: Partial<
       <Section
         title="Test prices"
         hint={
-          'Prices in taka. Add a source link for prices the centre publishes; the site links to it. ' +
-          'Empty prices on common diagnostic tests show the sample price from the Sample prices tab, labelled as sample. ' +
-          'Other empty prices show "Price not published". Rows without a name are ignored.'
+          forOwner
+            ? 'Prices in taka. Empty prices on common tests show a sample price, labelled as sample. ' +
+              'Other empty prices show "Price not published". Rows without a name are ignored.'
+            : 'Prices in taka. Add a source link for prices the centre publishes; the site links to it. ' +
+              'Empty prices on common diagnostic tests show the sample price from the Sample prices tab, labelled as sample. ' +
+              'Other empty prices show "Price not published". Rows without a name are ignored.'
         }
       >
         <datalist id="hospital-common-tests">

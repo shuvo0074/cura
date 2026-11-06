@@ -5,7 +5,9 @@
  */
 export type Row = Record<string, any>;
 
-export type DirectoryRoleName = 'super_admin' | 'patient' | 'doctor' | 'ambulance_owner' | 'pharmacy_owner';
+export type DirectoryRoleName = 'super_admin' | 'patient' | 'doctor' | 'ambulance_owner' | 'pharmacy_owner' | 'hospital_owner';
+
+export type OwnerDirectoryRole = 'AMBULANCE_OWNER' | 'PHARMACY_OWNER' | 'HOSPITAL_OWNER';
 
 export interface DirectoryIdentity {
   userId: string;
@@ -50,8 +52,8 @@ export interface DirectoryAccountRepository {
   createClinicOwner(input: NewClinicOwner): Promise<Row>;
   listClinicOwners(): Promise<Row[]>;
   findUserIdByIdentifier(identifier: string): Promise<string | null>;
-  grantRole(userId: string, role: 'AMBULANCE_OWNER' | 'PHARMACY_OWNER'): Promise<void>;
-  revokeRole(userId: string, role: 'AMBULANCE_OWNER' | 'PHARMACY_OWNER'): Promise<void>;
+  grantRole(userId: string, role: OwnerDirectoryRole): Promise<void>;
+  revokeRole(userId: string, role: OwnerDirectoryRole): Promise<void>;
 }
 
 export interface NewClinicOwner {
@@ -177,6 +179,13 @@ export interface HospitalRepository {
   dependentDoctorCount(id: string, name: string): Promise<number>;
   delete(id: string): Promise<void>;
   setPhoto(id: string, photo: string | null): Promise<string | null | undefined>;
+  /** Places this account owns, with every editable field. */
+  listOwned(ownerId: string): Promise<Row[]>;
+  /** Null when the place is missing or belongs to someone else. */
+  findOwned(id: string, ownerId: string): Promise<Row | null>;
+  /** Null when the place is missing or belongs to someone else. */
+  updateOwned(id: string, ownerId: string, data: Row): Promise<Row | null>;
+  setOwner(id: string, ownerId: string | null): Promise<boolean>;
 }
 
 export const AMBULANCE_REPOSITORY = Symbol('AMBULANCE_REPOSITORY');
@@ -198,7 +207,7 @@ export interface AmbulanceRepository {
 
 export const ADMIN_USERS_REPOSITORY = Symbol('ADMIN_USERS_REPOSITORY');
 
-export type GrantableRole = 'SUPER_ADMIN' | 'PATIENT' | 'AMBULANCE_OWNER' | 'PHARMACY_OWNER';
+export type GrantableRole = 'SUPER_ADMIN' | 'PATIENT' | 'AMBULANCE_OWNER' | 'PHARMACY_OWNER' | 'HOSPITAL_OWNER';
 export type ClinicRole = 'ADMINISTRATOR' | 'DOCTOR' | 'DESK_STAFF';
 
 /** A super admin's view of every account, clinic and pharmacy. */
@@ -218,12 +227,16 @@ export interface AdminUsersRepository {
   updatePharmacy(id: string, data: Row): Promise<Row | null>;
   deletePharmacy(id: string): Promise<boolean>;
   setPharmacyOwner(id: string, ownerId: string): Promise<boolean>;
+  setPharmacyHidden(id: string, hidden: boolean): Promise<Row | null>;
 }
 
 export const PHARMACY_REPOSITORY = Symbol('PHARMACY_REPOSITORY');
 
 export interface PharmacyRepository {
+  /** Visible pharmacies, public fields only: never the owner or licence. */
+  listPublic(): Promise<Row[]>;
   listOwned(ownerId: string): Promise<Row[]>;
+  /** Hidden from patients until a super admin shows it. */
   create(ownerId: string, data: Row): Promise<Row>;
   /** Null when the pharmacy is missing or belongs to someone else. */
   update(id: string, ownerId: string, data: Row): Promise<Row | null>;

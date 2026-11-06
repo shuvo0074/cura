@@ -37,6 +37,7 @@ export interface Pharmacy {
   phones: string[];
   opening_hours: string | null;
   home_delivery: boolean;
+  hidden: boolean;
 }
 
 export const toggled = (list: readonly string[], key: string, on: boolean): string[] =>

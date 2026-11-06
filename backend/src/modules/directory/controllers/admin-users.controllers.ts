@@ -3,7 +3,7 @@ import type { DirectoryIdentity } from '../../../core/ports/directory.ports';
 import { Identity, RequireDirectoryAdmin } from '../access/directory-access.decorators';
 import { UuidOr404 } from '../access/uuid-or-404.pipe';
 import { AdminUsersService } from '../services/admin-users.service';
-import { bodyOf } from './shared';
+import { bodyOf, hiddenFlag } from './shared';
 
 /** Super admin only: every account and the roles it holds. */
 @Controller('directory/admin/users')
@@ -52,7 +52,7 @@ export class AdminUsersController {
   }
 }
 
-/** Super admin only: every clinic's details, every pharmacy, and ambulance owners. */
+/** Super admin only: every clinic's details, every pharmacy, and ambulance and hospital owners. */
 @Controller('directory/admin')
 @RequireDirectoryAdmin()
 export class AdminBusinessesController {
@@ -83,9 +83,19 @@ export class AdminBusinessesController {
     return this.users.updatePharmacy(id, bodyOf(body), admin.userId);
   }
 
+  @Patch('pharmacies/:id/hidden')
+  setPharmacyHidden(@Param('id', UuidOr404) id: string, @Body() body: unknown, @Identity() admin: DirectoryIdentity) {
+    return this.users.setPharmacyHidden(id, hiddenFlag(body), admin.userId);
+  }
+
   @Delete('pharmacies/:id')
   deletePharmacy(@Param('id', UuidOr404) id: string, @Identity() admin: DirectoryIdentity) {
     return this.users.deletePharmacy(id, admin.userId);
+  }
+
+  @Put('hospitals/:id/owner')
+  setHospitalOwner(@Param('id', UuidOr404) id: string, @Body() body: unknown, @Identity() admin: DirectoryIdentity) {
+    return this.users.setHospitalOwner(id, bodyOf(body), admin.userId);
   }
 
   @Put('ambulances/:id/owner')

@@ -12,6 +12,7 @@ import { LoginView } from '../features/auth/LoginView';
 import { AdminView } from '../features/admin/AdminView';
 import type { ViewedClinic } from '../features/admin/sections/admin-types';
 import { AmbulanceOwnerView } from '../features/owner/AmbulanceOwnerView';
+import { HospitalOwnerView } from '../features/owner/HospitalOwnerView';
 import { PharmacyOwnerView } from '../features/owner/PharmacyOwnerView';
 import { ProfileView } from '../features/profile/ProfileView';
 import { OnboardingView } from '../features/onboarding/OnboardingView';
@@ -169,13 +170,18 @@ export function App() {
 
   // An owner with no clinic has no calendar to land on.
   // An API deployed before owner roles existed does not send them.
+  const ownerRoles = user.ownerRoles ?? [];
   const ownerHome: RouteKey = user.isSuperAdmin
     ? 'admin'
-    : (user.ownerRoles ?? []).includes(OwnerRole.AMBULANCE_OWNER)
+    : ownerRoles.includes(OwnerRole.AMBULANCE_OWNER)
       ? 'ambulances'
-      : 'pharmacy';
+      : ownerRoles.includes(OwnerRole.HOSPITAL_OWNER)
+        ? 'hospital'
+        : 'pharmacy';
   const route: RouteKey =
-    hasClinicAccess || ['ambulances', 'pharmacy', 'profile', 'admin'].includes(location.route) ? location.route : ownerHome;
+    hasClinicAccess || ['ambulances', 'pharmacy', 'hospital', 'profile', 'admin'].includes(location.route)
+      ? location.route
+      : ownerHome;
 
   return (
     <AppShell
@@ -223,6 +229,8 @@ export function App() {
         <AmbulanceOwnerView />
       ) : route === 'pharmacy' && !location.patient ? (
         <PharmacyOwnerView />
+      ) : route === 'hospital' && !location.patient ? (
+        <HospitalOwnerView />
       ) : route === 'profile' && !practiceId ? (
         <ProfileView />
       ) : !practiceId ? (

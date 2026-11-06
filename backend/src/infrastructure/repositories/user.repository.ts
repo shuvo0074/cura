@@ -296,7 +296,7 @@ export class PrismaUserRepository implements UserRepository {
 
   async ownerRolesFor(userId: string): Promise<OwnerRole[]> {
     const rows = await this.prisma.userDirectoryRole.findMany({
-      where: { userId, role: { in: ['AMBULANCE_OWNER', 'PHARMACY_OWNER'] } },
+      where: { userId, role: { in: ['AMBULANCE_OWNER', 'PHARMACY_OWNER', 'HOSPITAL_OWNER'] } },
       select: { role: true },
     });
     return rows.map((row) => row.role.toLowerCase() as OwnerRole);

@@ -18,6 +18,7 @@ const FILTERS: { value: string; label: string }[] = [
   { value: 'DESK_STAFF', label: 'Clinic staff' },
   { value: 'ambulance_owner', label: 'Ambulance owners' },
   { value: 'pharmacy_owner', label: 'Pharmacy owners' },
+  { value: 'hospital_owner', label: 'Hospital owners' },
   { value: 'patient', label: 'Patients' },
 ];
 
@@ -414,66 +415,110 @@ function ClinicAccessSection({ user, path, onSaved }: { user: AdminUser; path: s
 
 function BusinessesSection({ user, path, onSaved }: { user: AdminUser; path: string; onSaved: Saved }) {
   const { http } = useServices();
-  const { data: vendors, reload } = useResource<{ id: string; name: string; owner_id: string | null }[]>(
-    '/directory/admin/ambulances',
-    {},
+  const refresh = async () => {
+    const fresh = await http.request<AdminUser>(path, {});
+    if (fresh.ok) onSaved(fresh.value);
+  };
+
+  return (
+    <>
+      <h4 className={s.subtitle}>Businesses</h4>
+      <LinkedPlaces
+        userId={user.id}
+        linked={user.ambulances ?? []}
+        title="Ambulance services"
+        listPath="/directory/admin/ambulances"
+        ownerPath={(id) => `/directory/admin/ambulances/${id}/owner`}
+        pickLabel="Link an ambulance service"
+        hint="Gives them the ambulance owner role if they lack it."
+        onChanged={refresh}
+      />
+      <LinkedPlaces
+        userId={user.id}
+        linked={user.hospitals ?? []}
+        title="Hospitals and diagnostic centres"
+        listPath="/directory/admin/hospitals"
+        ownerPath={(id) => `/directory/admin/hospitals/${id}/owner`}
+        pickLabel="Link a hospital or diagnostic centre"
+        hint="Gives them the hospital owner role if they lack it. They edit its details under My Hospital."
+        onChanged={refresh}
+      />
+      <p className={s.muted}>
+        Pharmacies: {(user.pharmacies ?? []).map((item) => item.name).join(', ') || 'none'}. Manage them under Pharmacies.
+      </p>
+    </>
   );
+}
+
+/** Places linked to this account, and a picker to link one more. */
+function LinkedPlaces({
+  userId,
+  linked,
+  title,
+  listPath,
+  ownerPath,
+  pickLabel,
+  hint,
+  onChanged,
+}: {
+  userId: string;
+  linked: readonly { id: string; name: string }[];
+  title: string;
+  listPath: string;
+  ownerPath: (id: string) => string;
+  pickLabel: string;
+  hint: string;
+  onChanged: () => Promise<void>;
+}) {
+  const { http } = useServices();
+  const { data: places, reload } = useResource<{ id: string; name: string; owner_id: string | null }[]>(listPath, {});
   const [pick, setPick] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const setOwner = async (vendorId: string, ownerId: string | null) => {
+  const setOwner = async (placeId: string, ownerId: string | null) => {
     setError(null);
-    const result = await http.request(`/directory/admin/ambulances/${vendorId}/owner`, {
-      method: 'PUT',
-      body: { owner_id: ownerId },
-      retry: false,
-    });
+    const result = await http.request(ownerPath(placeId), { method: 'PUT', body: { owner_id: ownerId }, retry: false });
     if (!result.ok) {
       setError(result.error.message);
       return;
     }
-    const fresh = await http.request<AdminUser>(path, {});
-    if (fresh.ok) onSaved(fresh.value);
+    await onChanged();
     setPick('');
     void reload();
   };
 
-  const free = (vendors ?? []).filter((vendor) => vendor.owner_id !== user.id);
+  const free = (places ?? []).filter((place) => place.owner_id !== userId);
   return (
     <>
-      <h4 className={s.subtitle}>Businesses</h4>
       <p className={s.muted}>
-        Ambulance services: {(user.ambulances ?? []).length === 0 && 'none'}
+        {title}: {linked.length === 0 && 'none'}
       </p>
-      {(user.ambulances ?? []).map((vendor) => (
-        <p key={vendor.id}>
-          {vendor.name}{' '}
-          <button type="button" className={s.linkDanger} onClick={() => void setOwner(vendor.id, null)}>
+      {linked.map((place) => (
+        <p key={place.id}>
+          {place.name}{' '}
+          <button type="button" className={s.linkDanger} onClick={() => void setOwner(place.id, null)}>
             Unlink
           </button>
         </p>
       ))}
       <Row cols={2}>
-        <Field label="Link an ambulance service" hint="Gives them the ambulance owner role if they lack it.">
+        <Field label={pickLabel} hint={hint}>
           <select className={s.input} value={pick} onChange={(e) => setPick(e.target.value)}>
             <option value="">Choose…</option>
-            {free.map((vendor) => (
-              <option key={vendor.id} value={vendor.id}>
-                {vendor.name}
-                {vendor.owner_id ? ' (has an owner)' : ''}
+            {free.map((place) => (
+              <option key={place.id} value={place.id}>
+                {place.name}
+                {place.owner_id ? ' (has an owner)' : ''}
               </option>
             ))}
           </select>
         </Field>
         <Field label=" ">
-          <button type="button" className={s.secondary} disabled={!pick} onClick={() => void setOwner(pick, user.id)}>
+          <button type="button" className={s.secondary} disabled={!pick} onClick={() => void setOwner(pick, userId)}>
             Link
           </button>
         </Field>
       </Row>
-      <p className={s.muted}>
-        Pharmacies: {(user.pharmacies ?? []).map((item) => item.name).join(', ') || 'none'}. Manage them under Pharmacies.
-      </p>
       {error && (
         <p className={s.error} role="alert">
           {error}

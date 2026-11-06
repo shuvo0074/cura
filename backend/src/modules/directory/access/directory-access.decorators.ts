@@ -22,6 +22,7 @@ export const DirectoryAccess = (rule: DirectoryAccessRule) => SetMetadata(DIRECT
 export const RequireDirectoryAdmin = () => DirectoryAccess({ roles: ['super_admin'] });
 export const RequireAmbulanceOwner = () => DirectoryAccess({ roles: ['ambulance_owner'] });
 export const RequirePharmacyOwner = () => DirectoryAccess({ roles: ['pharmacy_owner'] });
+export const RequireHospitalOwner = () => DirectoryAccess({ roles: ['hospital_owner'] });
 export const RequireLinkedDoctor = () => DirectoryAccess({ roles: ['doctor'], linkedDoctor: true });
 export const RequirePatient = () => DirectoryAccess({ roles: ['patient'] });
 /** Any signed-in account, whatever its directory roles. */

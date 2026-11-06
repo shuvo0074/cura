@@ -14,7 +14,7 @@ export function PharmacyOwnerView() {
   return (
     <Panel
       title="My Pharmacy"
-      description="Keep your pharmacy's details up to date."
+      description="Patients see these details on Cura Website. A new pharmacy waits for an admin before it shows."
       action={
         <button type="button" className={s.primary} onClick={() => setEditing('new')}>
           Add
@@ -32,6 +32,7 @@ export function PharmacyOwnerView() {
               <th>Location</th>
               <th>Hours</th>
               <th>Home delivery</th>
+              <th>On Cura Website</th>
               <th />
             </tr>
           </thead>
@@ -43,6 +44,7 @@ export function PharmacyOwnerView() {
                 <td>{[pharmacy.address, pharmacy.city].filter(Boolean).join(', ') || '—'}</td>
                 <td>{pharmacy.opening_hours ?? '—'}</td>
                 <td>{pharmacy.home_delivery ? 'Yes' : 'No'}</td>
+                <td>{pharmacy.hidden ? 'Waiting for an admin' : 'Visible'}</td>
                 <td>
                   <button type="button" className={s.linkButton} onClick={() => setEditing(pharmacy)}>
                     Edit

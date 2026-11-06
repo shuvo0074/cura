@@ -94,10 +94,11 @@ export class PrismaAdminUsersRepository implements AdminUsersRepository {
         doctorListing: { select: { id: true, specialty: true, hidden: true, pendingApproval: true } },
         ownedAmbulances: { select: { id: true, name: true } },
         ownedPharmacies: { select: { id: true, name: true } },
+        ownedHospitals: { select: { id: true, name: true, type: true }, orderBy: { name: 'asc' } },
       },
     });
     if (!user) return null;
-    const { passwordHash, doctorListing, ownedAmbulances, ownedPharmacies, ...rest } = user;
+    const { passwordHash, doctorListing, ownedAmbulances, ownedPharmacies, ownedHospitals, ...rest } = user;
     return {
       ...this.shape(rest, passwordHash !== null),
       doctor: doctorListing
@@ -105,6 +106,7 @@ export class PrismaAdminUsersRepository implements AdminUsersRepository {
         : null,
       ambulances: ownedAmbulances,
       pharmacies: ownedPharmacies,
+      hospitals: ownedHospitals,
     };
   }
 
@@ -236,6 +238,10 @@ export class PrismaAdminUsersRepository implements AdminUsersRepository {
   async deletePharmacy(id: string): Promise<boolean> {
     const { count } = await this.prisma.pharmacy.deleteMany({ where: { id } });
     return count > 0;
+  }
+
+  setPharmacyHidden(id: string, hidden: boolean): Promise<Row | null> {
+    return orNull(this.prisma.pharmacy.update({ where: { id }, data: { hidden }, select: { id: true, name: true, hidden: true } }));
   }
 
   async setPharmacyOwner(id: string, ownerId: string): Promise<boolean> {

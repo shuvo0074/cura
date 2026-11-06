@@ -13,7 +13,7 @@ The live and local databases hold different accounts, so check which section you
 ## What each role gets on Cura Website
 
 All the live logins below can log in on Cura Website, but only super admins, doctors and patients get their own screens
-there. Nobody needs a login to browse doctors, hospitals, diagnostic centres and ambulances.
+there. Nobody needs a login to browse doctors, hospitals, diagnostic centres, ambulances and pharmacies.
 
 | Role | Account to try | Lands on | What they can do |
 | --- | --- | --- | --- |
@@ -23,24 +23,31 @@ there. Nobody needs a login to browse doctors, hospitals, diagnostic centres and
 | Clinic owner | owner1@cura.local | Home | Browse only; their screens are on Cura Dashboard |
 | Clinic staff | desk@cura.local | Home | Browse only; their screens are on Cura Dashboard |
 
-- **Super admin:** the admin panel covers hospitals, doctors, specialties, symptoms, ambulances, sample prices, the home
-  page, site text, photo credits, appointments, verifications and owners.
+- **Super admin:** the admin panel covers hospitals, doctors, specialties, symptoms, ambulances, pharmacies (show or
+  hide only), sample prices, the home page, site text, photo credits, appointments, verifications and owners.
 - **Patients:** joining a clinic adds them to that clinic's patient list on Cura Dashboard. To join, open My Appointments
   and click **My clinics**. **My health** (next to it) shows what those clinics recorded, read-only; leaving a clinic
   hides its records there.
 - **Booking:** patients can only book online if booking is switched on in the API. A serial at a clinic on Cura also
   goes into that clinic's calendar on Cura Dashboard, where clinic staff can cancel, check out or mark it no-show.
 - **Ambulance and pharmacy owners:** their screens are on Cura Dashboard, under **My Ambulances** and **My Pharmacy**.
-  There are no pharmacy owners on the live database yet.
+  A pharmacy or ambulance service an owner adds stays hidden from patients until a super admin shows it; the owner sees
+  **Waiting for an admin** or **Visible**. There are no pharmacy owners on the live database yet.
+- **Hospital owners:** a super admin links a hospital or diagnostic centre to an account on Cura Dashboard (**Super
+  Admin → Users and roles**, open the account, **Businesses**), which gives it the hospital owner role. The owner edits
+  that place's public details under **My Hospital** on Cura Dashboard: name, address, hotline, website, description,
+  opening and visiting hours, services, facilities, payment methods, bed counts and test prices. Changes show on Cura
+  Website at once. Only a super admin can change the type, location, map pin or photo, or hide or delete the place.
+  There are no hospital owners on the live database yet.
 
 ### Login rules
 
 - **Patients:** Cura Website is the only place they can log in, because Cura Dashboard blocks them.
 - **Super admin:** works on both front ends. On Cura Dashboard, **Super Admin** has the same tools as the Cura Website
-  admin panel, plus users and roles, clinics and pharmacies. A super admin can open any clinic's records read-only from
+  admin panel, plus users and roles, clinics, pharmacies and linking hospitals to their owners. A super admin can open any clinic's records read-only from
   **Super Admin → Clinics**, and each view is recorded in the audit log.
-- **Moving between the two:** an account that can use Cura Dashboard (doctor, clinic account, ambulance or pharmacy
-  owner, super admin) logs in once. **Open Cura Dashboard** at the top of Cura Website and **Open Cura Website** in the
+- **Moving between the two:** an account that can use Cura Dashboard (doctor, clinic account, ambulance, pharmacy or
+  hospital owner, super admin) logs in once. **Open Cura Dashboard** at the top of Cura Website and **Open Cura Website** in the
   Cura Dashboard account menu open the other one already logged in. The link works once, for one minute.
 - **New doctors:** signing up on Cura Website sends them to Cura Dashboard. They cannot finish signing up on the live
   site yet, because Cura does not send real SMS.
@@ -217,6 +224,7 @@ database kept as `cura_local_backup_20261106`.
 | Super admin | Cura Super Admin | None | superadmin@cura.local | 01700000009 | CuraSuper123 | Both |
 | Ambulance owner | Rafiq Mia | None | ambulance@cura.local | 01700000012 | CuraOwner123 | Cura Dashboard |
 | Pharmacy owner | Selina Parvin | None | pharmacy@cura.local | 01700000013 | CuraOwner123 | Cura Dashboard |
+| Hospital owner, of Cura Demo Hospital | Kamrul Hasan | None | hospital@cura.local | 01700000014 | CuraOwner123 | Cura Dashboard |
 | Patient | Sadia Rahman | Cura Demo Clinic and Cura Uttara Clinic | patient@cura.local | 01800000001 | CuraPatient123 | Cura Website |
 
 ### Doctor with no login yet

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useServices } from '../../../app/services';
-import { Check, Failed, Field, Loading, Modal, Panel, Row, uiStyles as s, useResource } from '../../../ui';
+import { Check, Failed, Field, Loading, Modal, Panel, Row, uiStyles as s, useMutation, useResource } from '../../../ui';
 import type { AdminUser } from './admin-types';
 
 interface AdminPharmacy {
@@ -12,6 +12,7 @@ interface AdminPharmacy {
   phones: string[];
   opening_hours: string | null;
   home_delivery: boolean;
+  hidden: boolean;
   owner: { id: string; full_name: string; email: string | null } | null;
 }
 
@@ -19,6 +20,12 @@ interface AdminPharmacy {
 export function PharmaciesPanel() {
   const { data, error, loading, reload } = useResource<AdminPharmacy[]>('/directory/admin/pharmacies', {});
   const [editing, setEditing] = useState<AdminPharmacy | 'new' | null>(null);
+  const visibility = useMutation();
+
+  const setHidden = async (pharmacy: AdminPharmacy, hidden: boolean) => {
+    const ok = await visibility.run(`/directory/admin/pharmacies/${pharmacy.id}/hidden`, { method: 'PATCH', body: { hidden } });
+    if (ok) void reload();
+  };
 
   if (loading && !data) return <Loading />;
   if (error) return <Failed message={error} />;
@@ -26,7 +33,7 @@ export function PharmaciesPanel() {
   return (
     <Panel
       title="Pharmacies"
-      description="Owners manage their own pharmacies on Cura Dashboard."
+      description="Owners manage their own pharmacies on Cura Dashboard. A pharmacy an owner adds stays hidden until you show it."
       action={
         <button type="button" className={s.primary} onClick={() => setEditing('new')}>
           Add
@@ -43,6 +50,7 @@ export function PharmaciesPanel() {
               <th>Owner</th>
               <th>Phones</th>
               <th>Location</th>
+              <th>On Cura Website</th>
               <th />
             </tr>
           </thead>
@@ -54,6 +62,18 @@ export function PharmaciesPanel() {
                 <td>{pharmacy.phones.join(', ')}</td>
                 <td>{[pharmacy.address, pharmacy.city].filter(Boolean).join(', ') || '—'}</td>
                 <td>
+                  {pharmacy.hidden ? 'Hidden' : 'Visible'}{' '}
+                  <button
+                    type="button"
+                    className={s.linkButton}
+                    disabled={visibility.busy}
+                    aria-label={`${pharmacy.hidden ? 'Show' : 'Hide'} ${pharmacy.name}`}
+                    onClick={() => void setHidden(pharmacy, !pharmacy.hidden)}
+                  >
+                    {pharmacy.hidden ? 'Show' : 'Hide'}
+                  </button>
+                </td>
+                <td>
                   <button type="button" className={s.linkButton} onClick={() => setEditing(pharmacy)}>
                     Edit
                   </button>
@@ -62,6 +82,11 @@ export function PharmaciesPanel() {
             ))}
           </tbody>
         </table>
+      )}
+      {visibility.error && (
+        <p className={s.error} role="alert">
+          {visibility.error}
+        </p>
       )}
       {editing && (
         <PharmacyModal

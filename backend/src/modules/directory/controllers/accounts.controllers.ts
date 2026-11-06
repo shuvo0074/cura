@@ -5,12 +5,14 @@ import {
   Identity,
   RequireAmbulanceOwner,
   RequireDirectoryAdmin,
+  RequireHospitalOwner,
   RequirePatient,
   RequirePharmacyOwner,
 } from '../access/directory-access.decorators';
 import { UuidOr404 } from '../access/uuid-or-404.pipe';
 import { AmbulanceService } from '../services/ambulance.service';
 import { ClinicOwnerService } from '../services/clinic-owner.service';
+import { HospitalService } from '../services/hospital.service';
 import { PatientClinicService } from '../services/patient-clinic.service';
 import { PatientHealthService } from '../services/patient-health.service';
 import { PharmacyService } from '../services/pharmacy.service';
@@ -108,6 +110,26 @@ export class MyPharmaciesController {
   @Patch(':id')
   update(@Param('id', UuidOr404) id: string, @Body() body: unknown, @Identity() identity: DirectoryIdentity) {
     return this.pharmacies.update(id, bodyOf(body), identity.userId);
+  }
+}
+
+/**
+ * Hospitals and diagnostic centres this owner runs. They edit the public
+ * details only; a super admin links the place and controls everything else.
+ */
+@Controller('directory/my-hospitals')
+@RequireHospitalOwner()
+export class MyHospitalsController {
+  constructor(private readonly hospitals: HospitalService) {}
+
+  @Get()
+  mine(@Identity() identity: DirectoryIdentity) {
+    return this.hospitals.listOwned(identity.userId);
+  }
+
+  @Patch(':id')
+  update(@Param('id', UuidOr404) id: string, @Body() body: unknown, @Identity() identity: DirectoryIdentity) {
+    return this.hospitals.updateOwned(id, bodyOf(body), identity.userId);
   }
 }
 

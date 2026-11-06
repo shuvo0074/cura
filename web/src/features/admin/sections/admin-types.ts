@@ -1,7 +1,7 @@
 /** Shapes the super admin API returns. */
 
 export type ClinicRole = 'ADMINISTRATOR' | 'DOCTOR' | 'DESK_STAFF';
-export type GrantableRole = 'super_admin' | 'patient' | 'ambulance_owner' | 'pharmacy_owner';
+export type GrantableRole = 'super_admin' | 'patient' | 'ambulance_owner' | 'pharmacy_owner' | 'hospital_owner';
 
 export interface AdminUser {
   id: string;
@@ -16,6 +16,7 @@ export interface AdminUser {
   doctor?: { id: string; specialty: string; hidden: boolean; pending_approval: boolean } | null;
   ambulances?: { id: string; name: string }[];
   pharmacies?: { id: string; name: string }[];
+  hospitals?: { id: string; name: string; type: string | null }[];
 }
 
 export interface AdminClinic {
@@ -43,9 +44,10 @@ export const ROLE_LABELS: Record<string, string> = {
   doctor: 'Doctor (Cura Website)',
   ambulance_owner: 'Ambulance owner',
   pharmacy_owner: 'Pharmacy owner',
+  hospital_owner: 'Hospital owner',
 };
 
-export const GRANTABLE_ROLES: readonly GrantableRole[] = ['super_admin', 'patient', 'ambulance_owner', 'pharmacy_owner'];
+export const GRANTABLE_ROLES: readonly GrantableRole[] = ['super_admin', 'patient', 'ambulance_owner', 'pharmacy_owner', 'hospital_owner'];
 
 /** The clinic a super admin is looking at, read-only. */
 export interface ViewedClinic {

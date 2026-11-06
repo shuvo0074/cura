@@ -16,7 +16,40 @@ import { scheduleEntries } from '../domain/schedule';
 import { DirectoryAudit } from './directory-audit.service';
 import { DirectoryMediaService, type UploadedImage } from './media.service';
 
-/** Hospitals and diagnostic centres: public pages and admin edits. */
+/**
+ * What a hospital owner may change. Everything else (type, location and
+ * coordinates, photo, source, visibility) stays as the super admin set it.
+ */
+const OWNER_FIELDS = [
+  'name',
+  'address',
+  'hotline',
+  'website',
+  'description',
+  'opening_hours',
+  'visiting_hours',
+  'services',
+  'facilities',
+  'payment_methods',
+  'beds',
+  'tests',
+] as const;
+const OWNER_COLUMNS = [
+  'name',
+  'address',
+  'hotline',
+  'website',
+  'description',
+  'openingHours',
+  'visitingHours',
+  'services',
+  'facilities',
+  'paymentMethods',
+  'beds',
+  'tests',
+] as const;
+
+/** Hospitals and diagnostic centres: public pages, admin edits and owner edits. */
 @Injectable()
 export class HospitalService {
   constructor(
@@ -71,6 +104,29 @@ export class HospitalService {
     const row = await this.hospitals.update(id, adminHospital(body));
     if (!row) throw directoryNotFound('Hospital');
     await this.audit.record(adminId, 'hospital_updated', 'hospital', id);
+    return present(row);
+  }
+
+  async listOwned(ownerId: string) {
+    return (await this.hospitals.listOwned(ownerId)).map(present);
+  }
+
+  /**
+   * An owner edits their own place's public details, live at once. The admin
+   * rules validate a full record, so the owner's changes are merged onto the
+   * stored one first, and only the owner's columns are written.
+   */
+  async updateOwned(id: string, body: Row, ownerId: string) {
+    const current = await this.hospitals.findOwned(id, ownerId);
+    if (!current) throw directoryNotFound('Hospital');
+    const merged: Row = present(current);
+    for (const field of OWNER_FIELDS) if (field in body) merged[field] = body[field];
+    const clean: Row = adminHospital(merged);
+    const data: Row = {};
+    for (const column of OWNER_COLUMNS) if (column in clean) data[column] = clean[column];
+    const row = await this.hospitals.updateOwned(id, ownerId, data);
+    if (!row) throw directoryNotFound('Hospital');
+    await this.audit.record(ownerId, 'hospital_updated_by_owner', 'hospital', id, { fields: OWNER_FIELDS.filter((f) => f in body) });
     return present(row);
   }
 

@@ -8,6 +8,7 @@ import type {
   NewAccount,
   NewClinicOwner,
   NewVerification,
+  OwnerDirectoryRole,
   Row,
 } from '../../../core/ports/directory.ports';
 import { DirectoryError } from '../../../modules/directory/domain/errors';
@@ -205,7 +206,7 @@ export class PrismaDirectoryAccountRepository implements DirectoryAccountReposit
     return row?.id ?? null;
   }
 
-  async grantRole(userId: string, role: 'AMBULANCE_OWNER' | 'PHARMACY_OWNER'): Promise<void> {
+  async grantRole(userId: string, role: OwnerDirectoryRole): Promise<void> {
     await this.prisma.userDirectoryRole.upsert({
       where: { userId_role: { userId, role } },
       create: { userId, role },
@@ -213,7 +214,7 @@ export class PrismaDirectoryAccountRepository implements DirectoryAccountReposit
     });
   }
 
-  async revokeRole(userId: string, role: 'AMBULANCE_OWNER' | 'PHARMACY_OWNER'): Promise<void> {
+  async revokeRole(userId: string, role: OwnerDirectoryRole): Promise<void> {
     await this.prisma.userDirectoryRole.deleteMany({ where: { userId, role } });
   }
 

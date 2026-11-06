@@ -12,7 +12,11 @@ import { DirectoryValidationError, directoryNotFound } from '../domain/errors';
 import { present } from '../domain/presenter';
 import { DirectoryAudit } from './directory-audit.service';
 
-const GRANTABLE = { ambulance_owner: 'AMBULANCE_OWNER', pharmacy_owner: 'PHARMACY_OWNER' } as const;
+const GRANTABLE = {
+  ambulance_owner: 'AMBULANCE_OWNER',
+  pharmacy_owner: 'PHARMACY_OWNER',
+  hospital_owner: 'HOSPITAL_OWNER',
+} as const;
 
 function checked<T>(result: { success: true; data: T } | { success: false }, message: string): T {
   if (!result.success) throw new DirectoryValidationError(message);
@@ -56,10 +60,10 @@ export class ClinicOwnerService {
     return present(owner);
   }
 
-  /** An owner can hold ambulance and pharmacy access too. */
+  /** An owner can hold ambulance, pharmacy and hospital access too. */
   async setRole(body: Row, granted: boolean, adminId: string) {
     const role = GRANTABLE[body.role as keyof typeof GRANTABLE];
-    if (!role) throw new DirectoryValidationError('Choose ambulance_owner or pharmacy_owner');
+    if (!role) throw new DirectoryValidationError('Choose ambulance_owner, pharmacy_owner or hospital_owner');
     const identifier = typeof body.identifier === 'string' ? body.identifier.trim() : '';
     const parsedMobile = bdMobileSchema.safeParse(identifier);
     const userId = await this.accounts.findUserIdByIdentifier(parsedMobile.success ? parsedMobile.data : identifier);

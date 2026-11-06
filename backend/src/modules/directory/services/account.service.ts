@@ -19,7 +19,7 @@ import { normalizeBmdc, toNationalPhone } from '../domain/account-rules';
 import { DirectoryError, DirectoryValidationError } from '../domain/errors';
 import { present } from '../domain/presenter';
 
-const ROLE_PRIORITY: DirectoryRoleName[] = ['super_admin', 'doctor', 'ambulance_owner', 'pharmacy_owner', 'patient'];
+const ROLE_PRIORITY: DirectoryRoleName[] = ['super_admin', 'doctor', 'ambulance_owner', 'pharmacy_owner', 'hospital_owner', 'patient'];
 const GENDERS = ['male', 'female'];
 
 export interface SessionContext {

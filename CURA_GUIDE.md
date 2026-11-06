@@ -20,6 +20,11 @@
 - Create invoices and take payments
 - As a patient on Cura Website, see your own visits, prescriptions, vital signs, invoices and upcoming clinic
   appointments from the clinics you joined, on **My health**, and print a prescription
+- Find a pharmacy on Cura Website by name or area, see which ones deliver, and call them
+- As a pharmacy owner, see whether patients can see your pharmacy yet; a super admin shows or hides it
+- As a hospital owner, edit your hospital or diagnostic centre's details on Cura Dashboard (**My Hospital**); patients
+  see the change on Cura Website at once
+- As a super admin, link a hospital or diagnostic centre to its owner's account
 - Upload and view patient documents
 - View statistics: income, appointments, top procedures, patient mix
 - Change clinic settings: clinic details, hours, staff, prices, drugs, note templates, printouts, messages, security
@@ -58,6 +63,7 @@ The other user types, and where each one logs in:
 | Doctor with no login yet | Dr Farzana Ahmed | 01711111114 | Signs up with BMDC A-100203 | Cura Dashboard |
 | Ambulance owner | Rafiq Mia | ambulance@cura.local | CuraOwner123 | Cura Dashboard |
 | Pharmacy owner | Selina Parvin | pharmacy@cura.local | CuraOwner123 | Cura Dashboard |
+| Hospital owner (freshly seeded database only) | Kamrul Hasan | hospital@cura.local | CuraOwner123 | Cura Dashboard |
 | Patient | Sadia Rahman | patient@cura.local | CuraPatient123 | Cura Website |
 
 A patient cannot log in on Cura Dashboard, but appears there as a patient at each clinic they chose on Cura Website.
@@ -179,6 +185,34 @@ Online booking must be switched on in the Cura API (it is, unless `DIRECTORY_BOO
    **My health** is also in the menu.
 8. Use a test patient for this step, not patient01: click **My clinics** and leave a clinic. Its records disappear from
    **My health**. Joining again makes a new clinic record, so the old visits stay hidden.
+
+### Pharmacies on Cura Website
+
+1. On Cura Dashboard, log in as admin@cura.local. Click **Super Admin**, then **Users and roles**, then **New account**.
+   Make a test account, and in it tick **Pharmacy owner**.
+2. Log out and log in as the test account. **My Pharmacy** opens. Click **Add**, fill the name, phone, address and city,
+   tick **Home delivery**, click **Save**. **On Cura Website** says **Waiting for an admin**.
+3. On Cura Website, click **Pharmacies** at the top. The new pharmacy is not there yet.
+4. On Cura Dashboard, log in as admin@cura.local. Click **Super Admin**, then **Pharmacies**. The pharmacy says
+   **Hidden**. Click **Show** next to it: it says **Visible**. (The Cura Website admin panel has the same switch under
+   **Pharmacies**.)
+5. On Cura Website, reload **Pharmacies**. The pharmacy is there. Type part of its area in the search box, tick
+   **Home delivery**: it stays. Click **Call**: the phone app opens with its number. Switch to **বাং**: the page is in
+   Bangla.
+6. As the test account on Cura Dashboard, **My Pharmacy** now says **Visible**.
+
+### My Hospital
+
+1. On Cura Dashboard, log in as admin@cura.local. Click **Super Admin**, then **Users and roles**, then **New account**,
+   and make a test account.
+2. In the account, under **Businesses**, choose a place in **Link a hospital or diagnostic centre** and click the
+   **Link** next to it. The place shows above the box, and **Hospital owner** is ticked under **Roles**.
+3. Log out and log in as the test account. **My Hospital** opens. Click **Edit** next to the place. There is no type,
+   map pin or photo: only a super admin changes those.
+4. Change the **Hotline** and click **Save**. The table shows the new hotline.
+5. On Cura Website, open that hospital (**Find Hospital**, or **Diagnostic Centres** for a centre). The new hotline is
+   there. Also check **Open Cura Dashboard** shows at the top when logged in as the test account.
+6. As admin@cura.local, click **Unlink** next to the place in the account to take it away again.
 
 ### Add a patient and search
 

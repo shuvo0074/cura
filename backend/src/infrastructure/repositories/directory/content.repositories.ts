@@ -69,7 +69,7 @@ export class PrismaHospitalRepository implements HospitalRepository {
 
   listAdmin(): Promise<Row[]> {
     return this.prisma.hospital.findMany({
-      select: { id: true, name: true, location: true, division: true, address: true, hotline: true, photo: true, type: true, hidden: true },
+      select: { id: true, name: true, location: true, division: true, address: true, hotline: true, photo: true, type: true, hidden: true, ownerId: true },
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     });
   }
@@ -109,18 +109,55 @@ export class PrismaHospitalRepository implements HospitalRepository {
     await this.prisma.hospital.update({ where: { id }, data: { photo } });
     return before.photo;
   }
+
+  listOwned(ownerId: string): Promise<Row[]> {
+    return this.prisma.hospital.findMany({ where: { ownerId }, orderBy: { name: 'asc' } });
+  }
+
+  findOwned(id: string, ownerId: string): Promise<Row | null> {
+    return this.prisma.hospital.findFirst({ where: { id, ownerId } });
+  }
+
+  updateOwned(id: string, ownerId: string, data: Row): Promise<Row | null> {
+    return orNull(
+      this.prisma.hospital.update({
+        where: { id, ownerId },
+        data: withNullableJson(data, HOSPITAL_JSON) as Prisma.HospitalUncheckedUpdateInput,
+      }),
+    );
+  }
+
+  async setOwner(id: string, ownerId: string | null): Promise<boolean> {
+    const { count } = await this.prisma.hospital.updateMany({ where: { id }, data: { ownerId } });
+    return count > 0;
+  }
 }
+
+/** What patients see of a pharmacy. Never the owner, licence or visibility. */
+const PHARMACY_PUBLIC = {
+  id: true,
+  name: true,
+  address: true,
+  city: true,
+  phones: true,
+  openingHours: true,
+  homeDelivery: true,
+} satisfies Prisma.PharmacySelect;
 
 @Injectable()
 export class PrismaPharmacyRepository implements PharmacyRepository {
   constructor(private readonly prisma: PrismaService) {}
+
+  listPublic(): Promise<Row[]> {
+    return this.prisma.pharmacy.findMany({ where: { hidden: false }, select: PHARMACY_PUBLIC, orderBy: [{ name: 'asc' }, { id: 'asc' }] });
+  }
 
   listOwned(ownerId: string): Promise<Row[]> {
     return this.prisma.pharmacy.findMany({ where: { ownerId }, orderBy: { name: 'asc' } });
   }
 
   create(ownerId: string, data: Row): Promise<Row> {
-    return this.prisma.pharmacy.create({ data: { ...data, ownerId } as Prisma.PharmacyUncheckedCreateInput });
+    return this.prisma.pharmacy.create({ data: { ...data, ownerId, hidden: true } as Prisma.PharmacyUncheckedCreateInput });
   }
 
   update(id: string, ownerId: string, data: Row): Promise<Row | null> {

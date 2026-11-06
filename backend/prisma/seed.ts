@@ -815,6 +815,35 @@ async function seedUserTypes(
     });
   }
 
+  // A hospital owner, linked to one demo hospital they edit under My Hospital.
+  const hospitalOwner = await account({
+    email: 'hospital@cura.local',
+    mobile: '+8801700000014',
+    fullName: 'Kamrul Hasan',
+    password: 'CuraOwner123',
+    role: 'PUBLIC_USER',
+  });
+  await prisma.userDirectoryRole.upsert({
+    where: { userId_role: { userId: hospitalOwner.id, role: 'HOSPITAL_OWNER' } },
+    update: {},
+    create: { userId: hospitalOwner.id, role: 'HOSPITAL_OWNER' },
+  });
+  await prisma.hospital.upsert({
+    where: { id: '44444444-4444-4444-8444-444444444441' },
+    update: { ownerId: hospitalOwner.id },
+    create: {
+      id: '44444444-4444-4444-8444-444444444441',
+      name: 'Cura Demo Hospital',
+      location: 'Dhaka',
+      division: 'Dhaka',
+      address: 'House 12, Road 5, Dhanmondi, Dhaka',
+      hotline: '01700000014',
+      type: 'hospital',
+      openingHours: '24/7',
+      ownerId: hospitalOwner.id,
+    },
+  });
+
   // A patient on Cura Website who joined both clinics.
   const patient = await account({
     email: 'patient@cura.local',

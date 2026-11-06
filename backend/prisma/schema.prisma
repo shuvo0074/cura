@@ -112,6 +112,7 @@ model User {
   directoryRoles        UserDirectoryRole[]
   ownedAmbulances       AmbulanceVendor[]
   ownedPharmacies       Pharmacy[]
+  ownedHospitals        Hospital[]
   patientAccount        PatientAccount?
   doctorListing         DoctorListing?
   doctorVerifications   DoctorVerification[] @relation("VerificationApplicant")
@@ -830,6 +831,7 @@ enum DirectoryRole {
   DOCTOR
   AMBULANCE_OWNER
   PHARMACY_OWNER
+  HOSPITAL_OWNER
 }
 
 enum VerificationKind {
@@ -908,11 +910,15 @@ model Hospital {
   sourceUrl      String?
   verifiedOn     DateTime? @db.Date
   hidden         Boolean   @default(false)
+  /// The account allowed to edit this place's public details, linked by a super admin.
+  ownerId        String?   @db.Uuid
   createdAt      DateTime  @default(now())
 
+  owner   User?           @relation(fields: [ownerId], references: [id], onDelete: SetNull)
   doctors DoctorListing[]
 
   @@index([hidden, type])
+  @@index([ownerId])
   @@map("hospitals")
 }
 
@@ -991,6 +997,8 @@ model Pharmacy {
   phones        Json     @default("[]")
   openingHours  String?
   homeDelivery  Boolean  @default(false)
+  /// Hidden from patients. A pharmacy an owner adds waits here for a super admin.
+  hidden        Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

@@ -5,7 +5,7 @@ import { directoryNotFound } from '../domain/errors';
 import { present } from '../domain/presenter';
 import { DirectoryAudit } from './directory-audit.service';
 
-/** A pharmacy owner's own businesses. */
+/** Pharmacies on Cura Website, and a pharmacy owner's own businesses. */
 @Injectable()
 export class PharmacyService {
   constructor(
@@ -13,10 +13,16 @@ export class PharmacyService {
     private readonly audit: DirectoryAudit,
   ) {}
 
+  /** What patients see on Cura Website: visible pharmacies, public fields only. */
+  async listPublic() {
+    return (await this.pharmacies.listPublic()).map(present);
+  }
+
   async listOwned(ownerId: string) {
     return (await this.pharmacies.listOwned(ownerId)).map(present);
   }
 
+  /** A new pharmacy stays hidden from patients until a super admin shows it. */
   async create(body: Row, ownerId: string) {
     const row = await this.pharmacies.create(ownerId, pharmacy(body));
     await this.audit.record(ownerId, 'pharmacy_created', 'pharmacy', row.id, { name: row.name });

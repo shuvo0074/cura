@@ -4,8 +4,10 @@ import { CryptoService } from '../../../common/crypto/crypto.service';
 import {
   ADMIN_USERS_REPOSITORY,
   AMBULANCE_REPOSITORY,
+  HOSPITAL_REPOSITORY,
   type AdminUsersRepository,
   type AmbulanceRepository,
+  type HospitalRepository,
   type ClinicRole,
   type GrantableRole,
   type Row,
@@ -21,6 +23,7 @@ const ROLES: Record<string, GrantableRole> = {
   patient: 'PATIENT',
   ambulance_owner: 'AMBULANCE_OWNER',
   pharmacy_owner: 'PHARMACY_OWNER',
+  hospital_owner: 'HOSPITAL_OWNER',
 };
 const CLINIC_ROLES: ClinicRole[] = ['ADMINISTRATOR', 'DOCTOR', 'DESK_STAFF'];
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -35,12 +38,13 @@ const text = (value: unknown, max = 160): string | null => {
   return trimmed ? trimmed.slice(0, max) : null;
 };
 
-/** What only a super admin does: every account's roles, every clinic and pharmacy. */
+/** What only a super admin does: every account's roles, every clinic and pharmacy, and business owners. */
 @Injectable()
 export class AdminUsersService {
   constructor(
     @Inject(ADMIN_USERS_REPOSITORY) private readonly admin: AdminUsersRepository,
     @Inject(AMBULANCE_REPOSITORY) private readonly ambulances: AmbulanceRepository,
+    @Inject(HOSPITAL_REPOSITORY) private readonly hospitals: HospitalRepository,
     @Inject(USER_REPOSITORY) private readonly users: UserRepository,
     private readonly crypto: CryptoService,
     private readonly audit: DirectoryAudit,
@@ -103,7 +107,7 @@ export class AdminUsersService {
 
   async setRole(id: string, roleName: string, granted: boolean, adminId: string) {
     const role = ROLES[roleName];
-    if (!role) throw new DirectoryValidationError('Choose super_admin, patient, ambulance_owner or pharmacy_owner');
+    if (!role) throw new DirectoryValidationError('Choose super_admin, patient, ambulance_owner, pharmacy_owner or hospital_owner');
     await this.get(id);
     if (role === 'SUPER_ADMIN' && !granted) {
       if (id === adminId) throw new DirectoryError(HttpStatus.CONFLICT, 'CANNOT_REMOVE_SELF', 'You cannot remove your own super admin role');
@@ -178,6 +182,23 @@ export class AdminUsersService {
     if (!(await this.admin.deletePharmacy(id))) throw directoryNotFound('Pharmacy');
     await this.audit.record(adminId, 'pharmacy_deleted', 'pharmacy', id);
     return { id };
+  }
+
+  /** Shows a pharmacy on Cura Website, or hides it. */
+  async setPharmacyHidden(id: string, hidden: boolean, adminId: string) {
+    const row = await this.admin.setPharmacyHidden(id, hidden);
+    if (!row) throw directoryNotFound('Pharmacy');
+    await this.audit.record(adminId, hidden ? 'pharmacy_hidden' : 'pharmacy_shown', 'pharmacy', id);
+    return row;
+  }
+
+  /** Links a hospital or diagnostic centre to an owner, who gets the role if they lack it. */
+  async setHospitalOwner(id: string, body: Row, adminId: string) {
+    if (!(await this.hospitals.findAny(id))) throw directoryNotFound('Hospital');
+    const ownerId = body.owner_id ? await this.ownerFor(body.owner_id, 'HOSPITAL_OWNER') : null;
+    if (!(await this.hospitals.setOwner(id, ownerId))) throw directoryNotFound('Hospital');
+    await this.audit.record(adminId, 'hospital_owner_set', 'hospital', id, { ownerId });
+    return { id, owner_id: ownerId };
   }
 
   /** Links an ambulance service to an owner, who gets the role if they lack it. */

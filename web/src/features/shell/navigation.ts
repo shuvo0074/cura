@@ -26,6 +26,7 @@ export type RouteKey =
   | 'integrations'
   | 'ambulances'
   | 'pharmacy'
+  | 'hospital'
   | 'admin'
   | 'community'
   | 'prime'
@@ -129,6 +130,13 @@ export const NAV_ITEMS: readonly NavItem[] = [
     label: 'My Pharmacy',
     icon: '℞',
     ownerRole: OwnerRole.PHARMACY_OWNER,
+    status: 'ready',
+  },
+  {
+    key: 'hospital',
+    label: 'My Hospital',
+    icon: '✙',
+    ownerRole: OwnerRole.HOSPITAL_OWNER,
     status: 'ready',
   },
   {

@@ -8,6 +8,7 @@ import { directoryNotFound } from '../domain/errors';
 import { AmbulanceService } from '../services/ambulance.service';
 import { CatalogService } from '../services/catalog.service';
 import { HospitalService } from '../services/hospital.service';
+import { PharmacyService } from '../services/pharmacy.service';
 import { DirectoryMediaService } from '../services/media.service';
 import { SerialBookingService } from '../services/serial-booking.service';
 import { SiteContentService } from '../services/site-content.service';
@@ -41,6 +42,7 @@ export class HospitalsController {
 export class PublicContentController {
   constructor(
     private readonly ambulances: AmbulanceService,
+    private readonly pharmacies: PharmacyService,
     private readonly catalog: CatalogService,
     private readonly site: SiteContentService,
   ) {}
@@ -53,6 +55,11 @@ export class PublicContentController {
   @Get('ambulances')
   listAmbulances() {
     return this.ambulances.listPublic();
+  }
+
+  @Get('pharmacies')
+  listPharmacies() {
+    return this.pharmacies.listPublic();
   }
 
   @Get('specialties')

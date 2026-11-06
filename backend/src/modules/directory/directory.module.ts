@@ -16,6 +16,7 @@ import {
   MyClinicsController,
   MyHealthController,
   MyPharmaciesController,
+  MyHospitalsController,
 } from './controllers/accounts.controllers';
 import { AdminBusinessesController, AdminUsersController } from './controllers/admin-users.controllers';
 import { DirectoryAuthController } from './controllers/auth.controller';
@@ -75,6 +76,7 @@ import { DoctorVerificationService } from './services/verification.service';
     MyHealthController,
     MyAmbulancesController,
     MyPharmaciesController,
+    MyHospitalsController,
     AdminUsersController,
     AdminBusinessesController,
   ],
