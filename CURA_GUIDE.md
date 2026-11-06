@@ -47,8 +47,8 @@
 - Edit your own profile and password
 - Switch between light and dark mode
 - Use Cura Dashboard in Bangla: switch **English / বাংলা** on the login page, in the menu under your name, or on
-  **Profile**; the choice is saved to your account (so far the menu, login, new-doctor setup, Calendar, setup checklist and
-  Profile are in Bangla; other screens are being translated)
+  **Profile**; the choice is saved to your account. Every screen is in Bangla, including Super Admin and the owner
+  screens; names of people, places and medicines stay as they were typed
 
 Not available yet: Community, Integrations (Practo and others), Facebook sign-up, login with a code instead of a
 password, and text messages to patients.
@@ -56,7 +56,8 @@ password, and text messages to patients.
 ## Open Cura
 
 1. Open Chrome or Safari.
-2. Go to **https://cura-web-qvfx.onrender.com**
+2. Go to **https://cura-web-qvfx.onrender.com** for Cura Dashboard, or **https://cura-user-frontend.onrender.com** for
+   Cura Website.
 
 ## Login details
 
@@ -72,19 +73,21 @@ On the welcome page, stay on the **Login** tab, type the email (or mobile) and p
 | Desk staff | Mitu Akter | desk2@cura.local | 01700000004 | CuraDesk123 | Same as Desk staff |
 | Desk staff | Jahid Hasan | desk3@cura.local | 01700000005 | CuraDesk123 | Same as Desk staff |
 
-The other user types, and where each one logs in:
+The other user types used in the checks below, and where each one logs in. They work on the live site and on your
+local copy unless the row says otherwise. **CREDENTIALS.md** lists every account.
 
 | User type | Name | Email or mobile | Password | Logs in on |
 | --- | --- | --- | --- | --- |
-| Super admin | Cura Super Admin | superadmin@cura.local | CuraSuper123 | Cura Website and Cura Dashboard |
-| Clinic owner, also ambulance and pharmacy owner | Tanzila Ahmed | owner2@cura.local | CuraAdmin123 | Cura Dashboard |
-| Doctor at Cura Uttara Clinic | Dr Rumana Haque | doctor4@cura.local | CuraDoctor123 | Cura Dashboard |
-| Doctor with no login yet | Dr Farzana Ahmed | 01711111114 | Signs up with BMDC A-100203 | Cura Dashboard |
-| Ambulance owner | Rafiq Mia | ambulance@cura.local | CuraOwner123 | Cura Dashboard |
-| Pharmacy owner (freshly seeded database only) | Selina Parvin | pharmacy@cura.local | CuraOwner123 | Cura Dashboard |
+| Super admin, also owner of Cura Demo Clinic | Shahnaz Rahman | admin@cura.local | CuraAdmin123 | Cura Website and Cura Dashboard |
+| Clinic owner of Cura Dhanmondi Clinic | Farhana Yasmin | owner1@cura.local | CuraAdmin123 | Cura Dashboard |
+| Doctor at Cura Dhanmondi Clinic | Dr Rumana Haque | doctor01@cura.local | CuraDoctor123 | Cura Website and Cura Dashboard |
+| Ambulance owner of BD Ambulance | Rafiq Mia | ambulance1@cura.local | CuraOwner123 | Cura Dashboard |
 | Pharmacy owner of Cura Demo Pharmacy (your local copy only) | Selina Parvin | pharmacy1@cura.local | CuraOwner123 | Cura Dashboard |
-| Hospital owner (freshly seeded database only) | Kamrul Hasan | hospital@cura.local | CuraOwner123 | Cura Dashboard |
-| Patient | Sadia Rahman | patient@cura.local | CuraPatient123 | Cura Website |
+| Patient at Cura Dhanmondi Clinic | Mahbub Ahmed | patient01@cura.local | CuraPatient123 | Cura Website |
+| Doctor with no login yet (freshly seeded database only) | Dr Farzana Ahmed | 01711111114 | Signs up with BMDC A-100203 | Cura Dashboard |
+
+There are no pharmacy or hospital owners on the live site yet: make one as in **Pharmacies on Cura Website** and
+**My Hospital** below.
 
 A patient cannot log in on Cura Dashboard, but appears there as a patient at each clinic they chose on Cura Website.
 
@@ -280,8 +283,8 @@ which patients can see. Mahbub Ahmed (patient01@cura.local) already has signed p
 
 ### Ambulance requests
 
-Only services with an owner show **Request this ambulance**. On your local copy, ambulance1@cura.local (password
-`CuraOwner123`) owns **BD Ambulance**.
+Only services with an owner show **Request this ambulance**. ambulance1@cura.local (password `CuraOwner123`) owns
+**BD Ambulance**, on the live site and on your local copy.
 
 1. On Cura Website, logged out, click **Find Ambulance**. On **BD Ambulance**, the call buttons are still there, with
    **In an emergency, call: it is faster.** under **Request this ambulance**. Click it: the form asks you to log in and
@@ -404,8 +407,9 @@ Click **Settings**, then each item in the second menu:
 1. Log in as admin@cura.local. Click **Super Admin**, then **Clinics**, and click **View records** next to **Cura
    Dhanmondi Clinic**. Look at its patients, then go back.
 2. Click **Super Admin**, then **Activity log**. The newest rows are at the top: your sign-in and **Super admin looked
-   at clinic data** for Cura Dhanmondi Clinic. Each row shows the time, the person (name, email, role), the action in
-   plain words, what it was about and the clinic.
+   at clinic data** for Cura Dhanmondi Clinic, one row for each part of the clinic's data that opened (appointments,
+   patients and so on). Each row shows the time, the person (name, email, role), the action in plain words, what it
+   was about and the clinic.
 3. Pick **Cura Dhanmondi Clinic** under **Clinic** and click **Show**. Only that clinic's rows stay. Click **Details** on
    a row: it shows the action code and the stored details (never passwords, codes or tokens). Click **Hide**.
 4. Type a name or email under **Person** and click **Show**. Click **Clear filters**. Click **Show more** at the bottom

@@ -8,7 +8,8 @@ ends. **Works on** says where its screens are.
 - **Cura Dashboard:** https://cura-web-qvfx.onrender.com
 - **Cura Website:** https://cura-user-frontend.onrender.com
 
-The live and local databases hold different accounts, so check which section you need.
+Your local database is a copy of the live one with one extra account (see **Local database**). A freshly seeded
+database holds different accounts, so check which section you need.
 
 ## What each role gets on Cura Website
 
