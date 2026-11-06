@@ -711,5 +711,8 @@
   "reset_err_wait": "Please wait a minute before asking for another code.",
   "reset_done_title": "Password changed",
   "reset_done_sub": "Your password has changed. Log in with your new password.",
-  "reset_remembered": "Remembered it?"
+  "reset_remembered": "Remembered it?",
+  "open_dashboard": "Open Cura Dashboard",
+  "opening_dashboard": "Opening Cura Dashboard…",
+  "handoff_expired": "This link has expired. Please log in."
 }

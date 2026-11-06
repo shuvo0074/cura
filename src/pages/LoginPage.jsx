@@ -15,7 +15,8 @@ export default function LoginPage() {
   const redirect = searchParams.get('redirect');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  // Sent here when a link from Cura Dashboard could not log them in.
+  const [error, setError] = useState(() => (searchParams.get('handoff') === 'expired' ? t('handoff_expired') : ''));
   const [busy, setBusy] = useState(false);
 
   if (!loading && user) return <Navigate to={safeRedirect(redirect, homePathFor(user))} replace />;

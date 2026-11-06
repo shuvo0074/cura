@@ -711,5 +711,8 @@
   "reset_err_wait": "আরেকটি কোড চাওয়ার আগে এক মিনিট অপেক্ষা করুন।",
   "reset_done_title": "পাসওয়ার্ড বদলানো হয়েছে",
   "reset_done_sub": "আপনার পাসওয়ার্ড বদলানো হয়েছে। নতুন পাসওয়ার্ড দিয়ে লগ ইন করুন।",
-  "reset_remembered": "মনে পড়েছে?"
+  "reset_remembered": "মনে পড়েছে?",
+  "open_dashboard": "Cura Dashboard খুলুন",
+  "opening_dashboard": "Cura Dashboard খুলছে…",
+  "handoff_expired": "লিংকটির মেয়াদ শেষ। অনুগ্রহ করে লগ ইন করুন।"
 }

@@ -34,7 +34,7 @@ function refreshSession() {
 }
 
 async function request(path, options = {}, canRetry = true) {
-  const isSessionRoute = ['/auth/login', '/auth/logout', '/auth/refresh'].includes(path);
+  const isSessionRoute = ['/auth/login', '/auth/logout', '/auth/refresh', '/auth/handoff/redeem'].includes(path);
   // Optional-auth routes treat an expired token as anonymous, so refresh first.
   if (!isSessionRoute && accessToken && Date.now() >= expiresAt - EXPIRY_SKEW_MS) {
     await refreshSession();

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { Search, Phone, Menu, X, ChevronRight, User, LogOut } from 'lucide-react';
+import { Search, Phone, Menu, X, ChevronRight, User, LogOut, LayoutDashboard } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useSiteContent } from '../../context/SiteContentContext';
@@ -21,8 +21,11 @@ export default function GlobalHeader() {
   const { t, i18n } = useTranslation();
   const { contacts } = useSiteContent();
   const hotline = phoneDigits(contacts.hotline, i18n.language);
-  const { user, logout, hasRole } = useAuth();
+  const { user, logout, hasRole, openDashboard } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [openingDashboard, setOpeningDashboard] = useState(false);
+  // Doctors, owners, super admins and clinic accounts also use Cura Dashboard.
+  const showDashboard = Boolean(user?.canUseDashboard);
   const menuRef = useRef(null);
 
   // Publish the header's real height as --header-h so sticky bars below it
@@ -35,6 +38,13 @@ export default function GlobalHeader() {
     });
     observer.observe(el);
     return () => observer.disconnect();
+  }, []);
+
+  // Coming back with the browser's Back button restores this page as it was left.
+  useEffect(() => {
+    const reset = event => event.persisted && setOpeningDashboard(false);
+    window.addEventListener('pageshow', reset);
+    return () => window.removeEventListener('pageshow', reset);
   }, []);
 
   // Close on route change
@@ -68,6 +78,11 @@ export default function GlobalHeader() {
     const next = i18n.language === 'en' ? 'bn' : 'en';
     i18n.changeLanguage(next);
     localStorage.setItem('cura-lang', next);
+  }
+
+  function handleOpenDashboard() {
+    setOpeningDashboard(true);
+    openDashboard();
   }
 
   async function handleLogout() {
@@ -123,6 +138,12 @@ export default function GlobalHeader() {
               className="hidden md:inline-flex text-sm font-medium bg-white text-action rounded px-3 py-1.5 whitespace-nowrap hover:bg-gray-100">
               {accountLink.label}
             </NavLink>}
+            {showDashboard && (
+              <button onClick={handleOpenDashboard} disabled={openingDashboard}
+                className="hidden md:inline-flex items-center gap-1.5 text-sm font-medium text-white border border-white rounded px-3 py-1.5 whitespace-nowrap hover:bg-white/10 disabled:opacity-60">
+                <LayoutDashboard size={14} /> {openingDashboard ? t('opening_dashboard') : t('open_dashboard')}
+              </button>
+            )}
             {user && (
               <button onClick={handleLogout} className="hidden md:block text-sm font-medium text-white/80 hover:text-white">
                 Logout
@@ -167,6 +188,19 @@ export default function GlobalHeader() {
                 </span>
                 <ChevronRight size={16} className="opacity-50" />
               </NavLink>}
+
+              {showDashboard && (
+                <button
+                  onClick={handleOpenDashboard}
+                  disabled={openingDashboard}
+                  className="flex items-center justify-between px-5 py-4 text-sm font-medium border-b border-white/10 text-white/90 hover:bg-white/10 transition-colors w-full text-left disabled:opacity-60">
+                  <span className="flex items-center gap-2.5">
+                    <LayoutDashboard size={16} className="opacity-70" />
+                    {openingDashboard ? t('opening_dashboard') : t('open_dashboard')}
+                  </span>
+                  <ChevronRight size={16} className="opacity-50" />
+                </button>
+              )}
 
               {/* Phone */}
               <a
