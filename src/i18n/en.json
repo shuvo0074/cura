@@ -750,5 +750,21 @@
   "mh_status_issued": "Unpaid",
   "mh_status_partially_paid": "Partly paid",
   "mh_status_paid": "Paid",
-  "mh_status_cancelled": "Cancelled"
+  "mh_status_cancelled": "Cancelled",
+  "retry": "Try again",
+  "pharmacy_title": "Pharmacies",
+  "pharmacy_intro_title": "Find a pharmacy near you",
+  "pharmacy_intro": "Search by name or area, and call the pharmacy to check if your medicine is in stock.",
+  "pharmacy_search": "Pharmacy name or area",
+  "pharmacy_home_delivery": "Home delivery",
+  "pharmacy_results": "Pharmacies",
+  "pharmacy_note": "Cura lists pharmacies but does not sell medicine. Call the pharmacy to order.",
+  "pharmacy_results_count_one": "{{count}} pharmacy matches",
+  "pharmacy_results_count_other": "{{count}} pharmacies match",
+  "pharmacy_empty": "No pharmacies found",
+  "pharmacy_empty_note": "Try another name or area, or clear the filters.",
+  "pharmacy_none_yet": "No pharmacies are listed yet. Check back soon.",
+  "pharmacy_load_error": "Pharmacies could not load",
+  "pharmacy_call_button": "Call",
+  "pharmacy_call": "Call {{name}} on {{phone}}"
 }

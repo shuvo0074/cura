@@ -34,6 +34,7 @@ import DoctorProfileEditorPage from './pages/DoctorProfileEditorPage';
 import DoctorQrCardPage from './pages/DoctorQrCardPage';
 import CreditsPage from './pages/CreditsPage';
 import AmbulancesPage from './pages/AmbulancesPage';
+import PharmaciesPage from './pages/PharmaciesPage';
 
 function PlaceholderPage({ titleKey }) {
   const { t } = useTranslation();
@@ -104,6 +105,7 @@ export default function App() {
               <Route path="/admin/site-text" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
               <Route path="/admin/photo-credits" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
               <Route path="/admin/ambulances" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
+              <Route path="/admin/pharmacies" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
               <Route path="/admin/sample-prices" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
               <Route path="/admin/verifications" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
               <Route path="/admin/owners" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
@@ -115,6 +117,7 @@ export default function App() {
               <Route path="/health-blogs" element={<PlaceholderPage titleKey="health_blogs" />} />
               <Route path="/credits" element={<CreditsPage />} />
               <Route path="/ambulances" element={<AmbulancesPage />} />
+              <Route path="/pharmacies" element={<PharmaciesPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>

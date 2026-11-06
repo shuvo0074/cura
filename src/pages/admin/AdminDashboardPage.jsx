@@ -11,6 +11,7 @@ import AdminSiteTextTab from './AdminSiteTextTab';
 import AdminPhotoCreditsTab from './AdminPhotoCreditsTab';
 import AdminVerificationsTab from './AdminVerificationsTab';
 import AdminOwnersTab from './AdminOwnersTab';
+import AdminPharmaciesTab from './AdminPharmaciesTab';
 
 export default function AdminDashboardPage() {
   const { pathname } = useLocation();
@@ -22,6 +23,7 @@ export default function AdminDashboardPage() {
     if (pathname === '/admin/specialties')  return <AdminCatalogTab kind="specialties" />;
     if (pathname === '/admin/symptoms')     return <AdminCatalogTab kind="symptoms" />;
     if (pathname === '/admin/ambulances')   return <AdminAmbulancesTab />;
+    if (pathname === '/admin/pharmacies')   return <AdminPharmaciesTab />;
     if (pathname === '/admin/home-page')    return <AdminHomePageTab />;
     if (pathname === '/admin/site-text')    return <AdminSiteTextTab />;
     if (pathname === '/admin/photo-credits') return <AdminPhotoCreditsTab />;

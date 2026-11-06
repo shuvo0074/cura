@@ -13,6 +13,7 @@ const NAV_LINKS = [
   { label: 'Diagnostic Centres', path: '/diagnostic-centres' },
   { label: 'Read about Health', path: '/health-blogs' },
   { label: 'Find Ambulance', path: '/ambulances' },
+  { label: 'Pharmacies', path: '/pharmacies' },
 ];
 
 export default function GlobalHeader() {

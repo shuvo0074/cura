@@ -73,7 +73,8 @@ export default function AdminOwnersTab() {
       </form>
 
       <div className="bg-white rounded-xl shadow-sm p-4 flex flex-col gap-3">
-        <h2 className="font-semibold text-gray-900">Ambulance and pharmacy owners</h2>
+        <h2 className="font-semibold text-gray-900">Ambulance, pharmacy and hospital owners</h2>
+        <p className="text-xs text-gray-500">To link a hospital to its owner, use Cura Dashboard: Super Admin, then Users and roles.</p>
         <div className="grid sm:grid-cols-2 gap-3">
           <Field label="Account's email or mobile">
             <input className={inputClass} value={role.identifier} onChange={e => setRole(r => ({ ...r, identifier: e.target.value }))} />
@@ -82,6 +83,7 @@ export default function AdminOwnersTab() {
             <select className={inputClass} value={role.role} onChange={e => setRole(r => ({ ...r, role: e.target.value }))}>
               <option value="ambulance_owner">Ambulance owner</option>
               <option value="pharmacy_owner">Pharmacy owner</option>
+              <option value="hospital_owner">Hospital owner</option>
             </select>
           </Field>
         </div>

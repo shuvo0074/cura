@@ -750,5 +750,21 @@
   "mh_status_issued": "অপরিশোধিত",
   "mh_status_partially_paid": "আংশিক পরিশোধিত",
   "mh_status_paid": "পরিশোধিত",
-  "mh_status_cancelled": "বাতিল"
+  "mh_status_cancelled": "বাতিল",
+  "retry": "আবার চেষ্টা করুন",
+  "pharmacy_title": "ফার্মেসি",
+  "pharmacy_intro_title": "কাছের ফার্মেসি খুঁজুন",
+  "pharmacy_intro": "নাম বা এলাকা দিয়ে খুঁজুন, আর ওষুধ আছে কিনা জানতে ফার্মেসিতে ফোন করুন।",
+  "pharmacy_search": "ফার্মেসির নাম বা এলাকা",
+  "pharmacy_home_delivery": "হোম ডেলিভারি",
+  "pharmacy_results": "ফার্মেসি",
+  "pharmacy_note": "Cura ফার্মেসির তালিকা দেখায়, ওষুধ বিক্রি করে না। অর্ডার করতে ফার্মেসিতে ফোন করুন।",
+  "pharmacy_results_count_one": "{{count, number}}টি ফার্মেসি পাওয়া গেছে",
+  "pharmacy_results_count_other": "{{count, number}}টি ফার্মেসি পাওয়া গেছে",
+  "pharmacy_empty": "কোনো ফার্মেসি পাওয়া যায়নি",
+  "pharmacy_empty_note": "অন্য নাম বা এলাকা দিয়ে খুঁজুন, অথবা ফিল্টার মুছুন।",
+  "pharmacy_none_yet": "এখনও কোনো ফার্মেসি যোগ করা হয়নি। পরে আবার দেখুন।",
+  "pharmacy_load_error": "ফার্মেসির তালিকা লোড হয়নি",
+  "pharmacy_call_button": "ফোন করুন",
+  "pharmacy_call": "{{name}}-কে {{phone}} নম্বরে ফোন করুন"
 }
