@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
-import { Ambulance, ArrowUpRight, Clock, MapPin, Phone } from 'lucide-react';
+import { Ambulance, ArrowUpRight, Clock, MapPin, Phone, Send } from 'lucide-react';
 
-export default function AmbulanceVendorCard({ vendor, areaName, lang }) {
+export default function AmbulanceVendorCard({ vendor, areaName, lang, onRequest }) {
   const { t } = useTranslation();
   const name = lang === 'bn' ? vendor.name_bn : vendor.name;
   return (
@@ -48,6 +48,15 @@ export default function AmbulanceVendorCard({ vendor, areaName, lang }) {
             <Phone size={16} /> {i === 0 ? t('ambulance_call_book') : t('ambulance_alternate')} · <span dir="ltr">{phone}</span>
           </a>
         ))}
+        {vendor.requestable && onRequest && (
+          <>
+            <button type="button" onClick={() => onRequest(vendor)}
+              className="w-full min-h-11 px-3 py-2 flex items-center justify-center gap-2 rounded-xl border border-primary/30 text-primary font-semibold text-sm hover:bg-primary/5">
+              <Send size={16} /> {t('ar_request_button')}
+            </button>
+            <p className="text-xs text-gray-500 text-center">{t('ar_card_hint')}</p>
+          </>
+        )}
       </div>
       <a href={vendor.source_url} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-500 hover:text-primary flex items-center gap-1">
         {t('ambulance_source', { date: new Date(`${vendor.source_checked_on}T00:00:00`).toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-GB') })}<ArrowUpRight size={13} />

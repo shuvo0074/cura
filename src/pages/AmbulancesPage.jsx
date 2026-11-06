@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { LocateFixed, SlidersHorizontal } from 'lucide-react';
+import { Ambulance, LocateFixed, SlidersHorizontal } from 'lucide-react';
 import { api } from '../api/client';
+import { useAuth } from '../context/AuthContext';
+import { AmbulanceRequestCard, RequestAmbulanceDialog } from '../components/ambulance/AmbulanceRequests';
+import { isOpenRequest, requestErrorKey, sortRequests } from '../utils/ambulanceRequests';
 import EmergencySection from '../components/home/EmergencySection';
 import PageHeader from '../components/ui/PageHeader';
 import SearchInput from '../components/ui/SearchInput';
@@ -13,6 +16,10 @@ import { AMBULANCE_CATEGORIES, AMBULANCE_FEATURES, filterAmbulances } from '../u
 import { distanceKm } from '../utils/distance';
 
 const ZONES = ['North', 'West', 'Central', 'East', 'South', 'Old Dhaka'];
+// While a request is open, its status is checked this often.
+const REQUEST_REFRESH_MS = 30_000;
+// Finished requests shown before "Show all".
+const RECENT_FINISHED = 2;
 const CONTROL = 'w-full min-h-11 rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-action';
 
 export default function AmbulancesPage() {
@@ -31,6 +38,42 @@ export default function AmbulancesPage() {
   const features = params.getAll('feature').filter(f => AMBULANCE_FEATURES.includes(f));
   const query = params.get('q') || '';
   const areaName = id => { const a = areas.find(item => item.id === id); return a ? (lang === 'bn' ? a.bn : a.en) : ''; };
+  const { hasRole } = useAuth();
+  const isPatient = hasRole('patient');
+  const [requests, setRequests] = useState([]);
+  const [requestBusy, setRequestBusy] = useState(false);
+  const [requestNotice, setRequestNotice] = useState('');
+  const [showAllRequests, setShowAllRequests] = useState(false);
+  // ?request=<id> opens the request form, so logging in brings the visitor back to it.
+  const requestingId = params.get('request') || '';
+  const requesting = vendors.find(v => v.id === requestingId && v.requestable) ?? null;
+
+  const myRequests = isPatient ? requests : [];
+  const hasOpen = myRequests.some(isOpenRequest);
+  useEffect(() => {
+    if (!isPatient) return undefined;
+    let active = true;
+    const load = () => api.get('/my-ambulance-requests').then(list => { if (active) setRequests(list); }).catch(() => {});
+    load();
+    const timer = hasOpen ? window.setInterval(load, REQUEST_REFRESH_MS) : null;
+    return () => { active = false; if (timer) window.clearInterval(timer); };
+  }, [isPatient, hasOpen]);
+  const loadRequests = () => api.get('/my-ambulance-requests').then(setRequests).catch(() => {});
+
+  function openRequest(vendor) { update('request', vendor.id); }
+  function closeRequest() { update('request', ''); }
+  async function cancelRequest(request) {
+    if (!window.confirm(t('ar_cancel_confirm'))) return;
+    setRequestBusy(true);
+    setRequestNotice('');
+    try {
+      await api.post(`/my-ambulance-requests/${request.id}/cancel`, {});
+    } catch (err) {
+      setRequestNotice(t(requestErrorKey(err)));
+    }
+    await loadRequests();
+    setRequestBusy(false);
+  }
 
   useEffect(() => {
     let active = true;
@@ -80,6 +123,10 @@ export default function AmbulancesPage() {
     }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 });
   }
 
+  // Open requests, and only the latest finished ones unless the patient asks for all.
+  const sortedRequests = sortRequests(myRequests);
+  const openCount = myRequests.filter(isOpenRequest).length;
+  const shownRequests = showAllRequests ? sortedRequests : sortedRequests.slice(0, openCount + RECENT_FINISHED);
   const visible = filterAmbulances(vendors, { category, area, features, query }, areas);
   return (
     <div>
@@ -100,6 +147,20 @@ export default function AmbulancesPage() {
       </div>
       <EmergencySection />
       </div>
+      {myRequests.length > 0 && (
+        <section aria-labelledby="my-ambulance-requests" className="mb-5">
+          <h2 id="my-ambulance-requests" className="font-semibold text-gray-900 flex items-center gap-2 mb-3"><Ambulance size={18} className="text-primary" />{t('ar_my_title')}</h2>
+          {requestNotice && <p role="alert" className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 mb-3">{requestNotice}</p>}
+          <div className="grid md:grid-cols-2 gap-3">
+            {shownRequests.map(request => <AmbulanceRequestCard key={request.id} request={request} busy={requestBusy} onCancel={cancelRequest} />)}
+          </div>
+          {sortedRequests.length > shownRequests.length || showAllRequests ? (
+            <button type="button" onClick={() => setShowAllRequests(v => !v)} className="mt-2 min-h-11 px-2 text-sm font-semibold text-primary">
+              {showAllRequests ? t('ar_show_less') : t('ar_show_all', { count: sortedRequests.length })}
+            </button>
+          ) : null}
+        </section>
+      )}
       <div className="grid lg:grid-cols-[280px_minmax(0,1fr)] gap-5">
         <aside className="bg-white rounded-2xl border border-gray-100 p-4 h-fit lg:sticky lg:top-[calc(var(--header-h,80px)+16px)] space-y-4">
           <div className="flex items-center justify-between"><h2 className="font-semibold flex items-center gap-2"><SlidersHorizontal size={17} />{t('ambulance_filters')}</h2><button type="button" onClick={reset} className="text-sm text-primary min-h-11 px-2">{t('clear_all')}</button></div>
@@ -119,10 +180,22 @@ export default function AmbulancesPage() {
             <EmptyState title={t('ambulance_load_error')} message={t('ambulance_retry_note')} actions={[{ label: t('retry'), onClick: () => { setLoading(true); setError(false); setReload(n => n + 1); } }]} />
           ) : <>
             <p role="status" className="text-sm text-gray-500 mb-3">{t('ambulance_results_count', { count: visible.length })}</p>
-            {visible.length === 0 ? <EmptyState title={t('ambulance_empty')} message={t('ambulance_empty_note')} actions={[{ label: t('clear_search_filters'), onClick: reset }]} /> : <ul className="grid md:grid-cols-2 gap-4">{visible.map(vendor => <AmbulanceVendorCard key={vendor.id} vendor={vendor} areaName={areaName} lang={lang} />)}</ul>}
+            {visible.length === 0 ? <EmptyState title={t('ambulance_empty')} message={t('ambulance_empty_note')} actions={[{ label: t('clear_search_filters'), onClick: reset }]} /> : <ul className="grid md:grid-cols-2 gap-4">{visible.map(vendor => <AmbulanceVendorCard key={vendor.id} vendor={vendor} areaName={areaName} lang={lang} onRequest={openRequest} />)}</ul>}
           </>}
         </section>
       </div>
+      {requesting && (
+        <RequestAmbulanceDialog
+          vendor={requesting}
+          onClose={closeRequest}
+          onSent={request => {
+            closeRequest();
+            setRequests(current => [request, ...current]);
+            setRequestNotice('');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+        />
+      )}
     </div>
   );
 }
