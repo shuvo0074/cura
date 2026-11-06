@@ -52,3 +52,41 @@ export interface Pharmacy {
 
 export const toggled = (list: readonly string[], key: string, on: boolean): string[] =>
   on ? [...list, key] : list.filter((item) => item !== key);
+
+export interface StockItem {
+  id: string;
+  name: string;
+  strength: string | null;
+  form: string | null;
+  /** Taka. */
+  price: number | null;
+  in_stock: boolean;
+}
+
+export type PharmacyOrderStatus = 'new' | 'ready' | 'collected' | 'cannot_fill' | 'cancelled';
+
+export interface PrescribedMedicine {
+  drug_name: string;
+  strength: string | null;
+  form: string | null;
+  morning: number;
+  noon: number;
+  night: number;
+  meal_relation: string;
+  duration_days: number | null;
+  instruction: string | null;
+}
+
+/** A prescription a patient sent to this pharmacy. */
+export interface PharmacyOrder {
+  id: string;
+  status: PharmacyOrderStatus;
+  patient_name: string;
+  patient_phone: string | null;
+  doctor_name: string;
+  prescribed_at: string;
+  items: PrescribedMedicine[];
+  note: string | null;
+  reason: string | null;
+  created_at: string;
+}

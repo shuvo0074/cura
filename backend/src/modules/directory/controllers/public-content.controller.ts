@@ -9,6 +9,7 @@ import { AmbulanceService } from '../services/ambulance.service';
 import { CatalogService } from '../services/catalog.service';
 import { HospitalService } from '../services/hospital.service';
 import { PharmacyService } from '../services/pharmacy.service';
+import { PharmacyShopService } from '../services/pharmacy-shop.service';
 import { DirectoryMediaService } from '../services/media.service';
 import { SerialBookingService } from '../services/serial-booking.service';
 import { SiteContentService } from '../services/site-content.service';
@@ -43,6 +44,7 @@ export class PublicContentController {
   constructor(
     private readonly ambulances: AmbulanceService,
     private readonly pharmacies: PharmacyService,
+    private readonly pharmacyShop: PharmacyShopService,
     private readonly catalog: CatalogService,
     private readonly site: SiteContentService,
   ) {}
@@ -60,6 +62,12 @@ export class PublicContentController {
   @Get('pharmacies')
   listPharmacies() {
     return this.pharmacies.listPublic();
+  }
+
+  /** A visible pharmacy's in-stock medicines, so patients can check before going. */
+  @Get('pharmacies/:id/stock')
+  pharmacyStock(@Param('id', UuidOr404) id: string) {
+    return this.pharmacyShop.publicStock(id);
   }
 
   @Get('specialties')

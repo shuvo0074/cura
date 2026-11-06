@@ -434,8 +434,9 @@ model Prescription {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  encounter Encounter          @relation(fields: [encounterId], references: [id], onDelete: Cascade)
-  items     PrescriptionItem[]
+  encounter      Encounter          @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+  items          PrescriptionItem[]
+  pharmacyOrders PharmacyOrder[]
 
   /// Communications' follow-up list reads by due date.
   @@index([followUpDate])
@@ -878,10 +879,11 @@ model PatientAccount {
   name      String?  @db.VarChar(120)
   createdAt DateTime @default(now())
 
-  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  bookings      SerialBooking[]
-  reviews       DoctorReview[]
-  clinicRecords Patient[]
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookings       SerialBooking[]
+  reviews        DoctorReview[]
+  clinicRecords  Patient[]
+  pharmacyOrders PharmacyOrder[]
 
   @@map("patient_accounts")
 }
@@ -1002,10 +1004,71 @@ model Pharmacy {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  owner  User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  stock  PharmacyStockItem[]
+  orders PharmacyOrder[]
 
   @@index([ownerId])
   @@map("pharmacies")
+}
+
+/// A medicine a pharmacy lists. Patients see the in-stock ones on Cura Website.
+model PharmacyStockItem {
+  id         String   @id @default(uuid()) @db.Uuid
+  pharmacyId String   @db.Uuid
+  name       String   @db.VarChar(160)
+  strength   String?  @db.VarChar(40)
+  form       String?  @db.VarChar(40)
+  /// Poisha, like invoices. Null when the owner gives no price.
+  priceMinor Int?
+  inStock    Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  pharmacy Pharmacy @relation(fields: [pharmacyId], references: [id], onDelete: Cascade)
+
+  @@index([pharmacyId, name])
+  @@map("pharmacy_stock_items")
+}
+
+enum PharmacyOrderStatus {
+  NEW
+  READY
+  COLLECTED
+  CANNOT_FILL
+  CANCELLED
+}
+
+/// A patient sends one of their prescriptions to a pharmacy to collect it there.
+/// The pharmacy reads only the copy kept here: who sent it and the prescribed
+/// medicines, never the visit or any other record.
+model PharmacyOrder {
+  id             String              @id @default(uuid()) @db.Uuid
+  pharmacyId     String              @db.Uuid
+  /// The sender's Cura Website account (`patient_accounts`).
+  accountId      String              @db.Uuid
+  prescriptionId String?             @db.Uuid
+  status         PharmacyOrderStatus @default(NEW)
+  patientName    String              @db.VarChar(120)
+  patientPhone   String?             @db.VarChar(20)
+  doctorName     String              @db.VarChar(120)
+  prescribedAt   DateTime
+  /// The prescribed medicines as they were when sent.
+  items          Json
+  note           String?             @db.VarChar(500)
+  /// Why the pharmacy cannot fill it, when it says.
+  reason         String?             @db.VarChar(300)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  pharmacy     Pharmacy       @relation(fields: [pharmacyId], references: [id], onDelete: Cascade)
+  account      PatientAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  prescription Prescription?  @relation(fields: [prescriptionId], references: [id], onDelete: SetNull)
+
+  @@index([pharmacyId, createdAt])
+  @@index([accountId, createdAt])
+  @@index([prescriptionId])
+  @@map("pharmacy_orders")
 }
 
 model AmbulanceVendor {

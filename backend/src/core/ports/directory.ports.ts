@@ -242,6 +242,88 @@ export interface PharmacyRepository {
   update(id: string, ownerId: string, data: Row): Promise<Row | null>;
 }
 
+export const PHARMACY_SHOP_REPOSITORY = Symbol('PHARMACY_SHOP_REPOSITORY');
+
+export type PharmacyOrderStatus = 'NEW' | 'READY' | 'COLLECTED' | 'CANNOT_FILL' | 'CANCELLED';
+
+export interface StockItemInput {
+  name: string;
+  strength: string | null;
+  form: string | null;
+  priceMinor: number | null;
+  inStock: boolean;
+}
+
+/** One medicine on a prescription, as the pharmacy reads it. */
+export interface PrescribedMedicine {
+  drug_name: string;
+  strength: string | null;
+  form: string | null;
+  morning: number;
+  noon: number;
+  night: number;
+  meal_relation: string;
+  duration_days: number | null;
+  instruction: string | null;
+}
+
+/** A patient's own signed prescription, with what a pharmacy needs to fill it. */
+export interface SendablePrescription {
+  id: string;
+  patientName: string;
+  patientPhone: string | null;
+  doctorName: string;
+  prescribedAt: Date;
+  items: PrescribedMedicine[];
+}
+
+export interface NewPharmacyOrder {
+  pharmacyId: string;
+  accountId: string;
+  prescriptionId: string;
+  patientName: string;
+  patientPhone: string | null;
+  doctorName: string;
+  prescribedAt: Date;
+  items: PrescribedMedicine[];
+  note: string | null;
+}
+
+/** Who may touch an order: its pharmacy's owner, or the patient who sent it. */
+export type OrderScope = { id: string; pharmacyId: string; ownerId: string } | { id: string; accountId: string };
+
+/**
+ * A pharmacy's stock list and the prescriptions patients send it. Every owner
+ * call is scoped by the owner's user id, and every patient call by their
+ * website account, so nobody reaches another pharmacy's or patient's rows.
+ */
+export interface PharmacyShopRepository {
+  /** True when the pharmacy exists and this user owns it. */
+  isOwner(pharmacyId: string, ownerId: string): Promise<boolean>;
+  /** A pharmacy patients can see, or null. */
+  visiblePharmacy(pharmacyId: string): Promise<{ id: string; name: string } | null>;
+  listStock(pharmacyId: string, onlyInStock: boolean): Promise<Row[]>;
+  countStock(pharmacyId: string): Promise<number>;
+  createStock(pharmacyId: string, data: StockItemInput): Promise<Row>;
+  /** Null when the item is not on this pharmacy's list. */
+  updateStock(pharmacyId: string, itemId: string, data: StockItemInput): Promise<Row | null>;
+  deleteStock(pharmacyId: string, itemId: string): Promise<boolean>;
+
+  /** A signed prescription on one of this account's own clinic records, or null. */
+  sendablePrescription(accountId: string, prescriptionId: string): Promise<SendablePrescription | null>;
+  countOpenOrders(accountId: string): Promise<number>;
+  hasOpenOrder(accountId: string, prescriptionId: string, pharmacyId: string): Promise<boolean>;
+  createOrder(data: NewPharmacyOrder): Promise<Row>;
+  /** The patient's own orders, newest first, with the pharmacy's public details. */
+  patientOrders(accountId: string, limit: number): Promise<Row[]>;
+  /** Orders sent to this pharmacy, newest first. */
+  pharmacyOrders(pharmacyId: string, limit: number): Promise<Row[]>;
+  /** The order's current status, or null when it is missing or outside the scope. */
+  orderStatus(scope: OrderScope): Promise<PharmacyOrderStatus | null>;
+  /** Moves the order only while it is in one of `from`. False when it was not. */
+  moveOrder(scope: OrderScope, from: PharmacyOrderStatus[], to: PharmacyOrderStatus, reason: string | null): Promise<boolean>;
+}
+
 export const CATALOG_DIRECTORY_REPOSITORY = Symbol('CATALOG_DIRECTORY_REPOSITORY');
 
 export type CatalogKind = 'specialties' | 'symptoms';
@@ -282,6 +364,7 @@ export interface HealthVisit {
     temperatureC: number | null;
   } | null;
   prescription: {
+    id: string;
     investigations: string[];
     followUpDate: Date | null;
     items: {

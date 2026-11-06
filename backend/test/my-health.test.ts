@@ -160,7 +160,9 @@ test('a patient sees only their own signed records across the clinics they joine
   assert.deepEqual(latest.diagnoses, ['Viral fever']);
   assert.deepEqual(latest.advice, ['Drink water']);
   assert.deepEqual(latest.vitals, { weight_kg: 64.5, systolic: 120, diastolic: 80, pulse_bpm: 72, temperature_c: 37.1 });
+  const signedRx = await db.prescription.findUniqueOrThrow({ where: { encounterId: signed.id } });
   assert.deepEqual(latest.prescription, {
+    id: signedRx.id,
     investigations: ['CBC'],
     follow_up_date: '2026-12-20',
     items: [{ drug_name: 'Napa', form: 'Tab', strength: '500 mg', morning: 1, noon: 0, night: 1, meal_relation: 'after', duration_days: 5, instruction: null }],

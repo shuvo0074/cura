@@ -16,6 +16,7 @@ import {
   MyClinicsController,
   MyHealthController,
   MyPharmaciesController,
+  MyPharmacyOrdersController,
   MyHospitalsController,
 } from './controllers/accounts.controllers';
 import { AdminBusinessesController, AdminUsersController } from './controllers/admin-users.controllers';
@@ -36,6 +37,7 @@ import { ClinicOwnerService } from './services/clinic-owner.service';
 import { PatientClinicService } from './services/patient-clinic.service';
 import { PatientHealthService } from './services/patient-health.service';
 import { PharmacyService } from './services/pharmacy.service';
+import { PharmacyShopService } from './services/pharmacy-shop.service';
 import { DirectoryAudit } from './services/directory-audit.service';
 import { DoctorDirectoryService } from './services/doctor-directory.service';
 import { DoctorProfileService } from './services/doctor-profile.service';
@@ -50,7 +52,8 @@ import { DoctorVerificationService } from './services/verification.service';
  * The public directory: doctor, hospital and ambulance listings, doctor
  * verification, serial booking and patients joining clinics. The only clinical
  * table it writes is `patients`. It reads clinical records only for "My health",
- * through a read-only port that returns a patient's own records.
+ * through a read-only port that returns a patient's own records, and to copy a
+ * patient's own prescription when they send it to a pharmacy.
  */
 @Module({
   imports: [AuthModule, AppointmentModule],
@@ -76,6 +79,7 @@ import { DoctorVerificationService } from './services/verification.service';
     MyHealthController,
     MyAmbulancesController,
     MyPharmaciesController,
+    MyPharmacyOrdersController,
     MyHospitalsController,
     AdminUsersController,
     AdminBusinessesController,
@@ -90,6 +94,7 @@ import { DoctorVerificationService } from './services/verification.service';
     PatientClinicService,
     PatientHealthService,
     PharmacyService,
+    PharmacyShopService,
     DirectoryAudit,
     DoctorDirectoryService,
     DoctorProfileService,

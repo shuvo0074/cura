@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Put } from '@nestjs/common';
 import { Public } from '../../../common/security/decorators';
 import type { DirectoryIdentity } from '../../../core/ports/directory.ports';
 import {
@@ -16,6 +16,7 @@ import { HospitalService } from '../services/hospital.service';
 import { PatientClinicService } from '../services/patient-clinic.service';
 import { PatientHealthService } from '../services/patient-health.service';
 import { PharmacyService } from '../services/pharmacy.service';
+import { PharmacyShopService } from '../services/pharmacy-shop.service';
 import { PublicReadLimit, bodyOf } from './shared';
 
 /** The clinics a patient can choose. */
@@ -95,7 +96,10 @@ export class MyAmbulancesController {
 @Controller('directory/my-pharmacies')
 @RequirePharmacyOwner()
 export class MyPharmaciesController {
-  constructor(private readonly pharmacies: PharmacyService) {}
+  constructor(
+    private readonly pharmacies: PharmacyService,
+    private readonly shop: PharmacyShopService,
+  ) {}
 
   @Get()
   mine(@Identity() identity: DirectoryIdentity) {
@@ -110,6 +114,73 @@ export class MyPharmaciesController {
   @Patch(':id')
   update(@Param('id', UuidOr404) id: string, @Body() body: unknown, @Identity() identity: DirectoryIdentity) {
     return this.pharmacies.update(id, bodyOf(body), identity.userId);
+  }
+
+  @Get(':id/stock')
+  stock(@Param('id', UuidOr404) id: string, @Identity() identity: DirectoryIdentity) {
+    return this.shop.ownerStock(id, identity.userId);
+  }
+
+  @Post(':id/stock')
+  addStock(@Param('id', UuidOr404) id: string, @Body() body: unknown, @Identity() identity: DirectoryIdentity) {
+    return this.shop.addStock(id, bodyOf(body), identity.userId);
+  }
+
+  @Patch(':id/stock/:itemId')
+  updateStock(
+    @Param('id', UuidOr404) id: string,
+    @Param('itemId', UuidOr404) itemId: string,
+    @Body() body: unknown,
+    @Identity() identity: DirectoryIdentity,
+  ) {
+    return this.shop.updateStock(id, itemId, bodyOf(body), identity.userId);
+  }
+
+  @Delete(':id/stock/:itemId')
+  removeStock(@Param('id', UuidOr404) id: string, @Param('itemId', UuidOr404) itemId: string, @Identity() identity: DirectoryIdentity) {
+    return this.shop.removeStock(id, itemId, identity.userId);
+  }
+
+  /** Prescriptions patients sent to this pharmacy. */
+  @Get(':id/orders')
+  orders(@Param('id', UuidOr404) id: string, @Identity() identity: DirectoryIdentity) {
+    return this.shop.ownerOrders(id, identity.userId);
+  }
+
+  @Patch(':id/orders/:orderId')
+  moveOrder(
+    @Param('id', UuidOr404) id: string,
+    @Param('orderId', UuidOr404) orderId: string,
+    @Body() body: unknown,
+    @Identity() identity: DirectoryIdentity,
+  ) {
+    return this.shop.moveOrder(id, orderId, bodyOf(body), identity.userId);
+  }
+}
+
+/**
+ * Prescriptions a patient sent to a pharmacy to collect. Scoped by the
+ * signed-in account alone: a patient sees and cancels only their own.
+ */
+@Controller('directory/my-pharmacy-orders')
+@RequirePatient()
+export class MyPharmacyOrdersController {
+  constructor(private readonly shop: PharmacyShopService) {}
+
+  @Get()
+  mine(@Identity() identity: DirectoryIdentity) {
+    return this.shop.patientOrders(identity);
+  }
+
+  @Post()
+  send(@Body() body: unknown, @Identity() identity: DirectoryIdentity) {
+    return this.shop.send(identity, bodyOf(body));
+  }
+
+  @Post(':id/cancel')
+  @HttpCode(200)
+  cancel(@Param('id', UuidOr404) id: string, @Identity() identity: DirectoryIdentity) {
+    return this.shop.cancel(identity, id);
   }
 }
 

@@ -17,7 +17,7 @@ there. Nobody needs a login to browse doctors, hospitals, diagnostic centres, am
 
 | Role | Account to try | Lands on | What they can do |
 | --- | --- | --- | --- |
-| Patient | patient01@cura.local | My Appointments | Browse, join or leave clinics, view appointments, review completed visits, and see their own signed visits, prescriptions, vital signs, invoices and upcoming clinic appointments on **My health** |
+| Patient | patient01@cura.local | My Appointments | Browse, join or leave clinics, view appointments, review completed visits, see their own signed visits, prescriptions, vital signs, invoices and upcoming clinic appointments on **My health**, and send a prescription to a pharmacy to collect |
 | Doctor | doctor01@cura.local | Doctor Dashboard | Browse, edit their public profile, see profile stats and get a QR card |
 | Super admin | admin@cura.local | Admin panel | Manage all website content and doctors, approve doctor sign-ups and create clinic owners |
 | Clinic owner | owner1@cura.local | Home | Browse only; their screens are on Cura Dashboard |
@@ -32,7 +32,10 @@ there. Nobody needs a login to browse doctors, hospitals, diagnostic centres, am
   goes into that clinic's calendar on Cura Dashboard, where clinic staff can cancel, check out or mark it no-show.
 - **Ambulance and pharmacy owners:** their screens are on Cura Dashboard, under **My Ambulances** and **My Pharmacy**.
   A pharmacy or ambulance service an owner adds stays hidden from patients until a super admin shows it; the owner sees
-  **Waiting for an admin** or **Visible**. There are no pharmacy owners on the live database yet.
+  **Waiting for an admin** or **Visible**. A pharmacy owner also keeps the pharmacy's medicine stock list and handles
+  the prescriptions patients send it (**Ready for pickup**, **Collected** or **Cannot fill**) on **My Pharmacy**. A
+  pharmacy sees only the patient's name and phone and the prescribed medicines, never other records. There are no
+  pharmacy owners on the live database yet.
 - **Hospital owners:** a super admin links a hospital or diagnostic centre to an account on Cura Dashboard (**Super
   Admin → Users and roles**, open the account, **Businesses**), which gives it the hospital owner role. The owner edits
   that place's public details under **My Hospital** on Cura Dashboard: name, address, hotline, website, description,
@@ -206,6 +209,10 @@ Password for all: `CuraPatient123`. Works on Cura Website only. Each patient app
 ## Local database
 
 Your local `cura` database is now a copy of the live database, taken on 2026-11-06, so the live accounts above work locally.
+
+Added to your local copy only (not on the live database): pharmacy owner **Selina Parvin**, `pharmacy1@cura.local`,
+mobile 01700040001, password `CuraOwner123`, who owns **Cura Demo Pharmacy** (visible to patients). Log in on Cura
+Dashboard and open **My Pharmacy**.
 
 The accounts below come from `backend/prisma/seed.ts`. They exist only in a freshly seeded database, or in the old local
 database kept as `cura_local_backup_20261106`.

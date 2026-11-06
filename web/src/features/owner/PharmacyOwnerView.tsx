@@ -2,73 +2,104 @@ import { useState } from 'react';
 import { useT } from '../../i18n';
 import { Check, Failed, Field, Loading, Modal, Panel, Row, uiStyles as s, useMutation, useResource } from '../../ui';
 import type { Pharmacy } from './owner-shared';
+import { PharmacyOrders } from './PharmacyOrders';
+import { PharmacyStock } from './PharmacyStock';
 
-/** A pharmacy owner's own pharmacies. */
+/** A pharmacy owner's own pharmacies, their prescription orders and their medicine lists. */
 export function PharmacyOwnerView() {
   const { data, error, loading, reload } = useResource<Pharmacy[]>('/directory/my-pharmacies', {});
   const [editing, setEditing] = useState<Pharmacy | 'new' | null>(null);
+  const [chosenId, setChosenId] = useState<string | null>(null);
   const { t } = useT();
 
   if (loading && !data) return <Loading />;
   if (error) return <Failed message={error} />;
 
   const pharmacies = data ?? [];
+  const chosen = pharmacies.find((pharmacy) => pharmacy.id === chosenId) ?? pharmacies[0] ?? null;
   return (
-    <Panel
-      title={t('owner.pharmacy.title')}
-      description={t('owner.pharmacy.description')}
-      action={
-        <button type="button" className={s.primary} onClick={() => setEditing('new')}>
-          {t('common.add')}
-        </button>
-      }
-    >
-      {pharmacies.length === 0 ? (
-        <p className={s.muted}>{t('owner.pharmacy.empty')}</p>
-      ) : (
-        <table className={s.table}>
-          <thead>
-            <tr>
-              <th>{t('owner.col.name')}</th>
-              <th>{t('owner.col.phones')}</th>
-              <th>{t('owner.pharmacy.col.location')}</th>
-              <th>{t('owner.pharmacy.col.hours')}</th>
-              <th>{t('owner.pharmacy.homeDelivery')}</th>
-              <th>{t('owner.col.onWebsite')}</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {pharmacies.map((pharmacy) => (
-              <tr key={pharmacy.id}>
-                <td>{pharmacy.name}</td>
-                <td>{pharmacy.phones.join(', ')}</td>
-                <td>{[pharmacy.address, pharmacy.city].filter(Boolean).join(', ') || '—'}</td>
-                <td>{pharmacy.opening_hours ?? '—'}</td>
-                <td>{pharmacy.home_delivery ? t('common.yes') : t('common.no')}</td>
-                <td>{pharmacy.hidden ? t('owner.waitingForAdmin') : t('owner.visible')}</td>
-                <td>
-                  <button type="button" className={s.linkButton} onClick={() => setEditing(pharmacy)}>
-                    {t('common.edit')}
-                  </button>
-                </td>
+    <>
+      <Panel
+        title={t('owner.pharmacy.title')}
+        description={t('owner.pharmacy.description')}
+        action={
+          <button type="button" className={s.primary} onClick={() => setEditing('new')}>
+            {t('common.add')}
+          </button>
+        }
+      >
+        {pharmacies.length === 0 ? (
+          <p className={s.muted}>{t('owner.pharmacy.empty')}</p>
+        ) : (
+          <table className={s.table}>
+            <thead>
+              <tr>
+                <th>{t('owner.col.name')}</th>
+                <th>{t('owner.col.phones')}</th>
+                <th>{t('owner.pharmacy.col.location')}</th>
+                <th>{t('owner.pharmacy.col.hours')}</th>
+                <th>{t('owner.pharmacy.homeDelivery')}</th>
+                <th>{t('owner.col.onWebsite')}</th>
+                <th />
               </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+            </thead>
+            <tbody>
+              {pharmacies.map((pharmacy) => (
+                <tr key={pharmacy.id}>
+                  <td>{pharmacy.name}</td>
+                  <td>{pharmacy.phones.join(', ')}</td>
+                  <td>{[pharmacy.address, pharmacy.city].filter(Boolean).join(', ') || '—'}</td>
+                  <td>{pharmacy.opening_hours ?? '—'}</td>
+                  <td>{pharmacy.home_delivery ? t('common.yes') : t('common.no')}</td>
+                  <td>{pharmacy.hidden ? t('owner.waitingForAdmin') : t('owner.visible')}</td>
+                  <td>
+                    <button type="button" className={s.linkButton} onClick={() => setEditing(pharmacy)}>
+                      {t('common.edit')}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
 
-      {editing && (
-        <PharmacyModal
-          existing={editing === 'new' ? null : editing}
-          onClose={() => setEditing(null)}
-          onSaved={() => {
-            setEditing(null);
-            void reload();
-          }}
-        />
+        {editing && (
+          <PharmacyModal
+            existing={editing === 'new' ? null : editing}
+            onClose={() => setEditing(null)}
+            onSaved={() => {
+              setEditing(null);
+              void reload();
+            }}
+          />
+        )}
+      </Panel>
+
+      {chosen && (
+        <>
+          {pharmacies.length > 1 && (
+            <section className={s.panelBody}>
+              <div className={s.filters} role="tablist" aria-label={t('owner.pharmacy.choose')}>
+                {pharmacies.map((pharmacy) => (
+                  <button
+                    key={pharmacy.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={pharmacy.id === chosen.id}
+                    data-active={pharmacy.id === chosen.id || undefined}
+                    onClick={() => setChosenId(pharmacy.id)}
+                  >
+                    {pharmacy.name}
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
+          <PharmacyOrders key={`orders-${chosen.id}`} pharmacyId={chosen.id} />
+          <PharmacyStock key={`stock-${chosen.id}`} pharmacyId={chosen.id} />
+        </>
       )}
-    </Panel>
+    </>
   );
 }
 
@@ -97,8 +128,14 @@ function PharmacyModal({
 
   const submit = async () => {
     const ok = existing
-      ? await save.run(`/directory/my-pharmacies/${existing.id}`, { method: 'PATCH', body: form })
-      : await save.run('/directory/my-pharmacies', { method: 'POST', body: form });
+      ? await save.run(`/directory/my-pharmacies/${existing.id}`, {
+          method: 'PATCH',
+          body: form,
+        })
+      : await save.run('/directory/my-pharmacies', {
+          method: 'POST',
+          body: form,
+        });
     if (ok) onSaved();
   };
 
@@ -128,7 +165,11 @@ function PharmacyModal({
           <input className={s.input} value={form.name} onChange={(e) => set('name', e.target.value)} />
         </Field>
         <Field label={t('owner.pharmacy.licence')}>
-          <input className={s.input} value={form.license_number} onChange={(e) => set('license_number', e.target.value)} />
+          <input
+            className={s.input}
+            value={form.license_number}
+            onChange={(e) => set('license_number', e.target.value)}
+          />
         </Field>
       </Row>
       <Row cols={2}>
@@ -136,7 +177,11 @@ function PharmacyModal({
           <input className={s.input} value={form.phones} onChange={(e) => set('phones', e.target.value)} />
         </Field>
         <Field label={t('owner.pharmacy.openingHours')}>
-          <input className={s.input} value={form.opening_hours} onChange={(e) => set('opening_hours', e.target.value)} />
+          <input
+            className={s.input}
+            value={form.opening_hours}
+            onChange={(e) => set('opening_hours', e.target.value)}
+          />
         </Field>
       </Row>
       <Row cols={2}>

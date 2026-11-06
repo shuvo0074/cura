@@ -57,6 +57,7 @@ export class PatientHealthService {
           temperature_c: visit.vitals.temperatureC,
         },
         prescription: visit.prescription && {
+          id: visit.prescription.id,
           investigations: visit.prescription.investigations,
           follow_up_date: dateOnly(visit.prescription.followUpDate),
           items: visit.prescription.items.map((item) => ({

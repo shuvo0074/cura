@@ -22,8 +22,13 @@
 - Create invoices and take payments
 - As a patient on Cura Website, see your own visits, prescriptions, vital signs, invoices and upcoming clinic
   appointments from the clinics you joined, on **My health**, and print a prescription
-- Find a pharmacy on Cura Website by name or area, see which ones deliver, and call them
+- Find a pharmacy on Cura Website by name or area, see which ones deliver, see which medicines they have in stock,
+  and call them
+- As a patient, send a prescription from **My health** to a pharmacy, follow its status (waiting, ready for pickup,
+  collected, cannot fill) and cancel it while the pharmacy has not started
 - As a pharmacy owner, see whether patients can see your pharmacy yet; a super admin shows or hides it
+- As a pharmacy owner, keep your medicine stock list (name, strength, form, price, in stock) and handle the
+  prescriptions patients send you, on **My Pharmacy**
 - As a hospital owner, edit your hospital or diagnostic centre's details on Cura Dashboard (**My Hospital**); patients
   see the change on Cura Website at once
 - As a super admin, link a hospital or diagnostic centre to its owner's account
@@ -67,7 +72,8 @@ The other user types, and where each one logs in:
 | Doctor at Cura Uttara Clinic | Dr Rumana Haque | doctor4@cura.local | CuraDoctor123 | Cura Dashboard |
 | Doctor with no login yet | Dr Farzana Ahmed | 01711111114 | Signs up with BMDC A-100203 | Cura Dashboard |
 | Ambulance owner | Rafiq Mia | ambulance@cura.local | CuraOwner123 | Cura Dashboard |
-| Pharmacy owner | Selina Parvin | pharmacy@cura.local | CuraOwner123 | Cura Dashboard |
+| Pharmacy owner (freshly seeded database only) | Selina Parvin | pharmacy@cura.local | CuraOwner123 | Cura Dashboard |
+| Pharmacy owner of Cura Demo Pharmacy (your local copy only) | Selina Parvin | pharmacy1@cura.local | CuraOwner123 | Cura Dashboard |
 | Hospital owner (freshly seeded database only) | Kamrul Hasan | hospital@cura.local | CuraOwner123 | Cura Dashboard |
 | Patient | Sadia Rahman | patient@cura.local | CuraPatient123 | Cura Website |
 
@@ -236,6 +242,31 @@ Online booking must be switched on in the Cura API (it is, unless `DIRECTORY_BOO
    **Home delivery**: it stays. Click **Call**: the phone app opens with its number. Switch to **বাং**: the page is in
    Bangla.
 6. As the test account on Cura Dashboard, **My Pharmacy** now says **Visible**.
+
+### Prescription pickup and medicine stock
+
+On your local copy, the pharmacy owner pharmacy1@cura.local (password `CuraOwner123`) owns **Cura Demo Pharmacy**,
+which patients can see. Mahbub Ahmed (patient01@cura.local) already has signed prescriptions; if not, make one as in
+**My health on Cura Website** above.
+
+1. On Cura Dashboard, log in as pharmacy1@cura.local and click **My Pharmacy**. Under **Medicines in stock**, click
+   **Add medicine**, type `Napa`, strength `500 mg`, form `Tablet`, price `1.5`, and click **Save**. Add a second one
+   and click its **In stock** button: it says **Out of stock**.
+2. On Cura Website, click **Pharmacies**, find **Cura Demo Pharmacy** and click **See medicines in stock**. Napa shows
+   with its price; the out-of-stock one does not. With six or more medicines, a search box appears.
+3. Log in on Cura Website as patient01@cura.local and open **My health**. Under a prescription, click **Send to a
+   pharmacy**, search `Cura Demo`, pick **Cura Demo Pharmacy**, add a note and click **Send**. **My pharmacy orders**
+   appears at the top with **Waiting for the pharmacy** and a **Cancel order** button, and the prescription says
+   **Sent to Cura Demo Pharmacy**.
+4. On Cura Dashboard, as pharmacy1@cura.local, click **Refresh** under **Prescription orders**. The order shows the
+   time, Mahbub Ahmed's name and phone, the medicines with their doses, the doctor and the note. It shows nothing else
+   from the visit. Click **Ready for pickup**.
+5. Reload **My health** on Cura Website: the order says **Ready for pickup**, and **Cancel order** is gone.
+6. On Cura Dashboard, click **Collected**; the order leaves the **Open** list and shows under **All**. Send another
+   order and click **Cannot fill** instead, type a reason and confirm: the patient sees the reason on **My health**.
+7. Send one more and click **Cancel order** on Cura Website: Cura Dashboard shows **Cancelled by patient** under
+   **All**, with no buttons.
+8. Switch to **বাং** on both: the new screens are in Bangla.
 
 ### My Hospital
 

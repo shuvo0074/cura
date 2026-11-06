@@ -39,6 +39,7 @@ export class PrismaPatientHealthRepository implements PatientHealthRepository {
         vitals: { select: { weightKg: true, systolic: true, diastolic: true, pulseBpm: true, temperatureC: true } },
         prescription: {
           select: {
+            id: true,
             investigations: true,
             followUpDate: true,
             items: {
@@ -81,6 +82,7 @@ export class PrismaPatientHealthRepository implements PatientHealthRepository {
         : null,
       prescription: row.prescription
         ? {
+            id: row.prescription.id,
             investigations: row.prescription.investigations,
             followUpDate: row.prescription.followUpDate,
             items: row.prescription.items.map((item) => ({
