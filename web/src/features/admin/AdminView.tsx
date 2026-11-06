@@ -3,6 +3,7 @@ import { useT } from '../../i18n';
 import styles from '../settings/settings.module.css';
 import { ADMIN_ITEMS, type AdminKey } from './admin-nav';
 import type { ViewedClinic } from './sections/admin-types';
+import { ActivityLogPanel } from './sections/ActivityLogPanel';
 import { AmbulancesPanel } from './sections/AmbulancesPanel';
 import { AppointmentsPanel } from './sections/AppointmentsPanel';
 import { CatalogPanel } from './sections/CatalogPanel';
@@ -73,6 +74,8 @@ function ActiveSection({
       return <ClinicsPanel onViewClinic={onViewClinic} />;
     case 'pharmacies':
       return <PharmaciesPanel />;
+    case 'activity':
+      return <ActivityLogPanel />;
     case 'verifications':
       return <VerificationsPanel />;
     case 'doctors':

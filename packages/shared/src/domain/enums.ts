@@ -65,6 +65,8 @@ export const Permission = {
    * the clinical screen for everyone but administrators.
    */
   CATALOG_READ: 'catalog:read',
+  /** Reading the clinic's activity log (who did what, including super admin reads). Clinic owners only. */
+  AUDIT_READ: 'audit:read',
 } as const;
 export type Permission = (typeof Permission)[keyof typeof Permission];
 

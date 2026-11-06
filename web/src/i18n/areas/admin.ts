@@ -28,6 +28,11 @@ export const admin = defineArea({
     'nav.homePage': 'Home page',
     'nav.siteText': 'Site text',
     'nav.photoCredits': 'Photo credits',
+    'nav.activity': 'Activity log',
+
+    // Activity log (sections/ActivityLogPanel); the table's words are in the settings area.
+    'activity.title': 'Activity log',
+    'activity.description': 'Everything people did across Cura, newest first. Passwords, codes and tokens are never shown.',
 
     // Role names (admin-types.ts).
     'clinicRole.ADMINISTRATOR': 'Clinic owner',
@@ -837,6 +842,9 @@ export const admin = defineArea({
     'nav.homePage': 'হোম পেজ',
     'nav.siteText': 'সাইটের লেখা',
     'nav.photoCredits': 'ছবির কৃতজ্ঞতা',
+    'nav.activity': 'অ্যাক্টিভিটি লগ',
+    'activity.title': 'অ্যাক্টিভিটি লগ',
+    'activity.description': 'পুরো Cura-তে কে কী করেছেন, নতুনগুলো আগে। পাসওয়ার্ড, কোড বা টোকেন কখনো দেখানো হয় না।',
 
     'clinicRole.ADMINISTRATOR': 'ক্লিনিক মালিক',
     'clinicRole.DOCTOR': 'ডাক্তার',

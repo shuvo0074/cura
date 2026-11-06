@@ -37,6 +37,10 @@
 - As a hospital owner, edit your hospital or diagnostic centre's details on Cura Dashboard (**My Hospital**); patients
   see the change on Cura Website at once
 - As a super admin, link a hospital or diagnostic centre to its owner's account
+- As a super admin, see everything people did across Cura on **Super Admin → Activity log**: filter by date, action,
+  person, clinic or a search word, open a row for its details, and download the list as a CSV file (up to 5,000 rows)
+- As a clinic owner, see who did what in your clinic on **Settings → Activity log**, including each time a Cura super
+  admin looked at your clinic's data. Doctors and clinic staff do not see it
 - Upload and view patient documents
 - View statistics: income, appointments, top procedures, patient mix
 - Change clinic settings: clinic details, hours, staff, prices, drugs, note templates, printouts, messages, security
@@ -113,6 +117,7 @@ After 10 login attempts in 15 minutes Cura says **Too many attempts**. Wait 15 m
 | Communication: SMS & email settings | ✅ | — | — |
 | Feedback: view, record, reply | ✅ | ✅ | ✅ |
 | Settings (clinic, staff, prices, drugs, templates, printouts…) | ✅ | — | — |
+| Settings → Activity log (who did what in the clinic) | ✅ | — | — |
 | Integrations, Prime Services | ✅ | — | — |
 | Community | ✅ | ✅ | ✅ |
 | Own profile and password | ✅ | ✅ | ✅ |
@@ -393,6 +398,24 @@ Click **Settings**, then each item in the second menu:
 11. **Charting Templates** — click **Add template**, fill, save.
 12. **Printouts** — change a setting, save.
 13. **Emails** — view the settings.
+
+### Activity log
+
+1. Log in as admin@cura.local. Click **Super Admin**, then **Clinics**, and click **View records** next to **Cura
+   Dhanmondi Clinic**. Look at its patients, then go back.
+2. Click **Super Admin**, then **Activity log**. The newest rows are at the top: your sign-in and **Super admin looked
+   at clinic data** for Cura Dhanmondi Clinic. Each row shows the time, the person (name, email, role), the action in
+   plain words, what it was about and the clinic.
+3. Pick **Cura Dhanmondi Clinic** under **Clinic** and click **Show**. Only that clinic's rows stay. Click **Details** on
+   a row: it shows the action code and the stored details (never passwords, codes or tokens). Click **Hide**.
+4. Type a name or email under **Person** and click **Show**. Click **Clear filters**. Click **Show more** at the bottom
+   for older rows. Click **Download CSV** to save the list you filtered.
+5. Log out. Log in as owner1@cura.local. Click **Settings**, then **Activity log**. Only Cura Dhanmondi Clinic's rows
+   are listed, with no clinic filter. Pick **Super admin looked at clinic data** under **Action** and click **Show**:
+   the rows from step 1 show Shahnaz Rahman, **Super admin**.
+6. Switch to **বাংলা** in the menu under your name. The screen reads **অ্যাক্টিভিটি লগ**. Switch back to **English**.
+7. Log out. Log in as doctor01@cura.local or desk@cura.local: **Settings** is not in the menu, so there is no activity
+   log.
 
 ### Other menu items
 

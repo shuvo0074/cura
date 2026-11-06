@@ -431,8 +431,56 @@ export interface AuditEntry {
   metadata?: Record<string, unknown> | undefined;
 }
 
+/** Filters for reading the trail. Every field is optional except the page size. */
+export interface AuditSearch {
+  /** Only rows about this clinic. Required for a clinic owner's view. */
+  practiceId?: string;
+  from?: Date;
+  to?: Date;
+  /** Exact action code. */
+  action?: string;
+  /** Part of the actor's name or email. */
+  actor?: string;
+  /** Part of the action, subject type, subject id or request id. */
+  q?: string;
+  /** Id of the last row of the previous page. */
+  cursor?: string;
+  limit: number;
+}
+
+export interface AuditActor {
+  id: string;
+  fullName: string;
+  email: string | null;
+  /** Clinic access level, or null for none. */
+  clinicRole: string | null;
+  /** Cura-wide roles in lower case (`super_admin`, `patient`, ...). */
+  roles: string[];
+}
+
+export interface AuditRow {
+  id: string;
+  createdAt: Date;
+  action: string;
+  resourceType: string;
+  resourceId: string | null;
+  /** A readable name for the subject, when one is cheap to find. */
+  resourceName: string | null;
+  practiceId: string | null;
+  practiceName: string | null;
+  ipHash: string | null;
+  userAgent: string | null;
+  requestId: string | null;
+  metadata: unknown;
+  actor: AuditActor | null;
+}
+
 export interface AuditRepository {
   record(entry: AuditEntry): Promise<void>;
+  /** Newest first. `nextCursor` is null on the last page. */
+  search(filter: AuditSearch): Promise<{ items: AuditRow[]; nextCursor: string | null }>;
+  /** Action codes that appear in the trail (for one clinic when given). */
+  actions(practiceId?: string): Promise<string[]>;
 }
 
 // ---------------------------------------------------------------------------

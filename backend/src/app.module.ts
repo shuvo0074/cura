@@ -22,6 +22,7 @@ import { DocumentModule } from './modules/documents/document.module';
 import { PatientModule } from './modules/patients/patient.module';
 import { AccountModule } from './modules/account/account.module';
 import { EngagementModule } from './modules/engagement/engagement.module';
+import { AuditLogModule } from './modules/audit/audit-log.module';
 
 /**
  * Application root.
@@ -66,6 +67,7 @@ import { EngagementModule } from './modules/engagement/engagement.module';
     PatientModule,
     AccountModule,
     EngagementModule,
+    AuditLogModule,
     DirectoryModule,
   ],
   providers: [

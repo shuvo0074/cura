@@ -14,6 +14,7 @@ export type SettingsKey =
   | 'pricing'
   | 'consent'
   | 'security'
+  | 'activity'
   | 'notes'
   | 'drugs'
   | 'charting'
@@ -37,6 +38,7 @@ export const SETTINGS_ITEMS: readonly SettingsItem[] = [
   { key: 'pricing', label: 'Pricing Catalog', group: 'practice' },
   { key: 'consent', label: 'Consent Forms', group: 'practice' },
   { key: 'security', label: 'Data Security', group: 'practice' },
+  { key: 'activity', label: 'Activity log', group: 'practice' },
 
   { key: 'notes', label: 'Clinical Notes Catalog', group: 'clinical' },
   { key: 'drugs', label: 'Drug Catalog', group: 'clinical' },

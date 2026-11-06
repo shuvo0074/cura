@@ -6,6 +6,7 @@ export type AdminKey =
   | 'owners'
   | 'clinics'
   | 'pharmacies'
+  | 'activity'
   | 'verifications'
   | 'doctors'
   | 'hospitals'
@@ -30,6 +31,7 @@ export const ADMIN_ITEMS: readonly AdminItem[] = [
   { key: 'owners', label: 'admin.nav.owners', group: 'people' },
   { key: 'clinics', label: 'admin.nav.clinics', group: 'people' },
   { key: 'pharmacies', label: 'admin.nav.pharmacies', group: 'people' },
+  { key: 'activity', label: 'admin.nav.activity', group: 'people' },
 
   { key: 'verifications', label: 'admin.nav.verifications', group: 'directory' },
   { key: 'doctors', label: 'admin.nav.doctors', group: 'directory' },

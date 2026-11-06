@@ -50,7 +50,10 @@ there. Nobody needs a login to browse doctors, hospitals, diagnostic centres, am
 - **Patients:** Cura Website is the only place they can log in, because Cura Dashboard blocks them.
 - **Super admin:** works on both front ends. On Cura Dashboard, **Super Admin** has the same tools as the Cura Website
   admin panel, plus users and roles, clinics, pharmacies and linking hospitals to their owners. A super admin can open any clinic's records read-only from
-  **Super Admin → Clinics**, and each view is recorded in the audit log.
+  **Super Admin → Clinics**, and each view is recorded in the activity log. **Super Admin → Activity log** lists
+  everything people did across Cura.
+- **Clinic owners:** **Settings → Activity log** on Cura Dashboard shows who did what in their own clinic, including
+  each time a super admin looked at it. Doctors and clinic staff cannot see it.
 - **Moving between the two:** an account that can use Cura Dashboard (doctor, clinic account, ambulance, pharmacy or
   hospital owner, super admin) logs in once. **Open Cura Dashboard** at the top of Cura Website and **Open Cura Website** in the
   Cura Dashboard account menu open the other one already logged in. The link works once, for one minute.

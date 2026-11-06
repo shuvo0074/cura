@@ -547,6 +547,10 @@ model AuditLog {
   @@index([actorUserId, createdAt(sort: Desc)])
   @@index([resourceType, resourceId])
   @@index([createdAt(sort: Desc)])
+  /// A clinic owner's activity log: one clinic, newest first.
+  @@index([practiceId, createdAt(sort: Desc)])
+  /// Activity log filtered by action.
+  @@index([action, createdAt(sort: Desc)])
   @@map("audit_logs")
 }
 

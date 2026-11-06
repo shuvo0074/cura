@@ -15,6 +15,7 @@ import {
   PricingPanel,
 } from './panels/CatalogPanels';
 import { EmailPanel, PrintoutsPanel } from './panels/OutputPanels';
+import { ActivityPanel } from './panels/ActivityPanel';
 
 
 export function ActivePanel({ active, practiceId }: { active: SettingsKey; practiceId: string }) {
@@ -38,6 +39,8 @@ export function ActivePanel({ active, practiceId }: { active: SettingsKey; pract
       return <ConsentPanel key={active} practiceId={practiceId} />;
     case 'security':
       return <SecurityPanel key={active} practiceId={practiceId} />;
+    case 'activity':
+      return <ActivityPanel key={active} practiceId={practiceId} />;
     case 'notes':
       return <ClinicalNotesPanel key={active} practiceId={practiceId} />;
     case 'drugs':
