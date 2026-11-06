@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useT } from '../../i18n';
 import styles from '../settings/settings.module.css';
 import { ADMIN_ITEMS, type AdminKey } from './admin-nav';
 import type { ViewedClinic } from './sections/admin-types';
@@ -23,14 +24,15 @@ import { VerificationsPanel } from './sections/VerificationsPanel';
  */
 export function AdminView({ onViewClinic }: { onViewClinic: (clinic: ViewedClinic) => void }) {
   const [active, setActive] = useState<AdminKey>('users');
+  const { t } = useT();
   let previousGroup = ADMIN_ITEMS[0]!.group;
 
   return (
     <div className={styles.shell}>
-      <nav className={styles.subnav} aria-label="Super admin sections">
+      <nav className={styles.subnav} aria-label={t('admin.nav.aria')}>
         <header className={styles.subnavHead}>
-          <h1>Super admin</h1>
-          <p>All of Cura</p>
+          <h1>{t('admin.nav.title')}</h1>
+          <p>{t('admin.nav.subtitle')}</p>
         </header>
         {ADMIN_ITEMS.map((item) => {
           const startsGroup = item.group !== previousGroup;
@@ -43,7 +45,7 @@ export function AdminView({ onViewClinic }: { onViewClinic: (clinic: ViewedClini
               data-group-start={startsGroup || undefined}
               onClick={() => setActive(item.key)}
             >
-              {item.label}
+              {t(item.label)}
             </button>
           );
         })}

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useServices } from '../../../app/services';
+import { useT, type TranslationKey } from '../../../i18n';
 import { Failed, Field, Loading, Modal, Panel, Row, uiStyles as s, useResource } from '../../../ui';
 import { ImageUpload, fromList, imageSrc, toList } from './admin-kit';
 import { RecordActions } from './AmbulancesPanel';
@@ -38,10 +39,14 @@ interface CatalogForm {
   specialties: string[];
 }
 
-const KINDS: Record<CatalogKind, { title: string; one: string; path: string }> = {
-  specialties: { title: 'Specialties', one: 'specialty', path: '/specialties' },
-  symptoms: { title: 'Symptoms', one: 'symptom', path: '/symptoms' },
+const KINDS: Record<CatalogKind, { path: string }> = {
+  specialties: { path: '/specialties' },
+  symptoms: { path: '/symptoms' },
 };
+
+/** The kind's own words: `admin.catalog.specialties.*` or `admin.catalog.symptoms.*`. */
+const kindKey = (kind: CatalogKind, word: 'title' | 'description' | 'search' | 'add' | 'edit' | 'empty' | 'one') =>
+  `admin.catalog.${kind}.${word}` as TranslationKey;
 
 const BLANK: CatalogForm = { name: '', name_bn: '', icon: '', description: '', tags: '', image: '', specialties: [] };
 
@@ -66,7 +71,7 @@ export function CatalogPanel({ kind }: { kind: CatalogKind }) {
 }
 
 function CatalogList({ kind }: { kind: CatalogKind }) {
-  const { title, one } = KINDS[kind];
+  const { t, tm, fmt } = useT();
   const { data, error, loading, reload } = useResource<CatalogItem[]>(`/directory/admin/${kind}`, {});
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState<{ item: CatalogItem | null; error?: string } | null>(null);
@@ -89,8 +94,8 @@ function CatalogList({ kind }: { kind: CatalogKind }) {
 
   return (
     <Panel
-      title={title}
-      description={`${visible.length} ${visible.length === 1 ? one : title.toLowerCase()}. Click one to edit, hide or delete it.`}
+      title={t(kindKey(kind, 'title'))}
+      description={t(kindKey(kind, 'description'), { count: visible.length })}
       action={
         <div className={c.imageButtons}>
           <input
@@ -98,11 +103,11 @@ function CatalogList({ kind }: { kind: CatalogKind }) {
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={`Search ${title.toLowerCase()}`}
-            aria-label={`Search ${title.toLowerCase()}`}
+            placeholder={t(kindKey(kind, 'search'))}
+            aria-label={t(kindKey(kind, 'search'))}
           />
           <button type="button" className={s.primary} onClick={() => open(null)}>
-            Add {one}
+            {t(kindKey(kind, 'add'))}
           </button>
         </div>
       }
@@ -113,15 +118,15 @@ function CatalogList({ kind }: { kind: CatalogKind }) {
         </p>
       )}
       {visible.length === 0 ? (
-        <p className={s.muted}>No {title.toLowerCase()} match.</p>
+        <p className={s.muted}>{t(kindKey(kind, 'empty'))}</p>
       ) : (
         <table className={s.table}>
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Bangla name</th>
-              <th>{kind === 'specialties' ? 'Doctors' : 'Specialists'}</th>
-              <th>Visible</th>
+              <th>{t('admin.catalog.col.name')}</th>
+              <th>{t('admin.catalog.col.nameBn')}</th>
+              <th>{kind === 'specialties' ? t('admin.catalog.col.doctors') : t('admin.catalog.col.specialists')}</th>
+              <th>{t('admin.catalog.col.visible')}</th>
               <th />
             </tr>
           </thead>
@@ -135,22 +140,22 @@ function CatalogList({ kind }: { kind: CatalogKind }) {
                     </span>
                     <span>
                       {item.name}
-                      {!item.description && <span className={s.staffMeta}>No description</span>}
+                      {!item.description && <span className={s.staffMeta}>{t('admin.catalog.noDescription')}</span>}
                     </span>
                   </span>
                 </td>
-                <td className={item.name_bn ? undefined : s.mutedCell}>{item.name_bn || 'Not added yet'}</td>
+                <td className={item.name_bn ? undefined : s.mutedCell}>{item.name_bn || t('admin.catalog.notAdded')}</td>
                 <td>
                   {kind === 'specialties'
-                    ? (item.doctor_count ?? 0)
+                    ? fmt.number(item.doctor_count ?? 0)
                     : item.specialties?.length
                       ? item.specialties.join(', ')
-                      : <span className={s.mutedCell}>None linked</span>}
+                      : <span className={s.mutedCell}>{t('admin.catalog.noneLinked')}</span>}
                 </td>
-                <td>{item.hidden ? 'Hidden' : 'Yes'}</td>
+                <td>{item.hidden ? t('admin.catalog.hidden') : t('common.yes')}</td>
                 <td>
                   <button type="button" className={s.linkButton} onClick={() => open(item)}>
-                    Edit
+                    {t('common.edit')}
                   </button>
                 </td>
               </tr>
@@ -171,11 +176,11 @@ function CatalogList({ kind }: { kind: CatalogKind }) {
             void reload();
             if (uploadError) {
               // The record exists now; reopen it so the image can be tried again.
-              setEditing({ item: saved, error: `Saved, but the image didn't upload: ${uploadError}` });
+              setEditing({ item: saved, error: t('admin.catalog.uploadFailed', { error: tm(uploadError) }) });
               return;
             }
             if (saved.renamedDoctors) {
-              setNotice(`Renamed to "${saved.name}" on ${saved.renamedDoctors} doctor(s).`);
+              setNotice(t('admin.catalog.renamed', { name: saved.name, count: saved.renamedDoctors }));
             }
             setEditing(null);
           }}
@@ -206,8 +211,9 @@ function CatalogModal({
   onSaved: (saved: SavedItem, uploadError: string | null) => void;
   onDeleted: () => void;
 }) {
+  const { t, tm } = useT();
   const { http } = useServices();
-  const { one, path } = KINDS[kind];
+  const { path } = KINDS[kind];
   const [form, setForm] = useState<CatalogForm>(existing ? toForm(existing) : BLANK);
   const [hidden, setHidden] = useState(existing?.hidden ?? false);
   const [pendingImage, setPendingImage] = useState<File | null>(null);
@@ -249,35 +255,35 @@ function CatalogModal({
 
   return (
     <Modal
-      title={existing ? `Edit ${one}` : `Add ${one}`}
+      title={existing ? t(kindKey(kind, 'edit')) : t(kindKey(kind, 'add'))}
       onClose={onClose}
       wide
       footer={
         <>
           {error && (
             <span className={s.error} role="alert">
-              {error}
+              {tm(error)}
             </span>
           )}
           <button type="button" className={s.secondary} onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </button>
           <button type="button" className={s.primary} onClick={() => void submit()} disabled={busy}>
-            {busy ? 'Saving…' : 'Save'}
+            {busy ? t('common.saving') : t('common.save')}
           </button>
         </>
       }
     >
       {existing && !hidden && (
         <p className={s.muted}>
-          Page on Cura Website: {path}/{existing.slug}
+          {t('admin.catalog.pageOnWebsite', { path: `${path}/${existing.slug}` })}
         </p>
       )}
       {existing && (
         <RecordActions
           path={`/directory/admin/${kind}/${existing.id}`}
           hidden={hidden}
-          label={one}
+          label={t(kindKey(kind, 'one'))}
           onHiddenChange={(next) => {
             setHidden(next);
             onChanged();
@@ -300,21 +306,20 @@ function CatalogModal({
       />
 
       <Row cols={2}>
-        <Field label="Name" required>
+        <Field label={t('admin.catalog.name')} required>
           <input className={s.input} value={form.name} onChange={(e) => set({ name: e.target.value })} />
         </Field>
-        <Field label="Name in Bangla">
+        <Field label={t('admin.catalog.nameBn')}>
           <input className={s.input} value={form.name_bn} onChange={(e) => set({ name_bn: e.target.value })} />
         </Field>
       </Row>
       {renaming && (
         <p className={c.warning}>
-          Renaming also changes the specialty on its {existing.doctor_count} doctor(s). The page address stays the
-          same.
+          {t('admin.catalog.renameWarning', { count: existing.doctor_count ?? 0 })}
         </p>
       )}
       {kind === 'specialties' && (
-        <Field label="Icon" hint="One emoji.">
+        <Field label={t('admin.catalog.icon')} hint={t('admin.catalog.iconHint')}>
           <input
             className={`${s.input} ${c.icon}`}
             maxLength={8}
@@ -323,20 +328,18 @@ function CatalogModal({
           />
         </Field>
       )}
-      <Field label="Tags" hint="Separate with commas, up to 6.">
+      <Field label={t('admin.catalog.tags')} hint={t('admin.catalog.tagsHint')}>
         <input
           className={s.input}
           value={form.tags}
-          placeholder="Heart check-up, ECG & echo"
+          placeholder={t('admin.catalog.tagsPlaceholder')}
           onChange={(e) => set({ tags: e.target.value })}
         />
       </Field>
       <Field
-        label="Description"
+        label={t('admin.catalog.description')}
         hint={
-          kind === 'specialties'
-            ? "Shown on the card, about three lines. Words here also help search find this specialty's doctors."
-            : 'Shown on the card, about three lines.'
+          kind === 'specialties' ? t('admin.catalog.descriptionHintSpecialty') : t('admin.catalog.descriptionHint')
         }
       >
         <textarea
@@ -374,6 +377,7 @@ function ImageField({
   onPendingImage: (file: File | null) => void;
   onImage: (image: string, stored: boolean) => void;
 }) {
+  const { t, tm } = useT();
   const { http } = useServices();
   const picker = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -407,14 +411,16 @@ function ImageField({
   return (
     <>
       <div className={c.imageRow}>
-        <div className={c.imageBox}>{shown ? <img src={shown} alt="" /> : 'No image'}</div>
+        <div className={c.imageBox}>{shown ? <img src={shown} alt="" /> : t('admin.catalog.noImage')}</div>
         <div className={c.imageControls}>
-          <span className={s.fieldLabel}>Image{pendingImage ? ' (uploads when you save)' : ''}</span>
+          <span className={s.fieldLabel}>
+            {pendingImage ? t('admin.catalog.imagePending') : t('admin.catalog.image')}
+          </span>
           <div className={c.imageButtons}>
             {uploadPath ? (
               <ImageUpload
                 path={uploadPath}
-                label={shown ? 'Change image' : 'Upload image'}
+                label={shown ? t('admin.catalog.changeImage') : t('admin.kit.uploadImage')}
                 onUploaded={(address) => onImage(address, true)}
               />
             ) : (
@@ -431,25 +437,25 @@ function ImageField({
                   }}
                 />
                 <button type="button" className={s.secondary} onClick={() => picker.current?.click()}>
-                  {shown ? 'Change image' : 'Upload image'}
+                  {shown ? t('admin.catalog.changeImage') : t('admin.kit.uploadImage')}
                 </button>
               </>
             )}
             {shown && (
               <button type="button" className={s.linkDanger} disabled={busy} onClick={() => void remove()}>
-                Remove
+                {t('common.remove')}
               </button>
             )}
           </div>
           {error && (
             <span className={s.error} role="alert">
-              {error}
+              {tm(error)}
             </span>
           )}
         </div>
       </div>
       {!uploaded && !pendingImage && (
-        <Field label="Or an image link">
+        <Field label={t('admin.catalog.imageLink')}>
           <input
             className={s.input}
             type="url"
@@ -465,6 +471,7 @@ function ImageField({
 
 /** Specialties a symptom sends patients to. */
 function SpecialtyPicker({ selected, onChange }: { selected: string[]; onChange: (next: string[]) => void }) {
+  const { t } = useT();
   const { data, error } = useResource<CatalogItem[]>('/directory/admin/specialties', {});
   const [query, setQuery] = useState('');
   const names = (data ?? []).map((item) => item.name);
@@ -472,18 +479,16 @@ function SpecialtyPicker({ selected, onChange }: { selected: string[]; onChange:
 
   return (
     <>
-      <h4 className={s.subtitle}>Specialists for this symptom ({selected.length} selected)</h4>
-      <p className={s.muted}>
-        Doctors with these specialties are listed for the symptom, as well as any whose profile mentions it.
-      </p>
+      <h4 className={s.subtitle}>{t('admin.catalog.specialistsHeading', { count: selected.length })}</h4>
+      <p className={s.muted}>{t('admin.catalog.specialistsNote')}</p>
       {error && <Failed message={error} />}
       <input
         className={`${s.input} ${a.areaSearch}`}
         type="search"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search specialties"
-        aria-label="Search specialties"
+        placeholder={t('admin.catalog.specialties.search')}
+        aria-label={t('admin.catalog.specialties.search')}
       />
       <div className={a.checkGrid}>
         {visible.map((name) => (

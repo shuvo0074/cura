@@ -1,3 +1,5 @@
+import type { TranslationKey, UseT } from '../../../../i18n';
+
 /** Bangladesh divisions and their districts, copied from Cura Website (divisions.json, divisionCities.json). */
 
 export const DIVISIONS: readonly string[] = [
@@ -64,3 +66,13 @@ export function districtsFor(divisions: readonly string[]): string[] {
   const list = divisions.length ? divisions : DIVISIONS;
   return list.flatMap((division) => DIVISION_DISTRICTS[division] ?? []).sort((a, b) => a.localeCompare(b));
 }
+
+/** A division's name in the current language (`admin.division.*`). Values stay in English. */
+export const divisionLabel = (t: UseT['t'], name: string): string =>
+  DIVISIONS.includes(name) ? t(`admin.division.${name}` as TranslationKey) : name;
+
+/** A district's name in the current language (`admin.district.*`). Values stay in English. */
+export const districtLabel = (t: UseT['t'], name: string): string =>
+  Object.values(DIVISION_DISTRICTS).some((list) => list.includes(name))
+    ? t(`admin.district.${name}` as TranslationKey)
+    : name;

@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
+import { useT, type TranslationKey, type UseT } from '../../../i18n';
 import { Failed, Loading, Panel, SaveBar, uiStyles as s, useMutation, useResource } from '../../../ui';
-import { placeholderProblem } from './data/site-text-placeholders';
+import { placeholders } from './data/site-text-placeholders';
 import {
   BUILT_IN_FAQ,
   BUILT_IN_TEXT,
@@ -13,17 +14,17 @@ import {
 import styles from './SiteTextPanel.module.css';
 
 /** Sections by the start of each text's key, in the order a visitor meets them. */
-const SECTIONS: ReadonlyArray<readonly [string, string]> = [
-  ['home', 'Home page'],
-  ['faq', 'FAQ'],
-  ['footer', 'Footer'],
-  ['doctor', 'Doctors'],
-  ['hospital', 'Hospitals'],
-  ['test', 'Tests & prices'],
-  ['ambulance', 'Ambulances'],
-  ['booking', 'Booking'],
-  ['credits', 'Photo credits'],
-  ['other', 'Other'],
+const SECTIONS: ReadonlyArray<readonly [string, TranslationKey]> = [
+  ['home', 'admin.siteText.section.home'],
+  ['faq', 'admin.siteText.section.faq'],
+  ['footer', 'admin.siteText.section.footer'],
+  ['doctor', 'admin.siteText.section.doctor'],
+  ['hospital', 'admin.siteText.section.hospital'],
+  ['test', 'admin.siteText.section.test'],
+  ['ambulance', 'admin.siteText.section.ambulance'],
+  ['booking', 'admin.siteText.section.booking'],
+  ['credits', 'admin.siteText.section.credits'],
+  ['other', 'admin.siteText.section.other'],
 ];
 const sectionOf = (key: string): string =>
   SECTIONS.find(([prefix]) => prefix !== 'other' && key.startsWith(`${prefix}_`))?.[0] ?? 'other';
@@ -39,12 +40,31 @@ const faqOf = (edits: TextEdits): FaqItem[] | undefined => {
   return Array.isArray(value) ? value : undefined;
 };
 
+/** The language's name in the current language (the editor's column headings). */
+const langLabel = (t: UseT['t'], lang: Lang): string => t(`admin.siteText.lang.${lang}`);
+
+/**
+ * What an edit lost or added among the built-in text's {{placeholders}}, or null
+ * when it's fine. Same check as `placeholderProblem`, with translated words.
+ */
+function placeholderProblemText(t: UseT['t'], builtIn: string | null | undefined, edited: string): string | null {
+  const want = placeholders(builtIn);
+  const have = placeholders(edited);
+  const list = (names: string[]) => names.map((p) => `{{${p}}}`).join(', ');
+  const missing = want.filter((p) => !have.includes(p));
+  const extra = have.filter((p) => !want.includes(p));
+  if (missing.length) return t('admin.siteText.problem.missing', { list: list(missing) });
+  if (extra.length) return t('admin.siteText.problem.extra', { list: list(extra) });
+  return null;
+}
+
 /**
  * Every piece of wording on the Cura Website, in English and Bangla. An empty
  * box uses the built-in wording (shown greyed); typing replaces it.
  * Placeholders like {{count}} are filled in by the site and must stay.
  */
 export function SiteTextPanel() {
+  const { t } = useT();
   const { data, error, loading, reload } = useResource<{ text?: Partial<SiteText> }>(
     '/directory/admin/site-content',
     {},
@@ -80,7 +100,7 @@ export function SiteTextPanel() {
   for (const [lang] of LANGS) {
     for (const [key, value] of Object.entries(draft[lang])) {
       if (typeof value !== 'string') continue;
-      const problem = placeholderProblem(BUILT_IN_TEXT[lang][key] ?? BUILT_IN_TEXT.en[key], value);
+      const problem = placeholderProblemText(t, BUILT_IN_TEXT[lang][key] ?? BUILT_IN_TEXT.en[key], value);
       if (problem) problems.set(`${lang}.${key}`, problem);
     }
   }
@@ -114,7 +134,7 @@ export function SiteTextPanel() {
 
   const submit = async () => {
     if (problems.size) {
-      setLocalError('Fix the texts marked in red first.');
+      setLocalError(t('admin.siteText.fixFirst'));
       return;
     }
     if (form.current && !form.current.reportValidity()) return;
@@ -131,21 +151,21 @@ export function SiteTextPanel() {
 
   return (
     <Panel
-      title="Site text"
-      description="Every piece of wording on the Cura Website, in English and Bangla. Leave a box empty to use the built-in wording. Keep placeholders like {{count}}: the site fills them in."
+      title={t('admin.siteText.title')}
+      description={t('admin.siteText.description')}
       action={
         <input
           className={`${s.input} ${styles.search}`}
           type="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search all text, English or Bangla"
-          aria-label="Search site text"
+          placeholder={t('admin.siteText.searchPlaceholder')}
+          aria-label={t('admin.siteText.searchLabel')}
         />
       }
     >
       {!search && (
-        <div className={s.filters} role="group" aria-label="Sections">
+        <div className={s.filters} role="group" aria-label={t('admin.siteText.sections')}>
           {SECTIONS.map(([prefix, label]) => {
             const count = editedIn(prefix);
             return (
@@ -156,8 +176,8 @@ export function SiteTextPanel() {
                 aria-pressed={section === prefix}
                 onClick={() => setSection(prefix)}
               >
-                {label}
-                {count ? ` · ${count} edited` : ''}
+                {t(label)}
+                {count ? t('admin.siteText.editedCount', { count }) : ''}
               </button>
             );
           })}
@@ -170,7 +190,7 @@ export function SiteTextPanel() {
         saved={save.saved}
         error={localError ?? save.error}
         dirty={changed.length > 0}
-        label={changed.length ? `Save ${changed.length} change(s)` : 'No changes'}
+        label={changed.length ? t('admin.siteText.saveChanges', { count: changed.length }) : t('admin.siteText.noChanges')}
       >
         {changed.length > 0 && (
           <button
@@ -181,7 +201,7 @@ export function SiteTextPanel() {
               setLocalError(null);
             }}
           >
-            Discard changes
+            {t('admin.siteText.discard')}
           </button>
         )}
       </SaveBar>
@@ -189,15 +209,16 @@ export function SiteTextPanel() {
       <form ref={form} onSubmit={(e) => e.preventDefault()}>
         {!search && section === 'faq' && (
           <div className={styles.faq}>
-            {LANGS.map(([lang, label]) => {
+            {LANGS.map(([lang]) => {
+              const label = langLabel(t, lang);
               const own = faqOf(draft[lang]);
               return (
                 <div key={lang}>
                   <div className={styles.faqHead}>
-                    <h3 className={s.subtitle}>Questions · {label}</h3>
+                    <h3 className={s.subtitle}>{t('admin.siteText.faq.heading', { lang: label })}</h3>
                     {own && (
                       <button type="button" className={s.linkButton} onClick={() => setFaq(lang, null)}>
-                        Use built-in questions
+                        {t('admin.siteText.faq.useBuiltIn')}
                       </button>
                     )}
                   </div>
@@ -214,14 +235,14 @@ export function SiteTextPanel() {
         )}
 
         {rows.length === 0 ? (
-          <p className={s.muted}>No text matches.</p>
+          <p className={s.muted}>{t('admin.siteText.noMatch')}</p>
         ) : (
           <table className={`${s.table} ${styles.texts}`}>
             <thead>
               <tr>
-                <th>Key</th>
-                {LANGS.map(([lang, label]) => (
-                  <th key={lang}>{label}</th>
+                <th>{t('admin.siteText.key')}</th>
+                {LANGS.map(([lang]) => (
+                  <th key={lang}>{langLabel(t, lang)}</th>
                 ))}
               </tr>
             </thead>
@@ -231,7 +252,8 @@ export function SiteTextPanel() {
                   <td>
                     <code className={styles.key}>{key}</code>
                   </td>
-                  {LANGS.map(([lang, label]) => {
+                  {LANGS.map(([lang]) => {
+                    const label = langLabel(t, lang);
                     const value = textOf(draft[lang], key);
                     const builtIn = BUILT_IN_TEXT[lang][key] ?? '';
                     const problem = problems.get(`${lang}.${key}`);
@@ -245,7 +267,7 @@ export function SiteTextPanel() {
                       value: value ?? '',
                       placeholder: builtIn,
                       lang,
-                      'aria-label': `${key} in ${label}`,
+                      'aria-label': t('admin.siteText.cellLabel', { key, lang: label }),
                       'aria-invalid': problem ? true : undefined,
                     };
                     return (
@@ -261,11 +283,11 @@ export function SiteTextPanel() {
                               <button
                                 type="button"
                                 className={s.linkButton}
-                                title="Use the built-in wording"
-                                aria-label={`Reset ${key} in ${label}`}
+                                title={t('admin.siteText.resetTitle')}
+                                aria-label={t('admin.siteText.resetLabel', { key, lang: label })}
                                 onClick={() => setText(lang, key, '')}
                               >
-                                Reset
+                                {t('admin.siteText.reset')}
                               </button>
                             )}
                           </div>
@@ -295,6 +317,7 @@ function FaqEditor({
   items: FaqItem[];
   onChange: (items: FaqItem[]) => void;
 }) {
+  const { t } = useT();
   const set = (i: number, patch: Partial<FaqItem>) =>
     onChange(items.map((x, j) => (j === i ? { ...x, ...patch } : x)));
   return (
@@ -307,8 +330,8 @@ function FaqEditor({
               required
               value={item.q}
               onChange={(e) => set(i, { q: e.target.value })}
-              placeholder="Question"
-              aria-label={`${label} question ${i + 1}`}
+              placeholder={t('admin.siteText.faq.question')}
+              aria-label={t('admin.siteText.faq.questionN', { lang: label, n: i + 1 })}
               lang={lang}
             />
             <textarea
@@ -317,8 +340,8 @@ function FaqEditor({
               rows={2}
               value={item.a}
               onChange={(e) => set(i, { a: e.target.value })}
-              placeholder="Answer"
-              aria-label={`${label} answer ${i + 1}`}
+              placeholder={t('admin.siteText.faq.answer')}
+              aria-label={t('admin.siteText.faq.answerN', { lang: label, n: i + 1 })}
               lang={lang}
             />
           </div>
@@ -326,9 +349,9 @@ function FaqEditor({
             type="button"
             className={s.linkDanger}
             onClick={() => onChange(items.filter((_, j) => j !== i))}
-            aria-label={`Remove ${label} question ${i + 1}`}
+            aria-label={t('admin.siteText.faq.removeN', { lang: label, n: i + 1 })}
           >
-            Remove
+            {t('common.remove')}
           </button>
         </div>
       ))}
@@ -338,7 +361,7 @@ function FaqEditor({
         disabled={items.length >= 30}
         onClick={() => onChange([...items, { q: '', a: '' }])}
       >
-        Add question
+        {t('admin.siteText.faq.add')}
       </button>
     </>
   );

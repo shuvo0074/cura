@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useServices } from '../../../app/services';
+import { useT } from '../../../i18n';
 import { Check, Failed, Field, Loading, Modal, ModalActions, Panel, Row, uiStyles as s, useResource } from '../../../ui';
 import { ImageUpload, imageSrc } from './admin-kit';
 import {
@@ -10,9 +11,10 @@ import {
   PAYMENT_METHODS,
   SERVICE_GROUPS,
   TEST_CATEGORIES,
+  catalogueLabel,
   typeLabel,
 } from './data/hospital-catalogue';
-import { DIVISIONS, districtsFor } from './data/divisions-hospitals';
+import { DIVISIONS, districtLabel, districtsFor, divisionLabel } from './data/divisions-hospitals';
 import h from './HospitalsPanel.module.css';
 
 const BASE = '/directory/admin/hospitals';
@@ -169,6 +171,7 @@ type Editing = { id: null } | { id: string; notice?: string };
 
 /** Hospitals and diagnostic centres patients find on Cura Website. */
 export function HospitalsPanel() {
+  const { t } = useT();
   const { data, error, loading, reload } = useResource<HospitalRecord[]>(BASE, {});
   const [editing, setEditing] = useState<Editing | null>(null);
   const [search, setSearch] = useState('');
@@ -206,11 +209,11 @@ export function HospitalsPanel() {
 
   return (
     <Panel
-      title="Hospitals and diagnostic centres"
-      description="Places patients find on Cura Website. Click a row to edit it."
+      title={t('admin.hospitals.title')}
+      description={t('admin.hospitals.description')}
       action={
         <button type="button" className={s.primary} onClick={() => setEditing({ id: null })}>
-          Add place
+          {t('admin.hospitals.add')}
         </button>
       }
     >
@@ -218,22 +221,22 @@ export function HospitalsPanel() {
         <input
           className={s.input}
           type="search"
-          placeholder="Search by name"
-          aria-label="Search by name"
+          placeholder={t('admin.hospitals.searchByName')}
+          aria-label={t('admin.hospitals.searchByName')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <select className={s.input} aria-label="Type" value={type} onChange={(e) => setType(e.target.value)}>
-          <option value="">All types</option>
+        <select className={s.input} aria-label={t('admin.hospitals.type')} value={type} onChange={(e) => setType(e.target.value)}>
+          <option value="">{t('admin.hospitals.allTypes')}</option>
           {HOSPITAL_TYPES.map((option) => (
             <option key={option.key} value={option.key}>
-              {option.label}
+              {catalogueLabel(t, 'type', option.key)}
             </option>
           ))}
         </select>
         <select
           className={s.input}
-          aria-label="Division"
+          aria-label={t('admin.hospitals.division')}
           value={division}
           onChange={(e) => {
             const next = e.target.value;
@@ -242,18 +245,18 @@ export function HospitalsPanel() {
             if (district && !districtsFor(next ? [next] : []).includes(district)) setDistrict('');
           }}
         >
-          <option value="">All divisions</option>
+          <option value="">{t('admin.hospitals.allDivisions')}</option>
           {DIVISIONS.map((name) => (
             <option key={name} value={name}>
-              {name}
+              {divisionLabel(t, name)}
             </option>
           ))}
         </select>
-        <select className={s.input} aria-label="District" value={district} onChange={(e) => setDistrict(e.target.value)}>
-          <option value="">All districts</option>
+        <select className={s.input} aria-label={t('admin.hospitals.district')} value={district} onChange={(e) => setDistrict(e.target.value)}>
+          <option value="">{t('admin.hospitals.allDistricts')}</option>
           {districts.map((name) => (
             <option key={name} value={name}>
-              {name}
+              {districtLabel(t, name)}
             </option>
           ))}
         </select>
@@ -266,30 +269,30 @@ export function HospitalsPanel() {
             data-active={visibility === value || undefined}
             onClick={() => setVisibility(value)}
           >
-            {value === 'all' ? 'All' : value === 'visible' ? 'Visible' : 'Hidden'}
+            {t(`admin.hospitals.filter.${value}`)}
           </button>
         ))}
       </div>
       <p className={s.muted}>
-        Showing {shown.length} of {all.length}.{' '}
+        {t('admin.hospitals.showing', { shown: shown.length, total: all.length })}{' '}
         {filtering && (
           <button type="button" className={s.linkButton} onClick={clear}>
-            Clear filters
+            {t('admin.hospitals.clearFilters')}
           </button>
         )}
       </p>
 
       {shown.length === 0 ? (
-        <p className={s.muted}>{all.length ? 'No places match these filters.' : 'No places added yet.'}</p>
+        <p className={s.muted}>{all.length ? t('admin.hospitals.noMatch') : t('admin.hospitals.none')}</p>
       ) : (
         <table className={s.table}>
           <thead>
             <tr>
-              <th aria-label="Photo" />
-              <th>Name</th>
-              <th>Type</th>
-              <th>Location</th>
-              <th>Division</th>
+              <th aria-label={t('admin.hospitals.col.photo')} />
+              <th>{t('admin.hospitals.col.name')}</th>
+              <th>{t('admin.hospitals.col.type')}</th>
+              <th>{t('admin.hospitals.col.location')}</th>
+              <th>{t('admin.hospitals.col.division')}</th>
               <th />
             </tr>
           </thead>
@@ -301,11 +304,11 @@ export function HospitalsPanel() {
                 </td>
                 <td>
                   {place.name}
-                  {place.hidden && <span className={h.hiddenTag}>Hidden</span>}
+                  {place.hidden && <span className={h.hiddenTag}>{t('admin.hospitals.hiddenTag')}</span>}
                 </td>
-                <td>{typeLabel(place.type)}</td>
-                <td>{place.location}</td>
-                <td className={s.mutedCell}>{place.division ?? '—'}</td>
+                <td>{typeLabel(t, place.type)}</td>
+                <td>{districtLabel(t, place.location)}</td>
+                <td className={s.mutedCell}>{place.division ? divisionLabel(t, place.division) : '—'}</td>
                 <td>
                   <button
                     type="button"
@@ -315,7 +318,7 @@ export function HospitalsPanel() {
                       setEditing({ id: place.id });
                     }}
                   >
-                    Edit
+                    {t('common.edit')}
                   </button>
                 </td>
               </tr>
@@ -367,12 +370,13 @@ function HospitalLoader({
   onClose: () => void;
   onChanged: () => void;
 }) {
+  const { t } = useT();
   const { data, error, loading } = useResource<HospitalRecord>(`${BASE}/${id}`, {});
 
   if (!data) {
     return (
-      <Modal title="Edit place" onClose={onClose} wide>
-        {loading ? <Loading /> : <Failed message={error ?? 'Could not load this place.'} />}
+      <Modal title={t('admin.hospitals.editPlace')} onClose={onClose} wide>
+        {loading ? <Loading /> : <Failed message={error ?? t('admin.hospitals.loadFailed')} />}
       </Modal>
     );
   }
@@ -406,6 +410,7 @@ function HospitalModal({
   onCreatedWithoutPhoto?: (id: string, notice: string) => void;
 }) {
   const { http } = useServices();
+  const { t, tm } = useT();
   const [form, setForm] = useState<HospitalForm>(initial);
   const [hidden, setHidden] = useState(initialHidden);
   const [pendingPhoto, setPendingPhoto] = useState<File | null>(null);
@@ -443,7 +448,10 @@ function HospitalModal({
         // The place is saved; reopen it so the photo can be tried again.
         setBusy(false);
         onChanged();
-        onCreatedWithoutPhoto?.(created.value.id, `Place saved, but the photo did not upload: ${uploaded.error.message}`);
+        onCreatedWithoutPhoto?.(
+          created.value.id,
+          t('admin.hospitals.photoUploadFailed', { message: tm(uploaded.error.message) }),
+        );
         return;
       }
     }
@@ -454,7 +462,13 @@ function HospitalModal({
 
   return (
     <Modal
-      title={id ? `Edit ${initial.name || 'place'}` : 'Add place'}
+      title={
+        id
+          ? initial.name
+            ? t('admin.hospitals.editNamed', { name: initial.name })
+            : t('admin.hospitals.editPlace')
+          : t('admin.hospitals.add')
+      }
       onClose={onClose}
       wide
       footer={<ModalActions error={error} busy={busy} onCancel={onClose} onSave={() => void save()} />}
@@ -482,76 +496,73 @@ function HospitalModal({
         onPhoto={(photo) => set({ photo })}
       />
 
-      <Field label="Name" required>
+      <Field label={t('admin.hospitals.name')} required>
         <input className={s.input} value={form.name} onChange={(e) => set({ name: e.target.value })} />
       </Field>
       <Row cols={2}>
-        <Field label="City or location" required>
+        <Field label={t('admin.hospitals.location')} required>
           <input className={s.input} value={form.location} onChange={(e) => set({ location: e.target.value })} />
         </Field>
-        <Field label="Division">
+        <Field label={t('admin.hospitals.division')}>
           <select className={s.input} value={form.division} onChange={(e) => set({ division: e.target.value })}>
-            <option value="">No division</option>
+            <option value="">{t('admin.hospitals.noDivision')}</option>
             {DIVISIONS.map((name) => (
               <option key={name} value={name}>
-                {name} Division
+                {t('admin.hospitals.divisionOption', { name: divisionLabel(t, name) })}
               </option>
             ))}
           </select>
         </Field>
       </Row>
-      <Field label="Address">
+      <Field label={t('admin.hospitals.address')}>
         <input className={s.input} value={form.address} onChange={(e) => set({ address: e.target.value })} />
       </Field>
       <Row cols={2}>
-        <Field label="Hotline">
+        <Field label={t('admin.hospitals.hotline')}>
           <input className={s.input} value={form.hotline} onChange={(e) => set({ hotline: e.target.value })} />
         </Field>
-        <Field label="Website">
+        <Field label={t('admin.hospitals.website')}>
           <input className={s.input} value={form.website} onChange={(e) => set({ website: e.target.value })} />
         </Field>
       </Row>
-      <Field label="Description">
+      <Field label={t('admin.hospitals.descriptionField')}>
         <textarea
           className={s.textarea}
           rows={3}
-          placeholder="A short description of the place"
+          placeholder={t('admin.hospitals.descriptionPlaceholder')}
           value={form.description}
           onChange={(e) => set({ description: e.target.value })}
         />
       </Field>
       <Row cols={2}>
-        <Field label="Latitude">
+        <Field label={t('admin.hospitals.latitude')}>
           <input
             className={s.input}
             type="number"
             step="any"
             min={-90}
             max={90}
-            placeholder="e.g. 23.7465"
+            placeholder={t('admin.hospitals.latPlaceholder')}
             value={form.lat}
             onChange={(e) => set({ lat: e.target.value })}
           />
         </Field>
-        <Field label="Longitude">
+        <Field label={t('admin.hospitals.longitude')}>
           <input
             className={s.input}
             type="number"
             step="any"
             min={-180}
             max={180}
-            placeholder="e.g. 90.3760"
+            placeholder={t('admin.hospitals.lngPlaceholder')}
             value={form.lng}
             onChange={(e) => set({ lng: e.target.value })}
           />
         </Field>
       </Row>
-      <p className={s.muted}>
-        Without latitude and longitude, the place is not shown on the home page map. In Google Maps, right-click the
-        building and click the numbers to copy them.
-      </p>
+      <p className={s.muted}>{t('admin.hospitals.mapHint')}</p>
       <Row cols={2}>
-        <Field label="Source link">
+        <Field label={t('admin.hospitals.sourceLink')}>
           <input
             className={s.input}
             type="url"
@@ -560,7 +571,7 @@ function HospitalModal({
             onChange={(e) => set({ source_url: e.target.value })}
           />
         </Field>
-        <Field label="Checked on">
+        <Field label={t('admin.hospitals.checkedOn')}>
           <input
             className={s.input}
             type="date"
@@ -589,6 +600,7 @@ function RecordActions({
   onDeleted: () => void;
 }) {
   const { http } = useServices();
+  const { t, tm } = useT();
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -626,15 +638,15 @@ function RecordActions({
         <span>
           {hidden ? (
             <>
-              <strong className={h.warn}>Hidden.</strong> Patients cannot see this place.
+              <strong className={h.warn}>{t('admin.hospitals.hiddenLabel')}</strong> {t('admin.hospitals.hiddenNote')}
             </>
           ) : (
-            'Visible to patients.'
+            t('admin.hospitals.visibleNote')
           )}
         </span>
         <span className={h.recordButtons}>
           <button type="button" className={s.secondary} disabled={busy} onClick={() => void toggleHidden()}>
-            {hidden ? 'Show on site' : 'Hide from site'}
+            {hidden ? t('admin.hospitals.showOnSite') : t('admin.hospitals.hideFromSite')}
           </button>
           <button
             type="button"
@@ -642,21 +654,21 @@ function RecordActions({
             disabled={busy}
             onClick={() => void remove()}
           >
-            {confirming ? 'Click again to delete' : 'Delete'}
+            {confirming ? t('admin.hospitals.confirmDelete') : t('common.delete')}
           </button>
         </span>
       </div>
       {confirming && !busy && (
         <p className={s.muted}>
-          Deleting cannot be undone. Hide it instead if it might come back.{' '}
+          {t('admin.hospitals.deleteWarning')}{' '}
           <button type="button" className={s.linkButton} onClick={() => setConfirming(false)}>
-            Cancel
+            {t('common.cancel')}
           </button>
         </p>
       )}
       {error && (
         <p className={s.error} role="alert">
-          {error}
+          {tm(error)}
         </p>
       )}
     </div>
@@ -680,6 +692,7 @@ function PhotoField({
   onPhoto: (photo: string) => void;
 }) {
   const { http } = useServices();
+  const { t, tm } = useT();
   const picker = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -705,12 +718,12 @@ function PhotoField({
 
   return (
     <div className={s.logoRow}>
-      <div className={h.photo}>{src ? <img src={src} alt="" /> : 'No photo'}</div>
+      <div className={h.photo}>{src ? <img src={src} alt="" /> : t('admin.hospitals.noPhoto')}</div>
       <div>
-        <span className={s.fieldLabel}>Photo{pending ? ' (uploads when you save)' : ''}</span>
+        <span className={s.fieldLabel}>{pending ? t('admin.hospitals.photoPending') : t('admin.hospitals.photo')}</span>
         <div className={h.photoButtons}>
           {id ? (
-            <ImageUpload path={`${BASE}/${id}/photo`} label={src ? 'Change photo' : 'Upload photo'} onUploaded={onPhoto} />
+            <ImageUpload path={`${BASE}/${id}/photo`} label={src ? t('admin.hospitals.changePhoto') : t('admin.hospitals.uploadPhoto')} onUploaded={onPhoto} />
           ) : (
             <>
               <input
@@ -725,19 +738,19 @@ function PhotoField({
                 }}
               />
               <button type="button" className={s.secondary} onClick={() => picker.current?.click()}>
-                {src ? 'Change photo' : 'Choose photo'}
+                {src ? t('admin.hospitals.changePhoto') : t('admin.hospitals.choosePhoto')}
               </button>
             </>
           )}
           {src && (
             <button type="button" className={s.linkDanger} disabled={busy} onClick={() => void remove()}>
-              {busy ? 'Removing…' : 'Remove'}
+              {busy ? t('admin.hospitals.removing') : t('common.remove')}
             </button>
           )}
         </div>
         {error && (
           <p className={s.error} role="alert">
-            {error}
+            {tm(error)}
           </p>
         )}
       </div>
@@ -769,6 +782,7 @@ function HoursInput({
   placeholder: string;
   label: string;
 }) {
+  const { t } = useT();
   const allDay = value === ALL_DAY;
   return (
     <div className={h.hours}>
@@ -777,22 +791,18 @@ function HoursInput({
         aria-label={label}
         value={allDay ? '' : value}
         disabled={allDay}
-        placeholder={allDay ? 'Open 24/7' : placeholder}
+        placeholder={allDay ? t('admin.hospitals.open24') : placeholder}
         onChange={(e) => onChange(e.target.value)}
       />
       <label className={h.inlineCheck}>
         <input type="checkbox" checked={allDay} onChange={(e) => onChange(e.target.checked ? ALL_DAY : '')} />
-        24/7
+        {t('admin.hospitals.allDay')}
       </label>
     </div>
   );
 }
 
-const BED_KINDS: readonly { key: keyof Beds; label: string }[] = [
-  { key: 'general', label: 'General' },
-  { key: 'cabin', label: 'Cabins' },
-  { key: 'icu', label: 'ICU' },
-];
+const BED_KINDS: readonly (keyof Beds)[] = ['general', 'cabin', 'icu'];
 
 /**
  * Hours, beds, services, facilities, payment and test prices. Also used by a
@@ -807,6 +817,7 @@ export function ExtrasFields({
   set: (patch: Partial<HospitalForm>) => void;
   forOwner?: boolean;
 }) {
+  const { t } = useT();
   const offered = new Map(form.services.map((service) => [service.key, service]));
   const beds: Beds = form.beds ?? { general: null, cabin: null, icu: null };
 
@@ -825,53 +836,53 @@ export function ExtrasFields({
 
   return (
     <>
-      <Section title={forOwner ? 'Hours' : 'Type and hours'}>
+      <Section title={forOwner ? t('admin.hospitals.hours') : t('admin.hospitals.typeAndHours')}>
         <Row cols={2}>
           {!forOwner && (
-            <Field label="Type">
+            <Field label={t('admin.hospitals.type')}>
               <select className={s.input} value={form.type} onChange={(e) => set({ type: e.target.value })}>
-                <option value="">Not set</option>
+                <option value="">{t('admin.hospitals.notSet')}</option>
                 {HOSPITAL_TYPES.map((option) => (
                   <option key={option.key} value={option.key}>
-                    {option.label}
+                    {catalogueLabel(t, 'type', option.key)}
                   </option>
                 ))}
               </select>
             </Field>
           )}
           <div className={s.field}>
-            <span className={s.fieldLabel}>Opening hours</span>
+            <span className={s.fieldLabel}>{t('admin.hospitals.openingHours')}</span>
             <HoursInput
-              label="Opening hours"
+              label={t('admin.hospitals.openingHours')}
               value={form.opening_hours}
               onChange={(opening_hours) => set({ opening_hours })}
-              placeholder="Sat – Thu, 9:00 AM – 10:00 PM"
+              placeholder={t('admin.hospitals.openingHoursPlaceholder')}
             />
           </div>
         </Row>
-        <Field label="Visiting hours (inpatients)">
+        <Field label={t('admin.hospitals.visitingHours')}>
           <input
             className={s.input}
-            placeholder="11:00 AM – 1:00 PM, 5:00 PM – 7:00 PM"
+            placeholder={t('admin.hospitals.visitingHoursPlaceholder')}
             value={form.visiting_hours}
             onChange={(e) => set({ visiting_hours: e.target.value })}
           />
         </Field>
       </Section>
 
-      <Section title="Beds" hint="Leave empty for outpatient-only places.">
+      <Section title={t('admin.hospitals.beds')} hint={t('admin.hospitals.bedsHint')}>
         <Row cols={3}>
           {BED_KINDS.map((kind) => (
-            <Field key={kind.key} label={kind.label}>
+            <Field key={kind} label={t(`admin.hospitals.bed.${kind}`)}>
               <input
                 className={s.input}
                 type="number"
                 min={0}
                 step={1}
                 inputMode="numeric"
-                value={beds[kind.key] ?? ''}
+                value={beds[kind] ?? ''}
                 onChange={(e) =>
-                  set({ beds: { ...beds, [kind.key]: e.target.value === '' ? null : Number(e.target.value) } })
+                  set({ beds: { ...beds, [kind]: e.target.value === '' ? null : Number(e.target.value) } })
                 }
               />
             </Field>
@@ -879,21 +890,22 @@ export function ExtrasFields({
         </Row>
       </Section>
 
-      <Section title="Services" hint="Tick what is offered here, then add its hours.">
+      <Section title={t('admin.hospitals.services')} hint={t('admin.hospitals.servicesHint')}>
         {SERVICE_GROUPS.map((group) => (
           <div key={group.key} className={h.group}>
-            <p className={h.groupLabel}>{group.label}</p>
+            <p className={h.groupLabel}>{catalogueLabel(t, 'group', group.key)}</p>
             {group.services.map((service) => {
               const on = offered.get(service.key);
+              const label = catalogueLabel(t, 'service', service.key);
               return (
                 <div key={service.key} className={h.serviceRow}>
-                  <Check label={service.label} checked={Boolean(on)} onChange={() => toggleService(service.key)} />
+                  <Check label={label} checked={Boolean(on)} onChange={() => toggleService(service.key)} />
                   {on && (
                     <HoursInput
-                      label={`${service.label} hours`}
+                      label={t('admin.hospitals.serviceHours', { service: label })}
                       value={on.hours}
                       onChange={(hours) => serviceHours(service.key, hours)}
-                      placeholder="8:00 AM – 10:00 PM"
+                      placeholder={t('admin.hospitals.serviceHoursPlaceholder')}
                     />
                   )}
                 </div>
@@ -903,24 +915,24 @@ export function ExtrasFields({
         ))}
       </Section>
 
-      <Section title="Facilities and payment">
-        <p className={h.groupLabel}>Facilities</p>
+      <Section title={t('admin.hospitals.facilitiesAndPayment')}>
+        <p className={h.groupLabel}>{t('admin.hospitals.facilities')}</p>
         <div className={h.chips}>
           {FACILITIES.map((option) => (
             <Check
               key={option.key}
-              label={option.label}
+              label={catalogueLabel(t, 'facility', option.key)}
               checked={form.facilities.includes(option.key)}
               onChange={() => set({ facilities: toggled(form.facilities, option.key) })}
             />
           ))}
         </div>
-        <p className={h.groupLabel}>Payment methods</p>
+        <p className={h.groupLabel}>{t('admin.hospitals.paymentMethods')}</p>
         <div className={h.chips}>
           {PAYMENT_METHODS.map((option) => (
             <Check
               key={option.key}
-              label={option.label}
+              label={catalogueLabel(t, 'payment', option.key)}
               checked={form.payment_methods.includes(option.key)}
               onChange={() => set({ payment_methods: toggled(form.payment_methods, option.key) })}
             />
@@ -929,15 +941,8 @@ export function ExtrasFields({
       </Section>
 
       <Section
-        title="Test prices"
-        hint={
-          forOwner
-            ? 'Prices in taka. Empty prices on common tests show a sample price, labelled as sample. ' +
-              'Other empty prices show "Price not published". Rows without a name are ignored.'
-            : 'Prices in taka. Add a source link for prices the centre publishes; the site links to it. ' +
-              'Empty prices on common diagnostic tests show the sample price from the Sample prices tab, labelled as sample. ' +
-              'Other empty prices show "Price not published". Rows without a name are ignored.'
-        }
+        title={t('admin.hospitals.testPrices')}
+        hint={forOwner ? t('admin.hospitals.testPricesHintOwner') : t('admin.hospitals.testPricesHint')}
       >
         <datalist id="hospital-common-tests">
           {COMMON_TESTS.map((name) => (
@@ -946,9 +951,9 @@ export function ExtrasFields({
         </datalist>
         {form.tests.length > 0 && (
           <div className={`${h.testRow} ${h.testHead}`}>
-            <span>Test</span>
-            <span>Category</span>
-            <span>Price (৳)</span>
+            <span>{t('admin.hospitals.col.test')}</span>
+            <span>{t('admin.hospitals.col.category')}</span>
+            <span>{t('admin.hospitals.col.price')}</span>
             <span />
           </div>
         )}
@@ -958,20 +963,20 @@ export function ExtrasFields({
               <input
                 className={s.input}
                 list="hospital-common-tests"
-                aria-label="Test name"
-                placeholder="Test name"
+                aria-label={t('admin.hospitals.testName')}
+                placeholder={t('admin.hospitals.testName')}
                 value={test.name}
                 onChange={(e) => setTest(index, { ...test, name: e.target.value })}
               />
               <select
                 className={s.input}
-                aria-label="Category"
+                aria-label={t('admin.hospitals.category')}
                 value={test.category}
                 onChange={(e) => setTest(index, { ...test, category: e.target.value })}
               >
                 {TEST_CATEGORIES.map((option) => (
                   <option key={option.key} value={option.key}>
-                    {option.label}
+                    {catalogueLabel(t, 'testCategory', option.key)}
                   </option>
                 ))}
               </select>
@@ -981,7 +986,7 @@ export function ExtrasFields({
                 min={0}
                 step={1}
                 inputMode="numeric"
-                aria-label="Price in taka"
+                aria-label={t('admin.hospitals.priceInTaka')}
                 placeholder="0"
                 value={test.price}
                 onChange={(e) => setTest(index, { ...test, price: e.target.value === '' ? '' : Number(e.target.value) })}
@@ -989,7 +994,7 @@ export function ExtrasFields({
               <button
                 type="button"
                 className={s.iconButton}
-                aria-label={`Remove ${test.name || 'test'}`}
+                aria-label={t('admin.hospitals.removeTest', { name: test.name || t('admin.hospitals.test') })}
                 onClick={() => set({ tests: form.tests.filter((_, i) => i !== index) })}
               >
                 ×
@@ -1000,20 +1005,20 @@ export function ExtrasFields({
                 <input
                   className={s.input}
                   type="url"
-                  aria-label={`Source link for ${test.name || 'test'}`}
-                  placeholder="Published at https://…"
+                  aria-label={t('admin.hospitals.sourceLinkFor', { name: test.name || t('admin.hospitals.test') })}
+                  placeholder={t('admin.hospitals.sourcePlaceholder')}
                   value={test.source_url}
                   onChange={(e) => setTest(index, { ...test, source_url: e.target.value })}
                 />
                 <input
                   className={s.input}
                   type="date"
-                  aria-label={`Source checked on for ${test.name || 'test'}`}
+                  aria-label={t('admin.hospitals.sourceCheckedFor', { name: test.name || t('admin.hospitals.test') })}
                   value={test.source_checked_on ?? ''}
                   onChange={(e) => setTest(index, { ...test, source_checked_on: e.target.value })}
                 />
                 <button type="button" className={s.linkDanger} onClick={() => setTest(index, dropSource(test))}>
-                  Remove source
+                  {t('admin.hospitals.removeSource')}
                 </button>
               </div>
             ) : (
@@ -1022,7 +1027,7 @@ export function ExtrasFields({
                 className={s.linkButton}
                 onClick={() => setTest(index, { ...test, source_url: '' })}
               >
-                Add source link
+                {t('admin.hospitals.addSource')}
               </button>
             )}
           </div>
@@ -1032,7 +1037,7 @@ export function ExtrasFields({
           className={s.secondary}
           onClick={() => set({ tests: [...form.tests, { name: '', category: 'blood', price: '' }] })}
         >
-          Add test
+          {t('admin.hospitals.addTest')}
         </button>
       </Section>
     </>

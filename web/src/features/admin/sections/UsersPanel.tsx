@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useServices } from '../../../app/services';
+import { useT, type TranslationKey, type UseT } from '../../../i18n';
 import { Check, Failed, Field, Loading, Modal, Panel, Row, uiStyles as s, useMutation, useResource } from '../../../ui';
 import {
   CLINIC_ROLE_LABELS,
@@ -10,30 +11,39 @@ import {
   type ClinicRole,
 } from './admin-types';
 
-const FILTERS: { value: string; label: string }[] = [
-  { value: '', label: 'Everyone' },
-  { value: 'super_admin', label: 'Super admins' },
-  { value: 'ADMINISTRATOR', label: 'Clinic owners' },
-  { value: 'DOCTOR', label: 'Doctors' },
-  { value: 'DESK_STAFF', label: 'Clinic staff' },
-  { value: 'ambulance_owner', label: 'Ambulance owners' },
-  { value: 'pharmacy_owner', label: 'Pharmacy owners' },
-  { value: 'hospital_owner', label: 'Hospital owners' },
-  { value: 'patient', label: 'Patients' },
+const FILTERS: { value: string; label: TranslationKey }[] = [
+  { value: '', label: 'admin.users.filter.everyone' },
+  { value: 'super_admin', label: 'admin.users.filter.superAdmins' },
+  { value: 'ADMINISTRATOR', label: 'admin.users.filter.clinicOwners' },
+  { value: 'DOCTOR', label: 'admin.users.filter.doctors' },
+  { value: 'DESK_STAFF', label: 'admin.users.filter.clinicStaff' },
+  { value: 'ambulance_owner', label: 'admin.users.filter.ambulanceOwners' },
+  { value: 'pharmacy_owner', label: 'admin.users.filter.pharmacyOwners' },
+  { value: 'hospital_owner', label: 'admin.users.filter.hospitalOwners' },
+  { value: 'patient', label: 'admin.users.filter.patients' },
 ];
 
 const PAGE_SIZE = 50;
 
-export function rolesSummary(user: AdminUser): string {
+/** A clinic access level's name in the current language. */
+const clinicRoleLabel = (t: UseT['t'], role: ClinicRole): string =>
+  role in CLINIC_ROLE_LABELS ? t(`admin.clinicRole.${role}`) : role;
+
+/** A Cura-wide role's name in the current language; an unknown role is shown as it is. */
+const roleLabel = (t: UseT['t'], role: string): string =>
+  ROLE_LABELS[role] ? t(`admin.role.${role}` as TranslationKey) : role;
+
+export function rolesSummary(t: UseT['t'], user: AdminUser): string {
   const parts = [
-    ...(user.clinic_role ? [CLINIC_ROLE_LABELS[user.clinic_role]] : []),
-    ...user.roles.filter((role) => role !== 'doctor').map((role) => ROLE_LABELS[role] ?? role),
+    ...(user.clinic_role ? [clinicRoleLabel(t, user.clinic_role)] : []),
+    ...user.roles.filter((role) => role !== 'doctor').map((role) => roleLabel(t, role)),
   ];
-  return parts.join(', ') || 'No role';
+  return parts.join(', ') || t('admin.users.noRole');
 }
 
 /** Every account: find one, then edit its details, roles and clinic access. */
 export function UsersPanel() {
+  const { t } = useT();
   const [query, setQuery] = useState('');
   const [search, setSearch] = useState('');
   const [role, setRole] = useState('');
@@ -51,11 +61,11 @@ export function UsersPanel() {
 
   return (
     <Panel
-      title="Users and roles"
-      description="Give anyone any role, change it, or take it away. Changing someone's roles logs them out."
+      title={t('admin.users.title')}
+      description={t('admin.users.description')}
       action={
         <button type="button" className={s.primary} onClick={() => setCreating(true)}>
-          New account
+          {t('admin.users.newAccount')}
         </button>
       }
     >
@@ -67,10 +77,10 @@ export function UsersPanel() {
         }}
       >
         <Row cols={2}>
-          <Field label="Search by name, email or mobile">
+          <Field label={t('admin.users.search')}>
             <input className={s.input} value={query} onChange={(e) => setQuery(e.target.value)} />
           </Field>
-          <Field label="Role">
+          <Field label={t('admin.users.role')}>
             <select
               className={s.input}
               value={role}
@@ -81,7 +91,7 @@ export function UsersPanel() {
             >
               {FILTERS.map((filter) => (
                 <option key={filter.value} value={filter.value}>
-                  {filter.label}
+                  {t(filter.label)}
                 </option>
               ))}
             </select>
@@ -95,15 +105,15 @@ export function UsersPanel() {
         <Failed message={error} />
       ) : (
         <>
-          <p className={s.muted}>{data?.total === 1 ? '1 account' : `${data?.total ?? 0} accounts`}</p>
+          <p className={s.muted}>{t('admin.users.accounts', { count: data?.total ?? 0 })}</p>
           <table className={s.table}>
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Email and mobile</th>
-                <th>Roles</th>
-                <th>Clinics</th>
-                <th>Status</th>
+                <th>{t('admin.users.col.name')}</th>
+                <th>{t('admin.users.col.contact')}</th>
+                <th>{t('admin.users.col.roles')}</th>
+                <th>{t('admin.users.col.clinics')}</th>
+                <th>{t('admin.users.col.status')}</th>
                 <th />
               </tr>
             </thead>
@@ -112,12 +122,18 @@ export function UsersPanel() {
                 <tr key={user.id}>
                   <td>{user.full_name}</td>
                   <td>{[user.email, user.mobile].filter(Boolean).join(' · ') || '—'}</td>
-                  <td>{rolesSummary(user)}</td>
+                  <td>{rolesSummary(t, user)}</td>
                   <td>{user.clinics.map((clinic) => clinic.name).join(', ') || '—'}</td>
-                  <td>{!user.is_active ? 'Deactivated' : user.has_login ? 'Active' : 'No login yet'}</td>
+                  <td>
+                    {!user.is_active
+                      ? t('admin.users.status.deactivated')
+                      : user.has_login
+                        ? t('admin.users.status.active')
+                        : t('admin.users.status.noLogin')}
+                  </td>
                   <td>
                     <button type="button" className={s.linkButton} onClick={() => setOpenId(user.id)}>
-                      Edit
+                      {t('common.edit')}
                     </button>
                   </td>
                 </tr>
@@ -127,11 +143,11 @@ export function UsersPanel() {
           {pages > 1 && (
             <p className={s.muted}>
               <button type="button" className={s.linkButton} disabled={page <= 1} onClick={() => setPage(page - 1)}>
-                Previous
+                {t('admin.users.previous')}
               </button>{' '}
-              Page {page} of {pages}{' '}
+              {t('admin.users.pageOf', { page, pages })}{' '}
               <button type="button" className={s.linkButton} disabled={page >= pages} onClick={() => setPage(page + 1)}>
-                Next
+                {t('admin.users.next')}
               </button>
             </p>
           )}
@@ -162,6 +178,7 @@ export function UsersPanel() {
 }
 
 function NewUserModal({ onClose, onCreated }: { onClose: () => void; onCreated: (id: string) => void }) {
+  const { t, tm } = useT();
   const { http } = useServices();
   const [form, setForm] = useState({ fullName: '', email: '', mobile: '', temporaryPassword: '' });
   const [error, setError] = useState<string | null>(null);
@@ -182,37 +199,37 @@ function NewUserModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
 
   return (
     <Modal
-      title="New account"
+      title={t('admin.users.newAccount')}
       onClose={onClose}
       footer={
         <>
           {error && (
             <span className={s.error} role="alert">
-              {error}
+              {tm(error)}
             </span>
           )}
           <button type="button" className={s.secondary} onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </button>
           <button type="button" className={s.primary} disabled={busy} onClick={() => void submit()}>
-            {busy ? 'Creating…' : 'Create'}
+            {busy ? t('admin.users.creating') : t('admin.users.create')}
           </button>
         </>
       }
     >
-      <p className={s.muted}>The account starts with no role. Give it roles once it exists.</p>
-      <Field label="Full name" required>
+      <p className={s.muted}>{t('admin.users.newAccountNote')}</p>
+      <Field label={t('admin.users.fullName')} required>
         <input className={s.input} value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} />
       </Field>
       <Row cols={2}>
-        <Field label="Email">
+        <Field label={t('admin.users.email')}>
           <input className={s.input} type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
         </Field>
-        <Field label="Mobile">
+        <Field label={t('admin.users.mobile')}>
           <input className={s.input} value={form.mobile} placeholder="01XXXXXXXXX" onChange={(e) => setForm({ ...form, mobile: e.target.value })} />
         </Field>
       </Row>
-      <Field label="Temporary password" required hint="At least 10 characters, with upper- and lowercase letters and a number.">
+      <Field label={t('admin.users.temporaryPassword')} required hint={t('admin.users.passwordHint')}>
         <input
           className={s.input}
           type="password"
@@ -228,13 +245,14 @@ function NewUserModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
 function UserModal({ userId, onClose }: { userId: string; onClose: () => void }) {
   const path = `/directory/admin/users/${userId}`;
   const { data: user, error, loading, setData } = useResource<AdminUser>(path, {});
+  const { t } = useT();
 
   return (
-    <Modal title={user ? user.full_name : 'Account'} onClose={onClose} wide>
+    <Modal title={user ? user.full_name : t('admin.users.account')} onClose={onClose} wide>
       {loading && !user ? (
         <Loading />
       ) : error || !user ? (
-        <Failed message={error ?? 'Not found'} />
+        <Failed message={error ?? t('admin.users.notFound')} />
       ) : (
         <>
           <DetailsSection user={user} path={path} onSaved={setData} />
@@ -251,6 +269,7 @@ function UserModal({ userId, onClose }: { userId: string; onClose: () => void })
 type Saved = (user: AdminUser) => void;
 
 function DetailsSection({ user, path, onSaved }: { user: AdminUser; path: string; onSaved: Saved }) {
+  const { t, tm } = useT();
   const { http } = useServices();
   const [form, setForm] = useState({ fullName: user.full_name, email: user.email ?? '', mobile: user.mobile ?? '' });
   const [message, setMessage] = useState<string | null>(null);
@@ -265,36 +284,41 @@ function DetailsSection({ user, path, onSaved }: { user: AdminUser; path: string
       onSaved(result.value);
       setMessage(done);
     } else {
-      setMessage(result.error.message);
+      setMessage(tm(result.error.message));
     }
   };
 
   return (
     <>
-      <h4 className={s.subtitle}>Details</h4>
+      <h4 className={s.subtitle}>{t('admin.users.details')}</h4>
       <Row cols={2}>
-        <Field label="Full name">
+        <Field label={t('admin.users.fullName')}>
           <input className={s.input} value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} />
         </Field>
-        <Field label="Status">
+        <Field label={t('admin.users.col.status')}>
           <span>
-            {user.is_active ? 'Active' : 'Deactivated'}{' '}
+            {user.is_active ? t('admin.users.status.active') : t('admin.users.status.deactivated')}{' '}
             <button
               type="button"
               className={user.is_active ? s.linkDanger : s.linkButton}
               disabled={busy}
-              onClick={() => void patch({ isActive: !user.is_active }, user.is_active ? 'Deactivated.' : 'Activated.')}
+              onClick={() =>
+                void patch(
+                  { isActive: !user.is_active },
+                  user.is_active ? t('admin.users.deactivatedDone') : t('admin.users.activatedDone'),
+                )
+              }
             >
-              {user.is_active ? 'Deactivate' : 'Activate'}
+              {user.is_active ? t('admin.users.deactivate') : t('admin.users.activate')}
             </button>
           </span>
         </Field>
       </Row>
       <Row cols={2}>
-        <Field label="Email">
+        <Field label={t('admin.users.email')}>
           <input className={s.input} type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
         </Field>
-        <Field label="Mobile">
+        <Field label={t('admin.users.mobile')}>
           <input className={s.input} value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} />
         </Field>
       </Row>
@@ -305,11 +329,11 @@ function DetailsSection({ user, path, onSaved }: { user: AdminUser; path: string
         onClick={() =>
           void patch(
             { fullName: form.fullName, email: form.email.trim() || null, mobile: form.mobile.trim() || null },
-            'Details saved.',
+            t('admin.users.detailsSaved'),
           )
         }
       >
-        Save details
+        {t('admin.users.saveDetails')}
       </button>{' '}
       {message && <span className={s.muted}>{message}</span>}
     </>
@@ -317,6 +341,7 @@ function DetailsSection({ user, path, onSaved }: { user: AdminUser; path: string
 }
 
 function RolesSection({ user, path, onSaved }: { user: AdminUser; path: string; onSaved: Saved }) {
+  const { t, tm } = useT();
   const { http } = useServices();
   const [error, setError] = useState<string | null>(null);
 
@@ -329,19 +354,19 @@ function RolesSection({ user, path, onSaved }: { user: AdminUser; path: string; 
 
   return (
     <>
-      <h4 className={s.subtitle}>Roles</h4>
+      <h4 className={s.subtitle}>{t('admin.users.col.roles')}</h4>
       {GRANTABLE_ROLES.map((role) => (
         <Check
           key={role}
-          label={ROLE_LABELS[role] ?? role}
+          label={roleLabel(t, role)}
           checked={user.roles.includes(role)}
           onChange={(on) => void toggle(role, on)}
         />
       ))}
-      {user.roles.includes('doctor') && <p className={s.muted}>Doctor on Cura Website: set by the clinic access below.</p>}
+      {user.roles.includes('doctor') && <p className={s.muted}>{t('admin.users.doctorRoleNote')}</p>}
       {error && (
         <p className={s.error} role="alert">
-          {error}
+          {tm(error)}
         </p>
       )}
     </>
@@ -350,6 +375,7 @@ function RolesSection({ user, path, onSaved }: { user: AdminUser; path: string; 
 
 function ClinicAccessSection({ user, path, onSaved }: { user: AdminUser; path: string; onSaved: Saved }) {
   const { data: clinics } = useResource<AdminClinic[]>('/directory/admin/clinics', {});
+  const { t, tm } = useT();
   const save = useMutation();
   const { http } = useServices();
   const [role, setRole] = useState<ClinicRole | ''>(user.clinic_role ?? '');
@@ -370,27 +396,27 @@ function ClinicAccessSection({ user, path, onSaved }: { user: AdminUser; path: s
 
   return (
     <>
-      <h4 className={s.subtitle}>Clinic access</h4>
+      <h4 className={s.subtitle}>{t('admin.users.clinicAccess')}</h4>
       <Row cols={2}>
-        <Field label="Access level">
+        <Field label={t('admin.users.accessLevel')}>
           <select className={s.input} value={role} onChange={(e) => setRole(e.target.value as ClinicRole | '')}>
-            <option value="">None</option>
+            <option value="">{t('admin.users.none')}</option>
             {(Object.keys(CLINIC_ROLE_LABELS) as ClinicRole[]).map((value) => (
               <option key={value} value={value}>
-                {CLINIC_ROLE_LABELS[value]}
+                {clinicRoleLabel(t, value)}
               </option>
             ))}
           </select>
         </Field>
         {role === 'DOCTOR' && (
-          <Field label="Specialty" hint="Shown to patients on Cura Website.">
+          <Field label={t('admin.users.specialty')} hint={t('admin.users.specialtyHint')}>
             <input className={s.input} value={specialty} onChange={(e) => setSpecialty(e.target.value)} />
           </Field>
         )}
       </Row>
       {role && (
         <>
-          <p className={s.muted}>Clinics</p>
+          <p className={s.muted}>{t('admin.users.col.clinics')}</p>
           {(clinics ?? []).map((clinic) => (
             <Check
               key={clinic.id}
@@ -402,11 +428,11 @@ function ClinicAccessSection({ user, path, onSaved }: { user: AdminUser; path: s
         </>
       )}
       <button type="button" className={s.secondary} disabled={save.busy} onClick={() => void submit()}>
-        Save clinic access
+        {t('admin.users.saveClinicAccess')}
       </button>
       {error && (
         <p className={s.error} role="alert">
-          {error}
+          {tm(error)}
         </p>
       )}
     </>
@@ -414,6 +440,7 @@ function ClinicAccessSection({ user, path, onSaved }: { user: AdminUser; path: s
 }
 
 function BusinessesSection({ user, path, onSaved }: { user: AdminUser; path: string; onSaved: Saved }) {
+  const { t } = useT();
   const { http } = useServices();
   const refresh = async () => {
     const fresh = await http.request<AdminUser>(path, {});
@@ -422,29 +449,31 @@ function BusinessesSection({ user, path, onSaved }: { user: AdminUser; path: str
 
   return (
     <>
-      <h4 className={s.subtitle}>Businesses</h4>
+      <h4 className={s.subtitle}>{t('admin.users.businesses')}</h4>
       <LinkedPlaces
         userId={user.id}
         linked={user.ambulances ?? []}
-        title="Ambulance services"
+        title={t('admin.users.ambulanceServices')}
         listPath="/directory/admin/ambulances"
         ownerPath={(id) => `/directory/admin/ambulances/${id}/owner`}
-        pickLabel="Link an ambulance service"
-        hint="Gives them the ambulance owner role if they lack it."
+        pickLabel={t('admin.users.linkAmbulance')}
+        hint={t('admin.users.linkAmbulanceHint')}
         onChanged={refresh}
       />
       <LinkedPlaces
         userId={user.id}
         linked={user.hospitals ?? []}
-        title="Hospitals and diagnostic centres"
+        title={t('admin.users.hospitals')}
         listPath="/directory/admin/hospitals"
         ownerPath={(id) => `/directory/admin/hospitals/${id}/owner`}
-        pickLabel="Link a hospital or diagnostic centre"
-        hint="Gives them the hospital owner role if they lack it. They edit its details under My Hospital."
+        pickLabel={t('admin.users.linkHospital')}
+        hint={t('admin.users.linkHospitalHint')}
         onChanged={refresh}
       />
       <p className={s.muted}>
-        Pharmacies: {(user.pharmacies ?? []).map((item) => item.name).join(', ') || 'none'}. Manage them under Pharmacies.
+        {t('admin.users.pharmacies', {
+          names: (user.pharmacies ?? []).map((item) => item.name).join(', ') || t('admin.users.noneLower'),
+        })}
       </p>
     </>
   );
@@ -470,6 +499,7 @@ function LinkedPlaces({
   hint: string;
   onChanged: () => Promise<void>;
 }) {
+  const { t, tm } = useT();
   const { http } = useServices();
   const { data: places, reload } = useResource<{ id: string; name: string; owner_id: string | null }[]>(listPath, {});
   const [pick, setPick] = useState('');
@@ -491,37 +521,37 @@ function LinkedPlaces({
   return (
     <>
       <p className={s.muted}>
-        {title}: {linked.length === 0 && 'none'}
+        {title}: {linked.length === 0 && t('admin.users.noneLower')}
       </p>
       {linked.map((place) => (
         <p key={place.id}>
           {place.name}{' '}
           <button type="button" className={s.linkDanger} onClick={() => void setOwner(place.id, null)}>
-            Unlink
+            {t('admin.users.unlink')}
           </button>
         </p>
       ))}
       <Row cols={2}>
         <Field label={pickLabel} hint={hint}>
           <select className={s.input} value={pick} onChange={(e) => setPick(e.target.value)}>
-            <option value="">Choose…</option>
+            <option value="">{t('admin.users.choose')}</option>
             {free.map((place) => (
               <option key={place.id} value={place.id}>
                 {place.name}
-                {place.owner_id ? ' (has an owner)' : ''}
+                {place.owner_id ? ` ${t('admin.users.hasOwner')}` : ''}
               </option>
             ))}
           </select>
         </Field>
         <Field label=" ">
           <button type="button" className={s.secondary} disabled={!pick} onClick={() => void setOwner(pick, userId)}>
-            Link
+            {t('admin.users.link')}
           </button>
         </Field>
       </Row>
       {error && (
         <p className={s.error} role="alert">
-          {error}
+          {tm(error)}
         </p>
       )}
     </>
@@ -529,13 +559,14 @@ function LinkedPlaces({
 }
 
 function PasswordSection({ path }: { path: string }) {
+  const { t, tm } = useT();
   const save = useMutation();
   const [password, setPassword] = useState('');
   return (
     <>
-      <h4 className={s.subtitle}>Password</h4>
+      <h4 className={s.subtitle}>{t('admin.users.password')}</h4>
       <Row cols={2}>
-        <Field label="New temporary password" hint="Logs them out everywhere.">
+        <Field label={t('admin.users.newTemporaryPassword')} hint={t('admin.users.newPasswordHint')}>
           <input className={s.input} type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
         </Field>
         <Field label=" ">
@@ -549,14 +580,14 @@ function PasswordSection({ path }: { path: string }) {
               })
             }
           >
-            Reset password
+            {t('admin.users.resetPassword')}
           </button>
         </Field>
       </Row>
-      {save.saved && <p className={s.muted}>Password reset.</p>}
+      {save.saved && <p className={s.muted}>{t('admin.users.passwordResetDone')}</p>}
       {save.error && (
         <p className={s.error} role="alert">
-          {save.error}
+          {tm(save.error)}
         </p>
       )}
     </>

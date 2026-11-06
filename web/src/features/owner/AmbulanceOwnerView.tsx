@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useT } from '../../i18n';
 import {
   Check,
   Failed,
@@ -11,7 +12,12 @@ import {
   useMutation,
   useResource,
 } from '../../ui';
-import { AMBULANCE_SERVICES, AMBULANCE_TYPES, toggled, type AmbulanceVendor, type FareRange } from './owner-shared';
+import {
+  AMBULANCE_SERVICES,
+  AMBULANCE_TYPES,
+  ambulanceServiceLabel,
+  ambulanceTypeLabel,
+  toggled, type AmbulanceVendor, type FareRange } from './owner-shared';
 
 const EMPTY: Omit<AmbulanceVendor, 'id' | 'hidden'> = {
   name: '',
@@ -27,6 +33,7 @@ const EMPTY: Omit<AmbulanceVendor, 'id' | 'hidden'> = {
 export function AmbulanceOwnerView() {
   const { data, error, loading, reload } = useResource<AmbulanceVendor[]>('/directory/my-ambulances', {});
   const [editing, setEditing] = useState<AmbulanceVendor | 'new' | null>(null);
+  const { t } = useT();
 
   if (loading && !data) return <Loading />;
   if (error) return <Failed message={error} />;
@@ -34,24 +41,24 @@ export function AmbulanceOwnerView() {
   const vendors = data ?? [];
   return (
     <Panel
-      title="My Ambulances"
-      description="Patients see these details on Cura Website."
+      title={t('owner.ambulances.title')}
+      description={t('owner.ambulances.description')}
       action={
         <button type="button" className={s.primary} onClick={() => setEditing('new')}>
-          Add
+          {t('common.add')}
         </button>
       }
     >
       {vendors.length === 0 ? (
-        <p className={s.muted}>No ambulance service added yet.</p>
+        <p className={s.muted}>{t('owner.ambulances.empty')}</p>
       ) : (
         <table className={s.table}>
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Phones</th>
-              <th>Types</th>
-              <th>On Cura Website</th>
+              <th>{t('owner.col.name')}</th>
+              <th>{t('owner.col.phones')}</th>
+              <th>{t('owner.ambulances.col.types')}</th>
+              <th>{t('owner.col.onWebsite')}</th>
               <th />
             </tr>
           </thead>
@@ -62,13 +69,13 @@ export function AmbulanceOwnerView() {
                 <td>{vendor.phones.join(', ')}</td>
                 <td>
                   {AMBULANCE_TYPES.filter((type) => vendor.categories.includes(type.key))
-                    .map((type) => type.label)
+                    .map((type) => ambulanceTypeLabel(t, type.key))
                     .join(', ')}
                 </td>
-                <td>{vendor.hidden ? 'Waiting for an admin' : 'Visible'}</td>
+                <td>{vendor.hidden ? t('owner.waitingForAdmin') : t('owner.visible')}</td>
                 <td>
                   <button type="button" className={s.linkButton} onClick={() => setEditing(vendor)}>
-                    Edit
+                    {t('common.edit')}
                   </button>
                 </td>
               </tr>
@@ -101,6 +108,7 @@ function AmbulanceModal({
   onSaved: () => void;
 }) {
   const save = useMutation();
+  const { t, tm } = useT();
   const [form, setForm] = useState<Omit<AmbulanceVendor, 'id' | 'hidden'>>({ ...EMPTY, ...existing });
   const [phones, setPhones] = useState((existing?.phones ?? []).join(', '));
   const set = (key: 'name' | 'address', value: string) => setForm((current) => ({ ...current, [key]: value }));
@@ -127,58 +135,58 @@ function AmbulanceModal({
 
   return (
     <Modal
-      title={existing ? `Edit ${existing.name}` : 'Add ambulance service'}
+      title={existing ? t('owner.editTitle', { name: existing.name }) : t('owner.ambulances.addTitle')}
       onClose={onClose}
       wide
       footer={
         <>
           {save.error && (
             <span className={s.error} role="alert">
-              {save.error}
+              {tm(save.error)}
             </span>
           )}
           <button type="button" className={s.secondary} onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </button>
           <button type="button" className={s.primary} onClick={() => void submit()} disabled={save.busy}>
-            {save.busy ? 'Saving…' : 'Save'}
+            {save.busy ? t('common.saving') : t('common.save')}
           </button>
         </>
       }
     >
       {!existing && (
-        <p className={s.muted}>Patients see a new service after a Cura admin publishes it.</p>
+        <p className={s.muted}>{t('owner.ambulances.newNote')}</p>
       )}
       <Row cols={2}>
-        <Field label="Name" required>
+        <Field label={t('owner.field.name')} required>
           <input className={s.input} value={form.name} onChange={(e) => set('name', e.target.value)} />
         </Field>
-        <Field label="Phone numbers" required hint="Separate several numbers with commas.">
+        <Field label={t('owner.field.phones')} required hint={t('owner.field.phonesHint')}>
           <input className={s.input} value={phones} onChange={(e) => setPhones(e.target.value)} />
         </Field>
       </Row>
-      <Field label="Address">
+      <Field label={t('owner.field.address')}>
         <input className={s.input} value={form.address ?? ''} onChange={(e) => set('address', e.target.value)} />
       </Field>
       <Check
-        label="Serves all of Dhaka"
+        label={t('owner.ambulances.dhakaWide')}
         checked={form.dhaka_wide}
         onChange={(checked) => setForm((current) => ({ ...current, dhaka_wide: checked }))}
       />
 
-      <h4 className={s.subtitle}>Ambulance types and fares (৳)</h4>
+      <h4 className={s.subtitle}>{t('owner.ambulances.typesAndFares')}</h4>
       {AMBULANCE_TYPES.map((type) => {
         const on = form.categories.includes(type.key);
         return (
           <div key={type.key}>
             <Check
-              label={type.label}
+              label={ambulanceTypeLabel(t, type.key)}
               checked={on}
               onChange={(checked) => setList('categories', toggled(form.categories, type.key, checked))}
             />
             {on && (
               <Row cols={2}>
-                <Field label={`${type.label} lowest fare`}>
+                <Field label={t('owner.ambulances.lowestFare', { type: ambulanceTypeLabel(t, type.key) })}>
                   <input
                     className={s.input}
                     inputMode="numeric"
@@ -186,7 +194,7 @@ function AmbulanceModal({
                     onChange={(e) => setFare(type.key, 'min', e.target.value)}
                   />
                 </Field>
-                <Field label={`${type.label} highest fare`}>
+                <Field label={t('owner.ambulances.highestFare', { type: ambulanceTypeLabel(t, type.key) })}>
                   <input
                     className={s.input}
                     inputMode="numeric"
@@ -200,11 +208,11 @@ function AmbulanceModal({
         );
       })}
 
-      <h4 className={s.subtitle}>Services</h4>
+      <h4 className={s.subtitle}>{t('owner.ambulances.services')}</h4>
       {AMBULANCE_SERVICES.map((service) => (
         <Check
           key={service.key}
-          label={service.label}
+          label={ambulanceServiceLabel(t, service.key)}
           checked={form.features.includes(service.key)}
           onChange={(checked) => setList('features', toggled(form.features, service.key, checked))}
         />

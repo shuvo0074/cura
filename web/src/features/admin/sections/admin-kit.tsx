@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { useServices } from '../../../app/services';
 import { WEBSITE_URL, appConfig } from '../../../config/env';
+import { useT } from '../../../i18n';
 import { uiStyles as s } from '../../../ui';
 
 /**
@@ -23,7 +24,7 @@ export function imageSrc(value: string | null | undefined): string | undefined {
  */
 export function ImageUpload({
   path,
-  label = 'Upload image',
+  label,
   onUploaded,
 }: {
   path: string;
@@ -31,6 +32,7 @@ export function ImageUpload({
   onUploaded: (address: string) => void;
 }) {
   const { http } = useServices();
+  const { t, tm } = useT();
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,12 +64,12 @@ export function ImageUpload({
         onChange={(e) => void upload(e.target.files?.[0])}
       />
       <button type="button" className={s.secondary} disabled={busy} onClick={() => input.current?.click()}>
-        {busy ? 'Uploading…' : label}
+        {busy ? t('admin.kit.uploading') : (label ?? t('admin.kit.uploadImage'))}
       </button>
       {error && (
         <span className={s.error} role="alert">
           {' '}
-          {error}
+          {tm(error)}
         </span>
       )}
     </span>

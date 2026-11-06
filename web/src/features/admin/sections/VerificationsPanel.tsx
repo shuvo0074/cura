@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useServices } from '../../../app/services';
+import { useT, type UseT } from '../../../i18n';
 import { Failed, Loading, Panel, uiStyles as s, useResource } from '../../../ui';
 import { imageSrc } from './admin-kit';
 import v from './VerificationsPanel.module.css';
@@ -7,11 +8,7 @@ import v from './VerificationsPanel.module.css';
 const BASE = '/directory/admin/verifications';
 
 type Status = 'pending' | 'approved' | 'rejected';
-const STATUSES: { key: Status; label: string }[] = [
-  { key: 'pending', label: 'Pending' },
-  { key: 'approved', label: 'Approved' },
-  { key: 'rejected', label: 'Rejected' },
-];
+const STATUSES: readonly Status[] = ['pending', 'approved', 'rejected'];
 
 /** What the doctor typed when they asked to be verified. */
 interface RequestDetails {
@@ -45,29 +42,29 @@ interface VerificationRequest {
   reviewed_by_name: string | null;
 }
 
-const when = (stamp: string | null): string =>
-  stamp ? new Date(stamp).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) : '';
+const when = (fmt: UseT['fmt'], stamp: string | null): string => (stamp ? fmt.dateTime(stamp) : '');
 
 /** Doctors asking for the "BMDC verified" badge, either on a new profile or on a listing they claim. */
 export function VerificationsPanel() {
+  const { t } = useT();
   const [status, setStatus] = useState<Status>('pending');
   const { data, error, loading, reload } = useResource<VerificationRequest[]>(BASE, { status });
 
   const requests = data ?? [];
   return (
     <Panel
-      title="Doctor verifications"
-      description="Check each BMDC number against the doctor's name before approving. Approving shows the BMDC verified badge on Cura Website and gives the account access to that listing's appointments."
+      title={t('admin.verifications.title')}
+      description={t('admin.verifications.description')}
     >
       <div className={s.filters}>
         {STATUSES.map((option) => (
           <button
-            key={option.key}
+            key={option}
             type="button"
-            data-active={status === option.key || undefined}
-            onClick={() => setStatus(option.key)}
+            data-active={status === option || undefined}
+            onClick={() => setStatus(option)}
           >
-            {option.label}
+            {t(`admin.verifications.status.${option}`)}
           </button>
         ))}
       </div>
@@ -77,7 +74,7 @@ export function VerificationsPanel() {
       ) : error ? (
         <Failed message={error} />
       ) : requests.length === 0 ? (
-        <p className={s.muted}>No {status} requests.</p>
+        <p className={s.muted}>{t(`admin.verifications.empty.${status}`)}</p>
       ) : (
         <div className={v.grid}>
           {requests.map((request) => (
@@ -91,6 +88,7 @@ export function VerificationsPanel() {
 
 /** One request: who signed up, the BMDC number to check and, for a claim, the listing they say is theirs. */
 function RequestCard({ request, onDone }: { request: VerificationRequest; onDone: () => void }) {
+  const { t, tm, fmt } = useT();
   const { http } = useServices();
   const [rejecting, setRejecting] = useState(false);
   const [note, setNote] = useState('');
@@ -128,7 +126,7 @@ function RequestCard({ request, onDone }: { request: VerificationRequest; onDone
           {subtitle && <p className={v.meta}>{subtitle}</p>}
         </div>
         <span className={v.kind} data-claim={isClaim || undefined}>
-          {isClaim ? 'Claims listing' : 'New doctor'}
+          {isClaim ? t('admin.verifications.claim') : t('admin.verifications.newDoctor')}
         </span>
       </div>
 
@@ -140,7 +138,7 @@ function RequestCard({ request, onDone }: { request: VerificationRequest; onDone
       <div className={v.contact}>
         {request.email && <span>{request.email}</span>}
         {request.phone && <a href={`tel:${request.phone}`}>{request.phone}</a>}
-        <span className={v.meta}>Submitted {when(request.submitted_at)}</span>
+        <span className={v.meta}>{t('admin.verifications.submitted', { when: when(fmt, request.submitted_at) })}</span>
       </div>
 
       {isClaim && request.doctor_id && (
@@ -151,7 +149,7 @@ function RequestCard({ request, onDone }: { request: VerificationRequest; onDone
             <span className={v.photo} aria-hidden="true" />
           )}
           <div>
-            <p className={v.meta}>Existing listing</p>
+            <p className={v.meta}>{t('admin.verifications.existingListing')}</p>
             <p>{request.listing_name}</p>
             <p className={v.meta}>
               {[request.listing_specialty, request.listing_hospital].filter(Boolean).join(' · ')}
@@ -160,7 +158,7 @@ function RequestCard({ request, onDone }: { request: VerificationRequest; onDone
         </div>
       )}
       {bmdcMismatch && (
-        <p className={s.error}>Listing has BMDC {request.listing_bmdc_no}. Approving replaces it.</p>
+        <p className={s.error}>{t('admin.verifications.bmdcMismatch', { bmdc: request.listing_bmdc_no ?? '' })}</p>
       )}
 
       {request.status === 'pending' ? (
@@ -170,14 +168,14 @@ function RequestCard({ request, onDone }: { request: VerificationRequest; onDone
               className={s.textarea}
               rows={2}
               autoFocus
-              aria-label="Reason for rejecting"
-              placeholder="Reason shown to the doctor, e.g. BMDC number does not match the name"
+              aria-label={t('admin.verifications.reasonLabel')}
+              placeholder={t('admin.verifications.reasonPlaceholder')}
               value={note}
               onChange={(e) => setNote(e.target.value)}
             />
             <div className={v.buttons}>
               <button type="button" className={s.secondary} disabled={busy} onClick={() => setRejecting(false)}>
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 type="button"
@@ -185,30 +183,36 @@ function RequestCard({ request, onDone }: { request: VerificationRequest; onDone
                 disabled={busy || note.trim().length < 5}
                 onClick={() => void act('reject', { note })}
               >
-                Reject
+                {t('admin.verifications.reject')}
               </button>
             </div>
           </>
         ) : (
           <div className={v.buttons}>
             <button type="button" className={s.secondary} disabled={busy} onClick={() => setRejecting(true)}>
-              Reject
+              {t('admin.verifications.reject')}
             </button>
             <button type="button" className={s.primary} disabled={busy} onClick={() => void act('approve')}>
-              {busy ? 'Approving…' : 'Approve'}
+              {busy ? t('admin.verifications.approving') : t('admin.verifications.approve')}
             </button>
           </div>
         )
       ) : (
         <p className={v.meta}>
-          {request.status === 'approved' ? 'Approved' : 'Rejected'} {when(request.reviewed_at)}
-          {request.reviewed_by_name && ` by ${request.reviewed_by_name}`}
+          {request.reviewed_by_name
+            ? t(`admin.verifications.reviewedBy.${request.status === 'approved' ? 'approved' : 'rejected'}`, {
+                when: when(fmt, request.reviewed_at),
+                name: request.reviewed_by_name,
+              })
+            : t(`admin.verifications.reviewed.${request.status === 'approved' ? 'approved' : 'rejected'}`, {
+                when: when(fmt, request.reviewed_at),
+              })}
           {request.review_note && <span className={v.note}>“{request.review_note}”</span>}
         </p>
       )}
       {error && (
         <p className={s.error} role="alert">
-          {error}
+          {tm(error)}
         </p>
       )}
     </article>

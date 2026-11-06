@@ -1,3 +1,5 @@
+import type { TranslationKey, UseT } from '../../../../i18n';
+
 /** Dhaka areas an ambulance vendor can be based in or serve. Copied from Cura Website (src/data/dhakaAreas.json); ids are what the API stores. */
 export interface AmbulanceArea {
   id: string;
@@ -80,3 +82,7 @@ export const AMBULANCE_AREAS: readonly AmbulanceArea[] = [
   { id: 'bakshibazar', name: 'Bakshibazar / Chankharpul' },
   { id: 'nawabpur', name: 'Nawabpur / Bangshal' },
 ];
+
+/** An area's name in the current language (`admin.area.*`); an unknown id is shown as it is. */
+export const areaLabel = (t: UseT['t'], id: string): string =>
+  AMBULANCE_AREAS.some((area) => area.id === id) ? t(`admin.area.${id}` as TranslationKey) : id;

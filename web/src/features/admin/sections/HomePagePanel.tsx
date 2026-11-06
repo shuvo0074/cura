@@ -1,5 +1,7 @@
 import { useRef, useState, type ReactNode } from 'react';
+import { useT, type TranslationKey } from '../../../i18n';
 import { Failed, Loading, Panel, Row, Field, SaveBar, uiStyles as s, useMutation, useResource } from '../../../ui';
+import { divisionLabel } from './data/divisions-hospitals';
 import { SiteImageField } from './PhotoCreditsPanel';
 import styles from './HomePagePanel.module.css';
 
@@ -27,10 +29,10 @@ const DEFAULT_HOME: HomeContent = {
   ].map(([name = '', bn = '']) => ({ name, bn, photo: null, alt: null })),
 };
 
-const PHONES: ReadonlyArray<readonly [keyof Contacts, string]> = [
-  ['emergency', 'Emergency (national)'],
-  ['health_line', 'Health advice line'],
-  ['hotline', 'Cura hotline'],
+const PHONES: ReadonlyArray<readonly [keyof Contacts, TranslationKey]> = [
+  ['emergency', 'admin.homePage.phone.emergency'],
+  ['health_line', 'admin.homePage.phone.healthLine'],
+  ['hotline', 'admin.homePage.phone.hotline'],
 ];
 
 type HomeDraft = Partial<HomeContent>;
@@ -40,6 +42,7 @@ type HomeDraft = Partial<HomeContent>;
  * across the Cura Website. Each section saves on its own.
  */
 export function HomePagePanel() {
+  const { t } = useT();
   const content = useResource<SiteContent>('/directory/admin/site-content', {});
   const specialties = useResource<CatalogPage[]>('/directory/admin/specialties', {});
   const symptoms = useResource<CatalogPage[]>('/directory/admin/symptoms', {});
@@ -93,10 +96,10 @@ export function HomePagePanel() {
     );
 
   return (
-    <Panel title="Home page" description="What the Cura Website home page shows. Each section saves on its own.">
+    <Panel title={t('admin.homePage.title')} description={t('admin.homePage.description')}>
       <Section
-        title="Phone numbers"
-        hint="Used in the header, footer and emergency box. The labels around them are in Site text."
+        title={t('admin.homePage.phones.title')}
+        hint={t('admin.homePage.phones.hint')}
         mutation={contactsSave}
         dirty={contactsDraft !== null}
         onSave={saveContacts}
@@ -104,7 +107,7 @@ export function HomePagePanel() {
       >
         <Row cols={3}>
           {PHONES.map(([key, label]) => (
-            <Field key={key} label={label} required>
+            <Field key={key} label={t(label)} required>
               <input
                 className={s.input}
                 required
@@ -118,8 +121,8 @@ export function HomePagePanel() {
       </Section>
 
       <Section
-        title="Popular specialties"
-        hint="Shown as cards on the home page; the first six also appear under the search box. Up to 12."
+        title={t('admin.homePage.specialties.title')}
+        hint={t('admin.homePage.specialties.hint', { max: 12 })}
         mutation={specialtiesSave}
         dirty={'popular_specialties' in homeDraft}
         onSave={() => saveHome('popular_specialties', specialtiesSave)}
@@ -130,14 +133,14 @@ export function HomePagePanel() {
           onChange={(list) => setHome('popular_specialties', list)}
           pages={specialties.data ?? []}
           pagesError={specialties.error}
-          pageLabel="Specialty"
+          kind="specialty"
           max={12}
         />
       </Section>
 
       <Section
-        title="Common problems"
-        hint="Everyday problems in the words people use, each opening a symptom page. Up to 16."
+        title={t('admin.homePage.problems.title')}
+        hint={t('admin.homePage.problems.hint', { max: 16 })}
         mutation={problemsSave}
         dirty={'common_problems' in homeDraft}
         onSave={() => saveHome('common_problems', problemsSave)}
@@ -148,14 +151,14 @@ export function HomePagePanel() {
           onChange={(list) => setHome('common_problems', list)}
           pages={symptoms.data ?? []}
           pagesError={symptoms.error}
-          pageLabel="Symptom"
+          kind="symptom"
           max={16}
         />
       </Section>
 
       <Section
-        title="Division photos"
-        hint="One photo per division for the browse-by-location cards. Credit photos that need it in Photo credits."
+        title={t('admin.homePage.divisions.title')}
+        hint={t('admin.homePage.divisions.hint')}
         mutation={divisionsSave}
         dirty={'divisions' in homeDraft}
         onSave={() => saveHome('divisions', divisionsSave)}
@@ -164,22 +167,22 @@ export function HomePagePanel() {
         <table className={`${s.table} ${styles.divisions}`}>
           <thead>
             <tr>
-              <th>Division</th>
-              <th>Bangla name</th>
-              <th>Photo</th>
+              <th>{t('admin.homePage.divisions.division')}</th>
+              <th>{t('admin.homePage.divisions.banglaName')}</th>
+              <th>{t('admin.homePage.divisions.photo')}</th>
             </tr>
           </thead>
           <tbody>
             {home.divisions.map((d) => (
               <tr key={d.name}>
-                <td>{d.name}</td>
+                <td>{divisionLabel(t, d.name)}</td>
                 <td>
                   <input
                     className={s.input}
                     required
                     value={d.bn}
                     onChange={(e) => setDivision(d.name, { bn: e.target.value })}
-                    aria-label={`${d.name} in Bangla`}
+                    aria-label={t('admin.homePage.divisions.inBangla', { name: divisionLabel(t, d.name) })}
                     lang="bn"
                   />
                 </td>
@@ -188,15 +191,15 @@ export function HomePagePanel() {
                     <SiteImageField
                       value={d.photo}
                       onChange={(photo) => setDivision(d.name, { photo })}
-                      label={`${d.name} photo`}
+                      label={t('admin.homePage.divisions.photoOf', { name: divisionLabel(t, d.name) })}
                     />
                     <input
                       className={s.input}
                       value={d.alt ?? ''}
                       onChange={(e) => setDivision(d.name, { alt: e.target.value })}
                       maxLength={160}
-                      placeholder="What the photo shows (for screen readers)"
-                      aria-label={`${d.name} photo description`}
+                      placeholder={t('admin.homePage.divisions.altPlaceholder')}
+                      aria-label={t('admin.homePage.divisions.altLabel', { name: divisionLabel(t, d.name) })}
                     />
                   </div>
                 </td>
@@ -227,6 +230,7 @@ function Section({
   onDiscard: () => void;
   children: ReactNode;
 }) {
+  const { t } = useT();
   const form = useRef<HTMLFormElement>(null);
   return (
     <form ref={form} className={styles.section} onSubmit={(e) => e.preventDefault()}>
@@ -245,7 +249,7 @@ function Section({
       >
         {dirty && (
           <button type="button" className={s.linkButton} onClick={onDiscard}>
-            Discard changes
+            {t('admin.homePage.discard')}
           </button>
         )}
       </SaveBar>
@@ -272,32 +276,35 @@ function ShortcutList({
   onChange,
   pages,
   pagesError,
-  pageLabel,
+  kind,
   max,
 }: {
   items: Shortcut[];
   onChange: (items: Shortcut[]) => void;
   pages: CatalogPage[];
   pagesError: string | null;
-  pageLabel: string;
+  kind: 'specialty' | 'symptom';
   max: number;
 }) {
+  const { t, tm } = useT();
   const set = (i: number, patch: Partial<Shortcut>) =>
     onChange(items.map((x, j) => (j === i ? { ...x, ...patch } : x)));
 
   return (
     <>
-      {pagesError && <p className={s.error}>Could not load the {pageLabel.toLowerCase()} pages: {pagesError}</p>}
+      {pagesError && (
+        <p className={s.error}>{t(`admin.homePage.${kind}.loadFailed`, { error: tm(pagesError) })}</p>
+      )}
       {items.length === 0 ? (
-        <p className={s.muted}>None yet.</p>
+        <p className={s.muted}>{t('admin.homePage.noneYet')}</p>
       ) : (
         <table className={`${s.table} ${styles.shortcuts}`}>
           <thead>
             <tr>
-              <th>{pageLabel} page</th>
-              <th>English label</th>
-              <th>Bangla label</th>
-              <th aria-label="Order" />
+              <th>{t(`admin.homePage.${kind}.page`)}</th>
+              <th>{t('admin.homePage.englishLabel')}</th>
+              <th>{t('admin.homePage.banglaLabel')}</th>
+              <th aria-label={t('admin.homePage.order')} />
             </tr>
           </thead>
           <tbody>
@@ -308,7 +315,7 @@ function ShortcutList({
                     className={s.input}
                     required
                     value={item.slug}
-                    aria-label={`${pageLabel} page ${i + 1}`}
+                    aria-label={t(`admin.homePage.${kind}.pageN`, { n: i + 1 })}
                     onChange={(e) => {
                       const page = pages.find((p) => p.slug === e.target.value);
                       set(i, {
@@ -318,7 +325,7 @@ function ShortcutList({
                       });
                     }}
                   >
-                    <option value="">Choose…</option>
+                    <option value="">{t('admin.homePage.choose')}</option>
                     {/* Keep a saved pick visible even if its page is missing from the list. */}
                     {item.slug && !pages.some((p) => p.slug === item.slug) && (
                       <option value={item.slug}>{item.slug}</option>
@@ -326,7 +333,7 @@ function ShortcutList({
                     {pages.map((p) => (
                       <option key={p.slug} value={p.slug}>
                         {p.name}
-                        {p.hidden ? ' (hidden)' : ''}
+                        {p.hidden ? t('admin.homePage.hiddenSuffix') : ''}
                       </option>
                     ))}
                   </select>
@@ -338,8 +345,8 @@ function ShortcutList({
                     value={item.en}
                     onChange={(e) => set(i, { en: e.target.value })}
                     maxLength={40}
-                    placeholder="English"
-                    aria-label={`English label ${i + 1}`}
+                    placeholder={t('admin.homePage.englishPlaceholder')}
+                    aria-label={t('admin.homePage.englishLabelN', { n: i + 1 })}
                   />
                 </td>
                 <td>
@@ -350,7 +357,7 @@ function ShortcutList({
                     onChange={(e) => set(i, { bn: e.target.value })}
                     maxLength={40}
                     placeholder="বাংলা"
-                    aria-label={`Bangla label ${i + 1}`}
+                    aria-label={t('admin.homePage.banglaLabelN', { n: i + 1 })}
                     lang="bn"
                   />
                 </td>
@@ -361,7 +368,7 @@ function ShortcutList({
                       className={s.iconButton}
                       disabled={i === 0}
                       onClick={() => onChange(move(items, i, -1))}
-                      aria-label={`Move ${i + 1} up`}
+                      aria-label={t('admin.homePage.moveUp', { n: i + 1 })}
                     >
                       ↑
                     </button>
@@ -370,7 +377,7 @@ function ShortcutList({
                       className={s.iconButton}
                       disabled={i === items.length - 1}
                       onClick={() => onChange(move(items, i, 1))}
-                      aria-label={`Move ${i + 1} down`}
+                      aria-label={t('admin.homePage.moveDown', { n: i + 1 })}
                     >
                       ↓
                     </button>
@@ -378,9 +385,9 @@ function ShortcutList({
                       type="button"
                       className={s.linkDanger}
                       onClick={() => onChange(items.filter((_, j) => j !== i))}
-                      aria-label={`Remove ${i + 1}`}
+                      aria-label={t('admin.homePage.removeN', { n: i + 1 })}
                     >
-                      Remove
+                      {t('common.remove')}
                     </button>
                   </div>
                 </td>
@@ -395,7 +402,7 @@ function ShortcutList({
         disabled={items.length >= max}
         onClick={() => onChange([...items, { slug: '', en: '', bn: '' }])}
       >
-        Add
+        {t('common.add')}
       </button>
     </>
   );

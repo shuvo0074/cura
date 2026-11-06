@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useServices } from '../../../app/services';
+import { useT, type TranslationKey, type UseT } from '../../../i18n';
 import { Failed, Field, Loading, Modal, ModalActions, Panel, Row, uiStyles as s, useResource } from '../../../ui';
 import { ImageUpload, fromList, imageSrc } from './admin-kit';
-import { DIVISIONS, districtsFor } from './data/divisions-hospitals';
+import { DIVISIONS, districtLabel, districtsFor, divisionLabel } from './data/divisions-hospitals';
 import d from './DoctorsPanel.module.css';
 
 const BASE = '/directory/admin/doctors';
@@ -174,8 +175,18 @@ function toForm(record: DoctorRecord): DoctorForm {
   };
 }
 
-const genderLabel = (gender: string | null): string =>
-  gender === 'female' ? 'Female' : gender === 'male' ? 'Male' : 'Not specified';
+const genderLabel = (t: UseT['t'], gender: string | null): string =>
+  gender === 'female'
+    ? t('common.gender.FEMALE')
+    : gender === 'male'
+      ? t('common.gender.MALE')
+      : t('admin.doctors.notSpecified');
+
+/** Visibility filter values stay English; these are their labels. */
+const VISIBILITY_LABELS: Record<string, TranslationKey> = {
+  Visible: 'admin.doctors.visible',
+  Hidden: 'admin.doctors.hidden',
+};
 
 const toggled = (list: readonly string[], item: string): string[] =>
   list.includes(item) ? list.filter((entry) => entry !== item) : [...list, item];
@@ -195,6 +206,7 @@ type Editing = { record: null } | { record: DoctorRecord; notice?: string };
 
 /** Doctor listings patients find on Cura Website. Each doctor is also a user account. */
 export function DoctorsPanel() {
+  const { t } = useT();
   const { data, error, loading, reload } = useResource<DoctorRecord[]>(BASE, {});
   const hospitals = useResource<HospitalOption[]>('/directory/admin/hospitals', {});
   const specialties = useResource<SpecialtyOption[]>('/directory/admin/specialties', {});
@@ -244,11 +256,11 @@ export function DoctorsPanel() {
 
   return (
     <Panel
-      title="Doctors"
-      description="Doctors patients find on Cura Website. Each doctor is also a user account. Click a row to edit it."
+      title={t('admin.doctors.title')}
+      description={t('admin.doctors.description')}
       action={
         <button type="button" className={s.primary} onClick={() => setEditing({ record: null })}>
-          Add doctor
+          {t('admin.doctors.add')}
         </button>
       }
     >
@@ -256,37 +268,45 @@ export function DoctorsPanel() {
         <input
           className={s.input}
           type="search"
-          placeholder="Search by name"
-          aria-label="Search by name"
+          placeholder={t('admin.doctors.searchByName')}
+          aria-label={t('admin.doctors.searchByName')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
       <div className={d.filterGrid}>
         <FilterGroup
-          title="Visibility"
+          title={t('admin.doctors.visibility')}
           items={['Visible', 'Hidden']}
+          labelOf={(item) => (VISIBILITY_LABELS[item] ? t(VISIBILITY_LABELS[item]) : item)}
           selected={filters.visibility}
           onToggle={(value) => setFilters((current) => ({ ...current, visibility: toggled(current.visibility, value) }))}
         />
         <FilterGroup
-          title="Specialty"
+          title={t('admin.doctors.specialty')}
           searchable
           items={specialtiesInUse}
           selected={filters.specialty}
           onToggle={(value) => setFilters((current) => ({ ...current, specialty: toggled(current.specialty, value) }))}
         />
-        <FilterGroup title="Division" items={DIVISIONS} selected={filters.division} onToggle={toggleDivision} />
         <FilterGroup
-          title="District"
+          title={t('admin.doctors.division')}
+          items={DIVISIONS}
+          labelOf={(item) => divisionLabel(t, item)}
+          selected={filters.division}
+          onToggle={toggleDivision}
+        />
+        <FilterGroup
+          title={t('admin.doctors.district')}
           searchable
+          labelOf={(item) => districtLabel(t, item)}
           items={districts}
           selected={filters.city}
           onToggle={(value) => setFilters((current) => ({ ...current, city: toggled(current.city, value) }))}
         />
       </div>
       <p className={s.muted}>
-        Showing {shown.length} of {all.length}.{' '}
+        {t('admin.doctors.showing', { shown: shown.length, total: all.length })}{' '}
         {filtering && (
           <button
             type="button"
@@ -296,22 +316,22 @@ export function DoctorsPanel() {
               setFilters(NO_FILTERS);
             }}
           >
-            Clear filters
+            {t('admin.doctors.clearFilters')}
           </button>
         )}
       </p>
 
       {shown.length === 0 ? (
-        <p className={s.muted}>{all.length ? 'No doctors match these filters.' : 'No doctors added yet.'}</p>
+        <p className={s.muted}>{all.length ? t('admin.doctors.noMatches') : t('admin.doctors.empty')}</p>
       ) : (
         <table className={s.table}>
           <thead>
             <tr>
-              <th aria-label="Photo" />
-              <th>Name</th>
-              <th>Specialty</th>
-              <th>Primary hospital</th>
-              <th>Gender</th>
+              <th aria-label={t('admin.doctors.photo')} />
+              <th>{t('admin.doctors.name')}</th>
+              <th>{t('admin.doctors.specialty')}</th>
+              <th>{t('admin.doctors.primaryHospital')}</th>
+              <th>{t('admin.doctors.gender')}</th>
               <th />
             </tr>
           </thead>
@@ -328,13 +348,13 @@ export function DoctorsPanel() {
                 </td>
                 <td>
                   {doctor.name}
-                  {doctor.hidden && <span className={d.tag}>Hidden</span>}
+                  {doctor.hidden && <span className={d.tag}>{t('admin.doctors.hidden')}</span>}
                 </td>
                 <td>{doctor.specialty}</td>
-                <td className={s.mutedCell}>{doctor.hospital_name || 'No hospital'}</td>
+                <td className={s.mutedCell}>{doctor.hospital_name || t('admin.doctors.noHospital')}</td>
                 <td>
-                  {genderLabel(doctor.gender)}
-                  {doctor.gender_is_demo && <span className={s.staffMeta}>Sample data</span>}
+                  {genderLabel(t, doctor.gender)}
+                  {doctor.gender_is_demo && <span className={s.staffMeta}>{t('admin.doctors.sampleData')}</span>}
                 </td>
                 <td>
                   <button
@@ -345,7 +365,7 @@ export function DoctorsPanel() {
                       setEditing({ record: doctor });
                     }}
                   >
-                    Edit
+                    {t('common.edit')}
                   </button>
                 </td>
               </tr>
@@ -382,15 +402,22 @@ function FilterGroup({
   selected,
   onToggle,
   searchable,
+  labelOf = (item) => item,
 }: {
   title: string;
   items: readonly string[];
   selected: readonly string[];
   onToggle: (item: string) => void;
   searchable?: boolean;
+  /** The shown label of a value; values themselves stay as stored. */
+  labelOf?: (item: string) => string;
 }) {
+  const { t } = useT();
   const [query, setQuery] = useState('');
-  const matches = items.filter((item) => item.toLowerCase().includes(query.trim().toLowerCase()));
+  const needle = query.trim().toLowerCase();
+  const matches = items.filter(
+    (item) => item.toLowerCase().includes(needle) || labelOf(item).toLowerCase().includes(needle),
+  );
   return (
     <div className={d.filterGroup}>
       <p className={d.filterTitle}>{title}</p>
@@ -398,8 +425,8 @@ function FilterGroup({
         <input
           className={s.input}
           type="search"
-          placeholder={`Search ${title.toLowerCase()}`}
-          aria-label={`Search ${title.toLowerCase()}`}
+          placeholder={t('admin.doctors.searchIn', { title: title.toLowerCase() })}
+          aria-label={t('admin.doctors.searchIn', { title: title.toLowerCase() })}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
@@ -408,10 +435,10 @@ function FilterGroup({
         {matches.map((item) => (
           <label key={item} className={d.filterItem}>
             <input type="checkbox" checked={selected.includes(item)} onChange={() => onToggle(item)} />
-            {item}
+            {labelOf(item)}
           </label>
         ))}
-        {matches.length === 0 && <span className={s.muted}>No matches.</span>}
+        {matches.length === 0 && <span className={s.muted}>{t('admin.doctors.noFilterMatches')}</span>}
       </div>
     </div>
   );
@@ -436,6 +463,7 @@ function DoctorModal({
   onChanged: () => void;
   onCreatedWithoutPhoto: (record: DoctorRecord, notice: string) => void;
 }) {
+  const { t, tm } = useT();
   const { http } = useServices();
   const id = record?.id ?? null;
   const [form, setForm] = useState<DoctorForm>(() => (record ? toForm(record) : BLANK));
@@ -482,7 +510,10 @@ function DoctorModal({
         // The doctor is saved; reopen it so the photo can be tried again.
         setBusy(false);
         onChanged();
-        onCreatedWithoutPhoto(created.value, `Doctor saved, but the photo did not upload: ${uploaded.error.message}`);
+        onCreatedWithoutPhoto(
+          created.value,
+          t('admin.doctors.photoUploadFailed', { error: tm(uploaded.error.message) }),
+        );
         return;
       }
     }
@@ -493,7 +524,7 @@ function DoctorModal({
 
   return (
     <Modal
-      title={record ? `Edit ${record.name}` : 'Add doctor'}
+      title={record ? t('admin.doctors.editTitle', { name: record.name }) : t('admin.doctors.add')}
       onClose={onClose}
       wide
       footer={<ModalActions error={error} busy={busy} onCancel={onClose} onSave={() => void save()} />}
@@ -525,7 +556,7 @@ function DoctorModal({
       />
 
       <Row cols={2}>
-        <Field label="Full name" required>
+        <Field label={t('admin.doctors.fullName')} required>
           <input {...text('name')} />
         </Field>
         <SpecialtySelect
@@ -536,109 +567,109 @@ function DoctorModal({
       </Row>
       <Row cols={2}>
         <Field
-          label="Mobile number"
+          label={t('admin.doctors.mobile')}
           required={!id}
-          hint={id ? undefined : 'The doctor signs up with this number, e.g. 01712345678.'}
+          hint={id ? undefined : t('admin.doctors.mobileHint')}
         >
           <input {...text('phone')} type="tel" inputMode="tel" placeholder="01712345678" />
         </Field>
-        <Field label="Gender">
+        <Field label={t('admin.doctors.gender')}>
           <select className={s.input} value={form.gender} onChange={(e) => set({ gender: e.target.value })}>
-            <option value="">Not specified</option>
-            <option value="female">Female</option>
-            <option value="male">Male</option>
+            <option value="">{t('admin.doctors.notSpecified')}</option>
+            <option value="female">{t('common.gender.FEMALE')}</option>
+            <option value="male">{t('common.gender.MALE')}</option>
           </select>
         </Field>
       </Row>
       <Row cols={3}>
-        <Field label="Department">
+        <Field label={t('admin.doctors.department')}>
           <input {...text('department')} />
         </Field>
-        <Field label="Experience">
+        <Field label={t('admin.doctors.experience')}>
           <input {...text('experience')} />
         </Field>
-        <Field label="Workplace">
+        <Field label={t('admin.doctors.workplace')}>
           <input {...text('workplace')} />
         </Field>
       </Row>
       <Row cols={3}>
-        <Field label="Chamber">
+        <Field label={t('admin.doctors.chamber')}>
           <input {...text('chamber')} />
         </Field>
-        <Field label="Consultation fee (৳)">
+        <Field label={t('admin.doctors.fee')}>
           <input {...text('fees')} inputMode="numeric" />
         </Field>
-        <Field label="Follow-up fee (৳)">
+        <Field label={t('admin.doctors.followupFee')}>
           <input {...text('followupFees')} inputMode="numeric" />
         </Field>
       </Row>
       <Row cols={3}>
-        <Field label="BMDC number" hint="For example A-12345.">
+        <Field label={t('admin.doctors.bmdc')} hint={t('admin.doctors.bmdcHint')}>
           <input {...text('bmdcNo')} />
         </Field>
-        <Field label="Rating (0 to 5)">
+        <Field label={t('admin.doctors.rating')}>
           <input {...text('rating')} type="number" min={0} max={5} step={0.1} />
         </Field>
-        <Field label="Website">
+        <Field label={t('admin.doctors.website')}>
           <input {...text('website')} type="url" placeholder="https://…" />
         </Field>
       </Row>
-      <Field label="About">
+      <Field label={t('admin.doctors.about')}>
         <textarea className={s.textarea} rows={3} value={form.about} onChange={(e) => set({ about: e.target.value })} />
       </Field>
       <Row cols={3}>
-        <Field label="Education">
+        <Field label={t('admin.doctors.education')}>
           <input {...text('education')} />
         </Field>
-        <Field label="Languages">
+        <Field label={t('admin.doctors.languages')}>
           <input {...text('languages')} />
         </Field>
-        <Field label="Consulting hours">
+        <Field label={t('admin.doctors.consultingHours')}>
           <input {...text('consultingHours')} />
         </Field>
       </Row>
-      <Field label="Address">
+      <Field label={t('admin.doctors.address')}>
         <input {...text('address')} />
       </Field>
       <Row cols={2}>
-        <Field label="Clinical expertise" hint="Separate items with commas.">
+        <Field label={t('admin.doctors.clinicalExpertise')} hint={t('admin.doctors.commaHint')}>
           <input {...text('clinicalExpertise')} />
         </Field>
-        <Field label="Treatments" hint="Separate items with commas.">
+        <Field label={t('admin.doctors.treatments')} hint={t('admin.doctors.commaHint')}>
           <input {...text('treatments')} />
         </Field>
       </Row>
       <Row cols={2}>
-        <Field label="Latitude">
-          <input {...text('lat')} type="number" step="any" min={-90} max={90} placeholder="e.g. 23.7465" />
+        <Field label={t('admin.doctors.latitude')}>
+          <input {...text('lat')} type="number" step="any" min={-90} max={90} placeholder={t('admin.doctors.latPlaceholder')} />
         </Field>
-        <Field label="Longitude">
-          <input {...text('lng')} type="number" step="any" min={-180} max={180} placeholder="e.g. 90.3760" />
+        <Field label={t('admin.doctors.longitude')}>
+          <input {...text('lng')} type="number" step="any" min={-180} max={180} placeholder={t('admin.doctors.lngPlaceholder')} />
         </Field>
       </Row>
       <Row cols={2}>
-        <Field label="Source link">
+        <Field label={t('admin.doctors.sourceLink')}>
           <input {...text('source_url')} type="url" placeholder="https://…" />
         </Field>
-        <Field label="Checked on">
+        <Field label={t('admin.doctors.checkedOn')}>
           <input {...text('verified_on')} type="date" />
         </Field>
       </Row>
 
-      <Section title="Where they practise">
+      <Section title={t('admin.doctors.wherePractise')}>
         <Row cols={3}>
-          <Field label="Primary hospital or diagnostic centre">
+          <Field label={t('admin.doctors.primaryPlace')}>
             <select className={s.input} value={form.hospitalId} onChange={(e) => set({ hospitalId: e.target.value })}>
-              <option value="">No primary affiliation</option>
+              <option value="">{t('admin.doctors.noPrimary')}</option>
               {hospitals.map((place) => (
                 <option key={place.id} value={place.id}>
                   {place.name}
-                  {place.hidden ? ' (hidden)' : ''}
+                  {place.hidden ? ` ${t('admin.doctors.hiddenTag')}` : ''}
                 </option>
               ))}
             </select>
           </Field>
-          <Field label="Division">
+          <Field label={t('admin.doctors.division')}>
             <select
               className={s.input}
               value={form.division}
@@ -648,22 +679,22 @@ function DoctorModal({
                 setForm((current) => ({ ...current, division, city: allowed.has(current.city) ? current.city : '' }));
               }}
             >
-              <option value="">No division</option>
+              <option value="">{t('admin.doctors.noDivision')}</option>
               {DIVISIONS.map((name) => (
                 <option key={name} value={name}>
-                  {name} Division
+                  {t('admin.doctors.divisionOption', { name: divisionLabel(t, name) })}
                 </option>
               ))}
             </select>
           </Field>
-          <Field label="District">
+          <Field label={t('admin.doctors.district')}>
             <select className={s.input} value={form.city} onChange={(e) => set({ city: e.target.value })}>
-              <option value="">No district</option>
+              <option value="">{t('admin.doctors.noDistrict')}</option>
               {/* Keep an old value that is not on the list, so saving does not drop it. */}
               {form.city && !districtOptions.includes(form.city) && <option value={form.city}>{form.city}</option>}
               {districtOptions.map((name) => (
                 <option key={name} value={name}>
-                  {name}
+                  {districtLabel(t, name)}
                 </option>
               ))}
             </select>
@@ -671,7 +702,7 @@ function DoctorModal({
         </Row>
       </Section>
 
-      <Section title="Chambers at hospitals and diagnostic centres">
+      <Section title={t('admin.doctors.chambers')}>
         <ChambersFields
           entries={form.weeklySchedule}
           hospitals={hospitals}
@@ -703,9 +734,10 @@ function SpecialtySelect({
   options: readonly string[];
   onChange: (value: string) => void;
 }) {
+  const { t } = useT();
   const [custom, setCustom] = useState(() => Boolean(value) && !options.includes(value));
   return (
-    <Field label="Specialty" required>
+    <Field label={t('admin.doctors.specialty')} required>
       <select
         className={s.input}
         value={custom ? OTHER : value}
@@ -715,20 +747,20 @@ function SpecialtySelect({
           onChange(next === OTHER ? '' : next);
         }}
       >
-        <option value="">Choose a specialty</option>
+        <option value="">{t('admin.doctors.chooseSpecialty')}</option>
         {options.map((name) => (
           <option key={name} value={name}>
             {name}
           </option>
         ))}
-        <option value={OTHER}>Other…</option>
+        <option value={OTHER}>{t('admin.doctors.other')}</option>
       </select>
       {custom && (
         <input
           className={s.input}
           autoFocus
-          placeholder="New specialty name"
-          aria-label="New specialty name"
+          placeholder={t('admin.doctors.newSpecialty')}
+          aria-label={t('admin.doctors.newSpecialty')}
           value={value}
           onChange={(e) => onChange(e.target.value)}
         />
@@ -737,12 +769,12 @@ function SpecialtySelect({
   );
 }
 
-const CHAMBER_FIELDS: { key: 'venue' | 'time' | 'address' | 'phone' | 'note'; label: string }[] = [
-  { key: 'venue', label: 'Venue' },
-  { key: 'time', label: 'Time' },
-  { key: 'address', label: 'Address' },
-  { key: 'phone', label: 'Phone' },
-  { key: 'note', label: 'Note' },
+const CHAMBER_FIELDS: { key: 'venue' | 'time' | 'address' | 'phone' | 'note'; label: TranslationKey }[] = [
+  { key: 'venue', label: 'admin.doctors.chamberVenue' },
+  { key: 'time', label: 'admin.doctors.chamberTime' },
+  { key: 'address', label: 'admin.doctors.address' },
+  { key: 'phone', label: 'admin.doctors.chamberPhone' },
+  { key: 'note', label: 'admin.doctors.chamberNote' },
 ];
 
 /** The doctor's weekly chambers. Choosing a listed place fills in its name, address and hotline. */
@@ -755,18 +787,19 @@ function ChambersFields({
   hospitals: HospitalOption[];
   onChange: (entries: ChamberEntry[]) => void;
 }) {
+  const { t } = useT();
   const update = (index: number, values: Partial<ChamberEntry>) =>
     onChange(entries.map((entry, i) => (i === index ? { ...entry, ...values } : entry)));
 
   return (
     <>
-      {entries.length === 0 && <p className={s.muted}>No chambers added.</p>}
+      {entries.length === 0 && <p className={s.muted}>{t('admin.doctors.noChambers')}</p>}
       {entries.map((entry, index) => {
         const placeId = entry.hospital_id || hospitals.find((place) => place.name === entry.venue)?.id || '';
         return (
           <div key={index} className={d.chamber}>
             <Row cols={2}>
-              <Field label="Hospital or diagnostic centre">
+              <Field label={t('admin.doctors.chamberPlace')}>
                 <select
                   className={s.input}
                   value={placeId}
@@ -780,7 +813,7 @@ function ChambersFields({
                     );
                   }}
                 >
-                  <option value="">Other venue</option>
+                  <option value="">{t('admin.doctors.otherVenue')}</option>
                   {hospitals.map((place) => (
                     <option key={place.id} value={place.id}>
                       {place.name}
@@ -789,7 +822,7 @@ function ChambersFields({
                 </select>
               </Field>
               {CHAMBER_FIELDS.map(({ key, label }) => (
-                <Field key={key} label={label}>
+                <Field key={key} label={t(label)}>
                   <input
                     className={s.input}
                     value={typeof entry[key] === 'string' ? entry[key] : ''}
@@ -805,7 +838,7 @@ function ChambersFields({
               className={s.linkDanger}
               onClick={() => onChange(entries.filter((_, i) => i !== index))}
             >
-              Remove chamber
+              {t('admin.doctors.removeChamber')}
             </button>
           </div>
         );
@@ -815,7 +848,7 @@ function ChambersFields({
         className={s.secondary}
         onClick={() => onChange([...entries, { venue: '', time: '', address: '', phone: '' }])}
       >
-        Add chamber
+        {t('admin.doctors.addChamber')}
       </button>
     </>
   );
@@ -834,6 +867,7 @@ function RecordActions({
   onHidden: (hidden: boolean) => void;
   onDeleted: () => void;
 }) {
+  const { t, tm } = useT();
   const { http } = useServices();
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -872,15 +906,15 @@ function RecordActions({
         <span>
           {hidden ? (
             <>
-              <strong className={d.warn}>Hidden.</strong> Patients cannot see this doctor.
+              <strong className={d.warn}>{t('admin.doctors.hiddenStrong')}</strong> {t('admin.doctors.hiddenNote')}
             </>
           ) : (
-            'Visible to patients.'
+            t('admin.doctors.visibleNote')
           )}
         </span>
         <span className={d.recordButtons}>
           <button type="button" className={s.secondary} disabled={busy} onClick={() => void toggleHidden()}>
-            {hidden ? 'Show on site' : 'Hide from site'}
+            {hidden ? t('admin.doctors.show') : t('admin.doctors.hide')}
           </button>
           <button
             type="button"
@@ -888,21 +922,21 @@ function RecordActions({
             disabled={busy}
             onClick={() => void remove()}
           >
-            {confirming ? 'Click again to delete' : 'Delete'}
+            {confirming ? t('admin.doctors.confirmDelete') : t('common.delete')}
           </button>
         </span>
       </div>
       {confirming && !busy && (
         <p className={s.muted}>
-          Deleting cannot be undone. Hide the doctor instead if they might come back.{' '}
+          {t('admin.doctors.deleteWarning')}{' '}
           <button type="button" className={s.linkButton} onClick={() => setConfirming(false)}>
-            Cancel
+            {t('common.cancel')}
           </button>
         </p>
       )}
       {error && (
         <p className={s.error} role="alert">
-          {error}
+          {tm(error)}
         </p>
       )}
     </div>
@@ -925,6 +959,7 @@ function PhotoField({
   onPending: (file: File | null) => void;
   onPhoto: (photo: string) => void;
 }) {
+  const { t, tm } = useT();
   const { http } = useServices();
   const picker = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -954,12 +989,12 @@ function PhotoField({
 
   return (
     <div className={s.logoRow}>
-      <div className={d.photo}>{src ? <img src={src} alt="" /> : 'No photo'}</div>
+      <div className={d.photo}>{src ? <img src={src} alt="" /> : t('admin.doctors.noPhoto')}</div>
       <div>
-        <span className={s.fieldLabel}>Photo{pending ? ' (uploads when you save)' : ''}</span>
+        <span className={s.fieldLabel}>{pending ? t('admin.doctors.photoPending') : t('admin.doctors.photo')}</span>
         <div className={d.photoButtons}>
           {id ? (
-            <ImageUpload path={`${BASE}/${id}/photo`} label={src ? 'Change photo' : 'Upload photo'} onUploaded={onPhoto} />
+            <ImageUpload path={`${BASE}/${id}/photo`} label={src ? t('admin.doctors.changePhoto') : t('admin.doctors.uploadPhoto')} onUploaded={onPhoto} />
           ) : (
             <>
               <input
@@ -974,19 +1009,19 @@ function PhotoField({
                 }}
               />
               <button type="button" className={s.secondary} onClick={() => picker.current?.click()}>
-                {src ? 'Change photo' : 'Choose photo'}
+                {src ? t('admin.doctors.changePhoto') : t('admin.doctors.choosePhoto')}
               </button>
             </>
           )}
           {src && (
             <button type="button" className={s.linkDanger} disabled={busy} onClick={() => void remove()}>
-              {busy ? 'Removing…' : 'Remove'}
+              {busy ? t('admin.doctors.removing') : t('common.remove')}
             </button>
           )}
         </div>
         {error && (
           <p className={s.error} role="alert">
-            {error}
+            {tm(error)}
           </p>
         )}
       </div>

@@ -1,7 +1,9 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { useServices } from '../../../app/services';
+import { useT } from '../../../i18n';
 import { Check, Failed, Loading, Panel, uiStyles as s, useResource } from '../../../ui';
-import { AMBULANCE_TYPES, type FareRange } from '../../owner/owner-shared';
+import { AMBULANCE_TYPES, ambulanceTypeLabel, type FareRange } from '../../owner/owner-shared';
+import { catalogueLabel } from './data/hospital-catalogue';
 import p from './SamplePricesPanel.module.css';
 
 interface TestPrice {
@@ -24,7 +26,8 @@ const TEST_CATEGORIES = [
 ] as const;
 
 type Section = 'fares' | 'tests';
-type Message = { error: boolean; text: string };
+/** `text` is null for "Saved", otherwise the error as Cura API sent it. */
+type Message = { error: boolean; text: string | null };
 
 /**
  * Sample prices fill gaps until real ones exist: the shared ambulance fare
@@ -32,6 +35,7 @@ type Message = { error: boolean; text: string };
  * sample. Each card saves on its own.
  */
 export function SamplePricesPanel() {
+  const { t } = useT();
   const { http } = useServices();
   const { data, error, loading, setData } = useResource<SamplePrices>('/directory/admin/sample-prices', {});
   const [saving, setSaving] = useState<Section | null>(null);
@@ -53,7 +57,7 @@ export function SamplePricesPanel() {
     if (result.ok) {
       // The answer holds every list as stored, so the other card's edits are kept.
       setData((current) => (current ? { ...current, ...pick(result.value, section) } : result.value));
-      setMessages((m) => ({ ...m, [section]: { error: false, text: 'Saved' } }));
+      setMessages((m) => ({ ...m, [section]: { error: false, text: null } }));
     } else {
       setMessages((m) => ({ ...m, [section]: { error: true, text: result.error.message } }));
     }
@@ -78,20 +82,20 @@ export function SamplePricesPanel() {
     setTests((tests) => tests.map((test, i) => (i === index ? { ...test, ...patch } : test)));
 
   return (
-    <Panel title="Sample prices" description="Prices Cura Website shows, labelled as sample, until real ones exist.">
+    <Panel title={t('admin.samplePrices.title')} description={t('admin.samplePrices.description')}>
       <Card
-        title="Ambulance fares"
-        hint="Shown for any ambulance type a vendor offers without its own fare. One way within Dhaka, in taka."
+        title={t('admin.samplePrices.fares.title')}
+        hint={t('admin.samplePrices.fares.hint')}
         busy={saving === 'fares'}
         message={messages.fares}
         onSubmit={() => void save('fares', { ambulanceFares: data.ambulanceFares })}
       >
         <div className={p.fareGrid}>
-          <span className={p.head}>Type</span>
-          <span className={p.head}>From (৳)</span>
-          <span className={p.head}>To (৳)</span>
+          <span className={p.head}>{t('admin.samplePrices.fares.type')}</span>
+          <span className={p.head}>{t('admin.samplePrices.fares.from')}</span>
+          <span className={p.head}>{t('admin.samplePrices.fares.to')}</span>
           {AMBULANCE_TYPES.map((type) => (
-            <FareRow key={type.key} label={type.label}>
+            <FareRow key={type.key} label={ambulanceTypeLabel(t, type.key)}>
               {(['min', 'max'] as const).map((edge) => (
                 <input
                   key={edge}
@@ -101,7 +105,7 @@ export function SamplePricesPanel() {
                   min={0}
                   step={1}
                   inputMode="numeric"
-                  aria-label={`${type.label} ${edge === 'min' ? 'lowest' : 'highest'} sample fare`}
+                  aria-label={t(`admin.samplePrices.fares.${edge}Label`, { type: ambulanceTypeLabel(t, type.key) })}
                   value={data.ambulanceFares[type.key]?.[edge] ?? ''}
                   onChange={(e) => setFare(type.key, edge, e.target.value)}
                 />
@@ -112,15 +116,15 @@ export function SamplePricesPanel() {
       </Card>
 
       <Card
-        title="Diagnostic test prices"
-        hint="Fill empty prices for these tests at diagnostic centres. Published and entered prices always come first."
+        title={t('admin.samplePrices.tests.title')}
+        hint={t('admin.samplePrices.tests.hint')}
         busy={saving === 'tests'}
         message={messages.tests}
         onSubmit={() => void save('tests', { testPrices: data.testPrices, showTestPrices: data.showTestPrices })}
       >
         <Check
-          label="Show sample test prices on the site"
-          description={'Turn off once centres have enough real prices. Empty prices then show "Price not published".'}
+          label={t('admin.samplePrices.tests.show')}
+          description={t('admin.samplePrices.tests.showHint')}
           checked={data.showTestPrices}
           onChange={(checked) => setData((current) => (current ? { ...current, showTestPrices: checked } : current))}
         />
@@ -129,20 +133,20 @@ export function SamplePricesPanel() {
             <input
               className={s.input}
               required
-              placeholder="Test name"
-              aria-label="Test name"
+              placeholder={t('admin.samplePrices.tests.name')}
+              aria-label={t('admin.samplePrices.tests.name')}
               value={test.name}
               onChange={(e) => setTest(index, { name: e.target.value })}
             />
             <select
               className={s.input}
-              aria-label="Category"
+              aria-label={t('admin.samplePrices.tests.category')}
               value={test.category}
               onChange={(e) => setTest(index, { category: e.target.value })}
             >
               {TEST_CATEGORIES.map((category) => (
                 <option key={category.key} value={category.key}>
-                  {category.label}
+                  {catalogueLabel(t, 'testCategory', category.key)}
                 </option>
               ))}
             </select>
@@ -154,17 +158,17 @@ export function SamplePricesPanel() {
               step={1}
               inputMode="numeric"
               placeholder="৳"
-              aria-label="Price in taka"
+              aria-label={t('admin.samplePrices.tests.price')}
               value={test.price}
               onChange={(e) => setTest(index, { price: e.target.value })}
             />
             <button
               type="button"
               className={s.linkDanger}
-              aria-label={`Remove ${test.name || 'test'}`}
+              aria-label={test.name ? t('admin.samplePrices.tests.removeNamed', { name: test.name }) : t('admin.samplePrices.tests.remove')}
               onClick={() => setTests((tests) => tests.filter((_, i) => i !== index))}
             >
-              Remove
+              {t('common.remove')}
             </button>
           </div>
         ))}
@@ -173,7 +177,7 @@ export function SamplePricesPanel() {
           className={s.secondary}
           onClick={() => setTests((tests) => [...tests, { name: '', category: 'blood', price: '' }])}
         >
-          Add test
+          {t('admin.samplePrices.tests.add')}
         </button>
       </Card>
     </Panel>
@@ -212,6 +216,7 @@ function Card({
   onSubmit: () => void;
   children: ReactNode;
 }) {
+  const { t, tm } = useT();
   const submit = (e: FormEvent) => {
     e.preventDefault();
     onSubmit();
@@ -223,11 +228,11 @@ function Card({
       {children}
       <div className={p.cardFoot}>
         <button type="submit" className={s.primary} disabled={busy}>
-          {busy ? 'Saving…' : 'Save'}
+          {busy ? t('common.saving') : t('common.save')}
         </button>
         {message && (
           <span className={message.error ? s.error : s.saved} role={message.error ? 'alert' : 'status'}>
-            {message.text}
+            {message.text === null ? t('common.saved') : tm(message.text)}
           </span>
         )}
       </div>

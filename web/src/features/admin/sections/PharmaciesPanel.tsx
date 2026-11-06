@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useServices } from '../../../app/services';
+import { useT } from '../../../i18n';
 import { Check, Failed, Field, Loading, Modal, Panel, Row, uiStyles as s, useMutation, useResource } from '../../../ui';
 import type { AdminUser } from './admin-types';
 
@@ -18,6 +19,7 @@ interface AdminPharmacy {
 
 /** Every pharmacy and its owner. */
 export function PharmaciesPanel() {
+  const { t, tm } = useT();
   const { data, error, loading, reload } = useResource<AdminPharmacy[]>('/directory/admin/pharmacies', {});
   const [editing, setEditing] = useState<AdminPharmacy | 'new' | null>(null);
   const visibility = useMutation();
@@ -32,25 +34,25 @@ export function PharmaciesPanel() {
 
   return (
     <Panel
-      title="Pharmacies"
-      description="Owners manage their own pharmacies on Cura Dashboard. A pharmacy an owner adds stays hidden until you show it."
+      title={t('admin.pharmacies.title')}
+      description={t('admin.pharmacies.description')}
       action={
         <button type="button" className={s.primary} onClick={() => setEditing('new')}>
-          Add
+          {t('common.add')}
         </button>
       }
     >
       {(data ?? []).length === 0 ? (
-        <p className={s.muted}>No pharmacies yet.</p>
+        <p className={s.muted}>{t('admin.pharmacies.empty')}</p>
       ) : (
         <table className={s.table}>
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Owner</th>
-              <th>Phones</th>
-              <th>Location</th>
-              <th>On Cura Website</th>
+              <th>{t('admin.pharmacies.col.name')}</th>
+              <th>{t('admin.pharmacies.col.owner')}</th>
+              <th>{t('admin.pharmacies.col.phones')}</th>
+              <th>{t('admin.pharmacies.col.location')}</th>
+              <th>{t('admin.pharmacies.col.onWebsite')}</th>
               <th />
             </tr>
           </thead>
@@ -62,20 +64,22 @@ export function PharmaciesPanel() {
                 <td>{pharmacy.phones.join(', ')}</td>
                 <td>{[pharmacy.address, pharmacy.city].filter(Boolean).join(', ') || '—'}</td>
                 <td>
-                  {pharmacy.hidden ? 'Hidden' : 'Visible'}{' '}
+                  {pharmacy.hidden ? t('admin.pharmacies.hidden') : t('admin.pharmacies.visible')}{' '}
                   <button
                     type="button"
                     className={s.linkButton}
                     disabled={visibility.busy}
-                    aria-label={`${pharmacy.hidden ? 'Show' : 'Hide'} ${pharmacy.name}`}
+                    aria-label={t(pharmacy.hidden ? 'admin.pharmacies.showAria' : 'admin.pharmacies.hideAria', {
+                      name: pharmacy.name,
+                    })}
                     onClick={() => void setHidden(pharmacy, !pharmacy.hidden)}
                   >
-                    {pharmacy.hidden ? 'Show' : 'Hide'}
+                    {pharmacy.hidden ? t('admin.pharmacies.show') : t('admin.pharmacies.hide')}
                   </button>
                 </td>
                 <td>
                   <button type="button" className={s.linkButton} onClick={() => setEditing(pharmacy)}>
-                    Edit
+                    {t('common.edit')}
                   </button>
                 </td>
               </tr>
@@ -85,7 +89,7 @@ export function PharmaciesPanel() {
       )}
       {visibility.error && (
         <p className={s.error} role="alert">
-          {visibility.error}
+          {tm(visibility.error)}
         </p>
       )}
       {editing && (
@@ -111,6 +115,7 @@ function PharmacyModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { t, tm } = useT();
   const { http } = useServices();
   const [form, setForm] = useState({
     name: existing?.name ?? '',
@@ -163,58 +168,58 @@ function PharmacyModal({
 
   return (
     <Modal
-      title={existing ? `Edit ${existing.name}` : 'Add pharmacy'}
+      title={existing ? t('admin.pharmacies.editTitle', { name: existing.name }) : t('admin.pharmacies.addTitle')}
       onClose={onClose}
       wide
       footer={
         <>
           {error && (
             <span className={s.error} role="alert">
-              {error}
+              {tm(error)}
             </span>
           )}
           {existing && (
             <button type="button" className={s.linkDanger} onClick={() => void remove()}>
-              Delete
+              {t('common.delete')}
             </button>
           )}
           <button type="button" className={s.secondary} onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </button>
           <button type="button" className={s.primary} disabled={busy} onClick={() => void submit()}>
-            {busy ? 'Saving…' : 'Save'}
+            {busy ? t('common.saving') : t('common.save')}
           </button>
         </>
       }
     >
-      <Field label="Owner's email or mobile" required hint="They get the pharmacy owner role if they lack it.">
+      <Field label={t('admin.pharmacies.owner')} required hint={t('admin.pharmacies.ownerHint')}>
         <input className={s.input} value={owner} onChange={(e) => setOwner(e.target.value)} />
       </Field>
       <Row cols={2}>
-        <Field label="Name" required>
+        <Field label={t('admin.pharmacies.name')} required>
           <input className={s.input} value={form.name} onChange={(e) => set('name', e.target.value)} />
         </Field>
-        <Field label="Drug licence number">
+        <Field label={t('admin.pharmacies.licence')}>
           <input className={s.input} value={form.license_number} onChange={(e) => set('license_number', e.target.value)} />
         </Field>
       </Row>
       <Row cols={2}>
-        <Field label="Phone numbers" required hint="Separate several numbers with commas.">
+        <Field label={t('admin.pharmacies.phones')} required hint={t('admin.pharmacies.phonesHint')}>
           <input className={s.input} value={form.phones} onChange={(e) => set('phones', e.target.value)} />
         </Field>
-        <Field label="Opening hours">
+        <Field label={t('admin.pharmacies.hours')}>
           <input className={s.input} value={form.opening_hours} onChange={(e) => set('opening_hours', e.target.value)} />
         </Field>
       </Row>
       <Row cols={2}>
-        <Field label="Address">
+        <Field label={t('admin.pharmacies.address')}>
           <input className={s.input} value={form.address} onChange={(e) => set('address', e.target.value)} />
         </Field>
-        <Field label="City">
+        <Field label={t('admin.pharmacies.city')}>
           <input className={s.input} value={form.city} onChange={(e) => set('city', e.target.value)} />
         </Field>
       </Row>
-      <Check label="Home delivery" checked={form.home_delivery} onChange={(on) => setForm((current) => ({ ...current, home_delivery: on }))} />
+      <Check label={t('admin.pharmacies.homeDelivery')} checked={form.home_delivery} onChange={(on) => setForm((current) => ({ ...current, home_delivery: on }))} />
     </Modal>
   );
 }

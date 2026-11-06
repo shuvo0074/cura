@@ -1,5 +1,9 @@
+import type { TranslationKey, UseT } from '../../../../i18n';
+
 /**
  * Codes stored on a hospital or diagnostic centre, with English labels.
+ * Show a label with `catalogueLabel(t, kind, key)`: the words are in
+ * `i18n/areas/admin.ts` under `catalogue.*`.
  * Copied from Cura Website (hospitalCatalogue.js and its en.json labels);
  * the API checks `type` and test categories against the same lists.
  */
@@ -102,5 +106,20 @@ export const COMMON_TESTS: readonly string[] = [
 /** Hours text meaning "always open". */
 export const ALL_DAY = '24/7';
 
-export const typeLabel = (key: string | null | undefined): string =>
-  HOSPITAL_TYPES.find((type) => type.key === key)?.label ?? 'Not set';
+export type CatalogueKind = 'type' | 'group' | 'service' | 'facility' | 'payment' | 'testCategory';
+
+const CATALOGUE: Record<CatalogueKind, readonly Option[]> = {
+  type: HOSPITAL_TYPES,
+  group: SERVICE_GROUPS,
+  service: SERVICE_GROUPS.flatMap((group) => group.services),
+  facility: FACILITIES,
+  payment: PAYMENT_METHODS,
+  testCategory: TEST_CATEGORIES,
+};
+
+/** A catalogue code's label in the current language; an unknown code is shown as it is. */
+export const catalogueLabel = (t: UseT['t'], kind: CatalogueKind, key: string): string =>
+  CATALOGUE[kind].some((option) => option.key === key) ? t(`admin.catalogue.${kind}.${key}` as TranslationKey) : key;
+
+export const typeLabel = (t: UseT['t'], key: string | null | undefined): string =>
+  key && HOSPITAL_TYPES.some((type) => type.key === key) ? catalogueLabel(t, 'type', key) : t('admin.catalogue.notSet');

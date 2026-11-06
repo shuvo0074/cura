@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useT } from '../../../i18n';
 import { Field, Panel, Row, uiStyles as s, useMutation, useResource } from '../../../ui';
 
 interface Owner {
@@ -15,6 +16,7 @@ const EMPTY = { clinicName: '', fullName: '', mobile: '', email: '', temporaryPa
 export function OwnersPanel() {
   const { data, reload } = useResource<Owner[]>('/directory/admin/owners', {});
   const save = useMutation();
+  const { t, tm } = useT();
   const [form, setForm] = useState(EMPTY);
   const set = (key: keyof typeof EMPTY, value: string) => setForm((current) => ({ ...current, [key]: value }));
 
@@ -27,24 +29,24 @@ export function OwnersPanel() {
   };
 
   return (
-    <Panel title="New clinic" description="Creates a clinic and the owner who runs it on Cura Dashboard.">
+    <Panel title={t('admin.owners.title')} description={t('admin.owners.description')}>
       <Row cols={2}>
-        <Field label="Clinic name" required>
+        <Field label={t('admin.owners.field.clinicName')} required>
           <input className={s.input} value={form.clinicName} onChange={(e) => set('clinicName', e.target.value)} />
         </Field>
-        <Field label="Owner's full name" required>
+        <Field label={t('admin.owners.field.fullName')} required>
           <input className={s.input} value={form.fullName} onChange={(e) => set('fullName', e.target.value)} />
         </Field>
       </Row>
       <Row cols={2}>
-        <Field label="Owner's mobile" required>
+        <Field label={t('admin.owners.field.mobile')} required>
           <input className={s.input} value={form.mobile} placeholder="01XXXXXXXXX" onChange={(e) => set('mobile', e.target.value)} />
         </Field>
-        <Field label="Owner's email">
+        <Field label={t('admin.owners.field.email')}>
           <input className={s.input} type="email" value={form.email} onChange={(e) => set('email', e.target.value)} />
         </Field>
       </Row>
-      <Field label="Temporary password" required hint="At least 10 characters, with upper- and lowercase letters and a number.">
+      <Field label={t('admin.owners.field.password')} required hint={t('admin.owners.passwordHint')}>
         <input
           className={s.input}
           type="password"
@@ -54,22 +56,22 @@ export function OwnersPanel() {
         />
       </Field>
       <button type="button" className={s.primary} disabled={save.busy} onClick={() => void submit()}>
-        {save.busy ? 'Creating…' : 'Create clinic and owner'}
+        {save.busy ? t('admin.owners.creating') : t('admin.owners.create')}
       </button>{' '}
-      {save.saved && <span className={s.muted}>Created.</span>}
+      {save.saved && <span className={s.muted}>{t('admin.owners.created')}</span>}
       {save.error && (
         <span className={s.error} role="alert">
-          {save.error}
+          {tm(save.error)}
         </span>
       )}
 
-      <h4 className={s.subtitle}>Clinic owners</h4>
+      <h4 className={s.subtitle}>{t('admin.owners.listTitle')}</h4>
       <table className={s.table}>
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Email and mobile</th>
-            <th>Clinics</th>
+            <th>{t('admin.owners.col.name')}</th>
+            <th>{t('admin.owners.col.contact')}</th>
+            <th>{t('admin.owners.col.clinics')}</th>
           </tr>
         </thead>
         <tbody>

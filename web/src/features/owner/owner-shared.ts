@@ -1,3 +1,5 @@
+import type { TranslationKey, UseT } from '../../i18n';
+
 /** Types and helpers shared by the ambulance and pharmacy owner screens. */
 
 export const AMBULANCE_TYPES = [
@@ -13,6 +15,14 @@ export const AMBULANCE_SERVICES = [
   { key: 'medical_team', label: 'Medical team' },
   { key: 'interdistrict', label: 'Travels between districts' },
 ] as const;
+
+/** An ambulance type's label in the current language (`owner.ambulanceType.*`). */
+export const ambulanceTypeLabel = (t: UseT['t'], key: string): string =>
+  AMBULANCE_TYPES.some((type) => type.key === key) ? t(`owner.ambulanceType.${key}` as TranslationKey) : key;
+
+/** An ambulance service's label in the current language (`owner.ambulanceService.*`). */
+export const ambulanceServiceLabel = (t: UseT['t'], key: string): string =>
+  AMBULANCE_SERVICES.some((service) => service.key === key) ? t(`owner.ambulanceService.${key}` as TranslationKey) : key;
 
 export type FareRange = { min: number | string; max: number | string };
 

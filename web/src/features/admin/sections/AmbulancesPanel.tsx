@@ -1,8 +1,16 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useServices } from '../../../app/services';
 import { Check, Failed, Field, Loading, Modal, Panel, Row, uiStyles as s, useMutation, useResource } from '../../../ui';
-import { AMBULANCE_SERVICES, AMBULANCE_TYPES, toggled, type FareRange } from '../../owner/owner-shared';
-import { AMBULANCE_AREAS } from './data/ambulance-areas';
+import { useT } from '../../../i18n';
+import {
+  AMBULANCE_SERVICES,
+  AMBULANCE_TYPES,
+  ambulanceServiceLabel,
+  ambulanceTypeLabel,
+  toggled,
+  type FareRange,
+} from '../../owner/owner-shared';
+import { AMBULANCE_AREAS, areaLabel } from './data/ambulance-areas';
 import a from './AmbulancesPanel.module.css';
 
 /** An ambulance vendor as the admin list returns it (snake_case, every column). */
@@ -77,10 +85,9 @@ const toForm = (v: AdminAmbulance): VendorForm => ({
   source_checked_on: v.source_checked_on ?? '',
 });
 
-const typeLabel = (key: string): string => AMBULANCE_TYPES.find((type) => type.key === key)?.label ?? key;
-
 /** Every ambulance vendor on Cura Website, including hidden ones. */
 export function AmbulancesPanel() {
+  const { t } = useT();
   const { data, error, loading, reload } = useResource<AdminAmbulance[]>('/directory/admin/ambulances', {});
   const samples = useResource<SampleFares>('/directory/admin/sample-prices', {});
   const [search, setSearch] = useState('');
@@ -100,8 +107,8 @@ export function AmbulancesPanel() {
 
   return (
     <Panel
-      title="Ambulances"
-      description={`${visible.length} vendor${visible.length === 1 ? '' : 's'}. Click one to edit, hide or delete it.`}
+      title={t('admin.ambulances.title')}
+      description={t('admin.ambulances.description', { count: visible.length })}
       action={
         <div className={a.toolbar}>
           <input
@@ -109,25 +116,25 @@ export function AmbulancesPanel() {
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search name or phone"
-            aria-label="Search ambulances"
+            placeholder={t('admin.ambulances.searchPlaceholder')}
+            aria-label={t('admin.ambulances.searchAria')}
           />
           <button type="button" className={s.primary} onClick={() => setEditing('new')}>
-            Add vendor
+            {t('admin.ambulances.add')}
           </button>
         </div>
       }
     >
       {visible.length === 0 ? (
-        <p className={s.muted}>No ambulance vendors match.</p>
+        <p className={s.muted}>{t('admin.ambulances.empty')}</p>
       ) : (
         <table className={s.table}>
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Types</th>
-              <th>Fares</th>
-              <th>Main phone</th>
+              <th>{t('admin.ambulances.col.name')}</th>
+              <th>{t('admin.ambulances.col.types')}</th>
+              <th>{t('admin.ambulances.col.fares')}</th>
+              <th>{t('admin.ambulances.col.phone')}</th>
               <th />
             </tr>
           </thead>
@@ -136,14 +143,14 @@ export function AmbulancesPanel() {
               <tr key={v.id} className={v.hidden ? a.hiddenRow : undefined}>
                 <td>
                   {v.name}
-                  {v.hidden && <span className={a.tag}>Hidden</span>}
+                  {v.hidden && <span className={a.tag}>{t('admin.ambulances.hiddenTag')}</span>}
                 </td>
-                <td>{v.categories.map(typeLabel).join(', ')}</td>
-                <td>{Object.keys(v.fares ?? {}).length ? 'Own fares' : 'Sample fares'}</td>
+                <td>{v.categories.map((key) => ambulanceTypeLabel(t, key)).join(', ')}</td>
+                <td>{Object.keys(v.fares ?? {}).length ? t('admin.ambulances.ownFares') : t('admin.ambulances.sampleFares')}</td>
                 <td>{v.phones[0] ?? ''}</td>
                 <td>
                   <button type="button" className={s.linkButton} onClick={() => setEditing(v)}>
-                    Edit
+                    {t('common.edit')}
                   </button>
                 </td>
               </tr>
@@ -181,6 +188,7 @@ function VendorModal({
   onChanged: () => void;
   onDone: () => void;
 }) {
+  const { t, tm, fmt, locale } = useT();
   const save = useMutation();
   const [form, setForm] = useState<VendorForm>(existing ? toForm(existing) : BLANK);
   const [hidden, setHidden] = useState(existing?.hidden ?? false);
@@ -193,9 +201,13 @@ function VendorModal({
       fares: { ...current.fares, [category]: { min: '', max: '', ...current.fares[category], [edge]: value } },
     }));
 
+  const query = areaQuery.trim().toLowerCase();
   const visibleAreas = AMBULANCE_AREAS.filter((area) =>
-    area.name.toLowerCase().includes(areaQuery.trim().toLowerCase()),
+    [area.name, areaLabel(t, area.id)].some((name) => name.toLowerCase().includes(query)),
   );
+  // English keeps the sample as stored; Bangla shows it in Bangla digits.
+  const sampleText = (value: number | string): string =>
+    locale === 'bn' && value !== '' && Number.isFinite(Number(value)) ? fmt.number(Number(value)) : String(value);
 
   const submit = async () => {
     const ok = existing
@@ -206,21 +218,21 @@ function VendorModal({
 
   return (
     <Modal
-      title={existing ? 'Edit ambulance vendor' : 'Add ambulance vendor'}
+      title={existing ? t('admin.ambulances.editTitle') : t('admin.ambulances.addTitle')}
       onClose={onClose}
       wide
       footer={
         <>
           {save.error && (
             <span className={s.error} role="alert">
-              {save.error}
+              {tm(save.error)}
             </span>
           )}
           <button type="button" className={s.secondary} onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </button>
           <button type="button" className={s.primary} onClick={() => void submit()} disabled={save.busy}>
-            {save.busy ? 'Saving…' : 'Save'}
+            {save.busy ? t('common.saving') : t('common.save')}
           </button>
         </>
       }
@@ -229,7 +241,7 @@ function VendorModal({
         <RecordActions
           path={`/directory/admin/ambulances/${existing.id}`}
           hidden={hidden}
-          label="vendor"
+          label={t('admin.ambulances.recordLabel')}
           onHiddenChange={(next) => {
             setHidden(next);
             onChanged();
@@ -239,16 +251,16 @@ function VendorModal({
       )}
 
       <Row cols={2}>
-        <Field label="Name" required>
+        <Field label={t('admin.ambulances.name')} required>
           <input className={s.input} value={form.name} onChange={(e) => set({ name: e.target.value })} />
         </Field>
-        <Field label="Name in Bangla">
+        <Field label={t('admin.ambulances.nameBn')}>
           <input className={s.input} value={form.name_bn} onChange={(e) => set({ name_bn: e.target.value })} />
         </Field>
-        <Field label="Address">
+        <Field label={t('admin.ambulances.address')}>
           <input className={s.input} value={form.address} onChange={(e) => set({ address: e.target.value })} />
         </Field>
-        <Field label="Address in Bangla">
+        <Field label={t('admin.ambulances.addressBn')}>
           <input
             className={s.input}
             value={form.address_bn}
@@ -257,9 +269,9 @@ function VendorModal({
         </Field>
       </Row>
       <Field
-        label="Phone numbers"
+        label={t('admin.ambulances.phones')}
         required
-        hint="The first one is the main booking line. Separate numbers with commas."
+        hint={t('admin.ambulances.phonesHint')}
       >
         <input
           className={s.input}
@@ -269,17 +281,16 @@ function VendorModal({
         />
       </Field>
 
-      <h4 className={s.subtitle}>Ambulance types and fares (৳)</h4>
-      <p className={s.muted}>
-        Fares are one way within Dhaka. Leave a fare empty to show the shared sample range, labelled as sample.
-      </p>
+      <h4 className={s.subtitle}>{t('admin.ambulances.typesHeading')}</h4>
+      <p className={s.muted}>{t('admin.ambulances.typesNote')}</p>
       {AMBULANCE_TYPES.map((type) => {
         const on = form.categories.includes(type.key);
         const sample = sampleFares[type.key];
+        const label = ambulanceTypeLabel(t, type.key);
         return (
           <div key={type.key} className={a.fareRow}>
             <Check
-              label={type.label}
+              label={label}
               checked={on}
               onChange={(checked) => set({ categories: toggled(form.categories, type.key, checked) })}
             />
@@ -292,8 +303,16 @@ function VendorModal({
                   min={0}
                   step={1}
                   inputMode="numeric"
-                  aria-label={`${type.label} ${edge === 'min' ? 'lowest' : 'highest'} fare`}
-                  placeholder={`${edge === 'min' ? 'From' : 'To'}${sample ? ` (sample ${sample[edge]})` : ''}`}
+                  aria-label={t(edge === 'min' ? 'admin.ambulances.fareLowestAria' : 'admin.ambulances.fareHighestAria', {
+                    type: label,
+                  })}
+                  placeholder={
+                    sample
+                      ? t(edge === 'min' ? 'admin.ambulances.fareFromSample' : 'admin.ambulances.fareToSample', {
+                          amount: sampleText(sample[edge]),
+                        })
+                      : t(edge === 'min' ? 'admin.ambulances.fareFrom' : 'admin.ambulances.fareTo')
+                  }
                   value={form.fares[type.key]?.[edge] ?? ''}
                   onChange={(e) => setFare(type.key, edge, e.target.value)}
                 />
@@ -302,50 +321,50 @@ function VendorModal({
         );
       })}
 
-      <h4 className={s.subtitle}>Services</h4>
+      <h4 className={s.subtitle}>{t('admin.ambulances.servicesHeading')}</h4>
       {AMBULANCE_SERVICES.map((service) => (
         <Check
           key={service.key}
-          label={service.label}
+          label={ambulanceServiceLabel(t, service.key)}
           checked={form.features.includes(service.key)}
           onChange={(checked) => set({ features: toggled(form.features, service.key, checked) })}
         />
       ))}
 
-      <h4 className={s.subtitle}>Coverage</h4>
+      <h4 className={s.subtitle}>{t('admin.ambulances.coverageHeading')}</h4>
       <Row cols={2}>
-        <Field label="Base area" hint="Used for distance from the patient.">
+        <Field label={t('admin.ambulances.baseArea')} hint={t('admin.ambulances.baseAreaHint')}>
           <select className={s.input} value={form.base_area} onChange={(e) => set({ base_area: e.target.value })}>
-            <option value="">No base area</option>
+            <option value="">{t('admin.ambulances.noBaseArea')}</option>
             {AMBULANCE_AREAS.map((area) => (
               <option key={area.id} value={area.id}>
-                {area.name}
+                {areaLabel(t, area.id)}
               </option>
             ))}
           </select>
         </Field>
       </Row>
       <Check
-        label="Serves all of Dhaka"
+        label={t('admin.ambulances.dhakaWide')}
         checked={form.dhaka_wide}
         onChange={(checked) => set({ dhaka_wide: checked })}
       />
       {!form.dhaka_wide && (
         <>
-          <p className={s.muted}>Areas served ({form.service_areas.length} selected)</p>
+          <p className={s.muted}>{t('admin.ambulances.areasServed', { count: form.service_areas.length })}</p>
           <input
             className={`${s.input} ${a.areaSearch}`}
             type="search"
             value={areaQuery}
             onChange={(e) => setAreaQuery(e.target.value)}
-            placeholder="Search areas"
-            aria-label="Search areas"
+            placeholder={t('admin.ambulances.searchAreas')}
+            aria-label={t('admin.ambulances.searchAreas')}
           />
           <div className={a.checkGrid}>
             {visibleAreas.map((area) => (
               <Check
                 key={area.id}
-                label={area.name}
+                label={areaLabel(t, area.id)}
                 checked={form.service_areas.includes(area.id)}
                 onChange={(checked) => set({ service_areas: toggled(form.service_areas, area.id, checked) })}
               />
@@ -354,9 +373,9 @@ function VendorModal({
         </>
       )}
 
-      <h4 className={s.subtitle}>Source</h4>
+      <h4 className={s.subtitle}>{t('admin.ambulances.sourceHeading')}</h4>
       <Row cols={2}>
-        <Field label="Source link">
+        <Field label={t('admin.ambulances.sourceLink')}>
           <input
             className={s.input}
             type="url"
@@ -365,7 +384,7 @@ function VendorModal({
             onChange={(e) => set({ source_url: e.target.value })}
           />
         </Field>
-        <Field label="Checked on">
+        <Field label={t('admin.ambulances.checkedOn')}>
           <input
             className={s.input}
             type="date"
@@ -382,6 +401,7 @@ function VendorModal({
  * Hide or show a record on Cura Website, or delete it for good. `path` is the
  * record's admin path. Delete asks for a second click; the API refuses it while
  * anything still refers to the record and says why. Also used by CatalogPanel.
+ * `label` is the record's noun in the current language ("vendor", "specialty").
  */
 export function RecordActions({
   path,
@@ -396,6 +416,7 @@ export function RecordActions({
   onHiddenChange: (hidden: boolean) => void;
   onDeleted: () => void;
 }) {
+  const { t, tm } = useT();
   const { http } = useServices();
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -434,10 +455,10 @@ export function RecordActions({
   return (
     <div className={a.recordBox}>
       <div className={a.recordHead}>
-        <p>{hidden ? `Hidden. Patients can't see this ${label}.` : 'Visible to patients.'}</p>
+        <p>{hidden ? t('admin.ambulances.record.hidden', { label }) : t('admin.ambulances.record.visible')}</p>
         <div className={a.recordButtons}>
           <button type="button" className={s.secondary} disabled={busy} onClick={() => void toggleHidden()}>
-            {hidden ? 'Show on site' : 'Hide from site'}
+            {hidden ? t('admin.ambulances.record.show') : t('admin.ambulances.record.hide')}
           </button>
           <button
             type="button"
@@ -446,21 +467,21 @@ export function RecordActions({
             disabled={busy}
             onClick={() => void remove()}
           >
-            {confirming ? 'Click again to delete for good' : 'Delete'}
+            {confirming ? t('admin.ambulances.record.confirmDelete') : t('common.delete')}
           </button>
         </div>
       </div>
       {confirming && !busy && (
         <p className={s.muted}>
-          Deleting can't be undone. Hide it instead if it might come back.{' '}
+          {t('admin.ambulances.record.deleteNote')}{' '}
           <button type="button" className={s.linkButton} onClick={() => setConfirming(false)}>
-            Cancel
+            {t('common.cancel')}
           </button>
         </p>
       )}
       {error && (
         <p className={s.error} role="alert">
-          {error}
+          {tm(error)}
         </p>
       )}
     </div>

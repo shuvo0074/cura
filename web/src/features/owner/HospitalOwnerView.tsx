@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useT } from '../../i18n';
 import { Failed, Field, Loading, Modal, ModalActions, Panel, Row, uiStyles as s, useMutation, useResource } from '../../ui';
 import { ExtrasFields, toForm, type HospitalForm, type HospitalRecord } from '../admin/sections/HospitalsPanel';
+import { districtLabel } from '../admin/sections/data/divisions-hospitals';
 import { typeLabel } from '../admin/sections/data/hospital-catalogue';
 
 /** The fields an owner may change. The API ignores anything else. */
@@ -23,23 +25,24 @@ const OWNER_FIELDS = [
 export function HospitalOwnerView() {
   const { data, error, loading, reload } = useResource<HospitalRecord[]>('/directory/my-hospitals', {});
   const [editing, setEditing] = useState<HospitalRecord | null>(null);
+  const { t } = useT();
 
   if (loading && !data) return <Loading />;
   if (error) return <Failed message={error} />;
 
   const places = data ?? [];
   return (
-    <Panel title="My Hospital" description="Patients see these details on Cura Website. Your changes show at once.">
+    <Panel title={t('owner.hospital.title')} description={t('owner.hospital.description')}>
       {places.length === 0 ? (
-        <p className={s.muted}>No hospital or diagnostic centre is linked to your account yet. Ask a Cura super admin to link it.</p>
+        <p className={s.muted}>{t('owner.hospital.empty')}</p>
       ) : (
         <table className={s.table}>
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Type</th>
-              <th>Hotline</th>
-              <th>On Cura Website</th>
+              <th>{t('owner.col.name')}</th>
+              <th>{t('owner.hospital.col.type')}</th>
+              <th>{t('owner.hospital.hotline')}</th>
+              <th>{t('owner.col.onWebsite')}</th>
               <th />
             </tr>
           </thead>
@@ -47,12 +50,12 @@ export function HospitalOwnerView() {
             {places.map((place) => (
               <tr key={place.id}>
                 <td>{place.name}</td>
-                <td>{typeLabel(place.type)}</td>
+                <td>{typeLabel(t, place.type)}</td>
                 <td>{place.hotline ?? '—'}</td>
-                <td>{place.hidden ? 'Hidden by an admin' : 'Visible'}</td>
+                <td>{place.hidden ? t('owner.hospital.hiddenByAdmin') : t('owner.visible')}</td>
                 <td>
                   <button type="button" className={s.linkButton} onClick={() => setEditing(place)}>
-                    Edit
+                    {t('common.edit')}
                   </button>
                 </td>
               </tr>
@@ -77,6 +80,7 @@ export function HospitalOwnerView() {
 
 function HospitalModal({ place, onClose, onSaved }: { place: HospitalRecord; onClose: () => void; onSaved: () => void }) {
   const save = useMutation();
+  const { t } = useT();
   const [form, setForm] = useState<HospitalForm>(() => toForm(place));
   const set = (patch: Partial<HospitalForm>) => setForm((current) => ({ ...current, ...patch }));
 
@@ -87,33 +91,33 @@ function HospitalModal({ place, onClose, onSaved }: { place: HospitalRecord; onC
 
   return (
     <Modal
-      title={`Edit ${place.name}`}
+      title={t('owner.editTitle', { name: place.name })}
       onClose={onClose}
       wide
       footer={<ModalActions error={save.error} busy={save.busy} onCancel={onClose} onSave={() => void submit()} />}
     >
       <p className={s.muted}>
-        {typeLabel(place.type)} in {place.location}. To change the type, location, map pin or photo, ask a Cura super admin.
+        {t('owner.hospital.lockedNote', { type: typeLabel(t, place.type), location: districtLabel(t, place.location) })}
       </p>
-      <Field label="Name" required>
+      <Field label={t('owner.field.name')} required>
         <input className={s.input} value={form.name} onChange={(e) => set({ name: e.target.value })} />
       </Field>
-      <Field label="Address">
+      <Field label={t('owner.field.address')}>
         <input className={s.input} value={form.address} onChange={(e) => set({ address: e.target.value })} />
       </Field>
       <Row cols={2}>
-        <Field label="Hotline">
+        <Field label={t('owner.hospital.hotline')}>
           <input className={s.input} value={form.hotline} onChange={(e) => set({ hotline: e.target.value })} />
         </Field>
-        <Field label="Website">
+        <Field label={t('owner.hospital.website')}>
           <input className={s.input} value={form.website} onChange={(e) => set({ website: e.target.value })} />
         </Field>
       </Row>
-      <Field label="Description">
+      <Field label={t('owner.hospital.descriptionLabel')}>
         <textarea
           className={s.textarea}
           rows={3}
-          placeholder="A short description of the place"
+          placeholder={t('owner.hospital.descriptionPlaceholder')}
           value={form.description}
           onChange={(e) => set({ description: e.target.value })}
         />

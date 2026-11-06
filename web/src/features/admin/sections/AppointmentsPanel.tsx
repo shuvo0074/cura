@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useT, type TranslationKey } from '../../../i18n';
 import { Failed, Loading, Panel, uiStyles as s, useResource } from '../../../ui';
 
 /** A serial booking as the admin list returns it. */
@@ -15,16 +16,13 @@ interface AdminAppointment {
 }
 
 const STATUSES = [
-  { key: '', label: 'All' },
-  { key: 'confirmed', label: 'Confirmed' },
-  { key: 'cancelled', label: 'Cancelled' },
-  { key: 'completed', label: 'Completed' },
-] as const;
+  { key: '', label: 'admin.appointments.status.all' },
+  { key: 'confirmed', label: 'admin.appointments.status.confirmed' },
+  { key: 'cancelled', label: 'admin.appointments.status.cancelled' },
+  { key: 'completed', label: 'admin.appointments.status.completed' },
+] as const satisfies readonly { key: string; label: TranslationKey }[];
 
 type StatusKey = (typeof STATUSES)[number]['key'];
-
-const statusLabel = (status: string): string =>
-  STATUSES.find((item) => item.key === status)?.label ?? status;
 
 /** Every serial booking made on Cura Website, newest first. */
 export function AppointmentsPanel() {
@@ -33,10 +31,15 @@ export function AppointmentsPanel() {
     status: status || undefined,
   });
   const appointments = data ?? [];
+  const { t, fmt } = useT();
+  const statusLabel = (value: string): string => {
+    const item = STATUSES.find((entry) => entry.key === value);
+    return item ? t(item.label) : value;
+  };
 
   return (
-    <Panel title="Appointments" description="Serial bookings patients made on Cura Website.">
-      <div className={s.filters} role="group" aria-label="Filter by status">
+    <Panel title={t('admin.appointments.title')} description={t('admin.appointments.description')}>
+      <div className={s.filters} role="group" aria-label={t('admin.appointments.filterAria')}>
         {STATUSES.map((item) => (
           <button
             key={item.key || 'all'}
@@ -45,7 +48,7 @@ export function AppointmentsPanel() {
             aria-pressed={status === item.key}
             onClick={() => setStatus(item.key)}
           >
-            {item.label}
+            {t(item.label)}
           </button>
         ))}
       </div>
@@ -55,17 +58,17 @@ export function AppointmentsPanel() {
       ) : error ? (
         <Failed message={error} />
       ) : appointments.length === 0 ? (
-        <p className={s.muted}>No appointments.</p>
+        <p className={s.muted}>{t('admin.appointments.empty')}</p>
       ) : (
         <table className={s.table}>
           <thead>
             <tr>
-              <th>Doctor</th>
-              <th>Patient phone</th>
-              <th>Date</th>
-              <th>Time</th>
-              <th>Serial</th>
-              <th>Status</th>
+              <th>{t('admin.appointments.col.doctor')}</th>
+              <th>{t('admin.appointments.col.patientPhone')}</th>
+              <th>{t('admin.appointments.col.date')}</th>
+              <th>{t('admin.appointments.col.time')}</th>
+              <th>{t('admin.appointments.col.serial')}</th>
+              <th>{t('admin.appointments.col.status')}</th>
             </tr>
           </thead>
           <tbody>
@@ -73,12 +76,15 @@ export function AppointmentsPanel() {
               <tr key={item.id}>
                 <td>{item.doctor_name}</td>
                 <td>{item.patient_phone ?? ''}</td>
-                <td>{item.appointment_date.slice(0, 10)}</td>
-                <td>{item.session_time || item.appointment_time.slice(0, 5)}</td>
+                <td>{fmt.date(`${item.appointment_date.slice(0, 10)}T00:00`)}</td>
+                <td>
+                  {item.session_time ||
+                    fmt.time(`${item.appointment_date.slice(0, 10)}T${item.appointment_time.slice(0, 5)}`)}
+                </td>
                 <td>
                   {item.serial_no ? (
                     <>
-                      #{item.serial_no}
+                      {t('admin.appointments.serialNo', { serial: item.serial_no })}
                       {item.venue && <span className={s.staffMeta}>{item.venue}</span>}
                     </>
                   ) : (
