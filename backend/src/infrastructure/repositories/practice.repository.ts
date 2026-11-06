@@ -9,6 +9,7 @@ import type {
   EmailSettingRecord,
   EmailSettingsRepository,
   PracticeRecord,
+  PracticeSetupFacts,
   PracticeRepository,
   PrintoutSettingRecord,
   PrintoutSettingsRepository,
@@ -169,6 +170,36 @@ export class PrismaPracticeRepository implements PracticeRepository, StaffReposi
 
   async removeClosure(practiceId: string, id: string): Promise<void> {
     await this.prisma.practiceClosure.deleteMany({ where: { id, practiceId } });
+  }
+
+  async setupFacts(practiceId: string): Promise<PracticeSetupFacts | null> {
+    const practice = await this.prisma.practice.findUnique({
+      where: { id: practiceId },
+      select: { name: true, contactNumber: true, address: true, addressLine1: true },
+    });
+    if (!practice) return null;
+    const activeMember = { practiceId, isActive: true, user: { isActive: true } };
+    const [sessions, doctors, pricingItems, deskStaff, appointments] = await Promise.all([
+      this.prisma.practiceSession.count({ where: { practiceId } }),
+      // Same rule as the calendar's doctor list: a doctor member, or any member
+      // with a BMDC number (an owner who sees patients counts).
+      this.prisma.practiceMembership.count({
+        where: { ...activeMember, OR: [{ role: 'DOCTOR' }, { user: { bmdcNumber: { not: null } } }] },
+      }),
+      this.prisma.pricingItem.count({ where: { practiceId, deletedAt: null } }),
+      this.prisma.practiceMembership.count({ where: { ...activeMember, role: 'DESK_STAFF' } }),
+      this.prisma.appointment.count({ where: { practiceId } }),
+    ]);
+    return {
+      name: practice.name,
+      contactNumber: practice.contactNumber,
+      address: practice.addressLine1 ?? practice.address,
+      sessions,
+      doctors,
+      pricingItems,
+      deskStaff,
+      appointments,
+    };
   }
 
   async listStaff(practiceId: string): Promise<StaffRecord[]> {

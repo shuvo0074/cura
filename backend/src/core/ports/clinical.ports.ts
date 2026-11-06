@@ -246,6 +246,20 @@ export interface PracticeRepository {
   listClosures(practiceId: string, from: Date, to: Date): Promise<Array<{ id: string; startsAt: Date; endsAt: Date; reason: string | null }>>;
   addClosure(practiceId: string, input: { startsAt: Date; endsAt: Date; allDay: boolean; reason: string | null }): Promise<{ id: string }>;
   removeClosure(practiceId: string, id: string): Promise<void>;
+  /** What the clinic owner's "Get your clinic ready" checklist is worked out from. */
+  setupFacts(practiceId: string): Promise<PracticeSetupFacts | null>;
+}
+
+export interface PracticeSetupFacts {
+  name: string;
+  contactNumber: string | null;
+  address: string | null;
+  sessions: number;
+  /** Active members the calendar lists as doctors (see `listDoctors`). */
+  doctors: number;
+  pricingItems: number;
+  deskStaff: number;
+  appointments: number;
 }
 
 export const STAFF_REPOSITORY = Symbol('STAFF_REPOSITORY');

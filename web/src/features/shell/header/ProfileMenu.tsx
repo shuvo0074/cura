@@ -21,12 +21,15 @@ export function ProfileMenu({
   onToggle,
   onNavigate,
   onSignOut,
+  onShowSetupChecklist,
 }: {
   user: AuthenticatedUser;
   toggles: WorkspaceToggles;
   onToggle: (key: keyof WorkspaceToggles, value: boolean) => void;
   onNavigate: (target: 'profile' | 'staff' | 'security') => void;
   onSignOut: () => void;
+  /** Clinic owners only: brings back the "Get your clinic ready" card. */
+  onShowSetupChecklist?: () => void;
 }) {
   const { auth } = useServices();
   const [open, setOpen] = useState(false);
@@ -98,6 +101,21 @@ export function ProfileMenu({
                 </span>
               </button>
             </li>
+            {onShowSetupChecklist && (
+              <li>
+                <button
+                  type="button"
+                  className={styles.menuItem}
+                  onClick={() => {
+                    setOpen(false);
+                    onShowSetupChecklist();
+                  }}
+                >
+                  <strong>Setup checklist</strong>
+                  <span>Steps to get your clinic ready.</span>
+                </button>
+              </li>
+            )}
             <li>
               <button type="button" className={styles.menuItem} onClick={() => go('security')}>
                 <strong>Account settings</strong>

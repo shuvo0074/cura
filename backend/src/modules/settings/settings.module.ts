@@ -18,6 +18,8 @@ import { ConsentFormSettingsController } from './consent-form-settings.controlle
 import { ConsentFormSettingsService } from './consent-form-settings.service';
 import { SubscriptionSettingsController } from './subscription-settings.controller';
 import { SubscriptionSettingsService } from './subscription-settings.service';
+import { SetupProgressController } from './setup-progress.controller';
+import { SetupProgressService } from './setup-progress.service';
 
 /**
  * Practice settings, one controller/service pair per settings screen. All of
@@ -35,6 +37,7 @@ import { SubscriptionSettingsService } from './subscription-settings.service';
     PrintoutSettingsController,
     ConsentFormSettingsController,
     SubscriptionSettingsController,
+    SetupProgressController,
   ],
   providers: [
     SettingsAuditTrail,
@@ -47,6 +50,7 @@ import { SubscriptionSettingsService } from './subscription-settings.service';
     PrintoutSettingsService,
     ConsentFormSettingsService,
     SubscriptionSettingsService,
+    SetupProgressService,
   ],
 })
 export class SettingsModule {}

@@ -13,6 +13,7 @@ import { IntegrationsView } from '../features/integrations/IntegrationsView';
 import { PremiumPanel } from '../features/settings/panels/PremiumPanel';
 import type { RouteKey } from '../features/shell/navigation';
 import type { SettingsKey } from '../features/settings/settings-nav';
+import { SetupChecklist } from '../features/setup/SetupChecklist';
 import { NotBuilt } from './NotBuilt';
 
 /** Routes a nav key to its module screen. */
@@ -24,6 +25,8 @@ export function Module({
   onOpenPatient,
   onAddWalkIn,
   onOpenSettings,
+  showSetup = false,
+  setupReveal = 0,
 }: {
   route: RouteKey;
   practiceId: string;
@@ -33,6 +36,10 @@ export function Module({
   /** Opens the intake modal at `at` (an empty calendar slot), or now. */
   onAddWalkIn: (at?: Date, doctorId?: string) => void;
   onOpenSettings: (section: SettingsKey) => void;
+  /** The clinic's own owner: show the "Get your clinic ready" checklist. */
+  showSetup?: boolean;
+  /** Bumped by "Setup checklist" in the profile menu, to show it again. */
+  setupReveal?: number;
 }) {
   switch (route) {
     case 'calendar':
@@ -52,6 +59,16 @@ export function Module({
           {...(permissions.includes(Permission.SETTINGS_MANAGE)
             ? { onOpenCalendarSettings: () => onOpenSettings('calendar') }
             : {})}
+          banner={
+            showSetup ? (
+              <SetupChecklist
+                key={setupReveal}
+                practiceId={practiceId}
+                onOpenSettings={onOpenSettings}
+                onAddPatient={permissions.includes(Permission.APPOINTMENT_WRITE) ? () => onAddWalkIn() : undefined}
+              />
+            ) : undefined
+          }
         />
       );
     case 'patients':

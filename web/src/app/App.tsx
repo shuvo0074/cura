@@ -20,6 +20,7 @@ import { PatientDashboardView } from '../features/patient/PatientDashboardView';
 import { AppShell } from '../features/shell/AppShell';
 import type { RouteKey } from '../features/shell/navigation';
 import type { SettingsKey } from '../features/settings/settings-nav';
+import { revealSetupChecklist } from '../features/setup/setup-storage';
 import { Module } from './Module';
 import type { Location, SessionState } from './app-shared';
 import styles from './app.module.css';
@@ -38,6 +39,8 @@ export function App() {
   const [intakeAt, setIntakeAt] = useState<Date | undefined>(undefined);
   /** Doctor the calendar is showing when booking from it; else the form picks. */
   const [intakeDoctorId, setIntakeDoctorId] = useState<string | undefined>(undefined);
+  /** Bumped to show the owner's setup checklist again from the profile menu. */
+  const [setupReveal, setSetupReveal] = useState(0);
 
   /**
    * Session restore on boot.
@@ -161,6 +164,9 @@ export function App() {
   const shownUser = { ...user, permissions: effectivePermissions };
   const hasClinicAccess = effectivePermissions.includes(Permission.CLINIC_ACCESS);
   const ownsClinicAccess = permissionsForRole(user.role).includes(Permission.CLINIC_ACCESS);
+  // The setup checklist is for the clinic's own owner, never a read-only view.
+  const ownsThisClinic = Boolean(practiceId && !readOnlyView && ownPracticeIds.includes(practiceId));
+  const showSetup = ownsThisClinic && permissionsForRole(user.role).includes(Permission.SETTINGS_MANAGE);
 
   // Spec 3.2.6(c): the wizard is one-time and blocks the dashboard until done.
   // It sets up a doctor's practice, so it does not apply to a business owner.
@@ -192,6 +198,15 @@ export function App() {
       onOpenPatient={openPatient}
       onOpenSettings={openSettings}
       onSignOut={handleSignOut}
+      {...(showSetup && practiceId
+        ? {
+            onShowSetupChecklist: () => {
+              revealSetupChecklist(practiceId);
+              setSetupReveal((n) => n + 1);
+              setLocation({ route: 'calendar' });
+            },
+          }
+        : {})}
       intakeOpen={intakeOpen}
       intakeAt={intakeAt}
       intakeDoctorId={intakeDoctorId}
@@ -259,6 +274,8 @@ export function App() {
             setIntakeOpen(true);
           }}
           onOpenSettings={openSettings}
+          showSetup={showSetup}
+          setupReveal={setupReveal}
         />
       )}
     </AppShell>

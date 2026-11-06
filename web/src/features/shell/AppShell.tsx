@@ -30,6 +30,7 @@ export function AppShell({
   onOpenPatient,
   onOpenSettings,
   onSignOut,
+  onShowSetupChecklist,
   intakeOpen,
   intakeAt,
   intakeDoctorId,
@@ -44,6 +45,8 @@ export function AppShell({
   /** Deep-links from the profile menu into a specific settings sub-module. */
   onOpenSettings: (section: 'staff' | 'security' | 'practice') => void;
   onSignOut: () => void;
+  /** Clinic owners: show the "Get your clinic ready" checklist again. */
+  onShowSetupChecklist?: () => void;
   /** Lifted so the calendar's walk-in button can open the same modal. */
   intakeOpen: boolean;
   /** Slot time when opened from an empty calendar slot; otherwise now. */
@@ -128,6 +131,7 @@ export function AppShell({
           onToggle={setToggle}
           onNavigate={fromProfileMenu}
           onSignOut={requestSignOut}
+          {...(onShowSetupChecklist ? { onShowSetupChecklist } : {})}
         />
       </header>
 

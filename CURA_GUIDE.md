@@ -6,6 +6,8 @@
 - Reset a forgotten password with a code sent to your mobile or email, on Cura Dashboard and Cura Website
 - Move between Cura Website and Cura Dashboard without logging in again
 - Complete the 4-step new-doctor setup (personal, professional, academic, documents)
+- As a new clinic owner, follow **Get your clinic ready** on the Calendar: clinic details, opening hours, a doctor,
+  prices, front desk staff (optional) and a first patient, each one click away
 - See the calendar by day, 3 days, week or month, and book an appointment by clicking an empty time
 - Drag an appointment to a new time
 - Check patients in, start the visit, finish the visit, mark them as no-show, or cancel the visit
@@ -149,6 +151,23 @@ A patient who resets on Cura Dashboard is told to log in on Cura Website. A doct
 10. Click **Settings ▾** at the top right. Tick **Show cancelled appointments**. Click **Calendar settings…**.
 11. Back in **Calendar**, click **Block Calendar** on the left, choose a date, save.
 12. On the right, click **+ Add Walk-in Appointment**, choose a **Doctor**, fill the form, click **Save**. The patient's record opens.
+
+### Get your clinic ready
+
+1. Log in as admin@cura.local. Click **Super Admin**, then **New clinic**. Fill in a clinic name, owner's name,
+   mobile, email and a temporary password, and click **Create clinic and owner**. Log out.
+2. Log in as the new owner (the login code is in the Cura API console). The Calendar shows **Get your clinic ready**
+   with **0 of 5 done**.
+3. Click **Add details**. Fill in **Address line 1** and **Specialization**, click **Save**, then click **Calendar**.
+   **Clinic details** now says **Done** and the count is **1 of 5 done**.
+4. Click **Set prices**, then **Add the standard three**. Back in **Calendar**, **Set prices** says **Done**.
+5. Click **Book patient**. The new-patient form opens. Close it.
+6. Click **Hide for now**. The card goes away, also after a reload. Open the menu under your name and click
+   **Setup checklist**. The card is back.
+7. When every step except the optional front desk step is done, the card says **Your clinic is ready** once, then
+   stays away. **Setup checklist** shows it again.
+8. Log in as owner1@cura.local. The card shows **4 of 5 done** (Cura Dhanmondi Clinic has no prices yet).
+9. Doctors, clinic staff and a super admin viewing a clinic read-only never see the card.
 
 ### Website booking reaches the clinic
 

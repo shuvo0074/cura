@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { CalendarViewModel, isCancelled, useViewModel, type Appointment } from '@cura/shared';
 import { useServices } from '../../app/services';
 import { Modal, uiStyles as s } from '../../ui';
@@ -35,6 +35,7 @@ export function CalendarView({
   canManageSettings = false,
   canViewStaff = false,
   onOpenCalendarSettings,
+  banner,
 }: {
   practiceId: string;
   doctorId?: string;
@@ -58,6 +59,8 @@ export function CalendarView({
   canViewStaff?: boolean;
   /** Deep-link to Settings → Calendar; absent when Settings is not available. */
   onOpenCalendarSettings?: () => void;
+  /** Shown between the toolbar and the grid, e.g. the owner's setup checklist. */
+  banner?: ReactNode;
 }) {
   const { appointments } = useServices();
   const [blocking, setBlocking] = useState(false);
@@ -127,6 +130,8 @@ export function CalendarView({
           onShowCancelled={(show) => vm.setShowCancelled(show)}
           onOpenCalendarSettings={onOpenCalendarSettings}
         />
+
+        {banner}
 
         <div className={styles.body}>
           <aside className={panes.left} aria-label="Navigator and team">
