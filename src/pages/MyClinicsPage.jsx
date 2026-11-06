@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Building2, MapPin, Phone } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 
@@ -41,7 +42,11 @@ export default function MyClinicsPage() {
   return (
     <div className="max-w-3xl mx-auto py-6">
       <h1 className="text-2xl font-bold text-gray-900">{t('mc_title')}</h1>
-      <p className="text-sm text-gray-500 mt-1 mb-5">{t('mc_sub')}</p>
+      <p className="text-sm text-gray-500 mt-1 mb-2">{t('mc_sub')}</p>
+      <div className="flex flex-wrap gap-x-4 gap-y-1 mb-5 text-sm font-semibold text-action">
+        <Link to="/my-health" className="hover:underline">{t('mh_title')}</Link>
+        <Link to="/appointments" className="hover:underline">{t('my_appointments')}</Link>
+      </div>
       {error && <p role="alert" className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 mb-4">{error}</p>}
       {!loading && clinics.length === 0 && <p className="text-sm text-gray-500">{t('mc_empty')}</p>}
       <div className="flex flex-col gap-3">

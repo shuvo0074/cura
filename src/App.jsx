@@ -29,6 +29,7 @@ import { doctorRegisterUrl } from './config/dashboard';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import DoctorDashboardPage from './pages/DoctorDashboardPage';
 import MyClinicsPage from './pages/MyClinicsPage';
+import MyHealthPage from './pages/MyHealthPage';
 import DoctorProfileEditorPage from './pages/DoctorProfileEditorPage';
 import DoctorQrCardPage from './pages/DoctorQrCardPage';
 import CreditsPage from './pages/CreditsPage';
@@ -107,6 +108,7 @@ export default function App() {
               <Route path="/admin/verifications" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
               <Route path="/admin/owners" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
               <Route path="/my-clinics" element={<ProtectedRoute role="patient"><MyClinicsPage /></ProtectedRoute>} />
+              <Route path="/my-health" element={<ProtectedRoute role="patient"><MyHealthPage /></ProtectedRoute>} />
               <Route path="/doctor-dashboard" element={<ProtectedRoute role="doctor"><DoctorDashboardPage /></ProtectedRoute>} />
               <Route path="/doctor-dashboard/profile" element={<ProtectedRoute role="doctor"><DoctorProfileEditorPage /></ProtectedRoute>} />
               <Route path="/doctor-dashboard/card" element={<ProtectedRoute role="doctor"><DoctorQrCardPage /></ProtectedRoute>} />

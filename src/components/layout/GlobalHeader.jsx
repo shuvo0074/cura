@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { Search, Phone, Menu, X, ChevronRight, User, LogOut, LayoutDashboard } from 'lucide-react';
+import { Search, Phone, Menu, X, ChevronRight, User, LogOut, LayoutDashboard, HeartPulse } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useSiteContent } from '../../context/SiteContentContext';
@@ -188,6 +188,18 @@ export default function GlobalHeader() {
                 </span>
                 <ChevronRight size={16} className="opacity-50" />
               </NavLink>}
+
+              {hasRole('patient') && (
+                <NavLink
+                  to="/my-health"
+                  className="flex items-center justify-between px-5 py-4 text-sm font-medium border-b border-white/10 text-white/90 hover:bg-white/10 transition-colors">
+                  <span className="flex items-center gap-2.5">
+                    <HeartPulse size={16} className="opacity-70" />
+                    {t('mh_title')}
+                  </span>
+                  <ChevronRight size={16} className="opacity-50" />
+                </NavLink>
+              )}
 
               {showDashboard && (
                 <button

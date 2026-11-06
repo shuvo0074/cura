@@ -183,9 +183,10 @@ export default function AppointmentsPage() {
   return (
     <div>
       <PageHeader title={t('appointments')} count={appointments.length || null} />
-      <Link to="/my-clinics" className="inline-block text-sm font-semibold text-action hover:underline mb-4">
-        {t('mc_title')}
-      </Link>
+      <div className="flex flex-wrap gap-x-4 gap-y-1 mb-4 text-sm font-semibold text-action">
+        <Link to="/my-health" className="hover:underline">{t('mh_title')}</Link>
+        <Link to="/my-clinics" className="hover:underline">{t('mc_title')}</Link>
+      </div>
       {appointments.length === 0 ? (
         <EmptyState
           icon={CalendarDays}
