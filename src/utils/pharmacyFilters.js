@@ -11,6 +11,35 @@ export function filterPharmacies(pharmacies, { query = '', delivery = false } = 
   });
 }
 
+// Search a pharmacy's medicines by name, strength or form.
+export function filterStock(items, query = '') {
+  const words = normalize(query).split(' ').filter(Boolean);
+  return items.filter(item => {
+    const haystack = normalize([item.name, item.strength, item.form].join(' '));
+    return words.every(word => haystack.includes(word));
+  });
+}
+
+// Pharmacy orders the patient can still act on or is waiting for come first.
+export const isOpenOrder = order => order.status === 'new' || order.status === 'ready';
+
+// The newest order for each prescription, to show its status next to it.
+export function latestOrderByPrescription(orders) {
+  const latest = {};
+  for (const order of orders) {
+    if (!order.prescription_id) continue;
+    const seen = latest[order.prescription_id];
+    if (!seen || order.created_at > seen.created_at) latest[order.prescription_id] = order;
+  }
+  return latest;
+}
+
+// The i18n key for an error from the pharmacy order API, by its code.
+export function orderErrorKey(err) {
+  const known = { ALREADY_SENT: 'po_err_already_sent', TOO_MANY_ORDERS: 'po_err_too_many', ORDER_STATUS: 'po_err_status', NOT_FOUND: 'po_err_not_found' };
+  return known[err?.code] ?? 'po_err_generic';
+}
+
 // A dialable link for a Bangladeshi number as owners type it.
 export function telHref(phone) {
   const digits = String(phone).replace(/[^\d+]/g, '');

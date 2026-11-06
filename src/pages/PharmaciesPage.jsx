@@ -6,6 +6,7 @@ import { api } from '../api/client';
 import PageHeader from '../components/ui/PageHeader';
 import SearchInput from '../components/ui/SearchInput';
 import EmptyState from '../components/ui/EmptyState';
+import PharmacyStock from '../components/pharmacy/PharmacyStock';
 import { filterPharmacies, telHref } from '../utils/pharmacyFilters';
 import { phoneDigits } from '../utils/phone';
 
@@ -33,6 +34,7 @@ function PharmacyCard({ pharmacy, lang }) {
           </a>
         ))}
       </div>
+      <PharmacyStock pharmacy={pharmacy} />
     </li>
   );
 }

@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { Link } from 'react-router-dom';
-import { Activity, CalendarDays, Clock, FileText, HeartPulse, Pill, Printer, Receipt, Stethoscope } from 'lucide-react';
+import { Activity, CalendarDays, Clock, FileText, HeartPulse, Pill, Printer, Receipt, Send, ShoppingBag, Stethoscope } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import PageHeader from '../components/ui/PageHeader';
 import EmptyState from '../components/ui/EmptyState';
+import { OrderStatus, PharmacyOrderCard, SendToPharmacyDialog } from '../components/pharmacy/PharmacyOrders';
+import { isOpenOrder, latestOrderByPrescription, orderErrorKey } from '../utils/pharmacyFilters';
 
 // Printing a prescription shows only that one card on the page.
 const PRINT_CSS = `
@@ -79,19 +81,32 @@ function Vitals({ vitals }) {
   );
 }
 
-function Prescription({ visit, onPrint }) {
+function Prescription({ visit, onPrint, lastOrder, onSend }) {
   const { t, i18n } = useTranslation();
   const rx = visit.prescription;
   if (!rx || (!rx.items.length && !rx.investigations.length && !rx.follow_up_date)) return null;
   return (
     <div className="border-t border-gray-100 pt-3 flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <p className="text-sm font-semibold text-gray-900 flex items-center gap-1.5"><Pill size={15} className="text-primary" /> {t('mh_prescription')}</p>
-        <button type="button" onClick={() => onPrint(visit.id)}
-          className="no-print inline-flex items-center gap-1.5 text-sm font-medium text-action px-2 py-1 rounded-lg hover:bg-gray-50">
-          <Printer size={15} /> {t('mh_print')}
-        </button>
+        <div className="no-print flex items-center gap-1">
+          {rx.id && rx.items.length > 0 && (
+            <button type="button" onClick={() => onSend(rx.id)}
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-action px-2 py-1 rounded-lg hover:bg-gray-50">
+              <Send size={15} /> {t('po_send')}
+            </button>
+          )}
+          <button type="button" onClick={() => onPrint(visit.id)}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-action px-2 py-1 rounded-lg hover:bg-gray-50">
+            <Printer size={15} /> {t('mh_print')}
+          </button>
+        </div>
       </div>
+      {lastOrder && (
+        <p className="no-print text-xs text-gray-600 flex items-center gap-2 flex-wrap">
+          {t('po_sent_to', { name: lastOrder.pharmacy.name })} <OrderStatus status={lastOrder.status} />
+        </p>
+      )}
       {rx.items.length > 0 && (
         <ol className="flex flex-col gap-2">
           {rx.items.map((item, i) => (
@@ -126,7 +141,7 @@ function Prescription({ visit, onPrint }) {
   );
 }
 
-function VisitCard({ visit, printing, onPrint }) {
+function VisitCard({ visit, printing, onPrint, lastOrder, onSend }) {
   const { t, i18n } = useTranslation();
   return (
     <article className={`bg-white rounded-xl shadow-sm p-4 flex flex-col gap-3 ${printing ? 'rx-printing' : ''}`}>
@@ -142,7 +157,7 @@ function VisitCard({ visit, printing, onPrint }) {
       <List label={t('mh_diagnosis')} items={visit.diagnoses} />
       <Vitals vitals={visit.vitals} />
       <List label={t('mh_advice')} items={visit.advice} />
-      <Prescription visit={visit} onPrint={onPrint} />
+      <Prescription visit={visit} onPrint={onPrint} lastOrder={lastOrder} onSend={onSend} />
     </article>
   );
 }
@@ -197,10 +212,30 @@ export default function MyHealthPage() {
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
   const [printingId, setPrintingId] = useState(null);
+  const [orders, setOrders] = useState([]);
+  const [sendingRx, setSendingRx] = useState(null);
+  const [orderBusy, setOrderBusy] = useState(false);
+  const [orderNotice, setOrderNotice] = useState('');
+
+  const loadOrders = () => api.get('/my-pharmacy-orders').then(setOrders).catch(() => {});
 
   useEffect(() => {
     api.get('/my-health').then(setData).catch(err => setError(err.message));
+    loadOrders();
   }, []);
+
+  async function cancelOrder(order) {
+    if (!window.confirm(t('po_cancel_confirm'))) return;
+    setOrderBusy(true);
+    setOrderNotice('');
+    try {
+      await api.post(`/my-pharmacy-orders/${order.id}/cancel`, {});
+    } catch (err) {
+      setOrderNotice(t(orderErrorKey(err)));
+    }
+    await loadOrders();
+    setOrderBusy(false);
+  }
 
   useEffect(() => {
     const done = () => setPrintingId(null);
@@ -219,7 +254,10 @@ export default function MyHealthPage() {
   if (!data) return <div className="flex items-center justify-center h-64 text-gray-400 text-sm">{t('loading')}</div>;
 
   const { visits, invoices, upcoming_appointments: upcoming } = data;
-  const isEmpty = !visits.length && !invoices.length && !upcoming.length;
+  const isEmpty = !visits.length && !invoices.length && !upcoming.length && !orders.length;
+  const lastOrders = latestOrderByPrescription(orders);
+  // Open orders first, each group newest first (the API sends newest first).
+  const sortedOrders = [...orders.filter(isOpenOrder), ...orders.filter(o => !isOpenOrder(o))];
 
   // Visits arrive newest first; group them by their day in Dhaka.
   const days = [];
@@ -248,6 +286,16 @@ export default function MyHealthPage() {
         />
       ) : (
         <div className="flex flex-col gap-8">
+          {orders.length > 0 && (
+            <section aria-labelledby="pharmacy-orders-title">
+              <div id="pharmacy-orders-title"><SectionTitle icon={ShoppingBag} count={orders.length}>{t('po_title')}</SectionTitle></div>
+              {orderNotice && <p role="alert" className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 mb-3">{orderNotice}</p>}
+              <div className="flex flex-col gap-3">
+                {sortedOrders.map(order => <PharmacyOrderCard key={order.id} order={order} busy={orderBusy} onCancel={cancelOrder} />)}
+              </div>
+            </section>
+          )}
+
           {upcoming.length > 0 && (
             <section>
               <SectionTitle icon={CalendarDays} count={upcoming.length}>{t('mh_upcoming')}</SectionTitle>
@@ -277,7 +325,8 @@ export default function MyHealthPage() {
                     <h3 className="text-sm font-semibold text-gray-900 mb-2">{formatDay(at, i18n.language)}</h3>
                     <div className="flex flex-col gap-3">
                       {dayVisits.map(visit => (
-                        <VisitCard key={visit.id} visit={visit} printing={printingId === visit.id} onPrint={printPrescription} />
+                        <VisitCard key={visit.id} visit={visit} printing={printingId === visit.id} onPrint={printPrescription}
+                          lastOrder={visit.prescription?.id ? lastOrders[visit.prescription.id] : null} onSend={setSendingRx} />
                       ))}
                     </div>
                   </div>
@@ -297,6 +346,18 @@ export default function MyHealthPage() {
             )}
           </section>
         </div>
+      )}
+
+      {sendingRx && (
+        <SendToPharmacyDialog
+          prescriptionId={sendingRx}
+          onClose={() => setSendingRx(null)}
+          onSent={order => {
+            setSendingRx(null);
+            setOrders(current => [order, ...current]);
+            setOrderNotice('');
+          }}
+        />
       )}
     </div>
   );
