@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { useServices } from '../../../app/services';
-import { appConfig } from '../../../config/env';
+import { WEBSITE_URL, appConfig } from '../../../config/env';
 import { uiStyles as s } from '../../../ui';
 
 /**
@@ -15,8 +15,6 @@ export function imageSrc(value: string | null | undefined): string | undefined {
   if (value.startsWith('/')) return WEBSITE_URL + value;
   return value;
 }
-
-const WEBSITE_URL = (import.meta.env.VITE_WEBSITE_URL ?? 'https://cura-user-frontend.onrender.com').replace(/\/$/, '');
 
 /**
  * Uploads one image as multipart `photo` to `path` and reports the stored address.

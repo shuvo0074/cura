@@ -38,6 +38,9 @@ there. Nobody needs a login to browse doctors, hospitals, diagnostic centres and
 - **Super admin:** works on both front ends. On Cura Dashboard, **Super Admin** has the same tools as the Cura Website
   admin panel, plus users and roles, clinics and pharmacies. A super admin can open any clinic's records read-only from
   **Super Admin → Clinics**, and each view is recorded in the audit log.
+- **Moving between the two:** an account that can use Cura Dashboard (doctor, clinic account, ambulance or pharmacy
+  owner, super admin) logs in once. **Open Cura Dashboard** at the top of Cura Website and **Open Cura Website** in the
+  Cura Dashboard account menu open the other one already logged in. The link works once, for one minute.
 - **New doctors:** signing up on Cura Website sends them to Cura Dashboard. They cannot finish signing up on the live
   site yet, because Cura does not send real SMS.
 

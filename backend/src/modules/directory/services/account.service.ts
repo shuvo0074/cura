@@ -1,5 +1,5 @@
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
-import { UserRole, bdMobileSchema, emailSchema, passwordSchema } from '@cura/shared';
+import { Permission, UserRole, bdMobileSchema, emailSchema, passwordSchema, permissionsForRole } from '@cura/shared';
 import type { ZodSchema } from 'zod';
 import { CryptoService } from '../../../common/crypto/crypto.service';
 import {
@@ -66,7 +66,25 @@ export class DirectoryAccountService {
   async describe(identity: DirectoryIdentity): Promise<Row> {
     const user = this.presentUser(identity);
     if (identity.roles.includes('doctor')) user.verification = await this.latestVerification(identity.userId);
+    user.canUseDashboard = await this.canUseDashboard(identity.userId);
     return user;
+  }
+
+  /**
+   * Whether Cura Dashboard lets this account in, by the same rule as its login:
+   * a clinic account, a business owner or a super admin. Cura Website then offers
+   * "Open Cura Dashboard".
+   */
+  private async canUseDashboard(userId: string): Promise<boolean> {
+    const [record, ownerRoles, isSuperAdmin] = await Promise.all([
+      this.users.findById(userId),
+      this.users.ownerRolesFor(userId),
+      this.users.isSuperAdmin(userId),
+    ]);
+    if (!record) return false;
+    return (
+      permissionsForRole(record.role).includes(Permission.CLINIC_ACCESS) || ownerRoles.length > 0 || isSuperAdmin
+    );
   }
 
   private async latestVerification(userId: string): Promise<Row> {

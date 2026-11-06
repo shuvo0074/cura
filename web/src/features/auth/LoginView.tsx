@@ -32,7 +32,14 @@ const TABS: ReadonlyArray<{ id: WelcomeTab; label: string }> = [
  * the session through the same `onAuthenticated`; App then routes a new
  * account into onboarding.
  */
-export function LoginView({ onAuthenticated }: { onAuthenticated: (s: AuthSession) => void }) {
+export function LoginView({
+  onAuthenticated,
+  notice = null,
+}: {
+  onAuthenticated: (s: AuthSession) => void;
+  /** Why the person is here, e.g. a link from Cura Website that did not work. */
+  notice?: string | null;
+}) {
   const { auth } = useServices();
   // Cura Website links here to send a doctor to sign up.
   const [params] = useState(() => new URLSearchParams(window.location.search));
@@ -50,6 +57,8 @@ export function LoginView({ onAuthenticated }: { onAuthenticated: (s: AuthSessio
   );
 
   const verifying = state.phase === 'otp';
+  const formError =
+    verifying || tab === 'login' ? (state.formError ?? (verifying ? null : notice)) : reg.formError;
   const submitting = state.submitting || reg.submitting;
 
   const handleSubmit = useCallback(
@@ -279,9 +288,9 @@ export function LoginView({ onAuthenticated }: { onAuthenticated: (s: AuthSessio
                 </>
               )}
 
-              {(verifying || tab === 'login' ? state.formError : reg.formError) && (
+              {formError && (
                 <p className={styles.formError} role="alert">
-                  {verifying || tab === 'login' ? state.formError : reg.formError}
+                  {formError}
                 </p>
               )}
 

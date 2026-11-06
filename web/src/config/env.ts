@@ -30,3 +30,9 @@ function readEnv(): ClientEnv {
 }
 
 export const appConfig: AppConfig = createAppConfig(readEnv());
+
+/** Cura Website, where patients book. Locally run the Dashboard with VITE_WEBSITE_URL=http://localhost:5174. */
+export const WEBSITE_URL = (import.meta.env.VITE_WEBSITE_URL ?? 'https://cura-user-frontend.onrender.com').replace(
+  /\/$/,
+  '',
+);

@@ -2,6 +2,7 @@ import type { AppointmentStatus } from '../domain/enums';
 import type {
   Appointment,
   AuthSession,
+  HandoffCode,
   LoginResult,
   OtpChallenge,
   PasswordResetResult,
@@ -54,6 +55,10 @@ export interface AuthApi {
   /** Sets the new password and ends every other session. */
   confirmPasswordReset(input: PasswordResetConfirmInput): Promise<Result<PasswordResetResult, AppError>>;
   restoreSession(): Promise<Result<{ accessToken: string; expiresIn: number }, AppError>>;
+  /** A single-use code that opens this session on the other front end (Cura Website or Cura Dashboard). */
+  createHandoff(): Promise<Result<HandoffCode, AppError>>;
+  /** Opens a session from a handoff code the other front end made. */
+  redeemHandoff(code: string): Promise<Result<AuthSession, AppError>>;
   logout(): Promise<void>;
 }
 
@@ -158,6 +163,20 @@ export class HttpAuthApi implements AuthApi {
     );
     if (result.ok) tokenStore.set(result.value.accessToken, result.value.expiresIn);
     return result;
+  }
+
+  createHandoff(): Promise<Result<HandoffCode, AppError>> {
+    return this.http.request<HandoffCode>('/auth/handoff', { method: 'POST', body: {} });
+  }
+
+  async redeemHandoff(code: string): Promise<Result<AuthSession, AppError>> {
+    const result = await this.http.request<{ status: 'authenticated'; session: AuthSession }>(
+      '/auth/handoff/redeem',
+      { method: 'POST', body: { code }, anonymous: true, retry: false },
+    );
+    if (!result.ok) return result;
+    tokenStore.set(result.value.session.accessToken, result.value.session.expiresIn);
+    return { ok: true, value: result.value.session };
   }
 
   async logout(): Promise<void> {

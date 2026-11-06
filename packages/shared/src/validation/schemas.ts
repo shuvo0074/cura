@@ -173,6 +173,12 @@ export const verifyOtpSchema = z.object({
 });
 export type VerifyOtpInput = z.infer<typeof verifyOtpSchema>;
 
+/** A one-time code that carries a session from Cura Website to Cura Dashboard, or back. */
+export const handoffRedeemSchema = z.object({
+  code: z.string().regex(/^[A-Za-z0-9_-]{43}$/, 'This link has expired. Please log in.'),
+});
+export type HandoffRedeemInput = z.infer<typeof handoffRedeemSchema>;
+
 /** Onboarding step 1 — mandatory: mobile, email, gender (spec 3.2.6.1). */
 export const personalDetailsSchema = z.object({
   fullName: z.string().trim().min(2).max(120),

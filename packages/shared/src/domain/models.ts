@@ -66,6 +66,12 @@ export type PasswordResetResult =
   | { status: 'authenticated'; session: AuthSession }
   | { status: 'login_required' };
 
+/** A single-use code that opens this session on the other front end. Lasts `expiresIn` seconds. */
+export interface HandoffCode {
+  code: string;
+  expiresIn: number;
+}
+
 export interface Patient extends Identified {
   curaId: string;
   fullName: string;

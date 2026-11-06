@@ -5,6 +5,7 @@ import {
   doctorClaimCompleteSchema,
   doctorClaimLookupSchema,
   doctorClaimStartSchema,
+  handoffRedeemSchema,
   loginSchema,
   passwordResetConfirmSchema,
   passwordResetRequestSchema,
@@ -13,6 +14,7 @@ import {
   type DoctorClaimCompleteInput,
   type DoctorClaimLookupInput,
   type DoctorClaimStartInput,
+  type HandoffRedeemInput,
   type LoginInput,
   type PasswordResetConfirmInput,
   type PasswordResetRequestInput,
@@ -159,6 +161,36 @@ export class AuthController {
       expiresIn: issued.expiresIn,
       tokenType: 'Bearer' as const,
     };
+  }
+
+  /**
+   * A single-use code that opens this session on the other front end. Cura
+   * Website and Cura Dashboard are different sites and cannot share the refresh
+   * cookie, so the browser carries this code across in the URL fragment.
+   */
+  @Post('handoff')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 30, ttl: 900_000 } })
+  createHandoff(@CurrentUser() principal: AuthenticatedPrincipal, @Req() req: Request) {
+    return this.auth.createHandoff(principal, this.contextOf(req));
+  }
+
+  /** Swaps a handoff code for a new session on this front end, like a login. */
+  @Public()
+  @Post('handoff/redeem')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 30, ttl: 900_000 } })
+  async redeemHandoff(
+    @Body(zodBody(handoffRedeemSchema)) dto: HandoffRedeemInput,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { session, refreshToken } = await this.auth.redeemHandoff(dto.code, this.contextOf(req));
+    // Whoever was logged in on this front end before is replaced, not left behind.
+    const previous = this.cookie.read(req);
+    if (previous) await this.auth.logout(previous);
+    this.cookie.set(res, refreshToken);
+    return { status: 'authenticated' as const, session };
   }
 
   @Public()

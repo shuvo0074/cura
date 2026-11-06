@@ -3,9 +3,11 @@ import {
   CLINIC_READ_PERMISSIONS,
   OwnerRole,
   Permission,
+  canUseDashboard,
   permissionsForRole,
   tokenStore, type AuthSession, type AuthenticatedUser } from '@cura/shared';
 import { useServices } from './services';
+import { redeemHandoffFromAddress } from './handoff';
 import { LoginView } from '../features/auth/LoginView';
 import { AdminView } from '../features/admin/AdminView';
 import type { ViewedClinic } from '../features/admin/sections/admin-types';
@@ -26,6 +28,8 @@ export function App() {
   const [session, setSession] = useState<SessionState>({ status: 'restoring' });
   const [location, setLocation] = useState<Location>({ route: 'calendar' });
   const [onboardingDone, setOnboardingDone] = useState(false);
+  /** Shown on the login screen, e.g. when a link from Cura Website did not work. */
+  const [loginNotice, setLoginNotice] = useState<string | null>(null);
   /** A clinic a super admin opened from Super Admin → Clinics, read-only. */
   const [viewedClinic, setViewedClinic] = useState<ViewedClinic | null>(null);
   const [intakeOpen, setIntakeOpen] = useState(false);
@@ -47,6 +51,27 @@ export function App() {
     let cancelled = false;
 
     void (async () => {
+      // Opened from Cura Website with a handoff code: that becomes the session.
+      const handoff = redeemHandoffFromAddress(auth);
+      if (handoff) {
+        const redeemed = await handoff;
+        if (cancelled) return;
+        if (redeemed.ok && canUseDashboard(redeemed.value)) {
+          setOnboardingDone(redeemed.value.user.onboardingCompleted);
+          setSession({ status: 'authenticated', user: redeemed.value.user });
+          return;
+        }
+        if (redeemed.ok) {
+          // Patients use Cura Website only, as at login.
+          await auth.logout();
+          if (cancelled) return;
+          setLoginNotice('This account is for Cura Website. Please log in there.');
+          setSession({ status: 'anonymous' });
+          return;
+        }
+        setLoginNotice(redeemed.error.message);
+      }
+
       const restored = await auth.restoreSession();
       if (cancelled) return;
 
@@ -55,6 +80,7 @@ export function App() {
         if (cancelled) return;
 
         if (me.ok) {
+          setLoginNotice(null);
           setOnboardingDone(me.value.onboardingCompleted);
           setSession({ status: 'authenticated', user: me.value });
           return;
@@ -79,6 +105,7 @@ export function App() {
   );
 
   const handleAuthenticated = useCallback((next: AuthSession) => {
+    setLoginNotice(null);
     setOnboardingDone(next.user.onboardingCompleted);
     setSession({ status: 'authenticated', user: next.user });
     setLocation({ route: 'calendar' });
@@ -117,7 +144,7 @@ export function App() {
   }
 
   if (session.status === 'anonymous') {
-    return <LoginView onAuthenticated={handleAuthenticated} />;
+    return <LoginView onAuthenticated={handleAuthenticated} notice={loginNotice} />;
   }
 
   const user = session.user;

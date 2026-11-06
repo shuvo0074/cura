@@ -1,5 +1,7 @@
-import {  useState } from 'react';
+import { useEffect, useState } from 'react';
 import {  type AuthenticatedUser } from '@cura/shared';
+import { useServices } from '../../../app/services';
+import { openWebsite } from '../../../app/handoff';
 import styles from './header.module.css';
 
 import { Switch } from './ToggleSwitch';
@@ -26,8 +28,17 @@ export function ProfileMenu({
   onNavigate: (target: 'profile' | 'staff' | 'security') => void;
   onSignOut: () => void;
 }) {
+  const { auth } = useServices();
   const [open, setOpen] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   const ref = useDismiss(open, () => setOpen(false));
+
+  // Coming back with the browser's Back button restores this page as it was left.
+  useEffect(() => {
+    const reset = (event: PageTransitionEvent) => event.persisted && setLeaving(false);
+    window.addEventListener('pageshow', reset);
+    return () => window.removeEventListener('pageshow', reset);
+  }, []);
 
   const go = (target: 'profile' | 'staff' | 'security') => {
     setOpen(false);
@@ -91,6 +102,20 @@ export function ProfileMenu({
               <button type="button" className={styles.menuItem} onClick={() => go('security')}>
                 <strong>Account settings</strong>
                 <span>Password and two-factor authentication.</span>
+              </button>
+            </li>
+            <li>
+              <button
+                type="button"
+                className={styles.menuItem}
+                disabled={leaving}
+                onClick={() => {
+                  setLeaving(true);
+                  void openWebsite(auth);
+                }}
+              >
+                <strong>{leaving ? 'Opening Cura Website…' : 'Open Cura Website'}</strong>
+                <span>Go to Cura Website, already logged in.</span>
               </button>
             </li>
             <li>

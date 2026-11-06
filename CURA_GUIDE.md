@@ -4,6 +4,7 @@
 
 - Log in, or register a new doctor account with a code sent to the phone
 - Reset a forgotten password with a code sent to your mobile or email, on Cura Dashboard and Cura Website
+- Move between Cura Website and Cura Dashboard without logging in again
 - Complete the 4-step new-doctor setup (personal, professional, academic, documents)
 - See the calendar by day, 3 days, week or month, and book an appointment by clicking an empty time
 - Drag an appointment to a new time
@@ -116,6 +117,15 @@ Use an account you made for testing, so the demo passwords above keep working.
 6. On Cura Website, click **Login**, then **Forgot password?**, and repeat steps 2–4. Switch to **বাং** at the top: the page is in Bangla.
 
 A patient who resets on Cura Dashboard is told to log in on Cura Website. A doctor a clinic added who has no password yet is sent to finish signing up instead.
+
+### Switch between Cura Website and Cura Dashboard
+
+1. On Cura Website, click **Login** and log in as doctor01@cura.local. At the top, click **Open Cura Dashboard**.
+2. Cura Dashboard opens on the calendar, already logged in as Dr Rumana Haque. The address bar shows no code.
+3. Click your name at the top right, then **Open Cura Website**. Cura Website opens on **Doctor Dashboard**, logged in.
+4. Repeat with admin@cura.local: it opens **Super Admin** on Cura Website and the clinic calendar on Cura Dashboard.
+5. Log in on Cura Website as patient01@cura.local: there is no **Open Cura Dashboard** button.
+6. Each link works once, for one minute. A used or older link opens the login page with **This link has expired**.
 
 ### Calendar
 

@@ -43,6 +43,8 @@ export interface AuthenticatedPrincipal {
   practiceIds: readonly string[];
   /** Set on a super admin's read: `practiceIds` then holds every clinic. */
   ownPracticeIds?: readonly string[];
+  /** Refresh family of the session that sent the request, when the token names one. */
+  familyId?: string;
 }
 
 declare module 'express' {
@@ -175,6 +177,7 @@ export class JwtAuthGuard implements CanActivate {
       role: user.role,
       permissions: permissionsForRole(user.role),
       practiceIds: claims.practices ?? [],
+      ...(claims.fid ? { familyId: claims.fid } : {}),
     };
   }
 

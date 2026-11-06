@@ -6,6 +6,7 @@ import {
   permissionsForRole,
   type AuthSession,
   type DoctorClaimCompleteInput,
+  type HandoffCode,
   type DoctorClaimStartInput,
   type LoginInput,
   type LoginResult,
@@ -19,17 +20,21 @@ import {
   InvalidCredentialsError,
   NotFoundError,
   RateLimitedError,
+  UnauthenticatedError,
   ValidationError,
 } from '../../common/errors/domain-error';
 import { normalizeBmdc } from '../directory/domain/account-rules';
 import {
   AUDIT_REPOSITORY,
+  REFRESH_TOKEN_REPOSITORY,
   USER_REPOSITORY,
   type AuditRepository,
+  type RefreshTokenRepository,
   type UserRepository,
   type UserRecord,
 } from '../../core/ports/repositories';
-import { CLOCK, type Clock } from '../../core/ports/services';
+import { CACHE, CLOCK, type Cache, type Clock } from '../../core/ports/services';
+import type { AuthenticatedPrincipal } from '../../common/security/jwt-auth.guard';
 import { OtpService } from './otp.service';
 import { TokenService } from './token.service';
 
@@ -68,6 +73,8 @@ export class AuthService {
     @Inject(USER_REPOSITORY) private readonly users: UserRepository,
     @Inject(AUDIT_REPOSITORY) private readonly audit: AuditRepository,
     @Inject(CLOCK) private readonly clock: Clock,
+    @Inject(CACHE) private readonly cache: Cache,
+    @Inject(REFRESH_TOKEN_REPOSITORY) private readonly refreshTokens: RefreshTokenRepository,
   ) {}
 
   async register(input: RegisterInput, ctx: RequestContext) {
@@ -395,6 +402,81 @@ export class AuthService {
     return { status: 'authenticated', ...created };
   }
 
+  /**
+   * Starts moving this session to the other front end (Cura Website or Cura
+   * Dashboard). The two sit on different sites, so they cannot share the refresh
+   * cookie; instead the browser carries a single-use code across.
+   *
+   * The code is random, lives for a minute and is stored only as a hash. It is
+   * tied to the session that asked for it: logging that session out, changing the
+   * password or deactivating the account before it is used makes it worthless.
+   */
+  async createHandoff(principal: AuthenticatedPrincipal, ctx: RequestContext): Promise<HandoffCode> {
+    const user = await this.users.findById(principal.userId);
+    if (!user || !user.isActive) throw new UnauthenticatedError('Account is not active.');
+
+    const code = this.crypto.generateToken(32);
+    const grant: HandoffGrant = {
+      userId: user.id,
+      tokenVersion: user.tokenVersion,
+      familyId: principal.familyId ?? null,
+    };
+    await this.cache.set(handoffKey(this.crypto.sha256(code)), grant, HANDOFF_TTL_SECONDS);
+
+    await this.audit.record({
+      actorUserId: user.id,
+      action: 'auth.handoff_created',
+      resourceType: 'user',
+      resourceId: user.id,
+      practiceId: null,
+      ipHash: this.crypto.hashIp(ctx.ip ?? undefined),
+      userAgent: ctx.userAgent ?? null,
+      requestId: ctx.requestId ?? null,
+    });
+    return { code, expiresIn: HANDOFF_TTL_SECONDS };
+  }
+
+  /**
+   * Turns a handoff code into a new session, exactly as a login would: a new
+   * refresh family, the same roles and permissions. Each code works once.
+   *
+   * The second-factor rule in `login` is not skipped: a code can only come from a
+   * session that already finished login, including any code it needed.
+   */
+  async redeemHandoff(
+    code: string,
+    ctx: RequestContext,
+  ): Promise<{ session: AuthSession; refreshToken: string }> {
+    const hash = this.crypto.sha256(code);
+    // The lock makes the claim atomic, so two requests racing with one code
+    // cannot both get a session. It outlives the code itself.
+    if (!(await this.cache.acquireLock(`auth:handoff:claimed:${hash}`, HANDOFF_TTL_SECONDS * 2))) {
+      throw handoffRejected();
+    }
+    const grant = await this.cache.get<HandoffGrant>(handoffKey(hash));
+    await this.cache.del(handoffKey(hash));
+    if (!grant) throw handoffRejected();
+
+    const user = await this.users.findById(grant.userId);
+    if (!user || !user.isActive || user.tokenVersion !== grant.tokenVersion) throw handoffRejected();
+    if (grant.familyId && !(await this.refreshTokens.isFamilyActive(grant.familyId))) {
+      throw handoffRejected();
+    }
+
+    const created = await this.createSession(user, ctx);
+    await this.audit.record({
+      actorUserId: user.id,
+      action: 'auth.handoff_redeemed',
+      resourceType: 'user',
+      resourceId: user.id,
+      practiceId: null,
+      ipHash: this.crypto.hashIp(ctx.ip ?? undefined),
+      userAgent: ctx.userAgent ?? null,
+      requestId: ctx.requestId ?? null,
+    });
+    return created;
+  }
+
   async refresh(refreshToken: string, ctx: RequestContext) {
     const issued = await this.tokens.rotate(refreshToken, ctx);
     return issued;
@@ -479,6 +561,22 @@ export const doctorSignupRequired = (): ConflictError =>
     'DOCTOR_SIGNUP_REQUIRED',
     'A clinic already added you as a doctor. Finish signing up on Cura Dashboard.',
   );
+
+/** How long a handoff code can be used, in seconds. */
+export const HANDOFF_TTL_SECONDS = 60;
+
+/** What a handoff code stands for. Kept in the cache under the code's hash. */
+interface HandoffGrant {
+  userId: string;
+  tokenVersion: number;
+  familyId: string | null;
+}
+
+const handoffKey = (hash: string) => `auth:handoff:${hash}`;
+
+/** One answer for every failed handoff, whatever the reason. */
+const handoffRejected = (): UnauthenticatedError =>
+  new UnauthenticatedError('This link has expired. Please log in.');
 
 /** One answer for every failed reset code, whatever the reason. */
 const resetCodeRejected = (): ValidationError =>
